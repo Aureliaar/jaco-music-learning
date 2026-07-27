@@ -145,11 +145,16 @@ column" (the tracker list) and "the roll"; the choice persists in
   "title": "untitled folio",
   "tempo": 112,
   "loop": 16,
+  "key": "C major",
   "steps": [ "C4", null, "E4", null, ... ]   // exactly 16 entries
 }
 ```
 
 A step entry is a note string or `null` (empty).
+
+- `"key"` (added 2026-07-28 with relative entry) is **optional on import**:
+  a file without it, or with an unreadable one, is C major. Export and
+  autosave always write it. See "Relative entry (contour mode)".
 
 - Export and autosave always write version 1.
 - Import accepts version 0 files unchanged and upgrades them in place. The
@@ -157,6 +162,133 @@ A step entry is a note string or `null` (empty).
   `null`; anything else that is not a parseable note is rejected.
 - Autosave lives at the localStorage key `folio.v1`; a pre-existing
   `folio.v0` autosave is still read as a fallback, so no work is lost.
+
+## Relative entry (contour mode) (added 2026-07-28)
+
+A second way to write notes with the pad: instead of naming a pitch, you name
+a **move** — up, down, again, rest — and the app works out the pitch. It is
+an **input method, not a data model**. Steps remain absolute note strings in
+memory, in the save file, in the autosave and in quest motifs; nothing about
+the format changes at all. The mode exists only between the button press and
+the note that gets written.
+
+The unit is **one step of the key**, not a semitone. That requires a key.
+
+### The key of the piece
+
+- A key is a tonic and a mode: `major` (`0 2 4 5 7 9 11`) or natural `minor`
+  (`0 2 3 5 7 8 10`). Default **C major**.
+- Persisted as an **optional `"key"` field** in the save file, e.g.
+  `"key": "E minor"`. A file without one, or with one that cannot be read,
+  loads as C major — old files stay valid and the validator stays permissive.
+  Export and autosave always write the field, normalised to a sharp spelling
+  and a lower-case mode (`"F# minor"`).
+- Shown on the header meta line in the existing quiet style:
+  `untitled folio · 112 · octave 4 · E minor`.
+- **Set on the F1 key page**, which is where it is also explained — no
+  modifier chords to remember, and reachable from either input:
+
+  | | keyboard | gamepad |
+  |---|---|---|
+  | move the tonic a semitone | `←` / `→` | d-pad ← / → |
+  | major or minor | `↑` / `↓` | △ (Y) or ✕ (A) |
+
+  The tonic wraps through the twelve pitch classes. Setting the key
+  autosaves; it changes no note already on the page.
+
+### Switching methods
+
+| | keyboard | gamepad |
+|---|---|---|
+| relative or absolute entry | `F4` | **hold select** for ½ s |
+
+Select still walks the pages (key → quest log → closed) on a **tap**; the page
+cycle simply fires on release now, so a held select can mean something else.
+The method persists in `localStorage` under `folio.entry` — a preference, not
+part of the document — and shows on the meta line as a quiet `· relative`
+when it is on (absolute is the default and says nothing).
+
+Keyboard note entry is **absolute in both methods** and completely unchanged;
+there is no keyboard mirror of the relative moves. Relative entry is a pad
+feature.
+
+### The mapping (bare face buttons, relative entry)
+
+| button | move |
+|---|---|
+| △ (Y) | up one step of the key |
+| ✕ (A) | down one step of the key |
+| ○ (B) | the previous note again, exactly |
+| □ (X) | a rest (writes `null`) |
+
+All four write at the cursor and **advance**, and a note is auditioned as it
+is written, exactly as absolute entry does.
+
+Modifiers — the bumpers, not the triggers:
+
+| held | △ / ✕ becomes |
+|---|---|
+| L1 (LB) | a leap of a third — 2 steps of the key |
+| R1 (RB) | a leap of a fifth — 4 steps of the key |
+| L1 + R1 | a **semitone**, ignoring the key — the out-of-key escape hatch |
+
+○ and □ ignore the bumpers. **The crossbar is untouched**: hold L2/R2/both in
+either method and the eight slots are the same twenty-four absolute
+semitones, with the d-pad given over to them as always. That is the whole
+reason the leaps live on the bumpers.
+
+L1/R1 are the base octave elsewhere. In relative entry they act **on release,
+and only if they were not used as a modifier while down** — so a tap still
+shifts the octave and a hold-and-△ does not. In absolute entry they are
+unchanged (they fire on press).
+
+Nudge — change a note without advancing:
+
+| | relative entry |
+|---|---|
+| d-pad ← / → | the note under the cursor, down / up one step of the key |
+
+Up and down (d-pad, left stick) remain time, the right stick still strides by
+fours, and an empty step says so rather than writing anything.
+
+### The anchor rule
+
+A relative move needs a previous note to move *from*.
+
+1. Scan **backwards from the cursor**, step by step. The first sounding step
+   found is the anchor — **rests do not break the chain**.
+2. The scan **wraps**: around the loop while the cursor is inside it (the
+   loop is what the ear actually repeats), around the whole page otherwise.
+   A full wrap ends on the cursor's own step, which therefore anchors as a
+   last resort.
+3. If the page holds no note at all, △/✕/○ all write the **tonic in the base
+   octave** — the seed a contour needs.
+
+The anchor is the *previous sounding note*, never the previous button press,
+so mixing crossbar entry, keyboard entry and relative moves works: whatever
+is on the page is what the next move counts from.
+
+### The snap rule (out-of-key anchors)
+
+If the anchor is not in the key, it is first moved to the **nearest note of
+the key in the direction of travel**, and *that counts as the first step*.
+In C major:
+
+- △ from F♯4 → **G4** (nearest scale tone above; the step is spent snapping).
+- ✕ from F♯4 → **F4**.
+- L1 + △ from F♯4 → **A4** (snap to G, then one more step).
+- ○ from F♯4 → **F♯4** — a repeat is literal and never snaps, so a
+  deliberate chromatic note can be held.
+
+So a note written with the L1+R1 escape hatch rejoins the key on the next
+plain move, which is the behaviour "Keep the Stray" wants.
+
+### Range
+
+Every relative result — moves and nudges alike — is clamped to **C2…C6**
+(MIDI 36…84), the range the base octave already implies, and the footer says
+"the end of the range" when a move is clamped. The anchor is clamped into the
+same range before the move is computed.
 
 ## Quest tracker (added 2026-07-28)
 

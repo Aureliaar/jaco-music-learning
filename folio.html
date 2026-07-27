@@ -266,6 +266,8 @@
           <dt>F2</dt><dd>the roll: the page drawn instead of written &mdash; time runs right, height is pitch, colour is the note</dd>
           <dt>F1</dt><dd>close this page of the key</dd>
           <dt>F3</dt><dd>open or close the quest log</dd>
+          <dt>F4</dt><dd>the pad's entry method: relative (contour) or absolute</dd>
+          <dt>the arrows, here</dt><dd>the key of the piece: left, right move the tonic; up, down make it major or minor</dd>
           <dt>in the quest log</dt><dd>up, down choose a quest; enter sets it as the objective; B binds the pattern on the page as its motif; L loads that motif back (press twice to replace work); C marks it complete; F3 or escape closes</dd>
         </dl>
         <p>Notes are entered by position, not by letter, so the layout is the same on any keyboard. Entering a note advances the cursor.</p>
@@ -287,10 +289,16 @@
           <dt>left stick</dt><dd>the same, up and down only</dd>
           <dt>right stick</dt><dd>the cursor by fours, beat to beat</dd>
           <dt>select (create)</dt><dd>the pages in turn: the key, the quest log, closed</dd>
+          <dt>hold select</dt><dd>the entry method: relative (contour) or absolute</dd>
+          <dt>in relative entry</dt><dd>&#9651; (Y) up one step of the key, &#10005; (A) down one, &#9675; (B) the same note again, &#9633; (X) a rest; each writes and advances</dd>
+          <dt>&hellip; hold L1 or R1</dt><dd>the move leaps: L1 (LB) a third, R1 (RB) a fifth, both together a semitone, out of the key; tapped alone they are still the octave</dd>
+          <dt>&hellip; d&#8209;pad &#8592;&#8594;</dt><dd>nudge the note under the cursor a step of the key, without advancing</dd>
+          <dt>here, d&#8209;pad &#8592;&#8594;</dt><dd>the tonic; &#9651; or &#10005; (Y, A) make the key major or minor</dd>
           <dt>in the quest log</dt><dd>d&#8209;pad up, down choose a quest; &#10005; (A) sets it as the objective; &#9633; (X) binds the pattern as its motif; &#9651; (Y) loads that motif back (press twice to replace work); &#9675; (B) marks it complete; select closes</dd>
         </dl>
         <p>The cross hotbar, borrowed: a trigger raises the eight slots, letting go gives the d&#8209;pad back to navigation. Twenty&#8209;four semitones, every pitch of two octaves, counted up from the octave in the header; entry advances and sounds the note as on the keyboard. A DualSense and an Xbox pad report the same positions. A browser notices a pad only after you press one of its buttons: press start if nothing answers. Sound may wait for one keyboard touch.</p>
         <p>Bare, the face buttons act alone as in the game &mdash; &#9633; clears and &#9675; returns to the top; raise a trigger and all four are notes again.</p>
+        <p>Relative entry changes only the bare face buttons, and only what they mean while you write: you give the shape &mdash; up, down, again, rest &mdash; and the page keeps ordinary notes, as always. A move is one step of the key shown in the header, counted from the last note that sounds before the cursor; rests are stepped over, and the search wraps around the loop. An empty page begins on the tonic. A note that lies outside the key moves first to the nearest note of the key in the direction you asked, and that counts as the step. The crossbar is untouched: hold a trigger in either method and the eight slots are absolute pitches again. Set the key on this page.</p>
       </div>
     </div>
   </section>
@@ -319,11 +327,14 @@
      they are read and dropped, never written */
   var LEGACY_MARK = "x";
 
+  var DEFAULT_KEY = "C major";
+
   var doc = {
     version: 1,
     title: "untitled folio",
     tempo: 112,
     loop: STEPS,             /* playback repeats the first `loop` steps: 4, 8, or 16 */
+    key: DEFAULT_KEY,        /* the key of the piece: relative entry counts in it */
     steps: new Array(STEPS).fill(null)
   };
   var baseOctave = 4;      // C2 - C6
@@ -356,6 +367,71 @@
     var m = NOTE_RE.exec(s);
     if (!m) return "·";
     return m[1] + (m[2] ? "♯" : "-") + m[3];
+  }
+
+  /* ================= the key of the piece =================
+     A key is a tonic and a mode. It is not a data model change: steps stay
+     absolute note strings everywhere. The key exists so that relative entry
+     can count in scale steps rather than semitones, and so that the header
+     can say what the page is in. Persisted as an optional "key" field. */
+  var SCALES = { major:[0,2,4,5,7,9,11], minor:[0,2,3,5,7,8,10] };
+  var KEY_RE = /^([A-G])(#|♯)?[ _-]+(major|minor)$/i;
+  var LETTER_PC = { C:0, D:2, E:4, F:5, G:7, A:9, B:11 };
+  /* the range the app writes into: C2 to C6, as the base octave allows */
+  var MIDI_LO = 36, MIDI_HI = 84;
+
+  function parseKey(s){
+    if (typeof s !== "string") return null;
+    var m = KEY_RE.exec(s.trim());
+    if (!m) return null;
+    return { pc: (LETTER_PC[m[1].toUpperCase()] + (m[2] ? 1 : 0)) % 12,
+             mode: m[3].toLowerCase() };
+  }
+  function normalizeKey(s){
+    var k = parseKey(s);
+    return k ? NAMES[k.pc] + " " + k.mode : DEFAULT_KEY;
+  }
+  function keyOf(){ return parseKey(doc.key) || { pc:0, mode:"major" }; }
+
+  function nameOfMidi(m){
+    var o = Math.floor(m / 12) - 1;
+    return NAMES[m - (o + 1) * 12] + o;
+  }
+  function clampMidi(m){ return Math.max(MIDI_LO, Math.min(MIDI_HI, m)); }
+
+  /* Scale degrees are absolute: degree 0 is the tonic at the octave the
+     tonic's pitch class sits in, 7 is the tonic an octave up, -1 the seventh
+     below. Every relative move is arithmetic on this number. */
+  function degreeOfMidi(m){
+    var k = keyOf(), sc = SCALES[k.mode];
+    var oct = Math.floor((m - k.pc) / 12), off = m - k.pc - oct * 12;
+    var i = sc.indexOf(off);
+    return (i >= 0) ? oct * 7 + i : null;      /* null: out of the key */
+  }
+  function midiOfDegree(d){
+    var k = keyOf(), sc = SCALES[k.mode];
+    var o = Math.floor(d / 7);
+    return k.pc + o * 12 + sc[d - o * 7];
+  }
+  /* out-of-key note: the nearest scale tone in the direction of travel.
+     Snapping counts as the first step of the move, so "up one" from F♯ in
+     C major is G, and "down one" from F♯ is F. */
+  function snapDegree(m, dir){
+    var k = keyOf(), sc = SCALES[k.mode], i;
+    var oct = Math.floor((m - k.pc) / 12), off = m - k.pc - oct * 12;
+    if (dir > 0){
+      for (i = 0; i < 7; i++) if (sc[i] > off) return oct * 7 + i;
+      return oct * 7 + 7;
+    }
+    for (i = 6; i >= 0; i--) if (sc[i] < off) return oct * 7 + i;
+    return oct * 7 - 1;
+  }
+  function moveDegrees(m, n){
+    if (!n) return m;
+    var dir = n > 0 ? 1 : -1;
+    var deg = degreeOfMidi(m);
+    if (deg === null) return midiOfDegree(snapDegree(m, dir) + (n - dir));
+    return midiOfDegree(deg + n);
   }
 
   /* ================= keymap, by physical position ================= */
@@ -537,7 +613,9 @@
   function renderMeta(){
     var obj = activeQuest();
     meta.textContent = doc.title + " · " + doc.tempo + " · octave " + baseOctave +
+                       " · " + doc.key +
                        (doc.loop < STEPS ? " · loop " + doc.loop : "") +
+                       (relative ? " · relative" : "") +
                        (obj ? " · ⚔ " + obj.short : "");
   }
   function renderLoop(){
@@ -573,7 +651,10 @@
     var title = (typeof obj.title === "string" && obj.title.trim()) ? obj.title.trim().slice(0, 60) : "untitled folio";
     /* version 1 files may carry a loop length; anything but 4 or 8 means the whole page */
     var loop = (obj.loop === 4 || obj.loop === 8) ? obj.loop : STEPS;
-    return { version: 1, title: title, tempo: tempo, loop: loop, steps: steps };
+    /* the key is optional and permissive: a file without one is in C major,
+       and so is a file whose key cannot be read */
+    var key = normalizeKey(obj.key);
+    return { version: 1, title: title, tempo: tempo, loop: loop, key: key, steps: steps };
   }
   function save(){
     if (!storageOK) return;
@@ -776,13 +857,82 @@
   function advance(){ cursor = (cursor + 1) % STEPS; renderCursor(); }
   function setStep(i, v){ doc.steps[i] = v; renderNotes(); save(); }
 
-  function enterNote(off){
-    var name = noteFromOffset(baseOctave, off);
+  function writeNote(name, tail){
     var at = cursor + 1;
     setStep(cursor, name);
     audition(name);
     advance();
-    say(display(name) + " at step " + at);
+    say(display(name) + " at step " + at + (tail ? " · " + tail : ""));
+  }
+  function enterNote(off){
+    writeNote(noteFromOffset(baseOctave, off));
+  }
+
+  /* ================= relative (contour) entry =================
+     An input method, not a data model: the page still holds absolute note
+     strings. Relative entry asks for a direction and writes whatever pitch
+     that direction lands on, counted in scale steps of the current key.
+
+     The anchor is the previous sounding note, scanned backwards from the
+     cursor. Rests do not break the chain, and the scan wraps — around the
+     loop while the cursor is inside it, around the whole page otherwise.
+     A page with nothing on it anchors on the tonic in the base octave. */
+  var relative = false;
+  var ENTRY_KEY = "folio.entry";      /* a preference, not part of the document */
+
+  function anchorMidi(){
+    var span = (cursor < doc.loop) ? doc.loop : STEPS;
+    for (var k = 1; k <= span; k++){
+      var i = ((cursor - k) % span + span) % span;
+      if (doc.steps[i]) return clampMidi(midiOf(doc.steps[i]));
+    }
+    return null;
+  }
+  function tonicMidi(){ return clampMidi((baseOctave + 1) * 12 + keyOf().pc); }
+
+  /* n scale steps, signed; chromatic asks for n semitones instead */
+  function relStep(n, chromatic){
+    var a = anchorMidi();
+    if (a === null){ writeNote(nameOfMidi(tonicMidi()), "the tonic"); return; }
+    var want = chromatic ? a + n : moveDegrees(a, n);
+    var m = clampMidi(want);
+    writeNote(nameOfMidi(m), m !== want ? "the end of the range" : null);
+  }
+  function relRepeat(){
+    var a = anchorMidi();
+    if (a === null){ writeNote(nameOfMidi(tonicMidi()), "the tonic"); return; }
+    writeNote(nameOfMidi(a), "again");
+  }
+  /* the note under the cursor, moved a scale step, staying where it is */
+  function nudge(n){
+    var v = doc.steps[cursor];
+    if (!v){ say("step " + (cursor + 1) + " is empty — nothing to nudge"); return; }
+    var m = clampMidi(moveDegrees(clampMidi(midiOf(v)), n));
+    var name = nameOfMidi(m);
+    setStep(cursor, name);
+    audition(name);
+    say(display(name) + " at step " + (cursor + 1));
+  }
+
+  function setRelative(on){
+    relative = !!on;
+    try { localStorage.setItem(ENTRY_KEY, relative ? "relative" : "absolute"); } catch (e){}
+    renderMeta();
+    say(relative ? "relative entry · △ up, ✕ down, ○ again, □ rest"
+                 : "absolute entry · the crossbar");
+  }
+  function toggleRelative(){ setRelative(!relative); }
+
+  /* the key is set on the key page, where it is also explained */
+  function shiftTonic(d){
+    var k = keyOf();
+    doc.key = NAMES[((k.pc + d) % 12 + 12) % 12] + " " + k.mode;
+    renderMeta(); save(); say("the key · " + doc.key);
+  }
+  function toggleKeyMode(){
+    var k = keyOf();
+    doc.key = NAMES[k.pc] + " " + (k.mode === "major" ? "minor" : "major");
+    renderMeta(); save(); say("the key · " + doc.key);
   }
 
   /* the loop: playback repeats the first 4, 8, or all 16 steps. Editing is
@@ -1033,6 +1183,8 @@
 
     if (code === "F1"){ e.preventDefault(); toggleKeyref(); return; }
     if (code === "F3"){ e.preventDefault(); toggleQuests(); return; }
+    /* the pad's entry method, from either hand */
+    if (code === "F4"){ e.preventDefault(); toggleRelative(); return; }
 
     /* tab does nothing, but it is swallowed so that focus never wanders off
        the page */
@@ -1053,9 +1205,16 @@
       return;
     }
 
+    /* the key page carries one setting: the key of the piece */
     if (keyref.classList.contains("on")){
-      if (code === "Escape"){ toggleKeyref(); }
-      return;                        /* the key is a page, not a mode with keys */
+      switch (code){
+        case "Escape":     toggleKeyref(); return;
+        case "ArrowLeft":  e.preventDefault(); shiftTonic(-1);   return;
+        case "ArrowRight": e.preventDefault(); shiftTonic(1);    return;
+        case "ArrowUp": case "ArrowDown":
+                           e.preventDefault(); toggleKeyMode();  return;
+      }
+      return;                        /* otherwise a page, not a mode with keys */
     }
 
     if (Object.prototype.hasOwnProperty.call(NOTE_KEYS, code)){
@@ -1128,6 +1287,10 @@
   var STICK_DEAD   = 0.5;              /* left stick must travel half way */
   var GP_THRESHOLD = 0.5;              /* how far a trigger must be pulled */
 
+  var SEL_HOLD = 500;                  /* ms select must be held to change method */
+  var selDown = 0, selHeld = false;
+  /* a bumper held as a leap modifier is not also an octave shift */
+  var lbUsed = false, rbUsed = false;
   var padIndex = null;
   var gpPrev = [];                     /* previous frame's button state: edge detection */
   var navHeld = { up: false, down: false, left: false, right: false, back: false, fwd: false };
@@ -1188,14 +1351,30 @@
       cur[i] = !!b && (b.value > GP_THRESHOLD || (b.pressed && !b.value));
     }
 
-    /* select walks the pages in turn — the key, the quest log, closed — and
-       while either page is open the pad is as quiet as the keyboard is */
-    if (gpEdge(cur, GP_SELECT)){
-      if (keyref.classList.contains("on") || questsEl.classList.contains("on")) toggleQuests();
-      else toggleKeyref();
+    /* select walks the pages in turn — the key, the quest log, closed — on
+       release, because held for half a second it means something else: the
+       entry method, relative or absolute. While either page is open the pad
+       is as quiet as the keyboard is. */
+    if (cur[GP_SELECT]){
+      if (!gpPrev[GP_SELECT]){ selDown = now; selHeld = false; }
+      else if (!selHeld && now - selDown >= SEL_HOLD){ selHeld = true; toggleRelative(); }
       gpPrev = cur; return;
     }
-    if (keyref.classList.contains("on")){ gpPrev = cur; return; }
+    if (gpPrev[GP_SELECT]){
+      if (!selHeld){
+        if (keyref.classList.contains("on") || questsEl.classList.contains("on")) toggleQuests();
+        else toggleKeyref();
+      }
+      gpPrev = cur; return;
+    }
+    /* the key page holds one setting, reachable without a keyboard:
+       d-pad left and right move the tonic, △ or ✕ make it major or minor */
+    if (keyref.classList.contains("on")){
+      if (gpEdge(cur, GP_TRIANGLE) || gpEdge(cur, GP_CROSS)) toggleKeyMode();
+      gpNav(cur[GP_DL], "left",  -1, now, shiftTonic);
+      gpNav(cur[GP_DR], "right",  1, now, shiftTonic);
+      gpPrev = cur; return;
+    }
     if (questsEl.classList.contains("on")){
       /* full parity with the keyboard page, and just as quiet otherwise */
       if (gpEdge(cur, GP_CROSS))    setObjective();
@@ -1214,32 +1393,71 @@
     if (gpEdge(cur, GP_R3)) toggleViz();
 
     if (gpEdge(cur, GP_START)){ if (playing) stop(); else play(); }
-    if (gpEdge(cur, GP_L1)) shiftOctave(-1);
-    if (gpEdge(cur, GP_R1)) shiftOctave(1);
 
-    /* the crossbar: a trigger is raised, so the eight slots are notes and the
-       d-pad is not navigation this frame */
+    /* L1 and R1 are the base octave — except in relative entry, where they
+       are also the leap modifiers. There a bumper acts on release, and only
+       if it was not used as a modifier while it was down. */
+    if (relative){
+      if (gpEdge(cur, GP_L1)) lbUsed = false;
+      if (gpEdge(cur, GP_R1)) rbUsed = false;
+      if (!cur[GP_L1] && gpPrev[GP_L1] && !lbUsed) shiftOctave(-1);
+      if (!cur[GP_R1] && gpPrev[GP_R1] && !rbUsed) shiftOctave(1);
+    } else {
+      if (gpEdge(cur, GP_L1)) shiftOctave(-1);
+      if (gpEdge(cur, GP_R1)) shiftOctave(1);
+    }
+
     var bar = (cur[GP_L2] ? 1 : 0) + (cur[GP_R2] ? 2 : 0);   /* 0 none, 1 L2, 2 R2, 3 both */
+    var ay, rx, ry;
     if (bar){
+      /* the crossbar, in either entry method: a trigger is raised, so the
+         eight slots are absolute pitches and the d-pad is not navigation
+         this frame. Relative entry never takes the crossbar away. */
       var base = (bar === 1 ? 0 : bar === 2 ? 8 : 16);
       for (i = 0; i < 8; i++){
         if (gpEdge(cur, GP_SLOTS[i])) enterNote(base + i);
       }
       navReset();                       /* forget any half-finished hold */
+    } else if (relative){
+      /* relative entry: bare, the face buttons are motion rather than pitch.
+         A bumper widens the move — L1 a third, R1 a fifth, both a semitone
+         out of the key. ○ and □ ignore the bumpers. */
+      var lead = (cur[GP_L1] ? 1 : 0) + (cur[GP_R1] ? 2 : 0);
+      var wide = (lead === 1) ? 2 : (lead === 2) ? 4 : 1;    /* third, fifth, step */
+      if (gpEdge(cur, GP_TRIANGLE) || gpEdge(cur, GP_CROSS)){
+        var dir = gpEdge(cur, GP_TRIANGLE) ? 1 : -1;
+        if (cur[GP_L1]) lbUsed = true;
+        if (cur[GP_R1]) rbUsed = true;
+        if (lead === 3) relStep(dir, true);                  /* a semitone out of key */
+        else relStep(dir * wide, false);
+      }
+      if (gpEdge(cur, GP_CIRCLE)) relRepeat();
+      if (gpEdge(cur, GP_SQUARE)) clearStep();               /* a rest, and on */
+      /* up and down are time, as everywhere; left and right nudge the note
+         under the cursor a scale step without advancing */
+      ay = (gp.axes && gp.axes.length > 1) ? gp.axes[1] : 0;
+      gpNav(cur[GP_DU] || ay <= -STICK_DEAD, "up",   -1, now);
+      gpNav(cur[GP_DD] || ay >=  STICK_DEAD, "down",  1, now);
+      gpNav(cur[GP_DL], "left",  -1, now, nudge);
+      gpNav(cur[GP_DR], "right",  1, now, nudge);
+      rx = (gp.axes && gp.axes.length > 2) ? gp.axes[2] : 0;
+      ry = (gp.axes && gp.axes.length > 3) ? gp.axes[3] : 0;
+      gpNav(rx <= -STICK_DEAD || ry <= -STICK_DEAD, "back", -4, now);
+      gpNav(rx >=  STICK_DEAD || ry >=  STICK_DEAD, "fwd",   4, now);
     } else {
       /* no trigger: the bare face buttons act alone, FFXIV style —
          □ clears the step, ○ returns to step 1 */
       if (gpEdge(cur, GP_SQUARE)) clearStep();
       else if (gpEdge(cur, GP_CIRCLE)) jump(0);
       /* both d-pad pairs walk the cursor, as both arrow pairs do */
-      var ay = (gp.axes && gp.axes.length > 1) ? gp.axes[1] : 0;  /* left stick Y, +1 = down */
+      ay = (gp.axes && gp.axes.length > 1) ? gp.axes[1] : 0;  /* left stick Y, +1 = down */
       gpNav(cur[GP_DU] || ay <= -STICK_DEAD, "up",   -1, now);
       gpNav(cur[GP_DD] || ay >=  STICK_DEAD, "down",  1, now);
       gpNav(cur[GP_DL], "left",  -1, now);
       gpNav(cur[GP_DR], "right",  1, now);
       /* the right stick strides by fours, beat to beat, either axis */
-      var rx = (gp.axes && gp.axes.length > 2) ? gp.axes[2] : 0;
-      var ry = (gp.axes && gp.axes.length > 3) ? gp.axes[3] : 0;
+      rx = (gp.axes && gp.axes.length > 2) ? gp.axes[2] : 0;
+      ry = (gp.axes && gp.axes.length > 3) ? gp.axes[3] : 0;
       gpNav(rx <= -STICK_DEAD || ry <= -STICK_DEAD, "back", -4, now);
       gpNav(rx >=  STICK_DEAD || ry >=  STICK_DEAD, "fwd",   4, now);
     }
@@ -1251,7 +1469,8 @@
     if (padIndex === null) padIndex = e.gamepad.index;
     gpPrev = [];
     navReset();
-    say("gamepad ready · hold L2 or R2 for the crossbar");
+    say(relative ? "gamepad ready · relative entry, △ up ✕ down"
+                 : "gamepad ready · hold L2 or R2 for the crossbar");
   });
   window.addEventListener("gamepaddisconnected", function(e){
     if (e.gamepad.index === padIndex){
@@ -1266,6 +1485,7 @@
   loadQuests();
   var restored = load();
   try { if (localStorage.getItem(VIZ_KEY) === "roll") viz = "roll"; } catch (e){}
+  try { if (localStorage.getItem(ENTRY_KEY) === "relative") relative = true; } catch (e){}
   applyViz();
   renderAll();
   renderQuests();
