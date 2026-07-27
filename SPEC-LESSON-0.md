@@ -158,6 +158,96 @@ A step entry is a note string or `null` (empty).
 - Autosave lives at the localStorage key `folio.v1`; a pre-existing
   `folio.v0` autosave is still read as a fallback, so no work is lost.
 
+## Quest tracker (added 2026-07-28)
+
+An in-app quest log, FF-quest-log flavored: the eight Lesson 1 constraint
+études from `QUESTS.md` are embedded in `folio.html` as a static array (no
+fetch — the app must keep working from `file://`). Each quest holds one
+**motif**: a snapshot of the page, bound and loaded back on demand.
+
+The quest log is a **page**, exactly like the F1 key reference — it replaces
+the column, no overlay, no dimming, no dialogs. The two pages are mutually
+exclusive: opening one closes the other. While either page is open, note
+keys and the gamepad crossbar are swallowed and cannot reach the pattern.
+
+### Bindings
+
+| | keyboard | gamepad |
+|---|---|---|
+| open / close the quest log | `F3` (also `Escape` to close) | select, which cycles the pages |
+| move the selection (wraps) | `ArrowUp` / `ArrowDown` | d-pad up / down, left stick |
+| set / clear the objective | `Enter` | ✕ (A) |
+| bind the page as this quest's motif | `KeyB` | □ (X) |
+| load the bound motif | `KeyL` | △ (Y) |
+| toggle complete | `KeyC` | ○ (B) |
+| export the quest log to disk | `Ctrl+S` while the log is open | — |
+| import a quest log | `Ctrl+O`, or drop the file anywhere | — |
+
+The quest log first shipped on `F2`/R3, but the roll (built the same day,
+in a parallel session) claimed the same keys; at merge the roll kept them
+and the quest log moved to `F3`. On the pad, select now walks the pages in
+turn — the key, the quest log, closed. All bindings are by
+`KeyboardEvent.code`, per the layout-independence rule; `KeyB`, `KeyL` and
+`KeyC` remain a note, the loop length and a note on the pattern page —
+they only mean quest actions while the log is open.
+
+Loading a motif over written work asks twice: if the page is non-empty and
+differs from the motif, the first press posts "press again to put … over
+the page" in the footer and the second press within 4 s does it. Moving the
+selection or leaving the page cancels the pending confirm. Loading goes
+through the ordinary autosave path, so a loaded motif is immediately the
+current pattern and `Ctrl+S` exports it as a normal `.folio.json` — there
+is no separate motif export.
+
+### Display and glyphs
+
+- The standing objective appears on the header meta line in the quiet
+  style: `untitled folio · 112 · octave 4 · ⚔ the summit`.
+- On the quest page: `‸` selection caret, `⚔` gilt sigil on the objective,
+  `❧` gilt for complete, `•` faded when a motif is bound, nothing when
+  untouched. The selected row takes the same flat `--wash` as the playhead
+  row. No new colors, no grids, no stripes, nothing blinks.
+
+### Storage
+
+Quest state lives **outside the pattern file** — the save format above is
+unchanged and gains no fields.
+
+- `localStorage["folio.quests.v1"]` holds the whole log. Only quests that
+  have been touched (completed or bound) are written.
+- A motif is an ordinary version-1 pattern object and is read back through
+  the same validator as an imported file; an unreadable motif becomes
+  `null` and the rest of the log still loads.
+
+```json
+{
+  "folio": "quest-log",
+  "version": 1,
+  "active": "summit",
+  "quests": {
+    "summit": { "done": true, "motif": { "version": 1, "title": "…",
+                                         "tempo": 112, "loop": 16,
+                                         "steps": [ "C4", null, … ] } }
+  }
+}
+```
+
+Quest ids: `ladder`, `whitespace`, `summit`, `stones`, `ouroboros`,
+`callanswer`, `stray`, `hand`.
+
+### The on-disk copy
+
+`localStorage` is invisible from outside the browser, so the log also goes
+to disk: `Ctrl+S` with the quest log open writes exactly the JSON above as
+`quest-log.json`, to be kept in the repository at **`quests/quest-log.json`**.
+That file is the single place a collaborator — or an agent reading the
+repository — can see which quests are done, which is the standing
+objective, and what motif is bound to each. `Ctrl+O` or a drag-and-drop
+reads it back; a quest log is recognised by its `"folio": "quest-log"`
+marker and opens as a quest log wherever it is dropped, without touching
+the pattern on the page. The convention from `QUESTS.md` stands alongside
+it: finished pieces are still saved as `quests/<quest-name>.folio.json`.
+
 ## Appearance — manuscript, not skeuomorphism
 
 The reference points are FF menu calm, Granblue's gilt-on-cream warmth, and
