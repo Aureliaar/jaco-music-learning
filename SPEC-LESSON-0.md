@@ -125,8 +125,10 @@ column" (the tracker list) and "the roll"; the choice persists in
   ruling, spartito-like — and one upright hairline per beat (steps 1, 5,
   9, 13), equally quiet: a ruling, never a grid. Playhead is the same
   flat wash as
-  the column view, vertical now; cursor is the `‸` caret under its column
-  plus a thin ink ring on its bar (the roll's answer to bold). Steps
+  the column view, vertical now; the cursor column is bracketed by two
+  full-height ink hairlines (half-strength ink — strong enough to find at
+  a glance, steady, never filled), with the `‸` caret beneath and a thin
+  ink ring on the bar itself. Steps
   beyond the loop fade. Beats 1/5/9/13 are numbered in faded ink along
   the base.
 - Migraine rules hold: no grids, no stripes, no flashing, nothing moves

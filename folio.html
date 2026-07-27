@@ -132,6 +132,13 @@
   /* and one per beat — the 4ths, upright, as quiet as the C rules */
   .beatline{position:absolute;top:0;bottom:0;width:1px;background:var(--rule);opacity:0.55;}
   .rollwash{position:absolute;top:0;bottom:0;background-color:var(--wash);display:none;}
+  /* the cursor column, bracketed: two upright ink hairlines, full height —
+     steady, unfilled, unmistakable; the caret below names the same column */
+  .rollcur{
+    position:absolute;top:0;bottom:0;
+    border-left:1px solid rgba(59,47,30,0.5);
+    border-right:1px solid rgba(59,47,30,0.5);
+  }
   .bar{
     position:absolute;
     border-radius:999px;
@@ -360,6 +367,9 @@
   var rollWash = document.createElement("div");
   rollWash.className = "rollwash";
   rollfield.appendChild(rollWash);
+  var rollCur = document.createElement("div");
+  rollCur.className = "rollcur";
+  rollfield.appendChild(rollCur);
   var octlines = [];
   var bars = [], baseCells = [];
   for (i = 0; i < STEPS; i++){
@@ -412,6 +422,8 @@
     }
   }
   function rollCursor(){
+    rollCur.style.left = (cursor * 6.25) + "%";
+    rollCur.style.width = "6.25%";
     for (var i = 0; i < STEPS; i++){
       var on = (i === cursor);
       bars[i].classList.toggle("cur", on);
