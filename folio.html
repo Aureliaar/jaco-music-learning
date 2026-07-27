@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Folio</title>
+<style>
+  /* ---- Folio, Lesson 0. Palette is fixed; see SPEC-LESSON-0.md ---- */
+  :root{
+    --ground:#EAE0CC;
+    --ink:#3B2F1E;
+    --faded:#A99C82;
+    --rule:#C9BCA0;
+    --gilt:#9C7A28;
+    --wash:#E0D2B4;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  }
+  html{
+    font-size:clamp(13px,1.7vh,19px);
+    height:100%;
+  }
+  body{
+    height:100%;
+    margin:0;
+    overflow:hidden;                 /* single screen, never scrolls */
+    background-color:var(--ground);
+    /* the one permitted vignette: 3% ink at the far corners, nothing else */
+    background-image:radial-gradient(ellipse 120% 110% at 50% 45%,
+      rgba(59,47,30,0) 45%, rgba(59,47,30,0.03) 100%);
+    background-repeat:no-repeat;
+    color:var(--ink);
+    font-family:var(--serif);
+    font-size:1rem;
+    font-variant-numeric:tabular-nums lining-nums;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* No animation anywhere. This block is belt-and-braces. */
+  *,*::before,*::after{animation:none !important;}
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{transition:none !important;animation:none !important;}
+  }
+
+  main{
+    width:min(46rem,92vw);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+
+  /* ---- header ---- */
+  header{width:100%;text-align:center;}
+  h1{
+    margin:0;
+    font-weight:400;
+    font-variant:small-caps;
+    letter-spacing:0.42em;
+    text-indent:0.42em;             /* balance the trailing letter-space */
+    font-size:2.1rem;
+    color:var(--ink);
+  }
+  /* the single permitted decorative flourish */
+  .flourish{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:0.7em;
+    margin:0.5rem 0 0.6rem;
+    color:var(--gilt);
+    font-size:1rem;
+    line-height:1;
+  }
+  .flourish i{display:block;width:5.5rem;height:1px;background:var(--gilt);opacity:0.55;}
+  .flourish span{opacity:0.8;}
+
+  .meta{
+    margin:0;
+    color:var(--faded);
+    font-size:0.92rem;
+    letter-spacing:0.06em;
+  }
+  .divider{
+    width:100%;
+    height:1px;
+    background:var(--rule);
+    margin:0.9rem 0 0.9rem;
+  }
+
+  /* ---- the column ---- */
+  .column{
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+    width:13rem;
+  }
+  .row{
+    display:grid;
+    grid-template-columns:1.5em 1.1em 2.3em 1.1em 3.4em;
+    align-items:center;
+    height:2.35em;                   /* > 2.2 em, generously spaced */
+    border-top:1px solid rgba(201,188,160,0.45);
+    padding:0 0.5em;
+  }
+  .row.beat{border-top-color:var(--rule);}
+  .row:first-child{border-top-color:var(--rule);}
+  .row.play{background-color:var(--wash);}   /* flat wash, no glow, no trail */
+
+  .fleuron{color:var(--gilt);text-align:center;font-size:1em;line-height:1;}
+  .caret{color:var(--ink);text-align:center;font-size:1.05em;line-height:1;}
+  .num{color:var(--faded);text-align:right;font-size:0.9em;}
+  .note{color:var(--ink);text-align:left;letter-spacing:0.04em;}
+  .note.empty{color:var(--faded);}
+  .row.cursor .note{font-weight:700;}         /* the only bold in the app */
+  /* steps beyond the loop length: present, editable, quieter on the page */
+  .row.outside .num,.row.outside .note{color:var(--faded);}
+
+  /* ---- key reference (replaces the column, no overlay, no dimming) ---- */
+  .keyref{
+    display:none;
+    width:100%;
+    max-width:44rem;
+    min-height:38.6rem;              /* same height as the column: nothing shifts */
+    color:var(--ink);
+    font-size:0.92rem;
+    line-height:1.66;
+  }
+  .keyref.on{display:block;}
+  .keyref h2{
+    margin:0 0 0.7rem;
+    font-weight:400;
+    font-variant:small-caps;
+    letter-spacing:0.14em;
+    font-size:1.05rem;
+    color:var(--ink);
+  }
+  .keyref h2+h2,.keyref .cols h2{margin-top:0;}
+  .keyref .cols{display:grid;grid-template-columns:1fr 1fr;column-gap:2.2rem;row-gap:1.4rem;}
+  .keyref dl{display:grid;grid-template-columns:8.4rem 1fr;margin:0;column-gap:1rem;}
+  .keyref dt{color:var(--faded);}
+  .keyref dd{margin:0;}
+  .keyref p{margin:0.9rem 0 0;color:var(--faded);font-size:0.88rem;line-height:1.6;}
+  @media (max-width:44rem){ .keyref .cols{grid-template-columns:1fr;} }
+
+  /* ---- footer ---- */
+  footer{
+    width:100%;
+    text-align:center;
+    color:var(--faded);
+    font-size:0.9rem;
+    letter-spacing:0.05em;
+    min-height:1.4em;
+  }
+  .hidden-input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;left:-9999px;}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Folio</h1>
+    <div class="flourish" aria-hidden="true"><i></i><span>&#10086;</span><i></i></div>
+    <p class="meta" id="meta"><span id="metatext">untitled folio &middot; 112 &middot; octave 4</span></p>
+  </header>
+  <div class="divider"></div>
+
+  <section class="column" id="column" aria-label="pattern"></section>
+
+  <section class="keyref" id="keyref" aria-label="key reference">
+    <div class="cols">
+      <div>
+        <h2>The key</h2>
+        <dl>
+          <dt>row starting at Z</dt><dd>lower octave, white keys left to right; the row above holds its sharps</dd>
+          <dt>row starting at Q</dt><dd>the same shape, one octave higher; its sharps sit on the number row</dd>
+          <dt>last key of each row</dt><dd>the octave above (C)</dd>
+          <dt>period, delete</dt><dd>clear the step</dd>
+          <dt>up, down</dt><dd>move the cursor (wraps)</dd>
+          <dt>home, end</dt><dd>step 1, step 16</dd>
+          <dt>left, right</dt><dd>base octave down, up (C2&ndash;C6)</dd>
+          <dt>space</dt><dd>play or stop; playback loops</dd>
+          <dt>L</dt><dd>loop length: the whole page &rarr; 8 &rarr; 4 &rarr; whole again</dd>
+          <dt>ctrl + S</dt><dd>export a .folio.json</dd>
+          <dt>ctrl + O</dt><dd>import one (or drop a file on the page)</dd>
+          <dt>F1</dt><dd>close this page of the key</dd>
+        </dl>
+        <p>Notes are entered by position, not by letter, so the layout is the same on any keyboard. Entering a note advances the cursor.</p>
+      </div>
+      <div>
+        <h2>The gamepad</h2>
+        <dl>
+          <dt>hold L2 (LT)</dt><dd>the crossbar: eight rising semitones, C to G</dd>
+          <dt>hold R2 (RT)</dt><dd>the next eight, G&#9839; to D&#9839;</dd>
+          <dt>hold L2 + R2</dt><dd>the last eight, E to B, an octave up</dd>
+          <dt>the eight slots</dt><dd>read left, up, right, down: d&#8209;pad &#8592;&#8593;&#8594;&#8595;, then &#9633;&#9651;&#9675;&#10005; (X, Y, B, A)</dd>
+          <dt>L3 (left stick click)</dt><dd>the loop length: the whole page &rarr; 8 &rarr; 4 &rarr; whole again</dd>
+          <dt>&#9633; (X), bare</dt><dd>clear the step</dd>
+          <dt>&#9675; (B), bare</dt><dd>back to step 1</dd>
+          <dt>L1, R1 (LB, RB)</dt><dd>base octave down, up</dd>
+          <dt>start (options)</dt><dd>play or stop</dd>
+          <dt>d&#8209;pad up, down</dt><dd>move the cursor; hold to repeat</dd>
+          <dt>left stick</dt><dd>the same, up and down only</dd>
+          <dt>select (create)</dt><dd>open or close this page</dd>
+        </dl>
+        <p>The cross hotbar, borrowed: a trigger raises the eight slots, letting go gives the d&#8209;pad back to navigation. Twenty&#8209;four semitones, every pitch of two octaves, counted up from the octave in the header; entry advances and sounds the note as on the keyboard. A DualSense and an Xbox pad report the same positions. A browser notices a pad only after you press one of its buttons: press start if nothing answers. Sound may wait for one keyboard touch.</p>
+        <p>Bare, the face buttons act alone as in the game &mdash; &#9633; clears and &#9675; returns to the top; raise a trigger and all four are notes again.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+  <footer id="footer">&#8248; cursor row &middot; F1 for the key</footer>
+</main>
+<input type="file" id="picker" class="hidden-input" accept=".json,.folio,application/json" tabindex="-1">
+
+<script>
+(function(){
+  "use strict";
+
+  /* ================= model ================= */
+  var STEPS = 16;
+  var NAMES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+  var STORE_KEY = "folio.v1";
+  var LEGACY_KEY = "folio.v0";
+  /* files written by the short-lived rhythm-mark experiment carry "x" entries;
+     they are read and dropped, never written */
+  var LEGACY_MARK = "x";
+
+  var doc = {
+    version: 1,
+    title: "untitled folio",
+    tempo: 112,
+    loop: STEPS,             /* playback repeats the first `loop` steps: 4, 8, or 16 */
+    steps: new Array(STEPS).fill(null)
+  };
+  var baseOctave = 4;      // C2 - C6
+  var cursor = 0;
+  var storageOK = true;
+  var droppedMarks = false;   /* the last thing validated carried "x" entries */
+
+  /* ================= note helpers ================= */
+  var NOTE_RE = /^([A-G])(#|♯)?(-?\d{1,2})$/;
+
+  function parseNote(s){
+    if (typeof s !== "string") return null;
+    var m = NOTE_RE.exec(s.trim());
+    if (!m) return null;
+    var pc = {C:0,D:2,E:4,F:5,G:7,A:9,B:11}[m[1]] + (m[2] ? 1 : 0);
+    return { pc: pc, oct: parseInt(m[3], 10) };
+  }
+  function noteFromOffset(oct, off){
+    var total = oct * 12 + off;
+    var o = Math.floor(total / 12);
+    return NAMES[total - o * 12] + o;
+  }
+  function noteToFreq(s){
+    var p = parseNote(s);
+    if (!p) return null;
+    var midi = (p.oct + 1) * 12 + p.pc;      // C4 = 60
+    return 440 * Math.pow(2, (midi - 69) / 12);
+  }
+  function display(s){
+    var m = NOTE_RE.exec(s);
+    if (!m) return "·";
+    return m[1] + (m[2] ? "♯" : "-") + m[3];
+  }
+
+  /* ================= keymap, by physical position ================= */
+  /* Z-row = base octave, Q-row = one octave up. Offsets in semitones from C. */
+  var NOTE_KEYS = {
+    KeyZ:0, KeyS:1, KeyX:2, KeyD:3, KeyC:4, KeyV:5, KeyG:6,
+    KeyB:7, KeyH:8, KeyN:9, KeyJ:10, KeyM:11, Comma:12,
+    KeyQ:12, Digit2:13, KeyW:14, Digit3:15, KeyE:16, KeyR:17, Digit5:18,
+    KeyT:19, Digit6:20, KeyY:21, Digit7:22, KeyU:23, KeyI:24
+  };
+
+  /* ================= view ================= */
+  var column = document.getElementById("column");
+  var footer = document.getElementById("footer");
+  var meta   = document.getElementById("metatext");
+  var keyref = document.getElementById("keyref");
+  var picker = document.getElementById("picker");
+
+  var rows = [];
+  for (var i = 0; i < STEPS; i++){
+    var row = document.createElement("div");
+    row.className = "row" + (i % 4 === 0 ? " beat" : "");
+    var fl = document.createElement("span"); fl.className = "fleuron";
+    var ca = document.createElement("span"); ca.className = "caret";
+    var nu = document.createElement("span"); nu.className = "num"; nu.textContent = String(i + 1);
+    var sp = document.createElement("span");
+    var no = document.createElement("span"); no.className = "note empty"; no.textContent = "·";
+    row.appendChild(fl); row.appendChild(ca); row.appendChild(nu); row.appendChild(sp); row.appendChild(no);
+    column.appendChild(row);
+    rows.push({ el: row, fleuron: fl, caret: ca, note: no });
+  }
+
+  var shownPlayhead = -1;
+
+  function renderNotes(){
+    for (var i = 0; i < STEPS; i++){
+      var v = doc.steps[i];
+      var el = rows[i].note;
+      if (v){ el.textContent = display(v); el.className = "note"; }
+      else  { el.textContent = "·";   el.className = "note empty"; }
+    }
+  }
+  function renderCursor(){
+    for (var i = 0; i < STEPS; i++){
+      var on = (i === cursor);
+      rows[i].el.classList.toggle("cursor", on);
+      rows[i].caret.textContent = on ? "‸" : "";
+    }
+  }
+  function renderPlayhead(step){
+    if (step === shownPlayhead) return;
+    if (shownPlayhead >= 0){
+      rows[shownPlayhead].el.classList.remove("play");
+      rows[shownPlayhead].fleuron.textContent = "";
+    }
+    if (step >= 0){
+      rows[step].el.classList.add("play");
+      rows[step].fleuron.textContent = "❧";
+    }
+    shownPlayhead = step;
+  }
+  function renderMeta(){
+    meta.textContent = doc.title + " · " + doc.tempo + " · octave " + baseOctave +
+                       (doc.loop < STEPS ? " · loop " + doc.loop : "");
+  }
+  function renderLoop(){
+    for (var i = 0; i < STEPS; i++){
+      rows[i].el.classList.toggle("outside", i >= doc.loop);
+    }
+  }
+  function say(msg){
+    footer.textContent = keyref.classList.contains("on")
+      ? msg + " · F1 to close"
+      : msg + " · F1 for the key";
+  }
+  function renderAll(){ renderNotes(); renderCursor(); renderMeta(); renderLoop(); }
+
+  /* ================= persistence ================= */
+  function validate(obj){
+    if (!obj || typeof obj !== "object" || Array.isArray(obj)) return null;
+    if (!Array.isArray(obj.steps) || obj.steps.length !== STEPS) return null;
+    var steps = [];
+    droppedMarks = false;
+    for (var i = 0; i < STEPS; i++){
+      var v = obj.steps[i];
+      if (v === null || v === undefined){ steps.push(null); continue; }
+      /* a rhythm mark from the removed two-pass entry: accepted, then dropped */
+      if (v === LEGACY_MARK){ steps.push(null); droppedMarks = true; continue; }
+      var p = parseNote(v);
+      if (!p) return null;
+      steps.push(NAMES[p.pc] + p.oct);
+    }
+    var tempo = (typeof obj.tempo === "number" && isFinite(obj.tempo) && obj.tempo > 0) ? obj.tempo : 112;
+    var title = (typeof obj.title === "string" && obj.title.trim()) ? obj.title.trim().slice(0, 60) : "untitled folio";
+    /* version 1 files may carry a loop length; anything but 4 or 8 means the whole page */
+    var loop = (obj.loop === 4 || obj.loop === 8) ? obj.loop : STEPS;
+    return { version: 1, title: title, tempo: tempo, loop: loop, steps: steps };
+  }
+  function save(){
+    if (!storageOK) return;
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(doc)); }
+    catch (e){ storageOK = false; say("autosave unavailable in this window"); }
+  }
+  function load(){
+    var raw = null;
+    try { raw = localStorage.getItem(STORE_KEY) || localStorage.getItem(LEGACY_KEY); }
+    catch (e){ storageOK = false; return false; }
+    if (!raw) return false;
+    try {
+      var v = validate(JSON.parse(raw));
+      if (!v) return false;
+      doc = v;
+      if (droppedMarks) save();     /* rewrite the autosave without the marks */
+      return true;
+    } catch (e){ return false; }
+  }
+
+  function exportFile(){
+    var name = doc.title.replace(/[^A-Za-z0-9 _-]/g, "").trim() || "untitled folio";
+    var blob = new Blob([JSON.stringify(doc, null, 2)], { type: "application/json" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = name + ".folio.json";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+    say("exported " + name + ".folio.json");
+  }
+  function importText(text, label){
+    var v = null;
+    try { v = validate(JSON.parse(text)); } catch (e){ v = null; }
+    if (!v){ say("that file is not a folio — nothing changed"); return; }
+    var dropped = droppedMarks;
+    doc = v;
+    cursor = 0;
+    if (playing) stop();
+    renderAll(); save();
+    say("opened " + (label || doc.title) +
+        (dropped ? " · marks from an older file were dropped" : ""));
+  }
+  function importFile(file){
+    if (!file){ return; }
+    var r = new FileReader();
+    r.onload = function(){ importText(String(r.result), file.name); };
+    r.onerror = function(){ say("could not read that file"); };
+    r.readAsText(file);
+  }
+
+  /* ================= audio ================= */
+  var ctx = null, master = null;
+  var playing = false;
+  var timer = null;
+  var nextStepTime = 0, schedStep = 0;
+  var queue = [];          /* {step, time} scheduled but not yet reached */
+  var live = [];           /* oscillators currently scheduled */
+
+  var LOOKAHEAD_MS = 25;
+  var AHEAD = 0.1;
+  var ATTACK = 0.008, RELEASE = 0.040, TAIL = 0.006;
+  var LEVEL = 0.22;
+
+  function stepDur(){ return 60 / doc.tempo / 4; }   /* 112 bpm 16ths = 0.1339 s */
+
+  function audio(){
+    if (!ctx){
+      var AC = window.AudioContext || window.webkitAudioContext;
+      ctx = new AC();
+      master = ctx.createGain();
+      master.gain.setValueAtTime(1, ctx.currentTime);
+      master.connect(ctx.destination);
+    }
+    if (ctx.state === "suspended") ctx.resume();
+    return ctx;
+  }
+
+  /* the autoplay policy does not count gamepad buttons as a user gesture, so
+     a pad-only session leaves the context suspended and every note lands on a
+     frozen clock; the first real key or pointer press unlocks it for the pad */
+  function unlockAudio(){ audio(); }
+  window.addEventListener("pointerdown", unlockAudio, true);
+  window.addEventListener("keydown", unlockAudio, true);
+
+  /* One note: triangle -> lowpass -> gain envelope. Gain starts at 0 and ends
+     at 0, so nothing ever switches on or off abruptly. Release finishes
+     TAIL seconds before the next step begins. */
+  function playNote(name, at, dur){
+    var f = noteToFreq(name);
+    if (!f) return;
+    var osc = ctx.createOscillator();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(f, at);
+
+    var lp = ctx.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.setValueAtTime(2500, at);
+    lp.Q.setValueAtTime(0.7, at);
+
+    var g = ctx.createGain();
+    var relEnd = at + dur - TAIL;
+    var relStart = Math.max(at + ATTACK + 0.001, relEnd - RELEASE);
+    g.gain.setValueAtTime(0, at);
+    g.gain.linearRampToValueAtTime(LEVEL, at + ATTACK);
+    g.gain.setValueAtTime(LEVEL, relStart);
+    g.gain.linearRampToValueAtTime(0, relEnd);
+
+    osc.connect(lp); lp.connect(g); g.connect(master);
+    osc.start(at);
+    osc.stop(relEnd + 0.01);
+    live.push(osc);
+    osc.onended = function(){
+      var k = live.indexOf(osc);
+      if (k >= 0) live.splice(k, 1);
+      try { osc.disconnect(); lp.disconnect(); g.disconnect(); } catch (e){}
+    };
+  }
+
+  function scheduler(){
+    var dur = stepDur();
+    /* If the tab was backgrounded the timer was throttled; never schedule
+       notes in the past (that is what produces a burst of clicks). */
+    if (nextStepTime < ctx.currentTime - 0.02){
+      nextStepTime = ctx.currentTime + 0.02;
+      queue.length = 0;
+    }
+    while (nextStepTime < ctx.currentTime + AHEAD){
+      var n = doc.steps[schedStep];
+      if (n) playNote(n, nextStepTime, dur);
+      queue.push({ step: schedStep, time: nextStepTime });
+      nextStepTime += dur;
+      schedStep = (schedStep + 1) % doc.loop;
+    }
+  }
+
+  function play(){
+    audio();
+    playing = true;
+    queue.length = 0;
+    schedStep = 0;
+    master.gain.cancelScheduledValues(ctx.currentTime);
+    master.gain.setValueAtTime(master.gain.value, ctx.currentTime);
+    master.gain.linearRampToValueAtTime(1, ctx.currentTime + 0.02);
+    nextStepTime = ctx.currentTime + 0.06;
+    scheduler();
+    timer = setInterval(scheduler, LOOKAHEAD_MS);
+    say(ctx.state !== "running"
+        ? "playing · press any key or click once to enable sound"
+        : "playing");
+  }
+
+  function stop(){
+    playing = false;
+    if (timer){ clearInterval(timer); timer = null; }
+    queue.length = 0;
+    if (ctx){
+      var t = ctx.currentTime;
+      master.gain.cancelScheduledValues(t);
+      master.gain.setValueAtTime(master.gain.value, t);
+      master.gain.linearRampToValueAtTime(0, t + 0.03);   /* fade, never a cut */
+      for (var i = 0; i < live.length; i++){
+        try { live[i].stop(t + 0.04); } catch (e){}
+      }
+      master.gain.setValueAtTime(1, t + 0.06);
+    }
+    renderPlayhead(-1);
+    say("stopped");
+  }
+
+  /* audition a note as it is entered, over playback too — writing into a
+     running loop should be heard as it happens */
+  function audition(name){
+    audio();
+    /* still suspended: the gesture that unlocks audio has not happened yet;
+       scheduling now would pile notes onto a frozen currentTime */
+    if (ctx.state !== "running"){
+      say("press any key or click once to enable sound");
+      return;
+    }
+    playNote(name, ctx.currentTime + 0.01, stepDur() * 1.6);
+  }
+
+  /* Playhead UI is driven by the audio clock: a step lights when its
+     scheduled time actually arrives, and only then. */
+  function frame(){
+    if (playing && ctx){
+      var now = ctx.currentTime, step = shownPlayhead;
+      while (queue.length && queue[0].time <= now){ step = queue.shift().step; }
+      if (step !== shownPlayhead) renderPlayhead(step);
+    }
+    pollPads();                      /* additive input layer; never touches audio timing */
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  /* ================= editing ================= */
+  function advance(){ cursor = (cursor + 1) % STEPS; renderCursor(); }
+  function setStep(i, v){ doc.steps[i] = v; renderNotes(); save(); }
+
+  function enterNote(off){
+    var name = noteFromOffset(baseOctave, off);
+    var at = cursor + 1;
+    setStep(cursor, name);
+    audition(name);
+    advance();
+    say(display(name) + " at step " + at);
+  }
+
+  /* the loop: playback repeats the first 4, 8, or all 16 steps. Editing is
+     never fenced in — the cursor still walks the whole page. */
+  function setLoop(n){
+    doc.loop = n;
+    if (schedStep >= n) schedStep = 0;   /* mid-playback shortening snaps home */
+    renderLoop(); renderMeta(); save();
+    say(n === STEPS ? "loop · the whole page" : "loop · first " + n + " steps");
+  }
+  function cycleLoop(){ setLoop(doc.loop === STEPS ? 8 : doc.loop === 8 ? 4 : STEPS); }
+
+  function clearStep(){
+    var at = cursor + 1;
+    setStep(cursor, null);
+    say("cleared step " + at);
+    advance();
+  }
+  function moveCursor(d){
+    cursor = (cursor + d + STEPS) % STEPS;
+    renderCursor();
+    say("step " + (cursor + 1));
+  }
+  function jump(i){ cursor = i; renderCursor(); say("step " + (i + 1)); }
+  function shiftOctave(d){
+    var n = Math.min(6, Math.max(2, baseOctave + d));
+    if (n === baseOctave){ say("octave " + baseOctave + " — end of the range"); return; }
+    baseOctave = n; renderMeta(); say("octave " + baseOctave);
+  }
+  function toggleKeyref(){
+    var on = keyref.classList.toggle("on");
+    column.style.display = on ? "none" : "flex";
+    say(on ? "the key, by position" : "‸ cursor row");
+  }
+
+  /* ================= keyboard, by physical code only ================= */
+  document.addEventListener("keydown", function(e){
+    if (e.repeat && e.code !== "ArrowUp" && e.code !== "ArrowDown") return;
+    var code = e.code;
+
+    if (e.ctrlKey || e.metaKey){
+      if (code === "KeyS"){ e.preventDefault(); exportFile(); return; }
+      if (code === "KeyO"){ e.preventDefault(); picker.value = ""; picker.click(); say("choose a folio to open"); return; }
+      return;
+    }
+    if (e.altKey) return;
+
+    if (code === "F1"){ e.preventDefault(); toggleKeyref(); return; }
+
+    /* tab does nothing, but it is swallowed so that focus never wanders off
+       the page */
+    if (code === "Tab"){ e.preventDefault(); return; }
+
+    if (keyref.classList.contains("on")){
+      if (code === "Escape"){ toggleKeyref(); }
+      return;                        /* the key is a page, not a mode with keys */
+    }
+
+    if (Object.prototype.hasOwnProperty.call(NOTE_KEYS, code)){
+      e.preventDefault(); enterNote(NOTE_KEYS[code]); return;
+    }
+
+    switch (code){
+      case "Period": case "NumpadDecimal": case "Delete": case "Backspace":
+        e.preventDefault(); clearStep(); return;
+      case "ArrowUp":    e.preventDefault(); moveCursor(-1); return;
+      case "ArrowDown":  e.preventDefault(); moveCursor(1); return;
+      case "Home":       e.preventDefault(); jump(0); return;
+      case "End":        e.preventDefault(); jump(STEPS - 1); return;
+      case "ArrowLeft":  e.preventDefault(); shiftOctave(-1); return;
+      case "ArrowRight": e.preventDefault(); shiftOctave(1); return;
+      case "KeyL":
+        e.preventDefault(); cycleLoop(); return;
+      case "Space":
+        e.preventDefault();
+        if (playing) stop(); else play();
+        return;
+    }
+  });
+
+  picker.addEventListener("change", function(){
+    if (picker.files && picker.files[0]) importFile(picker.files[0]);
+  });
+
+  /* drag and drop a .json onto the page */
+  window.addEventListener("dragover", function(e){ e.preventDefault(); }, false);
+  window.addEventListener("drop", function(e){
+    e.preventDefault();
+    var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) importFile(f); else say("nothing to open there");
+  }, false);
+
+  /* ==== gamepad:begin ==== additive layer; the keyboard above is untouched ====
+     Standard mapping, and a DualSense reports the same indices as an Xbox pad:
+       0 ✕/A      1 ○/B       2 □/X       3 △/Y
+       4 L1/LB    5 R1/RB     6 L2/LT     7 R2/RT
+       8 select   9 start    10 L3       11 R3
+      12 d-up    13 d-down   14 d-left   15 d-right
+
+     Note entry follows the FFXIV cross hotbar. Holding a trigger raises a
+     crossbar of eight slots — the d-pad cluster then the face cluster, each
+     read left, up, right, down — and the eight slots are eight rising
+     semitones. Three trigger states give three crossbars:
+
+       L2        slots 1-8 = semitones  0- 7 from the base octave
+       R2        slots 1-8 = semitones  8-15
+       L2 + R2   slots 1-8 = semitones 16-23
+
+     Twenty-four consecutive semitones, no duplicates, two full chromatic
+     octaves, and nothing is a mode: let go of the triggers and the d-pad is
+     navigation again, exactly as the crossbar lets go of the d-pad in game. */
+  var GP_SLOTS = [14, 12, 15, 13, 2, 3, 1, 0];   /* ←↑→↓ then □△○✕ */
+  var GP_CIRCLE = 1, GP_SQUARE = 2;  /* bare face buttons, FFXIV style */
+  var GP_L1 = 4, GP_R1 = 5, GP_L2 = 6, GP_R2 = 7,
+      GP_SELECT = 8, GP_START = 9, GP_L3 = 10,
+      GP_DU = 12, GP_DD = 13;
+  var GP_BUTTONS   = 17;
+  var HOLD_DELAY   = 350;              /* ms before a held direction repeats */
+  var HOLD_PERIOD  = 125;              /* then one move every 125 ms = 8 Hz */
+  var STICK_DEAD   = 0.5;              /* left stick must travel half way */
+  var GP_THRESHOLD = 0.5;              /* how far a trigger must be pulled */
+
+  var padIndex = null;
+  var gpPrev = [];                     /* previous frame's button state: edge detection */
+  var navHeld = { up: false, down: false };
+  var navNext = { up: 0, down: 0 };
+  var padWarned = false;
+
+  function gpEdge(cur, i){ return !!cur[i] && !gpPrev[i]; }
+
+  /* a held direction: fire once, wait HOLD_DELAY, then fire every HOLD_PERIOD */
+  function gpNav(active, key, d, now){
+    if (!active){ navHeld[key] = false; return; }
+    if (!navHeld[key]){
+      navHeld[key] = true;
+      navNext[key] = now + HOLD_DELAY;
+      moveCursor(d);
+      return;
+    }
+    if (now >= navNext[key]){
+      moveCursor(d);
+      /* advance the schedule, not the clock, so the rate stays 8 Hz even
+         though frames land on ~16.7 ms boundaries; if the tab stalled and
+         the schedule fell behind, resync instead of firing a burst */
+      navNext[key] += HOLD_PERIOD;
+      if (navNext[key] < now) navNext[key] = now + HOLD_PERIOD;
+    }
+  }
+
+  function gpPick(){
+    var pads = (navigator.getGamepads && navigator.getGamepads()) || [];
+    if (padIndex !== null && pads[padIndex] && pads[padIndex].connected) return pads[padIndex];
+    for (var i = 0; i < pads.length; i++){
+      if (pads[i] && pads[i].connected){ padIndex = i; return pads[i]; }
+    }
+    padIndex = null;
+    return null;
+  }
+
+  function pollPads(){
+    var gp = gpPick();
+    if (!gp){
+      if (gpPrev.length){ gpPrev = []; navHeld.up = navHeld.down = false; }
+      return;
+    }
+    if (gp.mapping !== "standard" && !padWarned){
+      padWarned = true;
+      say("that pad does not report the standard layout — positions may differ");
+    }
+
+    var now = (window.performance && performance.now) ? performance.now() : Date.now();
+    var cur = [], i, b;
+    for (i = 0; i < GP_BUTTONS; i++){
+      b = gp.buttons[i];
+      /* analog triggers report pressed on the lightest touch, so ask for half
+         a pull; digital pads report value 0 and are taken at their word */
+      cur[i] = !!b && (b.value > GP_THRESHOLD || (b.pressed && !b.value));
+    }
+
+    /* select opens the key; while the key is open the pad is as quiet as the
+       keyboard is — the key is a page, not a mode with buttons */
+    if (gpEdge(cur, GP_SELECT)) toggleKeyref();
+    if (keyref.classList.contains("on")){ gpPrev = cur; return; }
+
+    /* L3 is the loop length, the pad's answer to L */
+    if (gpEdge(cur, GP_L3)) cycleLoop();
+
+    if (gpEdge(cur, GP_START)){ if (playing) stop(); else play(); }
+    if (gpEdge(cur, GP_L1)) shiftOctave(-1);
+    if (gpEdge(cur, GP_R1)) shiftOctave(1);
+
+    /* the crossbar: a trigger is raised, so the eight slots are notes and the
+       d-pad is not navigation this frame */
+    var bar = (cur[GP_L2] ? 1 : 0) + (cur[GP_R2] ? 2 : 0);   /* 0 none, 1 L2, 2 R2, 3 both */
+    if (bar){
+      var base = (bar === 1 ? 0 : bar === 2 ? 8 : 16);
+      for (i = 0; i < 8; i++){
+        if (gpEdge(cur, GP_SLOTS[i])) enterNote(base + i);
+      }
+      gpNav(false, "up", -1, now);      /* forget any half-finished hold */
+      gpNav(false, "down", 1, now);
+    } else {
+      /* no trigger: the bare face buttons act alone, FFXIV style —
+         □ clears the step, ○ returns to step 1 */
+      if (gpEdge(cur, GP_SQUARE)) clearStep();
+      else if (gpEdge(cur, GP_CIRCLE)) jump(0);
+      var ay = (gp.axes && gp.axes.length > 1) ? gp.axes[1] : 0;  /* left stick Y, +1 = down */
+      gpNav(cur[GP_DU] || ay <= -STICK_DEAD, "up",   -1, now);
+      gpNav(cur[GP_DD] || ay >=  STICK_DEAD, "down",  1, now);
+    }
+
+    gpPrev = cur;
+  }
+
+  window.addEventListener("gamepadconnected", function(e){
+    if (padIndex === null) padIndex = e.gamepad.index;
+    gpPrev = [];
+    navHeld.up = navHeld.down = false;
+    say("gamepad ready · hold L2 or R2 for the crossbar");
+  });
+  window.addEventListener("gamepaddisconnected", function(e){
+    if (e.gamepad.index === padIndex){
+      padIndex = null; gpPrev = [];
+      navHeld.up = navHeld.down = false;
+    }
+    say("gamepad disconnected");
+  });
+  /* ==== gamepad:end ==== */
+
+  /* ================= boot ================= */
+  var restored = load();
+  renderAll();
+  if (!storageOK) say("autosave unavailable — export to keep your work");
+  else if (restored) say("restored ‸ cursor row" +
+        (droppedMarks ? " · marks from an older file were dropped" : ""));
+  else say("‸ cursor row");
+})();
+</script>
+</body>
+</html>
