@@ -76,14 +76,17 @@ high octave:  Q 2 W 3 E R 5 T 6 Y 7 U I     (same shape, one octave up)
 - Entering a note writes it at the cursor and **auto-advances** one step
   (the tracker flow that makes entry feel like typing).
 - `Period` (physical) or `Delete` clears the step (also auto-advances).
-- `←` / `→` shift the base octave down/up (range C2–C6) — arrow keys exist
-  identically on every layout, unlike `[`/`]`, which IT keyboards lack as
-  plain keys. Current base octave shown in the header.
+- `PageUp` / `PageDown` shift the base octave up/down (range C2–C6); they
+  exist identically on every layout, unlike `[`/`]`, which IT keyboards
+  lack as plain keys. Current base octave shown in the header. (Octave
+  lived on `←`/`→` until 2026-07-28, when the arrows became navigation.)
 
 **Navigation & transport:**
 
-- `↑`/`↓` move the cursor; `Home`/`End` jump to step 1/16. Cursor wraps.
-  (No hjkl — those keys are notes.)
+- All four arrows move the cursor: `↑`/`←` back, `↓`/`→` forward — the
+  column reads down, the roll reads right, the hands need not care.
+  `Home`/`End` jump to step 1/16. Cursor wraps. (No hjkl — those keys are
+  notes.)
 - `Space` play/stop. Playback always loops the pattern.
 - `Ctrl+S` export, `Ctrl+O` import, `F1` toggles an in-page key reference
   panel (same manuscript styling, no browser dialogs).
@@ -119,13 +122,18 @@ column" (the tracker list) and "the roll"; the choice persists in
 - The pitch window auto-fits the notes on the page (± 3 semitones, never
   tighter than two octaves) and is recomputed only on edits.
 - The only lines are one low-contrast hairline per C — a sparse octave
-  ruling, spartito-like, never a grid. Playhead is the same flat wash as
+  ruling, spartito-like — and one upright hairline per beat (steps 1, 5,
+  9, 13), equally quiet: a ruling, never a grid. Playhead is the same
+  flat wash as
   the column view, vertical now; cursor is the `‸` caret under its column
   plus a thin ink ring on its bar (the roll's answer to bold). Steps
   beyond the loop fade. Beats 1/5/9/13 are numbered in faded ink along
   the base.
 - Migraine rules hold: no grids, no stripes, no flashing, nothing moves
   faster than the step rate, all washes flat.
+- Pad navigation grew with it (2026-07-28): the bare d-pad moves the
+  cursor in any direction, and the right stick strides by fours, beat to
+  beat, on either axis.
 
 ### Save format, version 1
 

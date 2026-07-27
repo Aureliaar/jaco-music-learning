@@ -129,6 +129,8 @@
   }
   /* one hairline per C — a sparse octave ruling, a quiet staff, never a grid */
   .octline{position:absolute;left:0;right:0;height:1px;background:var(--rule);opacity:0.55;}
+  /* and one per beat — the 4ths, upright, as quiet as the C rules */
+  .beatline{position:absolute;top:0;bottom:0;width:1px;background:var(--rule);opacity:0.55;}
   .rollwash{position:absolute;top:0;bottom:0;background-color:var(--wash);display:none;}
   .bar{
     position:absolute;
@@ -209,9 +211,9 @@
           <dt>row starting at Q</dt><dd>the same shape, one octave higher; its sharps sit on the number row</dd>
           <dt>last key of each row</dt><dd>the octave above (C)</dd>
           <dt>period, delete</dt><dd>clear the step</dd>
-          <dt>up, down</dt><dd>move the cursor (wraps)</dd>
+          <dt>the arrows</dt><dd>all four move the cursor (wraps): up or left is back, down or right is forward</dd>
           <dt>home, end</dt><dd>step 1, step 16</dd>
-          <dt>left, right</dt><dd>base octave down, up (C2&ndash;C6)</dd>
+          <dt>page up, page down</dt><dd>base octave up, down (C2&ndash;C6)</dd>
           <dt>space</dt><dd>play or stop; playback loops</dd>
           <dt>L</dt><dd>loop length: the whole page &rarr; 8 &rarr; 4 &rarr; whole again</dd>
           <dt>ctrl + S</dt><dd>export a .folio.json</dd>
@@ -234,8 +236,9 @@
           <dt>&#9675; (B), bare</dt><dd>back to step 1</dd>
           <dt>L1, R1 (LB, RB)</dt><dd>base octave down, up</dd>
           <dt>start (options)</dt><dd>play or stop</dd>
-          <dt>d&#8209;pad up, down</dt><dd>move the cursor; hold to repeat</dd>
+          <dt>d&#8209;pad, bare</dt><dd>any direction moves the cursor; hold to repeat</dd>
           <dt>left stick</dt><dd>the same, up and down only</dd>
+          <dt>right stick</dt><dd>the cursor by fours, beat to beat</dd>
           <dt>select (create)</dt><dd>open or close this page</dd>
         </dl>
         <p>The cross hotbar, borrowed: a trigger raises the eight slots, letting go gives the d&#8209;pad back to navigation. Twenty&#8209;four semitones, every pitch of two octaves, counted up from the octave in the header; entry advances and sounds the note as on the keyboard. A DualSense and an Xbox pad report the same positions. A browser notices a pad only after you press one of its buttons: press start if nothing answers. Sound may wait for one keyboard touch.</p>
@@ -348,6 +351,12 @@
     PC_COLOR[i] = "hsl(" + ((((i * 7) % 12) * 30 + 45) % 360) + ",42%,40%)";
   }
 
+  for (i = 0; i < STEPS; i += 4){
+    var bl = document.createElement("div");
+    bl.className = "beatline";
+    bl.style.left = (i * 6.25) + "%";
+    rollfield.appendChild(bl);
+  }
   var rollWash = document.createElement("div");
   rollWash.className = "rollwash";
   rollfield.appendChild(rollWash);
@@ -742,7 +751,7 @@
 
   /* ================= keyboard, by physical code only ================= */
   document.addEventListener("keydown", function(e){
-    if (e.repeat && e.code !== "ArrowUp" && e.code !== "ArrowDown") return;
+    if (e.repeat && e.code.indexOf("Arrow") !== 0) return;
     var code = e.code;
 
     if (e.ctrlKey || e.metaKey){
@@ -770,12 +779,16 @@
     switch (code){
       case "Period": case "NumpadDecimal": case "Delete": case "Backspace":
         e.preventDefault(); clearStep(); return;
-      case "ArrowUp":    e.preventDefault(); moveCursor(-1); return;
-      case "ArrowDown":  e.preventDefault(); moveCursor(1); return;
+      /* both arrow pairs walk the cursor: up/left back, down/right forward —
+         the column reads down, the roll reads right, the hands need not care */
+      case "ArrowUp": case "ArrowLeft":
+        e.preventDefault(); moveCursor(-1); return;
+      case "ArrowDown": case "ArrowRight":
+        e.preventDefault(); moveCursor(1); return;
       case "Home":       e.preventDefault(); jump(0); return;
       case "End":        e.preventDefault(); jump(STEPS - 1); return;
-      case "ArrowLeft":  e.preventDefault(); shiftOctave(-1); return;
-      case "ArrowRight": e.preventDefault(); shiftOctave(1); return;
+      case "PageUp":     e.preventDefault(); shiftOctave(1); return;
+      case "PageDown":   e.preventDefault(); shiftOctave(-1); return;
       case "KeyL":
         e.preventDefault(); cycleLoop(); return;
       case "F2":
@@ -822,7 +835,7 @@
   var GP_CIRCLE = 1, GP_SQUARE = 2;  /* bare face buttons, FFXIV style */
   var GP_L1 = 4, GP_R1 = 5, GP_L2 = 6, GP_R2 = 7,
       GP_SELECT = 8, GP_START = 9, GP_L3 = 10, GP_R3 = 11,
-      GP_DU = 12, GP_DD = 13;
+      GP_DU = 12, GP_DD = 13, GP_DL = 14, GP_DR = 15;
   var GP_BUTTONS   = 17;
   var HOLD_DELAY   = 350;              /* ms before a held direction repeats */
   var HOLD_PERIOD  = 125;              /* then one move every 125 ms = 8 Hz */
@@ -831,11 +844,12 @@
 
   var padIndex = null;
   var gpPrev = [];                     /* previous frame's button state: edge detection */
-  var navHeld = { up: false, down: false };
-  var navNext = { up: 0, down: 0 };
+  var navHeld = { up: false, down: false, left: false, right: false, back: false, fwd: false };
+  var navNext = { up: 0, down: 0, left: 0, right: 0, back: 0, fwd: 0 };
   var padWarned = false;
 
   function gpEdge(cur, i){ return !!cur[i] && !gpPrev[i]; }
+  function navReset(){ for (var k in navHeld) navHeld[k] = false; }
 
   /* a held direction: fire once, wait HOLD_DELAY, then fire every HOLD_PERIOD */
   function gpNav(active, key, d, now){
@@ -869,7 +883,7 @@
   function pollPads(){
     var gp = gpPick();
     if (!gp){
-      if (gpPrev.length){ gpPrev = []; navHeld.up = navHeld.down = false; }
+      if (gpPrev.length){ gpPrev = []; navReset(); }
       return;
     }
     if (gp.mapping !== "standard" && !padWarned){
@@ -907,16 +921,23 @@
       for (i = 0; i < 8; i++){
         if (gpEdge(cur, GP_SLOTS[i])) enterNote(base + i);
       }
-      gpNav(false, "up", -1, now);      /* forget any half-finished hold */
-      gpNav(false, "down", 1, now);
+      navReset();                       /* forget any half-finished hold */
     } else {
       /* no trigger: the bare face buttons act alone, FFXIV style —
          □ clears the step, ○ returns to step 1 */
       if (gpEdge(cur, GP_SQUARE)) clearStep();
       else if (gpEdge(cur, GP_CIRCLE)) jump(0);
+      /* both d-pad pairs walk the cursor, as both arrow pairs do */
       var ay = (gp.axes && gp.axes.length > 1) ? gp.axes[1] : 0;  /* left stick Y, +1 = down */
       gpNav(cur[GP_DU] || ay <= -STICK_DEAD, "up",   -1, now);
       gpNav(cur[GP_DD] || ay >=  STICK_DEAD, "down",  1, now);
+      gpNav(cur[GP_DL], "left",  -1, now);
+      gpNav(cur[GP_DR], "right",  1, now);
+      /* the right stick strides by fours, beat to beat, either axis */
+      var rx = (gp.axes && gp.axes.length > 2) ? gp.axes[2] : 0;
+      var ry = (gp.axes && gp.axes.length > 3) ? gp.axes[3] : 0;
+      gpNav(rx <= -STICK_DEAD || ry <= -STICK_DEAD, "back", -4, now);
+      gpNav(rx >=  STICK_DEAD || ry >=  STICK_DEAD, "fwd",   4, now);
     }
 
     gpPrev = cur;
@@ -925,13 +946,13 @@
   window.addEventListener("gamepadconnected", function(e){
     if (padIndex === null) padIndex = e.gamepad.index;
     gpPrev = [];
-    navHeld.up = navHeld.down = false;
+    navReset();
     say("gamepad ready · hold L2 or R2 for the crossbar");
   });
   window.addEventListener("gamepaddisconnected", function(e){
     if (e.gamepad.index === padIndex){
       padIndex = null; gpPrev = [];
-      navHeld.up = navHeld.down = false;
+      navReset();
     }
     say("gamepad disconnected");
   });
