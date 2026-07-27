@@ -143,6 +143,44 @@
   .keyref p{margin:0.9rem 0 0;color:var(--faded);font-size:0.88rem;line-height:1.6;}
   @media (max-width:44rem){ .keyref .cols{grid-template-columns:1fr;} }
 
+  /* ---- quest log (also a page: replaces the column, no overlay) ---- */
+  .quests{
+    display:none;
+    width:100%;
+    max-width:44rem;                 /* same measure as the key: nothing shifts */
+    min-height:38.6rem;
+    color:var(--ink);
+    font-size:0.92rem;
+    line-height:1.4;
+  }
+  .quests.on{display:block;}
+  .quests h2{
+    margin:0 0 0.6rem;
+    font-weight:400;
+    font-variant:small-caps;
+    letter-spacing:0.14em;
+    font-size:1.05rem;
+    color:var(--ink);
+  }
+  .quest{
+    display:grid;
+    grid-template-columns:1.2em 1.2em 1fr 1.4em;
+    column-gap:0.4em;
+    align-items:baseline;
+    padding:0.5em 0.5em;
+    border-top:1px solid rgba(201,188,160,0.45);
+  }
+  .quest:first-child{border-top-color:var(--rule);}
+  .quest.sel{background-color:var(--wash);}   /* flat wash, as the playhead row */
+  .qcaret{color:var(--ink);text-align:center;line-height:1;}
+  .qsigil{color:var(--gilt);text-align:center;line-height:1;}
+  .qname{letter-spacing:0.04em;}
+  .qsum{color:var(--faded);font-size:0.88rem;}
+  .qstat{text-align:center;line-height:1;}
+  .qstat.done{color:var(--gilt);}
+  .qstat.bound{color:var(--faded);}
+  .quests p{margin:0.9rem 0 0;color:var(--faded);font-size:0.88rem;line-height:1.6;}
+
   /* ---- footer ---- */
   footer{
     width:100%;
@@ -180,9 +218,11 @@
           <dt>left, right</dt><dd>base octave down, up (C2&ndash;C6)</dd>
           <dt>space</dt><dd>play or stop; playback loops</dd>
           <dt>L</dt><dd>loop length: the whole page &rarr; 8 &rarr; 4 &rarr; whole again</dd>
-          <dt>ctrl + S</dt><dd>export a .folio.json</dd>
-          <dt>ctrl + O</dt><dd>import one (or drop a file on the page)</dd>
+          <dt>ctrl + S</dt><dd>export a .folio.json &mdash; or, with the quest log open, the quest log itself as quest&#8209;log.json</dd>
+          <dt>ctrl + O</dt><dd>import either (or drop a file on the page); a quest log opens as a quest log wherever it lands</dd>
           <dt>F1</dt><dd>close this page of the key</dd>
+          <dt>F2</dt><dd>open or close the quest log</dd>
+          <dt>in the quest log</dt><dd>up, down choose a quest; enter sets it as the objective; B binds the pattern on the page as its motif; L loads that motif back (press twice to replace work); C marks it complete; F2 or escape closes</dd>
         </dl>
         <p>Notes are entered by position, not by letter, so the layout is the same on any keyboard. Entering a note advances the cursor.</p>
       </div>
@@ -201,11 +241,19 @@
           <dt>d&#8209;pad up, down</dt><dd>move the cursor; hold to repeat</dd>
           <dt>left stick</dt><dd>the same, up and down only</dd>
           <dt>select (create)</dt><dd>open or close this page</dd>
+          <dt>R3 (right stick click)</dt><dd>open or close the quest log</dd>
+          <dt>in the quest log</dt><dd>d&#8209;pad up, down choose a quest; &#10005; (A) sets it as the objective; &#9633; (X) binds the pattern as its motif; &#9651; (Y) loads that motif back (press twice to replace work); &#9675; (B) marks it complete; R3 closes</dd>
         </dl>
         <p>The cross hotbar, borrowed: a trigger raises the eight slots, letting go gives the d&#8209;pad back to navigation. Twenty&#8209;four semitones, every pitch of two octaves, counted up from the octave in the header; entry advances and sounds the note as on the keyboard. A DualSense and an Xbox pad report the same positions. A browser notices a pad only after you press one of its buttons: press start if nothing answers. Sound may wait for one keyboard touch.</p>
         <p>Bare, the face buttons act alone as in the game &mdash; &#9633; clears and &#9675; returns to the top; raise a trigger and all four are notes again.</p>
       </div>
     </div>
+  </section>
+
+  <section class="quests" id="quests" aria-label="quest log">
+    <h2>The quest log</h2>
+    <div id="qlist"></div>
+    <p>Constraint &eacute;tudes, taken in any order and abandoned guiltlessly. A quest holds one motif: bind the page to it, load it back later. &#10087; complete &middot; &#8226; a motif is bound &middot; &#9876; the standing objective. Ctrl&#8239;+&#8239;S from here writes the whole log to quest&#8209;log.json, to be kept beside the folio at quests/quest&#8209;log.json.</p>
   </section>
 
   <div class="divider"></div>
@@ -279,6 +327,8 @@
   var footer = document.getElementById("footer");
   var meta   = document.getElementById("metatext");
   var keyref = document.getElementById("keyref");
+  var questsEl = document.getElementById("quests");
+  var qlist  = document.getElementById("qlist");
   var picker = document.getElementById("picker");
 
   var rows = [];
@@ -325,8 +375,10 @@
     shownPlayhead = step;
   }
   function renderMeta(){
+    var obj = activeQuest();
     meta.textContent = doc.title + " · " + doc.tempo + " · octave " + baseOctave +
-                       (doc.loop < STEPS ? " · loop " + doc.loop : "");
+                       (doc.loop < STEPS ? " · loop " + doc.loop : "") +
+                       (obj ? " · ⚔ " + obj.short : "");
   }
   function renderLoop(){
     for (var i = 0; i < STEPS; i++){
@@ -334,9 +386,10 @@
     }
   }
   function say(msg){
-    footer.textContent = keyref.classList.contains("on")
-      ? msg + " · F1 to close"
-      : msg + " · F1 for the key";
+    footer.textContent = msg + (
+      keyref.classList.contains("on")   ? " · F1 to close" :
+      questsEl.classList.contains("on") ? " · F2 to close" :
+                                          " · F1 for the key");
   }
   function renderAll(){ renderNotes(); renderCursor(); renderMeta(); renderLoop(); }
 
@@ -391,8 +444,11 @@
     say("exported " + name + ".folio.json");
   }
   function importText(text, label){
-    var v = null;
-    try { v = validate(JSON.parse(text)); } catch (e){ v = null; }
+    var o = null, v = null;
+    try { o = JSON.parse(text); } catch (e){ o = null; }
+    /* a quest log opens as a quest log, wherever it is dropped */
+    if (isQuestLog(o)){ importQuests(o, label); return; }
+    try { v = validate(o); } catch (e){ v = null; }
     if (!v){ say("that file is not a folio — nothing changed"); return; }
     var dropped = droppedMarks;
     doc = v;
@@ -595,10 +651,211 @@
     if (n === baseOctave){ say("octave " + baseOctave + " — end of the range"); return; }
     baseOctave = n; renderMeta(); say("octave " + baseOctave);
   }
+  /* the two pages are exclusive; whichever is open, the column stands down */
+  function showColumn(){
+    var page = keyref.classList.contains("on") || questsEl.classList.contains("on");
+    column.style.display = page ? "none" : "flex";
+  }
   function toggleKeyref(){
-    var on = keyref.classList.toggle("on");
-    column.style.display = on ? "none" : "flex";
+    var on = !keyref.classList.contains("on");
+    keyref.classList.toggle("on", on);
+    if (on) questsEl.classList.remove("on");
+    qPending = null;
+    showColumn();
     say(on ? "the key, by position" : "‸ cursor row");
+  }
+  function toggleQuests(){
+    var on = !questsEl.classList.contains("on");
+    questsEl.classList.toggle("on", on);
+    if (on) keyref.classList.remove("on");
+    qPending = null;
+    showColumn();
+    if (on) renderQuests();
+    say(on ? "the quest log · " + QUESTS[qsel].short : "‸ cursor row");
+  }
+
+  /* ================= the quest log =================
+     Side content from QUESTS.md, Lesson 1: constraint études. Each quest
+     holds one motif — a snapshot of the page — kept in localStorage beside
+     the autosave. The pattern file format is untouched by any of this. */
+  var QUEST_KEY = "folio.quests.v1";
+  var QUESTS = [
+    { id:"ladder", name:"⚔ The Ladder", short:"the ladder",
+      sum:"All seven notes of one scale appear at least once, hidden. If a listener hears a scale going up, it failed." },
+    { id:"whitespace", name:"⚔ White Space", short:"white space",
+      sum:"Exactly five silent steps, and no two of them adjacent. Breath distributed, not parked in one hole." },
+    { id:"summit", name:"⚔ The Summit", short:"the summit",
+      sum:"The highest note sounds exactly once, and not on step 1. Everything before it climbs, everything after settles." },
+    { id:"stones", name:"⚔ Three Stones", short:"three stones",
+      sum:"Exactly three distinct pitches for the whole loop. Rhythm and silence do all the remaining work." },
+    { id:"ouroboros", name:"⚔ Ouroboros", short:"ouroboros",
+      sum:"The last sounding note differs from the first, yet the seam pulls: stopping on step 16 must feel like an interruption." },
+    { id:"callanswer", name:"⚔ Call and Answer", short:"call and answer",
+      sum:"Steps 1–8 ask and end unresolved; steps 9–16 answer and end resolved. A listener should hear “…?” then “…!”." },
+    { id:"stray", name:"⚔ Keep the Stray", short:"keep the stray",
+      sum:"One note deliberately outside the key, approached and left so smoothly that it sounds intended." },
+    { id:"hand", name:"⚔ The Apprentice’s Hand", short:"the apprentice’s hand",
+      sum:"Transcribe sixteen steps of a borrowed melody, then change exactly four of them until it is yours." }
+  ];
+
+  var qsel = 0;                /* the selection cursor on the quest page */
+  var qActive = null;          /* the standing objective, an id or null */
+  var qState = {};             /* id -> { done:bool, motif:doc|null } */
+  var qPending = null;         /* {id, until} — the load confirm tap */
+  var QCONFIRM_MS = 4000;
+
+  function questSlot(id){
+    if (!qState[id]) qState[id] = { done:false, motif:null };
+    return qState[id];
+  }
+  function questById(id){
+    for (var i = 0; i < QUESTS.length; i++) if (QUESTS[i].id === id) return QUESTS[i];
+    return null;
+  }
+  function activeQuest(){ return qActive ? questById(qActive) : null; }
+
+  function saveQuests(){
+    if (!storageOK) return;
+    try { localStorage.setItem(QUEST_KEY, JSON.stringify(questsToJSON())); }
+    catch (e){ storageOK = false; say("autosave unavailable in this window"); }
+  }
+  /* the shape of the quest log, in storage and on disk alike */
+  function questsToJSON(){
+    var out = { folio: "quest-log", version: 1, active: qActive, quests: {} };
+    for (var i = 0; i < QUESTS.length; i++){
+      var id = QUESTS[i].id, s = qState[id];
+      if (!s || (!s.done && !s.motif)) continue;
+      out.quests[id] = { done: !!s.done, motif: s.motif || null };
+    }
+    return out;
+  }
+  function isQuestLog(o){
+    return !!o && typeof o === "object" && !Array.isArray(o) && !o.steps &&
+           (o.folio === "quest-log" || (o.quests && typeof o.quests === "object"));
+  }
+  function applyQuests(o){
+    if (!isQuestLog(o)) return false;
+    qActive = (typeof o.active === "string" && questById(o.active)) ? o.active : null;
+    if (o.quests && typeof o.quests === "object"){
+      for (var id in o.quests){
+        if (!Object.prototype.hasOwnProperty.call(o.quests, id) || !questById(id)) continue;
+        var q = o.quests[id];
+        if (!q || typeof q !== "object") continue;
+        var slot = questSlot(id);
+        slot.done = !!q.done;
+        /* a motif is a pattern, so it passes the same validator as a file */
+        slot.motif = q.motif ? validate(q.motif) : null;
+      }
+    }
+    droppedMarks = false;      /* the pattern autosave owns that message */
+    return true;
+  }
+  function loadQuests(){
+    var raw = null;
+    try { raw = localStorage.getItem(QUEST_KEY); } catch (e){ return; }
+    if (!raw) return;
+    try { applyQuests(JSON.parse(raw)); } catch (e){}
+  }
+
+  /* localStorage is invisible from outside the browser, so the log also goes
+     to disk on request: the same JSON, kept beside the folio at
+     quests/quest-log.json, where anyone (or anything) reading the repository
+     can see which quests are done and what is bound to them. */
+  function exportQuests(){
+    var blob = new Blob([JSON.stringify(questsToJSON(), null, 2)], { type: "application/json" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = "quest-log.json";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+    say("exported quest-log.json · keep it at quests/quest-log.json");
+  }
+  function importQuests(o, label){
+    if (!applyQuests(o)){ say("that file is not a quest log — nothing changed"); return false; }
+    saveQuests(); renderQuests(); renderMeta();
+    say("opened " + (label || "quest-log.json"));
+    return true;
+  }
+
+  var qrows = [];
+  for (var qi = 0; qi < QUESTS.length; qi++){
+    var qrow = document.createElement("div");
+    qrow.className = "quest";
+    var qc = document.createElement("span"); qc.className = "qcaret";
+    var qg = document.createElement("span"); qg.className = "qsigil";
+    var qb = document.createElement("div");
+    var qn = document.createElement("div"); qn.className = "qname"; qn.textContent = QUESTS[qi].name;
+    var qs = document.createElement("div"); qs.className = "qsum";  qs.textContent = QUESTS[qi].sum;
+    var qt = document.createElement("span"); qt.className = "qstat";
+    qb.appendChild(qn); qb.appendChild(qs);
+    qrow.appendChild(qc); qrow.appendChild(qg); qrow.appendChild(qb); qrow.appendChild(qt);
+    qlist.appendChild(qrow);
+    qrows.push({ el: qrow, caret: qc, sigil: qg, stat: qt });
+  }
+
+  function renderQuests(){
+    for (var i = 0; i < QUESTS.length; i++){
+      var q = QUESTS[i], s = questSlot(q.id), r = qrows[i];
+      r.el.classList.toggle("sel", i === qsel);
+      r.caret.textContent = (i === qsel) ? "‸" : "";
+      r.sigil.textContent = (q.id === qActive) ? "⚔" : "";
+      if (s.done){ r.stat.textContent = "❧"; r.stat.className = "qstat done"; }
+      else if (s.motif){ r.stat.textContent = "•"; r.stat.className = "qstat bound"; }
+      else { r.stat.textContent = ""; r.stat.className = "qstat"; }
+    }
+  }
+
+  function moveQuest(d){
+    qsel = (qsel + d + QUESTS.length) % QUESTS.length;
+    qPending = null;
+    renderQuests();
+    say(QUESTS[qsel].short);
+  }
+  function setObjective(){
+    var q = QUESTS[qsel];
+    qActive = (qActive === q.id) ? null : q.id;
+    saveQuests(); renderQuests(); renderMeta();
+    say(qActive ? "objective · " + q.short : "no objective");
+  }
+  function bindMotif(){
+    var q = QUESTS[qsel];
+    questSlot(q.id).motif = JSON.parse(JSON.stringify(doc));
+    saveQuests(); renderQuests();
+    say("bound this page to " + q.short);
+  }
+  function pageIsEmpty(){
+    for (var i = 0; i < STEPS; i++) if (doc.steps[i]) return false;
+    return true;
+  }
+  function sameAsPage(m){
+    return !!m && m.tempo === doc.tempo && m.title === doc.title &&
+           JSON.stringify(m.steps) === JSON.stringify(doc.steps);
+  }
+  /* replacing written work asks twice: no dialogs, just a second press */
+  function loadMotif(){
+    var q = QUESTS[qsel], s = questSlot(q.id);
+    if (!s.motif){ say("nothing bound to " + q.short + " yet"); return; }
+    var now = Date.now();
+    if (!pageIsEmpty() && !sameAsPage(s.motif) &&
+        !(qPending && qPending.id === q.id && now < qPending.until)){
+      qPending = { id: q.id, until: now + QCONFIRM_MS };
+      say("press again to put " + q.short + " over the page");
+      return;
+    }
+    qPending = null;
+    var v = validate(s.motif);
+    if (!v){ say("that motif could not be read — nothing changed"); return; }
+    doc = v;
+    cursor = 0;
+    if (playing) stop();
+    renderAll(); save();                 /* the ordinary autosave path */
+    say("loaded " + q.short);
+  }
+  function toggleComplete(){
+    var q = QUESTS[qsel], s = questSlot(q.id);
+    s.done = !s.done;
+    saveQuests(); renderQuests();
+    say(q.short + (s.done ? " · complete" : " · set aside"));
   }
 
   /* ================= keyboard, by physical code only ================= */
@@ -607,17 +864,38 @@
     var code = e.code;
 
     if (e.ctrlKey || e.metaKey){
-      if (code === "KeyS"){ e.preventDefault(); exportFile(); return; }
+      /* on the quest page these two act on the quest log instead */
+      if (code === "KeyS"){
+        e.preventDefault();
+        if (questsEl.classList.contains("on")) exportQuests(); else exportFile();
+        return;
+      }
       if (code === "KeyO"){ e.preventDefault(); picker.value = ""; picker.click(); say("choose a folio to open"); return; }
       return;
     }
     if (e.altKey) return;
 
     if (code === "F1"){ e.preventDefault(); toggleKeyref(); return; }
+    if (code === "F2"){ e.preventDefault(); toggleQuests(); return; }
 
     /* tab does nothing, but it is swallowed so that focus never wanders off
        the page */
     if (code === "Tab"){ e.preventDefault(); return; }
+
+    /* the quest log is a page too: nothing here reaches the pattern */
+    if (questsEl.classList.contains("on")){
+      e.preventDefault();
+      switch (code){
+        case "Escape":    toggleQuests();  return;
+        case "ArrowUp":   moveQuest(-1);   return;
+        case "ArrowDown": moveQuest(1);    return;
+        case "Enter": case "NumpadEnter": setObjective(); return;
+        case "KeyB":      bindMotif();     return;
+        case "KeyL":      loadMotif();     return;
+        case "KeyC":      toggleComplete();return;
+      }
+      return;
+    }
 
     if (keyref.classList.contains("on")){
       if (code === "Escape"){ toggleKeyref(); }
@@ -678,9 +956,9 @@
      octaves, and nothing is a mode: let go of the triggers and the d-pad is
      navigation again, exactly as the crossbar lets go of the d-pad in game. */
   var GP_SLOTS = [14, 12, 15, 13, 2, 3, 1, 0];   /* ←↑→↓ then □△○✕ */
-  var GP_CIRCLE = 1, GP_SQUARE = 2;  /* bare face buttons, FFXIV style */
+  var GP_CROSS = 0, GP_CIRCLE = 1, GP_SQUARE = 2, GP_TRIANGLE = 3;  /* face buttons */
   var GP_L1 = 4, GP_R1 = 5, GP_L2 = 6, GP_R2 = 7,
-      GP_SELECT = 8, GP_START = 9, GP_L3 = 10,
+      GP_SELECT = 8, GP_START = 9, GP_L3 = 10, GP_R3 = 11,
       GP_DU = 12, GP_DD = 13;
   var GP_BUTTONS   = 17;
   var HOLD_DELAY   = 350;              /* ms before a held direction repeats */
@@ -696,17 +974,19 @@
 
   function gpEdge(cur, i){ return !!cur[i] && !gpPrev[i]; }
 
-  /* a held direction: fire once, wait HOLD_DELAY, then fire every HOLD_PERIOD */
-  function gpNav(active, key, d, now){
+  /* a held direction: fire once, wait HOLD_DELAY, then fire every HOLD_PERIOD.
+     `mover` is moveCursor on the page, moveQuest in the quest log */
+  function gpNav(active, key, d, now, mover){
+    mover = mover || moveCursor;
     if (!active){ navHeld[key] = false; return; }
     if (!navHeld[key]){
       navHeld[key] = true;
       navNext[key] = now + HOLD_DELAY;
-      moveCursor(d);
+      mover(d);
       return;
     }
     if (now >= navNext[key]){
-      moveCursor(d);
+      mover(d);
       /* advance the schedule, not the clock, so the rate stays 8 Hz even
          though frames land on ~16.7 ms boundaries; if the tab stalled and
          the schedule fell behind, resync instead of firing a burst */
@@ -747,8 +1027,23 @@
 
     /* select opens the key; while the key is open the pad is as quiet as the
        keyboard is — the key is a page, not a mode with buttons */
-    if (gpEdge(cur, GP_SELECT)) toggleKeyref();
+    if (gpEdge(cur, GP_SELECT)){ toggleKeyref(); gpPrev = cur; return; }
     if (keyref.classList.contains("on")){ gpPrev = cur; return; }
+
+    /* R3 is the quest log, the pad's answer to F2 */
+    if (gpEdge(cur, GP_R3)){ toggleQuests(); gpPrev = cur; return; }
+    if (questsEl.classList.contains("on")){
+      /* full parity with the keyboard page, and just as quiet otherwise */
+      if (gpEdge(cur, GP_CROSS))    setObjective();
+      if (gpEdge(cur, GP_SQUARE))   bindMotif();
+      if (gpEdge(cur, GP_TRIANGLE)) loadMotif();
+      if (gpEdge(cur, GP_CIRCLE))   toggleComplete();
+      var qy = (gp.axes && gp.axes.length > 1) ? gp.axes[1] : 0;
+      gpNav(cur[GP_DU] || qy <= -STICK_DEAD, "up",   -1, now, moveQuest);
+      gpNav(cur[GP_DD] || qy >=  STICK_DEAD, "down",  1, now, moveQuest);
+      gpPrev = cur;
+      return;
+    }
 
     /* L3 is the loop length, the pad's answer to L */
     if (gpEdge(cur, GP_L3)) cycleLoop();
@@ -796,8 +1091,10 @@
   /* ==== gamepad:end ==== */
 
   /* ================= boot ================= */
+  loadQuests();
   var restored = load();
   renderAll();
+  renderQuests();
   if (!storageOK) say("autosave unavailable — export to keep your work");
   else if (restored) say("restored ‸ cursor row" +
         (droppedMarks ? " · marks from an older file were dropped" : ""));
