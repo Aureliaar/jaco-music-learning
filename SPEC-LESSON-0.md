@@ -102,6 +102,31 @@ The only surviving trace is backward compatibility: `"x"` entries in an old
 file or autosave are **converted to `null` on load**, and the footer says
 "marks from an older file were dropped" once when that happens.
 
+## The roll (added 2026-07-28)
+
+An alternate view of the same document, for eyes that read shape and colour
+rather than note names. `F2` (keyboard) or `R3` (pad) toggles between "the
+column" (the tracker list) and "the roll"; the choice persists in
+`localStorage` (`folio.viz`) and is a preference, not part of the save file.
+
+- Time runs left to right: sixteen columns, one per step. Pitch is height.
+  No note names appear anywhere in the roll.
+- Each note is a rounded bar coloured by pitch class. Hues follow the
+  circle of fifths, so harmonically neighbouring notes sit next to each
+  other in hue; octave-equivalents share a colour and height tells them
+  apart. Colours are muted (HSL 42% sat / 40% light) — visible on
+  parchment, never harsh.
+- The pitch window auto-fits the notes on the page (± 3 semitones, never
+  tighter than two octaves) and is recomputed only on edits.
+- The only lines are one low-contrast hairline per C — a sparse octave
+  ruling, spartito-like, never a grid. Playhead is the same flat wash as
+  the column view, vertical now; cursor is the `‸` caret under its column
+  plus a thin ink ring on its bar (the roll's answer to bold). Steps
+  beyond the loop fade. Beats 1/5/9/13 are numbered in faded ink along
+  the base.
+- Migraine rules hold: no grids, no stripes, no flashing, nothing moves
+  faster than the step rate, all washes flat.
+
 ### Save format, version 1
 
 ```json

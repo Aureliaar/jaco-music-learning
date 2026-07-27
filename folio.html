@@ -116,6 +116,35 @@
   /* steps beyond the loop length: present, editable, quieter on the page */
   .row.outside .num,.row.outside .note{color:var(--faded);}
 
+  /* ---- the roll: the same page drawn — time runs right, height is pitch ---- */
+  .roll{
+    display:none;
+    width:100%;
+    flex-direction:column;
+  }
+  .roll.on{display:flex;}
+  .rollfield{
+    position:relative;
+    height:36.9rem;                  /* with the base strip, the column's height: nothing shifts */
+  }
+  /* one hairline per C — a sparse octave ruling, a quiet staff, never a grid */
+  .octline{position:absolute;left:0;right:0;height:1px;background:var(--rule);opacity:0.55;}
+  .rollwash{position:absolute;top:0;bottom:0;background-color:var(--wash);display:none;}
+  .bar{
+    position:absolute;
+    border-radius:999px;
+  }
+  .bar.outside{opacity:0.4;}
+  .bar.cur{box-shadow:0 0 0 1px var(--ink);}   /* the roll's answer to bold */
+  .rollbase{
+    display:grid;
+    grid-template-columns:repeat(16,1fr);
+    height:1.7rem;
+    align-items:center;
+  }
+  .rollbase span{text-align:center;color:var(--faded);font-size:0.85em;}
+  .rollbase span.cur{color:var(--ink);font-size:1.05em;}
+
   /* ---- key reference (replaces the column, no overlay, no dimming) ---- */
   .keyref{
     display:none;
@@ -166,6 +195,11 @@
 
   <section class="column" id="column" aria-label="pattern"></section>
 
+  <section class="roll" id="roll" aria-label="pattern, drawn">
+    <div class="rollfield" id="rollfield"></div>
+    <div class="rollbase" id="rollbase"></div>
+  </section>
+
   <section class="keyref" id="keyref" aria-label="key reference">
     <div class="cols">
       <div>
@@ -182,6 +216,7 @@
           <dt>L</dt><dd>loop length: the whole page &rarr; 8 &rarr; 4 &rarr; whole again</dd>
           <dt>ctrl + S</dt><dd>export a .folio.json</dd>
           <dt>ctrl + O</dt><dd>import one (or drop a file on the page)</dd>
+          <dt>F2</dt><dd>the roll: the page drawn instead of written &mdash; time runs right, height is pitch, colour is the note</dd>
           <dt>F1</dt><dd>close this page of the key</dd>
         </dl>
         <p>Notes are entered by position, not by letter, so the layout is the same on any keyboard. Entering a note advances the cursor.</p>
@@ -194,6 +229,7 @@
           <dt>hold L2 + R2</dt><dd>the last eight, E to B, an octave up</dd>
           <dt>the eight slots</dt><dd>read left, up, right, down: d&#8209;pad &#8592;&#8593;&#8594;&#8595;, then &#9633;&#9651;&#9675;&#10005; (X, Y, B, A)</dd>
           <dt>L3 (left stick click)</dt><dd>the loop length: the whole page &rarr; 8 &rarr; 4 &rarr; whole again</dd>
+          <dt>R3 (right stick click)</dt><dd>the roll: the page drawn or written</dd>
           <dt>&#9633; (X), bare</dt><dd>clear the step</dd>
           <dt>&#9675; (B), bare</dt><dd>back to step 1</dd>
           <dt>L1, R1 (LB, RB)</dt><dd>base octave down, up</dd>
@@ -295,6 +331,101 @@
     rows.push({ el: row, fleuron: fl, caret: ca, note: no });
   }
 
+  /* ---- the roll, built once; bars and octave rules are laid out on edit ----
+     Same document, drawn instead of written: sixteen columns left to right,
+     pitch as height, no note names anywhere. Colour is the pitch class, and
+     neighbours on the circle of fifths sit next to each other in hue, so
+     notes that belong together look related. Octave-equivalents share a
+     colour; height tells them apart. */
+  var roll      = document.getElementById("roll");
+  var rollfield = document.getElementById("rollfield");
+  var rollbase  = document.getElementById("rollbase");
+  var viz = "column";
+  var VIZ_KEY = "folio.viz";           /* a preference, not part of the document */
+
+  var PC_COLOR = [];
+  for (i = 0; i < 12; i++){
+    PC_COLOR[i] = "hsl(" + ((((i * 7) % 12) * 30 + 45) % 360) + ",42%,40%)";
+  }
+
+  var rollWash = document.createElement("div");
+  rollWash.className = "rollwash";
+  rollfield.appendChild(rollWash);
+  var octlines = [];
+  var bars = [], baseCells = [];
+  for (i = 0; i < STEPS; i++){
+    var bar = document.createElement("div");
+    bar.className = "bar";
+    bar.style.display = "none";
+    rollfield.appendChild(bar);
+    bars.push(bar);
+    var cell = document.createElement("span");
+    cell.textContent = (i % 4 === 0) ? String(i + 1) : "";
+    rollbase.appendChild(cell);
+    baseCells.push(cell);
+  }
+
+  function midiOf(s){ var p = parseNote(s); return p ? (p.oct + 1) * 12 + p.pc : null; }
+
+  function rollLayout(){
+    /* fit the pitch window to the notes on the page, never tighter than two
+       octaves, recomputed only on edits — user-initiated, never while idle */
+    var lo = Infinity, hi = -Infinity, i, m;
+    for (i = 0; i < STEPS; i++){
+      m = doc.steps[i] ? midiOf(doc.steps[i]) : null;
+      if (m !== null){ if (m < lo) lo = m; if (m > hi) hi = m; }
+    }
+    if (lo > hi){ lo = 48; hi = 71; }          /* empty page: around middle C */
+    lo -= 3; hi += 3;
+    while (hi - lo + 1 < 24){ lo--; hi++; }
+    var span = hi - lo + 1;
+
+    for (i = 0; i < octlines.length; i++) rollfield.removeChild(octlines[i]);
+    octlines = [];
+    for (m = Math.ceil(lo / 12) * 12; m <= hi; m += 12){
+      var ln = document.createElement("div");
+      ln.className = "octline";
+      ln.style.top = ((hi - m + 0.5) / span * 100) + "%";
+      rollfield.insertBefore(ln, rollfield.firstChild);   /* under wash and bars */
+      octlines.push(ln);
+    }
+
+    for (i = 0; i < STEPS; i++){
+      var v = doc.steps[i];
+      if (!v){ bars[i].style.display = "none"; continue; }
+      m = midiOf(v);
+      bars[i].style.display = "block";
+      bars[i].style.left = (i * 6.25 + 0.7) + "%";
+      bars[i].style.width = "4.85%";
+      bars[i].style.top = ((hi - m) / span * 100) + "%";
+      bars[i].style.height = (100 / span) + "%";
+      bars[i].style.backgroundColor = PC_COLOR[parseNote(v).pc];
+    }
+  }
+  function rollCursor(){
+    for (var i = 0; i < STEPS; i++){
+      var on = (i === cursor);
+      bars[i].classList.toggle("cur", on);
+      baseCells[i].classList.toggle("cur", on);
+      baseCells[i].textContent = on ? "‸" : (i % 4 === 0 ? String(i + 1) : "");
+    }
+  }
+  function rollLoop(){
+    for (var i = 0; i < STEPS; i++) bars[i].classList.toggle("outside", i >= doc.loop);
+  }
+
+  function applyViz(){
+    var keyOpen = keyref.classList.contains("on");
+    column.style.display = (!keyOpen && viz === "column") ? "flex" : "none";
+    roll.classList.toggle("on", !keyOpen && viz === "roll");
+  }
+  function toggleViz(){
+    viz = (viz === "column") ? "roll" : "column";
+    try { localStorage.setItem(VIZ_KEY, viz); } catch (e){}
+    applyViz();
+    say(viz === "roll" ? "the roll · height is pitch, colour is the note" : "the column");
+  }
+
   var shownPlayhead = -1;
 
   function renderNotes(){
@@ -304,6 +435,7 @@
       if (v){ el.textContent = display(v); el.className = "note"; }
       else  { el.textContent = "·";   el.className = "note empty"; }
     }
+    rollLayout();
   }
   function renderCursor(){
     for (var i = 0; i < STEPS; i++){
@@ -311,6 +443,7 @@
       rows[i].el.classList.toggle("cursor", on);
       rows[i].caret.textContent = on ? "‸" : "";
     }
+    rollCursor();
   }
   function renderPlayhead(step){
     if (step === shownPlayhead) return;
@@ -321,6 +454,11 @@
     if (step >= 0){
       rows[step].el.classList.add("play");
       rows[step].fleuron.textContent = "❧";
+      rollWash.style.left = (step * 6.25) + "%";
+      rollWash.style.width = "6.25%";
+      rollWash.style.display = "block";
+    } else {
+      rollWash.style.display = "none";
     }
     shownPlayhead = step;
   }
@@ -332,6 +470,7 @@
     for (var i = 0; i < STEPS; i++){
       rows[i].el.classList.toggle("outside", i >= doc.loop);
     }
+    rollLoop();
   }
   function say(msg){
     footer.textContent = keyref.classList.contains("on")
@@ -597,7 +736,7 @@
   }
   function toggleKeyref(){
     var on = keyref.classList.toggle("on");
-    column.style.display = on ? "none" : "flex";
+    applyViz();
     say(on ? "the key, by position" : "‸ cursor row");
   }
 
@@ -639,6 +778,8 @@
       case "ArrowRight": e.preventDefault(); shiftOctave(1); return;
       case "KeyL":
         e.preventDefault(); cycleLoop(); return;
+      case "F2":
+        e.preventDefault(); toggleViz(); return;
       case "Space":
         e.preventDefault();
         if (playing) stop(); else play();
@@ -680,7 +821,7 @@
   var GP_SLOTS = [14, 12, 15, 13, 2, 3, 1, 0];   /* ←↑→↓ then □△○✕ */
   var GP_CIRCLE = 1, GP_SQUARE = 2;  /* bare face buttons, FFXIV style */
   var GP_L1 = 4, GP_R1 = 5, GP_L2 = 6, GP_R2 = 7,
-      GP_SELECT = 8, GP_START = 9, GP_L3 = 10,
+      GP_SELECT = 8, GP_START = 9, GP_L3 = 10, GP_R3 = 11,
       GP_DU = 12, GP_DD = 13;
   var GP_BUTTONS   = 17;
   var HOLD_DELAY   = 350;              /* ms before a held direction repeats */
@@ -750,8 +891,9 @@
     if (gpEdge(cur, GP_SELECT)) toggleKeyref();
     if (keyref.classList.contains("on")){ gpPrev = cur; return; }
 
-    /* L3 is the loop length, the pad's answer to L */
+    /* L3 is the loop length, the pad's answer to L; R3 the roll, its F2 */
     if (gpEdge(cur, GP_L3)) cycleLoop();
+    if (gpEdge(cur, GP_R3)) toggleViz();
 
     if (gpEdge(cur, GP_START)){ if (playing) stop(); else play(); }
     if (gpEdge(cur, GP_L1)) shiftOctave(-1);
@@ -797,6 +939,8 @@
 
   /* ================= boot ================= */
   var restored = load();
+  try { if (localStorage.getItem(VIZ_KEY) === "roll") viz = "roll"; } catch (e){}
+  applyViz();
   renderAll();
   if (!storageOK) say("autosave unavailable — export to keep your work");
   else if (restored) say("restored ‸ cursor row" +
