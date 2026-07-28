@@ -1,7 +1,7 @@
 {
   "folio": "quest-log",
   "version": 2,
-  "active": "summit",
+  "active": null,
   "free": {
     "version": 1,
     "title": "untitled folio",
@@ -28,6 +28,34 @@
     ]
   },
   "quests": {
+    "ladder": {
+      "done": false,
+      "pattern": {
+        "version": 1,
+        "title": "untitled folio",
+        "tempo": 120,
+        "loop": 16,
+        "key": "G major",
+        "steps": [
+          "G3",
+          "F#3",
+          "A3",
+          "A3",
+          null,
+          "E3",
+          "E3",
+          null,
+          "B3",
+          "C4",
+          null,
+          null,
+          "D4",
+          "C4",
+          "B3",
+          null
+        ]
+      }
+    },
     "whitespace": {
       "done": false,
       "pattern": {
@@ -93,21 +121,21 @@
         "loop": 16,
         "key": "A minor",
         "steps": [
+          "F3",
+          "G3",
+          "G3",
+          "G3",
+          "F3",
+          "F3",
+          "E3",
+          "E3",
           null,
+          "E3",
           null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
+          "E3",
+          "F3",
+          "G3",
+          "G3",
           null
         ]
       }
@@ -195,6 +223,90 @@
           null
         ]
       }
+    },
+    "hand": {
+      "done": false,
+      "pattern": {
+        "version": 1,
+        "title": "untitled folio",
+        "tempo": 128,
+        "loop": 16,
+        "key": "C major",
+        "steps": [
+          "F3",
+          null,
+          "F3",
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    },
+    "drill-itch": {
+      "done": false,
+      "pattern": {
+        "version": 1,
+        "title": "the itch drill",
+        "tempo": 104,
+        "loop": 16,
+        "key": "F major",
+        "steps": [
+          "F4",
+          "G4",
+          "A4",
+          "A#4",
+          "C5",
+          "D5",
+          "E5",
+          "A#4",
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    },
+    "drill-itch-2": {
+      "done": false,
+      "pattern": {
+        "version": 1,
+        "title": "the itch drill, ii",
+        "tempo": 104,
+        "loop": 16,
+        "key": "F major",
+        "steps": [
+          "A4",
+          "G4",
+          "A4",
+          "F4",
+          "G4",
+          "A4",
+          null,
+          "C5",
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
     }
   },
   "drills": [
@@ -218,6 +330,37 @@
           "D5",
           "E5",
           "F5",
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    },
+    {
+      "id": "drill-itch-2",
+      "name": "the itch drill, ii",
+      "summary": "flat runway this time — the circling figure predicts nothing; rank the enders again and meet the leading tone honestly",
+      "teaches": "tendency vs contour: what the note wants, when the line is not already deciding for it",
+      "pattern": {
+        "version": 1,
+        "title": "the itch drill, ii",
+        "tempo": 104,
+        "loop": 16,
+        "key": "F major",
+        "steps": [
+          "A4",
+          "G4",
+          "A4",
+          "F4",
+          "G4",
+          "A4",
+          null,
+          "F4",
           null,
           null,
           null,

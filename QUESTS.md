@@ -69,9 +69,15 @@ approached and left so smoothly a listener thinks it belongs. You already
 did this once by accident (the F♮). Now do it on purpose.
 *Teaches: accidents → style, chromaticism as seasoning.*
 
-### ⚔ The Apprentice's Hand
-Transcribe 16 steps of any Uematsu melody, then change exactly four steps
-until it's yours. Keep both files; play them back to back.
+### ⚔ The Apprentice's Hand *(deferred to L3 — tried in L1, needs note
+durations to be honest; nearly every real melody leans on holds the tool
+can't represent yet)*
+Transcribe 16 steps of a Uematsu figure **with the recording playing** —
+loop a few seconds, hunt each note against the audio; recall is not part
+of this exercise. Pick something that lives in running 16ths (Prelude
+arpeggio, Decisive Battle bass, Those Who Fight riff) — held-note melodies
+need L3 primitives and don't count as failure. Then change exactly four
+steps until it's yours. Keep both; play them back to back.
 *Teaches: the distance between imitation and voice is about four decisions.*
 
 ---
