@@ -14,6 +14,7 @@ import http from "node:http";
 import fs from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";                 /* core module, only for the LAN URL */
+import crypto from "node:crypto";         /* core module, only for the ETag */
 import { fileURLToPath } from "node:url";
 
 const ROOT     = path.dirname(fileURLToPath(import.meta.url));
@@ -45,18 +46,26 @@ const MIME = {
 function log(req, status){
   console.log(req.method + " " + req.url + " " + status);
 }
-function send(req, res, status, body, type){
+function send(req, res, status, body, type, extra){
   const buf = Buffer.isBuffer(body) ? body : Buffer.from(body ?? "");
-  res.writeHead(status, {
+  res.writeHead(status, Object.assign({
     "content-type": type || "text/plain; charset=utf-8",
     "content-length": buf.length,
     "cache-control": "no-store"
-  });
+  }, extra || {}));
   res.end(req.method === "HEAD" ? undefined : buf);
   log(req, status);
 }
 
 /* ---- the quest log ---- */
+
+/* The log carries an ETag so that the page can poll it for changes — a drill
+   delivered into the file arrives in an open tab that way — without paying
+   for the file every ten seconds. The tag is the content, hashed: identical
+   bytes are identical tags, whatever the mtime says. */
+function etagOf(text){
+  return '"' + crypto.createHash("sha1").update(text).digest("hex").slice(0, 32) + '"';
+}
 
 async function getLog(req, res){
   let text;
@@ -68,7 +77,13 @@ async function getLog(req, res){
     send(req, res, 404, '{"folio":"quest-log","absent":true}\n', MIME[".json"]);
     return;
   }
-  send(req, res, 200, text, MIME[".json"]);
+  const tag = etagOf(text);
+  if (req.headers["if-none-match"] === tag){
+    res.writeHead(304, { "etag": tag, "cache-control": "no-store" }).end();
+    log(req, 304);
+    return;
+  }
+  send(req, res, 200, text, MIME[".json"], { "etag": tag });
 }
 
 function readBody(req){
@@ -95,18 +110,37 @@ async function putLog(req, res){
     send(req, res, 400, 'not a quest log (expects "folio": "quest-log")');
     return;
   }
+  /* ---- drills are never lost to a stale tab ----
+     A drill delivered into the file is meant to survive whatever the browser
+     happens to push next. The page re-reads the file and sends the drills it
+     knows back, so ordinarily nothing is at stake — but a tab that has not
+     polled since the delivery would otherwise write the drill away. So:
+     before overwriting, read what is on disk, and keep any drill whose id the
+     incoming body does not mention. Nothing else on disk is preserved; a
+     workspace, a done flag and `active` all belong to the page. */
+  let disk = null;
+  try { disk = JSON.parse(await fs.readFile(LOG_FILE, "utf8")); } catch { disk = null; }
+  if (disk && Array.isArray(disk.drills)){
+    const incoming = Array.isArray(obj.drills) ? obj.drills : [];
+    const have = new Set(incoming.map(d => d && d.id).filter(id => typeof id === "string"));
+    const keep = disk.drills.filter(d => d && typeof d.id === "string" && !have.has(d.id));
+    if (keep.length) obj.drills = incoming.concat(keep);
+  }
+
   /* write beside it, then rename: a reader never sees a half-written log */
+  const text2 = JSON.stringify(obj, null, 2) + "\n";
   const tmp = LOG_FILE + "." + process.pid + "." + Date.now() + ".tmp";
   try {
     await fs.mkdir(LOG_DIR, { recursive: true });
-    await fs.writeFile(tmp, JSON.stringify(obj, null, 2) + "\n", "utf8");
+    await fs.writeFile(tmp, text2, "utf8");
     await fs.rename(tmp, LOG_FILE);
   } catch (e){
     try { await fs.unlink(tmp); } catch {}
     send(req, res, 500, "could not write the log: " + e.message);
     return;
   }
-  res.writeHead(204).end();
+  /* the tag of what was just written, so the page's next poll is a 304 */
+  res.writeHead(204, { "etag": etagOf(text2) }).end();
   log(req, 204);
 }
 

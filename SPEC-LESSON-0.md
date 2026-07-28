@@ -607,6 +607,104 @@ pieces are still saved as `quests/<quest-name>.folio.json`, and `Ctrl+S` on
 the pattern page exports the **active workspace** as an ordinary
 `.folio.json`, format unchanged.
 
+## Drill quests and live delivery (added 2026-07-28)
+
+The eight quests are the standing curriculum and live in `folio.html`. A
+**drill** is a short étude written into the quest log *from outside* — by a
+collaborator, or by the assistant working in the repository — so that new
+practice can be handed to the user without touching the app, and **without
+the open tab either missing it or writing it away**.
+
+### The schema
+
+`quests/quest-log.json` gains one optional top-level key:
+
+```json
+"drills": [
+  {
+    "id": "drill-itch",
+    "name": "the itch drill",
+    "summary": "one line: the constraint",
+    "teaches": "one line: what it is for",
+    "pattern": { "version":1, "title":"…", "tempo":104, "loop":8,
+                 "key":"F major", "steps":[ … 16 … ] }
+  }
+]
+```
+
+- `pattern` is an ordinary page — the same shape a `.folio.json` has, read by
+  the same validator — and it is the workspace's **seed**: what the page
+  arrives holding the first time that drill is entered, exactly as the
+  built-in seeded keys and tempos are. A drill with no readable pattern
+  simply starts on an empty page in C major at 112.
+- Everything else about a drill is a quest: it is listed, selected, entered
+  and left with the same keys; its workspace lives in `quests/<id>` in the
+  log like any other, with `done` beside it; both rails carry it; `C` marks
+  it complete.
+- `id` is trimmed and must not be a built-in quest's id — a drill can never
+  shadow `ladder`, `summit` and the rest.
+- Drills render **below the eight**, under a quiet hairline labelled
+  *drills*, in the order the file lists them — in the quest page and in the
+  left rail alike. With no drills, no divider is drawn.
+- The right rail and the quest detail show `name`, `summary` and `teaches`.
+
+**Missing definitions.** A workspace in storage whose id has no definition
+(the drill was deleted from the file, or the log arrived from elsewhere) is
+never dropped: it keeps a **ghost** definition — rendered by its id, with no
+summary and no teaches — so the work is still listed and still enterable. A
+ghost is never written back out as a definition, and it is replaced the
+moment a real definition for that id arrives.
+
+### Delivery: poll and merge, without a reload
+
+In **server mode only** (never `file://`, never the static copy):
+
+- The app re-reads `GET /api/quest-log` about every **10 s**. It sends
+  `If-None-Match` with the tag it was last given, so an unchanged file costs
+  one **304** and no body.
+- The poll **stands aside** while a push is pending (the 2 s autosave
+  debounce is armed) or in flight, so the two never cross.
+- `server.mjs` answers `GET` with an **ETag** — the SHA-1 of the file's
+  bytes, so identical content is an identical tag whatever the mtime says —
+  and honours `If-None-Match` with **304**. The **204** of a `PUT` also
+  carries the tag of what was just written, so the next poll is a 304.
+
+**The merge rule is deliberately as narrow as it can be.** From a polled
+file the app adopts:
+
+> a drill **definition** whose id this session has never seen (or holds only
+> as a ghost) — **and nothing else, ever.**
+
+Not workspaces, not `free`, not `done`, not `active`, not the built-in
+quests. Nothing is ever removed, and a definition that is already known is
+never overwritten — so editing a drill on disk does not reach into a
+workspace someone is working in, and deleting one from the file does not
+take it off the page. An adopted drill is saved into `localStorage` without
+scheduling a push (it is an arrival, not a change), and announces itself once
+in the footer, quietly: `· a drill arrived: <name>`. The next thing the page
+says clears the notice.
+
+**PUTs round-trip drills.** `stateToJSON()` includes every definition the
+session knows (ghosts excepted) as `drills`, so an ordinary autosave keeps
+them in the file rather than erasing them. The key is omitted entirely when
+there are none.
+
+### Race hardening on the server
+
+Cheap insurance for a stale tab that has not polled since a delivery: before
+`PUT` overwrites the file, `server.mjs` reads what is on disk and **keeps any
+drill whose id the incoming body does not mention**, appending it to what is
+written. Only `drills` is preserved this way — a workspace, a `done` flag and
+`active` all belong to the page and are written as sent.
+
+### Modes
+
+| mode | drills |
+|---|---|
+| `file://` | whatever a log carries when it is imported; no polling |
+| server (`http://localhost:4173`) | listed, delivered live, round-tripped on every push |
+| static copy | listed read-only-style like everything else, from the committed seed; **no polling, nothing sent** |
+
 ## Appearance — manuscript, not skeuomorphism
 
 The reference points are FF menu calm, Granblue's gilt-on-cream warmth, and

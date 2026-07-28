@@ -1,7 +1,7 @@
 {
   "folio": "quest-log",
   "version": 2,
-  "active": "callanswer",
+  "active": "summit",
   "free": {
     "version": 1,
     "title": "untitled folio",
@@ -65,22 +65,22 @@
         "loop": 16,
         "key": "D major",
         "steps": [
+          "B3",
           null,
           null,
+          "G3",
+          "A3",
+          "B3",
+          null,
+          "C#4",
+          "B3",
+          "A3",
           null,
           null,
+          "A3",
+          "B3",
           null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
+          "B3"
         ]
       }
     },
@@ -135,8 +135,8 @@
           "C#4",
           "D4",
           "D#4",
-          "C4",
-          null
+          "A#3",
+          "C4"
         ]
       }
     },
@@ -151,22 +151,83 @@
         "steps": [
           "F4",
           "E4",
-          "D4",
+          "G4",
           null,
-          "C#5",
-          "C5",
-          "A#4",
+          null,
+          null,
+          null,
           null,
           "F4",
           "E4",
-          "F4",
+          "C4",
           null,
-          "F4",
-          "F#4",
-          "F4",
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    },
+    "stray": {
+      "done": false,
+      "pattern": {
+        "version": 1,
+        "title": "untitled folio",
+        "tempo": 96,
+        "loop": 16,
+        "key": "E minor",
+        "steps": [
+          "E3",
+          "F#3",
+          "G3",
+          null,
+          "G3",
+          "G#3",
+          "A3",
+          null,
+          "C#4",
+          "C4",
+          "B3",
+          null,
+          "G3",
+          "A3",
+          "B3",
           null
         ]
       }
     }
-  }
+  },
+  "drills": [
+    {
+      "id": "drill-itch",
+      "name": "the itch drill",
+      "summary": "loop the scale, swap the final note; rank each ender by how badly it wants to move",
+      "teaches": "tendency tones — which notes are chairs and which are standing on one leg",
+      "pattern": {
+        "version": 1,
+        "title": "the itch drill",
+        "tempo": 104,
+        "loop": 8,
+        "key": "F major",
+        "steps": [
+          "F4",
+          "G4",
+          "A4",
+          "A#4",
+          "C5",
+          "D5",
+          "E5",
+          "F5",
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    }
+  ]
 }

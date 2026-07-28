@@ -207,6 +207,7 @@
     align-items:baseline;
     padding:0.42em 0.5em;
     border-top:1px solid rgba(201,188,160,0.45);
+    cursor:pointer;
   }
   .quest:first-child{border-top-color:var(--rule);}
   .quest.sel{background-color:var(--wash);}   /* flat wash, as the playhead row */
@@ -225,8 +226,23 @@
     align-items:baseline;
     padding:0.42em 0.5em;
     color:var(--faded);
+    cursor:pointer;
   }
   .qfree.act{color:var(--ink);}
+  /* the quiet hairline that separates the eight standing quests from the
+     drills — short études delivered into the log */
+  .qhair{
+    display:flex;
+    align-items:center;
+    gap:0.7em;
+    margin:0.9rem 0 0.1rem;
+    padding:0 0.5em;
+    color:var(--faded);
+    font-variant:small-caps;
+    letter-spacing:0.16em;
+    font-size:0.82rem;
+  }
+  .qhair i{display:block;height:1px;background:var(--rule);opacity:0.7;flex:1;}
   /* the selected quest, read in full: constraint, what it teaches, and the
      shape of whatever is saved in its workspace */
   .qdetail{margin:1rem 0 0;padding:0.9rem 0.5em 0;border-top:1px solid var(--rule);}
@@ -267,11 +283,24 @@
     color:var(--faded);
   }
   .rail .hair{height:1px;background:var(--rule);opacity:0.7;margin:0 0 0.7rem;}
+  /* the same divider in the margin, labelled once */
+  .rhair{
+    display:flex;
+    align-items:center;
+    gap:0.6em;
+    margin:0.55rem 0 0.35rem;
+    color:var(--faded);
+    font-variant:small-caps;
+    letter-spacing:0.16em;
+    font-size:0.78rem;
+  }
+  .rhair i{display:block;height:1px;background:var(--rule);opacity:0.7;flex:1;}
   .rline{
     display:flex;
     align-items:baseline;
     gap:0.5em;
     padding:0.16rem 0;
+    cursor:pointer;
   }
   .rail.right .rline{justify-content:flex-end;}
   .rline .rn{color:var(--faded);}
@@ -339,6 +368,7 @@
         <p>Notes are entered by position, not by letter, so the layout is the same on any keyboard. Entering a note advances the cursor.</p>
         <p>The key and the tempo both belong to the page you are on, and so to the workspace it lives in: each quest keeps its own, free play keeps its own, and changing one changes nothing anywhere else. Either may be changed while the loop runs; the change is heard at the next step, without a restart. A quest's page arrives already tuned &mdash; its own key and its own tempo, chosen to suit its constraint &mdash; so there is nothing to decide before writing; change them here whenever you like, and the change stays with that quest. Free play always begins in C major at 112.</p>
         <p>Every quest is a workspace: a whole page of its own &mdash; steps, title, tempo, loop and key &mdash; and one more page, free play, belongs to no quest. The page in front of you saves itself into the workspace you are in, on every change, as it always did; choosing another quest simply puts a different page in front of you. Nothing is bound, nothing is loaded, nothing is copied, and so nothing can be written over. The margins of this page carry the same thing quietly while you work: on the left every workspace and where you are, on the right the constraint you are under. A narrow window drops both rather than squeeze the column.</p>
+        <p>Below the eight, under a hairline, sit the drills: short &eacute;tudes written into the quest log from outside, each with its own page already on it. They are workspaces like any other &mdash; enter one, write, mark it complete &mdash; and when the folio is served, a drill added to the log while this page is open simply appears in the list, quietly, without a reload and without disturbing a line of what you have written.</p>
         <p>Opened from a file, the folio keeps everything in the browser alone. Started with folio.cmd and opened at http://localhost:4173, it also keeps the whole quest log in a real file &mdash; quests/quest&#8209;log.json &mdash; written a couple of seconds after every change, and read back when it opens. The footer says &middot;&#8239;synced while the quest log is open. If the server goes away the work carries on in the browser and the footer says so; the next change tries again.</p>
         <p>A copy of the folio can also be put on an ordinary web host and sent to somebody. There is no server behind that copy, so it never sends anything anywhere: it reads the quest log that travelled with it once, on a browser that has nothing of its own yet, and after that everything the reader writes is theirs and stays in their browser. The footer says &middot;&#8239;read&#8209;only copy while the quest log is open.</p>
       </div>
@@ -589,7 +619,7 @@
   var roll      = document.getElementById("roll");
   var rollfield = document.getElementById("rollfield");
   var rollbase  = document.getElementById("rollbase");
-  var viz = "column";
+  var viz = "roll";
   var VIZ_KEY = "folio.viz";           /* a preference, not part of the document */
 
   var PC_COLOR = [];
@@ -1117,7 +1147,7 @@
     if (on) keyref.classList.remove("on");
     applyViz();
     if (on) renderQuests();
-    say(on ? "the quest log · " + QUESTS[qsel].short : "‸ cursor row");
+    say(on ? "the quest log · " + selQuest().short : "‸ cursor row");
   }
 
   /* ================= quests as workspaces =================
@@ -1182,7 +1212,83 @@
     stray:      { key:"E minor", tempo:96  },   /* E minor and a stray F♮: the phrygian colour */
     hand:       { key:"C major", tempo:128 }    /* neutral and brisk, for transcription */
   };
+  /* ---- drills: quests written into the log from outside ----
+     The eight above are the standing curriculum and live in this file. A
+     *drill* is a short étude delivered into `quests/quest-log.json` — by a
+     collaborator, or by the assistant working in the repository — and it
+     behaves in every way like a quest: its own workspace, its own page, its
+     own done flag, its own line in both rails.
+
+     A drill definition is
+       { id, name, summary, teaches, pattern }
+     where `pattern` is an ordinary page (the same shape a .folio.json has)
+     and is the workspace's *seed*: it is what the workspace arrives holding
+     the first time the drill is entered, exactly as the built-in seeds are.
+     After that the workspace is the user's, saved where it lives, and the
+     definition is never allowed near it again.
+
+     Definitions are held apart from workspaces on purpose: `DRILLS` is the
+     list of definitions, `wsDoc` holds the pages, keyed by id as always. A
+     workspace whose definition has gone missing keeps a *ghost* definition
+     so that it still renders (by id, with no text) and is never lost; a
+     ghost is not written back out, and is replaced the moment a real
+     definition for that id arrives. */
+  var DRILLS = [];
+  var ALL = QUESTS.slice();        /* the whole list, built-ins then drills */
+
+  function drillById(id){
+    for (var i = 0; i < DRILLS.length; i++) if (DRILLS[i].id === id) return DRILLS[i];
+    return null;
+  }
+  function builtinById(id){
+    for (var i = 0; i < QUESTS.length; i++) if (QUESTS[i].id === id) return QUESTS[i];
+    return null;
+  }
+  /* validate() reports rhythm marks through a shared flag that belongs to the
+     pattern autosave; reading a drill definition must not disturb it */
+  function safeValidate(p){
+    var was = droppedMarks, v = null;
+    try { v = validate(p); } catch (e){ v = null; }
+    droppedMarks = was;
+    return v;
+  }
+  function drillText(s){ return (typeof s === "string") ? s.trim().slice(0, 240) : ""; }
+  function normDrill(o){
+    if (!o || typeof o !== "object" || Array.isArray(o)) return null;
+    if (typeof o.id !== "string" || !o.id.trim()) return null;
+    var id = o.id.trim().slice(0, 60);
+    if (builtinById(id)) return null;            /* a drill never shadows a quest */
+    return {
+      id: id,
+      name: (typeof o.name === "string" && o.name.trim()) ? o.name.trim().slice(0, 60) : id,
+      summary: drillText(o.summary),
+      teaches: drillText(o.teaches),
+      pattern: o.pattern ? safeValidate(o.pattern) : null
+    };
+  }
+  function ghostDrill(id){
+    return { id:id, name:id, summary:"", teaches:"", pattern:null, ghost:true };
+  }
+  /* a definition, read as the quest log reads a quest */
+  function drillQuest(d){
+    return { id:d.id, name:d.name, short:d.name, text:d.summary, teaches:d.teaches, drill:true };
+  }
+  function rebuildList(){
+    var i;
+    ALL.length = 0;
+    for (i = 0; i < QUESTS.length; i++) ALL.push(QUESTS[i]);
+    for (i = 0; i < DRILLS.length; i++) ALL.push(drillQuest(DRILLS[i]));
+    if (qsel >= ALL.length) qsel = ALL.length - 1;
+    if (qsel < 0) qsel = 0;
+    if (qrows) buildQuestRows();      /* the rows exist only after the page is built */
+    if (rrows) buildRailRows();
+  }
+  function allQuests(){ return ALL; }
+  function selQuest(){ return ALL[qsel] || ALL[0]; }
+
   function seededDoc(id){
+    var dr = drillById(id);
+    if (dr) return dr.pattern ? safeValidate(dr.pattern) || defaultDoc() : defaultDoc();
     var d = defaultDoc(), s = SEEDS[id];
     if (!s) return d;
     d.key = normalizeKey(s.key);
@@ -1201,7 +1307,7 @@
     return qState[id];
   }
   function questById(id){
-    for (var i = 0; i < QUESTS.length; i++) if (QUESTS[i].id === id) return QUESTS[i];
+    for (var i = 0; i < ALL.length; i++) if (ALL[i].id === id) return ALL[i];
     return null;
   }
   function activeQuest(){ return qActive ? questById(qActive) : null; }
@@ -1232,13 +1338,29 @@
     renderAll(); renderQuests();
   }
   function chooseWorkspace(){
-    var q = QUESTS[qsel];
+    var q = selQuest();
+    if (!q) return;
     if (qActive === q.id){ switchWorkspace(null); say("free play · no constraint"); return; }
     switchWorkspace(q.id);
     say(q.short + " · its own page" + (questHasContent(q.id) ? "" : ", empty"));
   }
+  /* the same switch, reached by mouse: a quest row or a rail line. Clicking
+     the workspace you are in returns to free play, as enter does. */
+  function clickWorkspace(id){
+    if (id !== null){
+      for (var i = 0; i < ALL.length; i++) if (ALL[i].id === id){ qsel = i; break; }
+    }
+    if (qActive === id){
+      if (id === null) return;
+      switchWorkspace(null); say("free play · no constraint"); return;
+    }
+    switchWorkspace(id);
+    if (id === null){ say("free play · no constraint"); return; }
+    var q = questById(id);
+    say(q.short + " · its own page" + (questHasContent(id) ? "" : ", empty"));
+  }
   function toggleComplete(){
-    var q = QUESTS[qsel], s = questSlot(q.id);
+    var q = selQuest(), s = questSlot(q.id);
     s.done = !s.done;
     save(); renderQuests();
     say(q.short + (s.done ? " · complete" : " · set aside"));
@@ -1248,11 +1370,22 @@
   function stateToJSON(){
     stash();
     var out = { folio:"quest-log", version:2, active:qActive, free:wsFree, quests:{} };
-    for (var i = 0; i < QUESTS.length; i++){
-      var id = QUESTS[i].id, s = qState[id], d = wsDoc[id];
+    var i, id, s, d;
+    for (i = 0; i < ALL.length; i++){
+      id = ALL[i].id; s = qState[id]; d = wsDoc[id];
       if (!d && !(s && s.done)) continue;
       out.quests[id] = { done: !!(s && s.done), pattern: d || null };
     }
+    /* every drill definition this session knows travels back out with the
+       state, so that a PUT can never be the thing that loses one; ghosts are
+       not definitions and are not written */
+    var ds = [];
+    for (i = 0; i < DRILLS.length; i++){
+      d = DRILLS[i];
+      if (d.ghost) continue;
+      ds.push({ id:d.id, name:d.name, summary:d.summary, teaches:d.teaches, pattern:d.pattern });
+    }
+    if (ds.length) out.drills = ds;
     return out;
   }
   function isQuestLog(o){
@@ -1265,14 +1398,25 @@
      into it and nothing is lost. */
   function applyState(o){
     if (!isQuestLog(o)) return false;
-    var id, q, p;
-    wsDoc = {}; qState = {};
+    var id, q, p, i;
+    wsDoc = {}; qState = {}; DRILLS = [];
+    /* the drill definitions the log carries, in the order it carries them */
+    if (Array.isArray(o.drills)){
+      for (i = 0; i < o.drills.length; i++){
+        var nd = normDrill(o.drills[i]);
+        if (nd && !drillById(nd.id)) DRILLS.push(nd);
+      }
+    }
+    rebuildList();
     if (o.free){ p = validate(o.free); if (p) wsFree = p; }
     if (o.quests && typeof o.quests === "object"){
       for (id in o.quests){
-        if (!Object.prototype.hasOwnProperty.call(o.quests, id) || !questById(id)) continue;
+        if (!Object.prototype.hasOwnProperty.call(o.quests, id)) continue;
         q = o.quests[id];
         if (!q || typeof q !== "object") continue;
+        /* a workspace whose definition is not here: kept, and given a ghost
+           so that it still has a line, a page and a name (its id) */
+        if (!questById(id)){ DRILLS.push(ghostDrill(id)); rebuildList(); }
         questSlot(id).done = !!q.done;
         /* a workspace page is an ordinary pattern, read by the same validator
            as a file; version 1's "motif" is the same thing under its old name */
@@ -1327,6 +1471,10 @@
   var SYNC_URL = "api/quest-log";
   var SEED_URL = "quests/quest-log.json";
   var SYNC_DEBOUNCE = 2000;
+  var POLL_MS = 10000;               /* how often the file is looked at again */
+  var pollTimer = null;
+  var logETag = null;                /* what the server last said the file was */
+  var putInFlight = false;           /* a push is on the wire right now */
   var syncOn = false;                /* set at boot: are we served over http? */
   var staticMode = false;            /* served over http, but by a dumb host */
   var syncState = "idle";            /* idle | ok | failed */
@@ -1360,24 +1508,102 @@
     renderAll(); renderQuests();
     return true;
   }
+  function etagOf(r){
+    try { return (r && r.headers && r.headers.get && r.headers.get("etag")) || null; }
+    catch (e){ return null; }
+  }
   function syncFlush(){
     if (!syncOn || typeof fetch !== "function") return;
     var text = JSON.stringify(stateToJSON(), null, 2);
+    putInFlight = true;
     try {
       fetch(SYNC_URL, {
         method: "PUT",
         headers: { "content-type": "application/json" },
         body: text
       }).then(function(r){
+        putInFlight = false;
         var was = syncState;
         syncState = (r && r.ok) ? "ok" : "failed";
+        /* the server tells us what it just wrote, so the next poll is a 304 */
+        var et = etagOf(r);
+        if (et) logETag = et;
         if (syncState !== was) syncTouch();
       }, function(){
+        putInFlight = false;
         var was = syncState;
         syncState = "failed";
         if (syncState !== was) syncTouch();
       });
-    } catch (e){ syncState = "failed"; syncTouch(); }
+    } catch (e){ putInFlight = false; syncState = "failed"; syncTouch(); }
+  }
+
+  /* ---- live delivery: the file is looked at again, gently ----
+     The tab is open for hours; a drill written into the file in the meantime
+     should arrive without a reload, and without the next autosave writing it
+     straight back out of existence. So, in server mode only, the log is
+     re-read about every ten seconds — conditionally, so an unchanged file
+     costs one 304 — and the merge is deliberately as narrow as it can be:
+
+       adopt a drill *definition* whose id this session has never seen
+       (or has only as a ghost), and nothing else, ever.
+
+     Not workspaces, not `free`, not done flags, not `active`, not the
+     built-in quests, and nothing is ever removed. A drill that is already
+     known is left exactly as it is, so an edit to a definition on disk does
+     not reach into a workspace someone is working in. The poll stands aside
+     while a push is pending or in flight, so the two never cross. */
+  function pollTick(){
+    if (!syncOn || staticMode || syncMute) return;
+    if (syncTimer || putInFlight) return;        /* a write is pending: not now */
+    if (typeof fetch !== "function") return;
+    var h = { "accept": "application/json" };
+    if (logETag) h["if-none-match"] = logETag;
+    try {
+      fetch(SYNC_URL, { headers: h }).then(function(r){
+        if (!r) return;
+        if (r.status === 304) return;            /* nothing has changed: free */
+        if (!r.ok) return;
+        var et = etagOf(r);
+        if (et) logETag = et;
+        return r.json().then(function(o){ mergeDrills(o); }, function(){});
+      }, function(){});
+    } catch (e){}
+  }
+  function pollStart(){
+    if (pollTimer || !syncOn || staticMode) return;
+    if (typeof setInterval !== "function") return;
+    pollTimer = setInterval(pollTick, POLL_MS);
+  }
+  function mergeDrills(o){
+    if (!isQuestLog(o) || !Array.isArray(o.drills)) return 0;
+    var added = [], i, d, cur;
+    for (i = 0; i < o.drills.length; i++){
+      d = normDrill(o.drills[i]);
+      if (!d) continue;
+      cur = drillById(d.id);
+      if (cur && !cur.ghost) continue;           /* known: never overwritten */
+      if (cur) DRILLS[DRILLS.indexOf(cur)] = d;  /* a ghost, given its name back */
+      else DRILLS.push(d);
+      added.push(d);
+    }
+    if (!added.length) return 0;
+    rebuildList();
+    /* the arrival is kept locally, but is not a change to push back */
+    syncMute = true;
+    try { save(); } finally { syncMute = false; }
+    renderQuests();
+    announceDrills(added);
+    return added.length;
+  }
+  /* quiet, and once: the line goes back to whatever it said next time
+     anything speaks */
+  function announceDrills(added){
+    var names = [], i;
+    for (i = 0; i < added.length; i++) names.push(added[i].name);
+    var was = lastSaid;
+    say(was + " · a drill arrived: " + names.join(", "));
+    lastSaid = was;
   }
   /* the footer carries the note only while the quest log is open, so it is
      refreshed rather than announced */
@@ -1441,13 +1667,16 @@
         if (!r) return;
         if (r.status === 404){
           /* server.mjs says so in JSON; a static host says it in HTML or text */
-          if (jsonish(r)) syncState = "ok";      /* no log yet: ours becomes it */
+          if (jsonish(r)){ syncState = "ok"; pollStart(); }   /* no log yet: ours becomes it */
           else goStatic(fresh);
           return;
         }
         if (!r.ok){ syncState = "failed"; syncTouch(); return; }
+        var et0 = etagOf(r);
+        if (et0) logETag = et0;
         return r.json().then(function(o){
           syncState = "ok";
+          pollStart();
           if (applyServerState(o))
             say("restored from the server ‸ cursor row" +
                 (activeQuest() ? " · ⚔ " + activeQuest().short : ""));
@@ -1479,18 +1708,41 @@
   }
 
   /* ---- the quest page ---- */
+  /* the list is rebuilt whenever it changes shape, which is only when a drill
+     arrives or a whole state is applied; the eight built-ins come first, then
+     a quiet labelled hairline, then the drills in the order they arrived */
   var qrows = [];
-  for (var qi = 0; qi < QUESTS.length; qi++){
-    var qrow = document.createElement("div");
-    qrow.className = "quest";
-    var qc = document.createElement("span"); qc.className = "qcaret";
-    var qg = document.createElement("span"); qg.className = "qsigil";
-    var qn = document.createElement("div"); qn.className = "qname"; qn.textContent = plainName(QUESTS[qi]);
-    var qt = document.createElement("span"); qt.className = "qstat";
-    qrow.appendChild(qc); qrow.appendChild(qg); qrow.appendChild(qn); qrow.appendChild(qt);
-    qlist.appendChild(qrow);
-    qrows.push({ el: qrow, caret: qc, sigil: qg, stat: qt });
+  function hairline(cls, label){
+    var el = document.createElement("div");
+    el.className = cls;
+    var sp = document.createElement("span"); sp.textContent = label;
+    var ln = document.createElement("i");
+    el.appendChild(sp); el.appendChild(ln);
+    return el;
   }
+  function buildQuestRows(){
+    while (qlist.firstChild) qlist.removeChild(qlist.firstChild);
+    qrows.length = 0;
+    for (var qi = 0; qi < ALL.length; qi++){
+      if (ALL[qi].drill && (qi === 0 || !ALL[qi - 1].drill))
+        qlist.appendChild(hairline("qhair", "drills"));
+      var qrow = document.createElement("div");
+      qrow.className = "quest";
+      var qc = document.createElement("span"); qc.className = "qcaret";
+      var qg = document.createElement("span"); qg.className = "qsigil";
+      var qn = document.createElement("div"); qn.className = "qname"; qn.textContent = plainName(ALL[qi]);
+      var qt = document.createElement("span"); qt.className = "qstat";
+      qrow.appendChild(qc); qrow.appendChild(qg); qrow.appendChild(qn); qrow.appendChild(qt);
+      qrow.addEventListener("click", (function(id){
+        return function(){ clickWorkspace(id); };
+      })(ALL[qi].id));
+      qlist.appendChild(qrow);
+      qrows.push({ el: qrow, caret: qc, sigil: qg, stat: qt });
+    }
+  }
+  buildQuestRows();
+  qfree.addEventListener("click", function(){ clickWorkspace(null); });
+  var qi;
 
   /* the contour: the selected quest's page in the roll's language, shrunk —
      one coloured dab per sounding step, pitch as height. No rules, no grid,
@@ -1538,8 +1790,8 @@
     return questHasContent(id) ? "•" : "";
   }
   function renderQuests(){
-    for (var i = 0; i < QUESTS.length; i++){
-      var q = QUESTS[i], s = questSlot(q.id), r = qrows[i];
+    for (var i = 0; i < ALL.length && i < qrows.length; i++){
+      var q = ALL[i], s = questSlot(q.id), r = qrows[i];
       r.el.classList.toggle("sel", i === qsel);
       r.caret.textContent = (i === qsel) ? "‸" : "";
       r.sigil.textContent = (q.id === qActive) ? "⚔" : "";
@@ -1553,10 +1805,12 @@
     renderRails();
   }
   function renderQuestDetail(){
-    var q = QUESTS[qsel], s = questSlot(q.id), bits = [];
+    var q = selQuest(), s, bits = [];
+    if (!q) return;
+    s = questSlot(q.id);
     qdname.textContent = plainName(q);
-    qdtext.textContent = q.text;
-    qdteach.textContent = "Teaches: " + q.teaches;
+    qdtext.textContent = q.text || "";
+    qdteach.textContent = q.teaches ? "Teaches: " + q.teaches : "";
     bits.push(q.id === qActive ? "⚔ you are working here"
                                : "enter to work here — its page is kept apart");
     if (s.done) bits.push("❧ complete");
@@ -1565,18 +1819,19 @@
     renderContour(q.id);
   }
   function moveQuest(d){
-    qsel = (qsel + d + QUESTS.length) % QUESTS.length;
+    qsel = (qsel + d + ALL.length) % ALL.length;
     renderQuests();
-    say(QUESTS[qsel].short);
+    say(selQuest().short);
   }
 
   /* ---- the side rails ----
      The page has always had wide margins. The left one says where every
      workspace is and which one you are in; the right one keeps the standing
-     constraint in view while you noodle, which is the whole point of it. Both
-     are read-only, quiet, and gone entirely on a narrow window. */
+     constraint in view while you noodle, which is the whole point of it. The
+     left one's lines switch workspaces on click; both are quiet, and gone
+     entirely on a narrow window. */
   var rrows = [];
-  (function buildRail(){
+  function buildRailRows(){
     function line(name){
       var el = document.createElement("div");
       el.className = "rline";
@@ -1586,21 +1841,33 @@
       railquests.appendChild(el);
       return { el: el, glyph: g, name: n };
     }
+    while (railquests.firstChild) railquests.removeChild(railquests.firstChild);
+    rrows.length = 0;
     rrows.push(line("free play"));
-    for (var i = 0; i < QUESTS.length; i++) rrows.push(line(QUESTS[i].short));
-  })();
+    rrows[0].el.addEventListener("click", function(){ clickWorkspace(null); });
+    for (var i = 0; i < ALL.length; i++){
+      if (ALL[i].drill && (i === 0 || !ALL[i - 1].drill))
+        railquests.appendChild(hairline("rhair", "drills"));
+      var rr = line(ALL[i].short);
+      rr.el.addEventListener("click", (function(id){
+        return function(){ clickWorkspace(id); };
+      })(ALL[i].id));
+      rrows.push(rr);
+    }
+  }
+  buildRailRows();
   function renderRails(){
     rrows[0].el.classList.toggle("act", !qActive);
     rrows[0].glyph.textContent = qActive ? "" : "⚔";
-    for (var i = 0; i < QUESTS.length; i++){
-      var id = QUESTS[i].id, r = rrows[i + 1];
+    for (var i = 0; i < ALL.length && i + 1 < rrows.length; i++){
+      var id = ALL[i].id, r = rrows[i + 1];
       r.el.classList.toggle("act", id === qActive);
       r.glyph.textContent = questGlyph(id);
     }
     var q = activeQuest();
     railtitle.textContent = q ? plainName(q) : "Free play";
-    railtext.textContent  = q ? q.text : "No constraint. Whatever you write here stays here.";
-    railteach.textContent = q ? "Teaches: " + q.teaches : "";
+    railtext.textContent  = q ? (q.text || "") : "No constraint. Whatever you write here stays here.";
+    railteach.textContent = (q && q.teaches) ? "Teaches: " + q.teaches : "";
     railstate.textContent = q ? (questSlot(q.id).done ? "❧ complete" : "not yet complete")
                               : "F3 for the quest log";
   }
@@ -1985,7 +2252,7 @@
     return restored || have;
   }
   var restored = bootState();
-  try { if (localStorage.getItem(VIZ_KEY) === "roll") viz = "roll"; } catch (e){}
+  try { if (localStorage.getItem(VIZ_KEY) === "column") viz = "column"; } catch (e){}
   try { if (localStorage.getItem(ENTRY_KEY) === "relative") relative = true; } catch (e){}
   applyViz();
   renderAll();
