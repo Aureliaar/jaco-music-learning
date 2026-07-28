@@ -333,9 +333,11 @@
           <dt>F3</dt><dd>open or close the quest log</dd>
           <dt>F4</dt><dd>the pad's entry method: relative (contour) or absolute</dd>
           <dt>the arrows, here</dt><dd>the key of the piece: left, right move the tonic; up, down make it major or minor</dd>
+          <dt>here, the two keys left of backspace</dt><dd>the tempo, down and up by four (60&ndash;180); with shift, by one</dd>
           <dt>in the quest log</dt><dd>the arrows choose a quest; enter opens its page and works there; enter on the quest you are already in returns to free play; C marks it complete; F3 or escape closes</dd>
         </dl>
         <p>Notes are entered by position, not by letter, so the layout is the same on any keyboard. Entering a note advances the cursor.</p>
+        <p>The key and the tempo both belong to the page you are on, and so to the workspace it lives in: each quest keeps its own, free play keeps its own, and changing one changes nothing anywhere else. Either may be changed while the loop runs; the change is heard at the next step, without a restart. A quest's page arrives already tuned &mdash; its own key and its own tempo, chosen to suit its constraint &mdash; so there is nothing to decide before writing; change them here whenever you like, and the change stays with that quest. Free play always begins in C major at 112.</p>
         <p>Every quest is a workspace: a whole page of its own &mdash; steps, title, tempo, loop and key &mdash; and one more page, free play, belongs to no quest. The page in front of you saves itself into the workspace you are in, on every change, as it always did; choosing another quest simply puts a different page in front of you. Nothing is bound, nothing is loaded, nothing is copied, and so nothing can be written over. The margins of this page carry the same thing quietly while you work: on the left every workspace and where you are, on the right the constraint you are under. A narrow window drops both rather than squeeze the column.</p>
         <p>Opened from a file, the folio keeps everything in the browser alone. Started with folio.cmd and opened at http://localhost:4173, it also keeps the whole quest log in a real file &mdash; quests/quest&#8209;log.json &mdash; written a couple of seconds after every change, and read back when it opens. The footer says &middot;&#8239;synced while the quest log is open. If the server goes away the work carries on in the browser and the footer says so; the next change tries again.</p>
       </div>
@@ -361,6 +363,7 @@
           <dt>&hellip; hold L1 or R1</dt><dd>the move leaps: L1 (LB) a third, R1 (RB) a fifth, both together a semitone, out of the key; tapped alone they are still the octave</dd>
           <dt>&hellip; d&#8209;pad &#8592;&#8594;</dt><dd>nudge the note under the cursor a step of the key, without advancing (in the roll this lives on &#8593;&#8595;, in either method)</dd>
           <dt>here, d&#8209;pad &#8592;&#8594;</dt><dd>the tonic; &#9651; or &#10005; (Y, A) make the key major or minor</dd>
+          <dt>here, d&#8209;pad &#8593;&#8595;</dt><dd>the tempo, up and down by four (60&ndash;180); hold L1 or R1 for one</dd>
           <dt>in the quest log</dt><dd>d&#8209;pad up, down choose a quest; &#10005; (A) opens its page, or returns to free play if you are in it already; &#9675; (B) marks it complete; select or R3 closes</dd>
         </dl>
         <p>The cross hotbar, borrowed: a trigger raises the eight slots, letting go gives the d&#8209;pad back to navigation. Twenty&#8209;four semitones, every pitch of two octaves, counted up from the octave in the header; entry advances and sounds the note as on the keyboard. A DualSense and an Xbox pad report the same positions. A browser notices a pad only after you press one of its buttons: press start if nothing answers. Sound may wait for one keyboard touch.</p>
@@ -419,6 +422,9 @@
   var LEGACY_MARK = "x";
 
   var DEFAULT_KEY = "C major";
+  /* the tempo, set on the key page beside the key: coarse steps of four, a
+     fine step of one, and a range wide enough for a study and no wider */
+  var TEMPO_MIN = 60, TEMPO_MAX = 180, TEMPO_STEP = 4, TEMPO_FINE = 1;
 
   /* a page: the whole document. Every workspace holds one of these. */
   function defaultDoc(){
@@ -1056,6 +1062,20 @@
     renderMeta(); save(); say("the key · " + doc.key);
   }
 
+  /* ---- the tempo, set on the same page as the key ----
+     Tempo belongs to the document, so it belongs to the workspace: each quest
+     keeps its own, free play keeps its own, and none of them can see another.
+     Playback needs no special handling — the lookahead scheduler reads the
+     step duration afresh at the top of every window, so a change lands on the
+     next scheduled step, with no restart and no click. */
+  function shiftTempo(d){
+    var want = doc.tempo + d;
+    var n = Math.max(TEMPO_MIN, Math.min(TEMPO_MAX, want));
+    doc.tempo = n;
+    renderMeta(); save();
+    say("tempo · " + n + (n !== want ? " — the end of the range" : ""));
+  }
+
   /* the loop: playback repeats the first 4, 8, or all 16 steps. Editing is
      never fenced in — the cursor still walks the whole page. */
   function setLoop(n){
@@ -1142,6 +1162,33 @@
       teaches:"the distance between imitation and voice is about four decisions." }
   ];
 
+  /* ---- the seeds: every quest's page arrives already tuned ----
+     A key and a tempo chosen to suit the constraint, so that nothing has to
+     be decided before the first note and the ear meets a different colour in
+     each quest without ever being asked to pick one. The seed is applied once
+     — when a quest's workspace is made, which is the first time it is entered
+     — and is an ordinary starting value from that moment on: changing either
+     on the key page overrides it, and the override is what is saved. A page
+     that already exists is never re-seeded, and free play is never seeded at
+     all: it is C major at 112, as it always was. */
+  var SEEDS = {
+    ladder:     { key:"G major", tempo:120 },   /* bright, neutral — a scale is easy to hide in it */
+    whitespace: { key:"A minor", tempo:88  },   /* slow enough that the silences breathe */
+    summit:     { key:"D major", tempo:112 },   /* open, climbing */
+    stones:     { key:"A minor", tempo:100 },   /* sparse and steady */
+    ouroboros:  { key:"D minor", tempo:100 },   /* circular, brooding — the seam quest */
+    callanswer: { key:"F major", tempo:104 },   /* conversational warmth */
+    stray:      { key:"E minor", tempo:96  },   /* E minor and a stray F♮: the phrygian colour */
+    hand:       { key:"C major", tempo:128 }    /* neutral and brisk, for transcription */
+  };
+  function seededDoc(id){
+    var d = defaultDoc(), s = SEEDS[id];
+    if (!s) return d;
+    d.key = normalizeKey(s.key);
+    d.tempo = Math.max(TEMPO_MIN, Math.min(TEMPO_MAX, s.tempo));
+    return d;
+  }
+
   var qsel = 0;                /* the selection cursor on the quest page */
   var qActive = null;          /* the active workspace: a quest id, or null for free play */
   var qState = {};             /* id -> { done:bool } */
@@ -1163,7 +1210,7 @@
   function stash(){ if (qActive) wsDoc[qActive] = doc; else wsFree = doc; }
   function workspaceDoc(id){
     if (!id) return wsFree || (wsFree = defaultDoc());
-    return wsDoc[id] || (wsDoc[id] = defaultDoc());
+    return wsDoc[id] || (wsDoc[id] = seededDoc(id));
   }
   function docHasNotes(d){
     if (!d) return false;
@@ -1543,7 +1590,10 @@
       return;
     }
 
-    /* the key page carries one setting: the key of the piece */
+    /* the key page carries the two settings of the piece: its key and its
+       tempo. The arrows were already spoken for by the key, so the tempo
+       takes the two keys left of backspace — free on this page, and adjacent
+       by position on any layout. Shift makes the step fine. */
     if (keyref.classList.contains("on")){
       switch (code){
         case "Escape":     toggleKeyref(); return;
@@ -1551,6 +1601,12 @@
         case "ArrowRight": e.preventDefault(); shiftTonic(1);    return;
         case "ArrowUp": case "ArrowDown":
                            e.preventDefault(); toggleKeyMode();  return;
+        case "Minus": case "NumpadSubtract":
+                           e.preventDefault();
+                           shiftTempo(e.shiftKey ? -TEMPO_FINE : -TEMPO_STEP); return;
+        case "Equal": case "NumpadAdd":
+                           e.preventDefault();
+                           shiftTempo(e.shiftKey ?  TEMPO_FINE :  TEMPO_STEP); return;
       }
       return;                        /* otherwise a page, not a mode with keys */
     }
@@ -1705,12 +1761,17 @@
       }
       gpPrev = cur; return;
     }
-    /* the key page holds one setting, reachable without a keyboard:
-       d-pad left and right move the tonic, △ or ✕ make it major or minor */
+    /* the key page holds the piece's two settings, both reachable without a
+       keyboard: d-pad left and right move the tonic, △ or ✕ make it major or
+       minor, and d-pad up and down are the tempo — by four, or by one with a
+       bumper held. */
     if (keyref.classList.contains("on")){
       if (gpEdge(cur, GP_TRIANGLE) || gpEdge(cur, GP_CROSS)) toggleKeyMode();
+      var fine = (cur[GP_L1] || cur[GP_R1]) ? TEMPO_FINE : TEMPO_STEP;
       gpNav(cur[GP_DL], "left",  -1, now, shiftTonic);
       gpNav(cur[GP_DR], "right",  1, now, shiftTonic);
+      gpNav(cur[GP_DU], "up",    fine, now, shiftTempo);
+      gpNav(cur[GP_DD], "down", -fine, now, shiftTempo);
       gpPrev = cur; return;
     }
     if (questsEl.classList.contains("on")){

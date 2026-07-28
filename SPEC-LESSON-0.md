@@ -14,8 +14,12 @@ Boots in under one second. Fully operable without a mouse.
 
 No velocity editing (L4). No swing/humanize (L4). No second track (L2). No
 chords or note lengths — every note is one step (L3). No samples (L5). No
-pattern chaining (L6). No tempo UI: tempo lives in the save file only;
-editing it there is permitted and costs nothing but shame.
+pattern chaining (L6). ~~No tempo UI: tempo lives in the save file only;
+editing it there is permitted and costs nothing but shame.~~
+**SUPERSEDED 2026-07-28** — the "No tempo UI" clause is withdrawn at the
+user's request. Tempo is now set on the F1 key page, beside the key. The
+clause is kept above, struck through, because it is the reason the tempo
+control took as long as it did to arrive. See "The tempo".
 
 ## Technical shape
 
@@ -302,6 +306,48 @@ Every relative result — moves and nudges alike — is clamped to **C2…C6**
 "the end of the range" when a move is clamped. The anchor is clamped into the
 same range before the move is computed.
 
+## The tempo (added 2026-07-28; supersedes the "no tempo UI" non-goal)
+
+Tempo was always in the save file — `"tempo": 112`, version 0 onward — and
+was always read by the scheduler. What changes is that it is now **settable
+from the app**, on the F1 key page, beside the key. Nothing about the file
+format changes, and no new field appears anywhere.
+
+- **Range 60–180 BPM**, clamped at both ends; the footer says "the end of the
+  range" when a press is clamped, in the same words the octave and the
+  relative moves already use.
+- **Coarse step 4 BPM, fine step 1 BPM.** Four is the useful unit — a few
+  presses move the feel of the piece; one is for settling.
+- **Per workspace, like the rest of the document.** Each quest holds its own
+  tempo, free play holds its own, and changing one changes nothing anywhere
+  else. It travels in the workspace's pattern in `quest-log.json` and in the
+  `.folio.json` export, exactly as it always did.
+- **Live.** The lookahead scheduler reads the step duration at the top of
+  every window (25 ms), so a change made during playback takes effect on the
+  next step scheduled: no restart, no re-scheduling of a step already
+  promised, no click. A step already committed keeps the spacing it was
+  given, which is why one step-length of the old tempo survives a change —
+  that is correct, and it is what keeps the audio clean.
+- The header meta line already showed the tempo and keeps doing so:
+  `untitled folio · 120 · octave 4 · G major`.
+
+### Bindings
+
+The arrows on the key page were already the key, so the tempo takes the two
+keys immediately left of backspace — free on that page, and adjacent by
+**position** on any layout, per the layout-independence rule (`Minus` and
+`Equal`; the numpad's `-`/`+` do the same).
+
+| | keyboard | gamepad |
+|---|---|---|
+| tempo down / up, by 4 | **the two keys left of backspace** (`Minus` / `Equal`), or numpad `-` / `+` | d-pad ↓ / ↑ |
+| … by 1 (fine) | the same, with `Shift` | the same, holding L1 **or** R1 |
+
+Nothing already bound on that page moves: `←`/`→` and d-pad ←/→ are still
+the tonic, `↑`/`↓` and △/✕ are still major/minor, `Escape` still closes it.
+The bumpers are only a modifier here — they are not the base octave on this
+page, because the page swallows everything else already.
+
 ## Quests as workspaces (added 2026-07-28; replaces the quest tracker)
 
 The eight Lesson 1 constraint études from `QUESTS.md` are embedded in
@@ -351,6 +397,55 @@ the entry method are preferences and do not belong to a workspace.
 or to load. All bindings are by `KeyboardEvent.code`, per the
 layout-independence rule; while the log is open, note keys and the gamepad
 crossbar are swallowed and cannot reach the pattern.
+
+### Seeded quest keys and tempos (added 2026-07-28)
+
+Choosing a key and a tempo is not a Lesson 0 decision — at L0 the user is
+learning to place notes, and being asked "what key? how fast?" before the
+first note is a toll, not a lesson. So **the app decides, once, per quest**.
+
+A quest's workspace is created the first time that quest is entered. At that
+moment, and only then, it is seeded with a key and a tempo chosen to suit its
+constraint, instead of the C-major/112 default. The user then simply writes;
+the header meta line says what they are in. Over eight quests they meet eight
+different colours without ever having been asked to pick one.
+
+| quest | key | tempo | why |
+|---|---|---|---|
+| `ladder` | G major | 120 | bright and neutral — a scale is easy to hide in it |
+| `whitespace` | A minor | 88 | slow enough that the silences breathe |
+| `summit` | D major | 112 | open, climbing |
+| `stones` | A minor | 100 | sparse and steady |
+| `ouroboros` | D minor | 100 | circular, brooding — the seam quest |
+| `callanswer` | F major | 104 | conversational warmth |
+| `stray` | E minor | 96 | E minor plus a stray F♮ is the sound the quest is about |
+| `hand` | C major | 128 | neutral and brisk, for transcription |
+
+Rules, all of them:
+
+- **Seed on creation only.** `workspaceDoc(id)` seeds when it makes the page.
+  A workspace that already exists — from storage, from `quest-log.json`, from
+  an imported log, from a log written before the seeds existed — is never
+  touched.
+- **Free play is never seeded.** It is C major at 112, as it always was.
+- **The seed is a starting value, not a rule.** The F1 page changes both, the
+  change is autosaved into that workspace like any other edit, and it
+  survives switching away and reloading. There is no "reset to seed".
+- **Nothing is blocked and nothing is confirmed.** No prompt, no modal, no
+  flag; note entry works from the first keystroke in a fresh quest.
+- **The pattern format gains no field.** The seed is not recorded as a seed —
+  it is simply what `key` and `tempo` happen to be in that workspace's
+  ordinary version-1 pattern.
+- The seeded key is a real key: relative entry counts its steps in it, and an
+  empty page anchors on its tonic. The seeded tempo is a real tempo: it is
+  what the scheduler plays.
+
+> An earlier design for this slot — a "pre-flight rite" that held note entry
+> in an empty quest until a key and a tempo had been chosen or confirmed —
+> was specified and then withdrawn by the user before it shipped, on the
+> grounds that it made the user do the work the app should be doing. Recorded
+> here so the seeds are not mistaken for a simplification of something that
+> once existed: they replaced it before it existed.
 
 ### The quest page
 
