@@ -22,7 +22,8 @@ editing it there is permitted and costs nothing but shame.
 - **One file:** `folio.html`. Inline CSS + JS, zero dependencies, zero
   network requests, zero build step. Opens from `file://`.
 - **Audio:** Web Audio API. One oscillator voice.
-- **Persistence:** autosave to `localStorage` on every edit; `Ctrl+S`
+- **Persistence:** autosave to `localStorage` on every edit (into the active
+  workspace — see "Quests as workspaces"); `Ctrl+S`
   exports a `.folio.json` file; `Ctrl+O` imports one (file picker is the
   one permitted mouse interaction, and even it should also accept
   drag-and-drop).
@@ -136,6 +137,11 @@ column" (the tracker list) and "the roll"; the choice persists in
 - Pad navigation grew with it (2026-07-28): the bare d-pad moves the
   cursor in any direction, and the right stick strides by fours, beat to
   beat, on either axis.
+- While the roll is open (2026-07-28, later the same day) the pairs
+  **trade places** to match the drawing — time runs right, height is
+  pitch — in **either entry method**: ←/→ walk the cursor and ↑/↓ nudge
+  the note under it up/down a step of the key. The left stick follows
+  the d-pad on **both axes** there, not just up/down.
 
 ### Save format, version 1
 
@@ -168,7 +174,7 @@ A step entry is a note string or `null` (empty).
 A second way to write notes with the pad: instead of naming a pitch, you name
 a **move** — up, down, again, rest — and the app works out the pitch. It is
 an **input method, not a data model**. Steps remain absolute note strings in
-memory, in the save file, in the autosave and in quest motifs; nothing about
+memory, in the save file, in the autosave and in every quest workspace; nothing about
 the format changes at all. The mode exists only between the button press and
 the note that gets written.
 
@@ -251,6 +257,10 @@ Nudge — change a note without advancing:
 Up and down (d-pad, left stick) remain time, the right stick still strides by
 fours, and an empty step says so rather than writing anything.
 
+While the roll is open the pairs trade places to match the drawing, in
+either entry method: ← / → (d-pad and left stick alike) walk the cursor,
+↑ / ↓ nudge the note under it up / down a step of the key. See "The roll".
+
 ### The anchor rule
 
 A relative move needs a previous note to move *from*.
@@ -290,95 +300,186 @@ Every relative result — moves and nudges alike — is clamped to **C2…C6**
 "the end of the range" when a move is clamped. The anchor is clamped into the
 same range before the move is computed.
 
-## Quest tracker (added 2026-07-28)
+## Quests as workspaces (added 2026-07-28; replaces the quest tracker)
 
-An in-app quest log, FF-quest-log flavored: the eight Lesson 1 constraint
-études from `QUESTS.md` are embedded in `folio.html` as a static array (no
-fetch — the app must keep working from `file://`). Each quest holds one
-**motif**: a snapshot of the page, bound and loaded back on demand.
+The eight Lesson 1 constraint études from `QUESTS.md` are embedded in
+`folio.html` as a static array (no fetch — the app must keep working from
+`file://`). Each quest is a **workspace**: a whole page of its own — steps,
+title, tempo, loop and key. One more workspace, **free play**, belongs to no
+quest. The active workspace is the page in front of you.
 
-The quest log is a **page**, exactly like the F1 key reference — it replaces
-the column, no overlay, no dimming, no dialogs. The two pages are mutually
-exclusive: opening one closes the other. While either page is open, note
-keys and the gamepad crossbar are swallowed and cannot reach the pattern.
+### Why the bind/load model was removed
+
+The first version (the morning of 2026-07-28) gave each quest one *motif*,
+bound with `B`/□ and loaded back with `L`/△ behind a two-press confirm. It
+produced a data-loss-shaped failure the same day: a piece was composed under
+a quest, believed to be attached to it, exported — and the log was empty,
+because the bind key was never pressed. Explicit bind and load are therefore
+**dead**. Nothing in the app now asks the user to remember to save.
+
+### The model
+
+1. Every quest holds its own full pattern document. So does free play.
+2. The page autosaves into the active workspace on **every modification** —
+   the same autosave mechanism as before, extended to write the workspace
+   set instead of one document.
+3. Choosing a quest on the quest page **switches workspaces**. Because the
+   page is already saved where it lives, the switch is instant and lossless
+   in both directions. No confirm, no bind, no load.
+4. Choosing the quest you are already in returns to **free play**.
+5. Nothing is ever copied between workspaces, so nothing can be overwritten:
+   each workspace is its own document.
+
+Switching resets the cursor to step 1 and stops playback. The base octave and
+the entry method are preferences and do not belong to a workspace.
 
 ### Bindings
 
 | | keyboard | gamepad |
 |---|---|---|
-| open / close the quest log | `F3` (also `Escape` to close) | select, which cycles the pages |
-| move the selection (wraps) | `ArrowUp` / `ArrowDown` | d-pad up / down, left stick |
-| set / clear the objective | `Enter` | ✕ (A) |
-| bind the page as this quest's motif | `KeyB` | □ (X) |
-| load the bound motif | `KeyL` | △ (Y) |
+| open / close the quest log | `F3` (also `Escape`) | select (cycles the pages), or R3 |
+| move the selection (wraps) | all four arrows | d-pad up / down, left stick |
+| switch to that quest's workspace | `Enter` | ✕ (A) |
+| … the quest you are in: back to free play | `Enter` again | ✕ (A) again |
 | toggle complete | `KeyC` | ○ (B) |
-| export the quest log to disk | `Ctrl+S` while the log is open | — |
-| import a quest log | `Ctrl+O`, or drop the file anywhere | — |
+| link the log to a file on disk | `KeyK` | — |
+| export the whole state | `Ctrl+S` while the log is open | — |
+| import it | `Ctrl+O`, or drop the file anywhere | — |
 
-The quest log first shipped on `F2`/R3, but the roll (built the same day,
-in a parallel session) claimed the same keys; at merge the roll kept them
-and the quest log moved to `F3`. On the pad, select now walks the pages in
-turn — the key, the quest log, closed. All bindings are by
-`KeyboardEvent.code`, per the layout-independence rule; `KeyB`, `KeyL` and
-`KeyC` remain a note, the loop length and a note on the pattern page —
-they only mean quest actions while the log is open.
+△ (Y) and □ (X) do nothing on the quest page — there is nothing left to bind
+or to load. All bindings are by `KeyboardEvent.code`, per the
+layout-independence rule; while the log is open, note keys and the gamepad
+crossbar are swallowed and cannot reach the pattern.
 
-Loading a motif over written work asks twice: if the page is non-empty and
-differs from the motif, the first press posts "press again to put … over
-the page" in the footer and the second press within 4 s does it. Moving the
-selection or leaving the page cancels the pending confirm. Loading goes
-through the ordinary autosave path, so a loaded motif is immediately the
-current pattern and `Ctrl+S` exports it as a normal `.folio.json` — there
-is no separate motif export.
+### The quest page
 
-### Display and glyphs
+The quest log is a **page**, exactly like the F1 key reference — it replaces
+the column, no overlay, no dimming, no dialogs. The two pages are mutually
+exclusive.
 
-- The standing objective appears on the header meta line in the quiet
-  style: `untitled folio · 112 · octave 4 · ⚔ the summit`.
-- On the quest page: `‸` selection caret, `⚔` gilt sigil on the objective,
-  `❧` gilt for complete, `•` faded when a motif is bound, nothing when
-  untouched. The selected row takes the same flat `--wash` as the playhead
-  row. No new colors, no grids, no stripes, nothing blinks.
+- A **free-play line** sits above the list, marked `⚔` when it is where you
+  are. It is not navigated to directly: the active quest, chosen again, is
+  the way back.
+- The list is names and status glyphs only: `‸` selection caret, `⚔` gilt
+  sigil on the active workspace, `❧` gilt for complete, `•` faded when the
+  workspace has something written in it, nothing when untouched. The
+  selected row takes the same flat `--wash` as the playhead row.
+- Below the list, the **selected quest in full**: its constraint verbatim
+  from `QUESTS.md` and its *teaches* line, then a line saying whether you
+  are working there, whether it is complete, and whether anything is
+  written yet.
+- A **contour preview** of that workspace's saved pattern, drawn in the
+  roll's visual language: one rounded dab per sounding step, coloured by
+  pitch class on the circle of fifths, height is pitch, time runs right,
+  steps beyond the loop faded. **No gridlines, no beat rules, no numbers,
+  no stripes** — it is there to be recognised, not read. An empty workspace
+  draws nothing and the state line says "nothing written yet".
+
+### The side rails
+
+The page has always had wide parchment margins. They now carry the two
+things worth having in view while composing, and nothing else:
+
+- **Right rail** — the active workspace: its name, its constraint in full,
+  its *teaches* line, and whether it is marked complete. This is the point
+  of the whole rework: the constraint is visible while you noodle. In free
+  play it says so and explains what free play is.
+- **Left rail** — every workspace: free play and the eight quests by their
+  short names, each with its status glyph, the active one in ink and the
+  rest in faded ink. Switching context is visible without opening a page.
+
+Both rails are `position:fixed` in the margins (they never touch the
+column's layout), faded ink, generously spaced, one hairline under each
+heading and no border heavier than that, no grid, no wash, no motion,
+`pointer-events:none`. At **≤ 80 rem** of window width they collapse away
+whole (`display:none`) rather than squeeze the column.
 
 ### Storage
 
-Quest state lives **outside the pattern file** — the save format above is
+Quest state lives **outside the pattern file** — the save format is
 unchanged and gains no fields.
 
-- `localStorage["folio.quests.v1"]` holds the whole log. Only quests that
-  have been touched (completed or bound) are written.
-- A motif is an ordinary version-1 pattern object and is read back through
-  the same validator as an imported file; an unreadable motif becomes
-  `null` and the rest of the log still loads.
+- `localStorage["folio.quests.v2"]` holds everything: the free-play page,
+  every quest workspace that exists, the done flags and the active id.
+- `localStorage["folio.v1"]` keeps a copy of the **active** page, so an
+  older build or anything else reading the browser's storage still finds a
+  pattern where it always was. It is read only at boot, as a migration
+  source; `folio.quests.v2` is the authority.
+- Each workspace page is an ordinary version-1 pattern object and is read
+  back through the same validator as an imported file; an unreadable page
+  is dropped and the rest of the state still loads.
 
 ```json
 {
   "folio": "quest-log",
-  "version": 1,
+  "version": 2,
   "active": "summit",
+  "free": { "version": 1, "title": "untitled folio", "tempo": 112,
+            "loop": 16, "key": "C major", "steps": [ "C4", null, … ] },
   "quests": {
-    "summit": { "done": true, "motif": { "version": 1, "title": "…",
-                                         "tempo": 112, "loop": 16,
-                                         "steps": [ "C4", null, … ] } }
+    "summit": { "done": true,
+                "pattern": { "version": 1, "title": "…", "tempo": 112,
+                             "loop": 16, "key": "C major",
+                             "steps": [ "C4", null, … ] } }
   }
 }
 ```
 
-Quest ids: `ladder`, `whitespace`, `summit`, `stones`, `ouroboros`,
-`callanswer`, `stray`, `hand`.
+Only quests that have been entered or completed are written. `"active"` is
+`null` in free play. Quest ids: `ladder`, `whitespace`, `summit`, `stones`,
+`ouroboros`, `callanswer`, `stray`, `hand`.
 
-### The on-disk copy
+### Migration (v1 → v2)
 
-`localStorage` is invisible from outside the browser, so the log also goes
-to disk: `Ctrl+S` with the quest log open writes exactly the JSON above as
-`quest-log.json`, to be kept in the repository at **`quests/quest-log.json`**.
-That file is the single place a collaborator — or an agent reading the
-repository — can see which quests are done, which is the standing
-objective, and what motif is bound to each. `Ctrl+O` or a drag-and-drop
-reads it back; a quest log is recognised by its `"folio": "quest-log"`
-marker and opens as a quest log wherever it is dropped, without touching
-the pattern on the page. The convention from `QUESTS.md` stands alongside
-it: finished pieces are still saved as `quests/<quest-name>.folio.json`.
+At boot: read `folio.v1` (or `folio.v0`) as before; that page becomes the
+**free-play** workspace. Then read `folio.quests.v2`. If it is absent, read
+`folio.quests.v1` and migrate:
+
+- each quest's bound **`motif` becomes that quest's workspace page**,
+- `done` flags carry over unchanged,
+- the old "standing objective" becomes the active workspace,
+- the result is written forward as `folio.quests.v2` immediately; the v1
+  key is left in place, untouched.
+
+No user data is lost, in either direction. The version-1 shape is also
+accepted on **import**, so an old `quest-log.json` on disk still opens and
+migrates the same way (`"motif"` is read wherever `"pattern"` is expected).
+
+### The log on disk
+
+`localStorage` is invisible from outside the browser, so the state also goes
+to a real file — the one place a collaborator, or an agent reading the
+repository, can see the whole picture.
+
+**Linked (preferred).** The File System Access API. `K` on the quest page
+calls `showSaveFilePicker` for
+`quest-log.json`; the handle is kept in IndexedDB, and from then on every
+change writes the file automatically, debounced 2 s. On a later boot the
+handle is recalled and `queryPermission` is checked; if the grant has
+lapsed, `requestPermission` is retried on the **first real key or click**,
+since a browser will not grant it without a gesture.
+
+*Verified on Chrome 2026-07 from `file://`:* a `file:` page reports
+`isSecureContext === true`, `showSaveFilePicker` / `showOpenFilePicker` /
+`FileSystemHandle.queryPermission` / `createWritable` all exist, and
+IndexedDB reads and writes normally. The picker itself needs a user gesture
+(headless it rejects with `AbortError`, as it has no UI to show), which is
+exactly what the `K` keypress provides.
+
+**Unlinked (fallback, unchanged).** `Ctrl+S` with the quest log open writes
+the same JSON by hand as `quest-log.json`, to be kept at
+`quests/quest-log.json`; `Ctrl+O` or a drag-and-drop reads it back. A quest
+log is recognised by its `"folio": "quest-log"` marker and opens as a quest
+log wherever it is dropped, without being mistaken for a pattern.
+
+The footer says which state it is in, quietly, and only while the quest log
+is open: `· linked to disk`, `· K links it to a file`, `· the linked file
+needs permission`, or nothing at all where the browser has no picker.
+
+The convention from `QUESTS.md` stands alongside all of this: finished
+pieces are still saved as `quests/<quest-name>.folio.json`, and `Ctrl+S` on
+the pattern page exports the **active workspace** as an ordinary
+`.folio.json`, format unchanged.
 
 ## Appearance — manuscript, not skeuomorphism
 
