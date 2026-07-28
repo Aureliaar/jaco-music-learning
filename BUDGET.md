@@ -4,7 +4,7 @@ Append-only. One line per tool-work session. $ = API-equivalent cost from
 the statusline (delta from session start to session end), honor-system,
 rounded up to $0.50.
 
-**Balance: $35.00** (bootstrap $50 − $5 gamepad − $3 entry modes − $2 removal − $5 audio unlock + loop + pad layout)
+**Balance: $8.00** (bootstrap $50 − $5 gamepad − $3 entry modes − $2 removal − $5 audio/loop/pad − $5 quest tracker − $14 roll view − $8 contour entry)
 
 Lesson 0 was ruled **free** (2026-07-27): the bootstrap was always meant to
 be gratis, and subagent usage isn't visible in the statusline anyway.
@@ -19,5 +19,6 @@ agent work is metered by the orchestrating session's statusline delta.
 | 2026-07-28 | HUD | 3.00 | 42.00 | Two-pass entry: note/rhythm/pitch modes, save format v1 |
 | 2026-07-28 | HUD | 2.00 | 40.00 | Removed entry modes after trial ("baggage"); marks convert to null on import |
 | 2026-07-28 | HUD | 5.00 | 35.00 | Audio unlock fix, 4/8/16 loop length (L / L3), pad relayout: L1/R1 octave, bare face buttons FFXIV-style, audition over playback |
-| 2026-07-28 | HUD | _pre 20.76, post pending_ | — | Quest tracker: in-app quest log, motif binding, objective display, quests/quest-log.json |
-| 2026-07-28 | HUD | $TBD | — | The roll: F2/R3 alternate view — time horizontal, pitch as height, colour by pitch class; arrows/d-pad 4-way nav, right stick by beats; quest log rebound to F3/select at merge (fill in statusline delta) |
+| 2026-07-28 | HUD | 5.00 | 30.00 | Quest tracker: in-app quest log, motif binding, objective display, quests/quest-log.json |
+| 2026-07-28 | HUD | 14.00 | 16.00 | The roll: F2/R3 alternate view — time horizontal, pitch as height, colour by pitch class; arrows/d-pad 4-way nav, right stick by beats; quest log rebound to F3/select |
+| 2026-07-28 | HUD | 8.00 | 8.00 | Relative (contour) entry: scale-step face buttons, bumper leaps, key concept, F4/hold-Select toggle |

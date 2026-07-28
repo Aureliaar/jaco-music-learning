@@ -14,6 +14,11 @@ Rules of play:
 - Save each completed quest as `quests/<quest-name>.folio.json`. The pile
   becomes your motif library — later lessons will loot it.
 - Family sign-off never required for quests. These are practice swings.
+- **The noodle rule:** playing aimlessly *inside* a quest's constraint counts
+  as playing the quest — the constraint is the intention, no deliverable
+  pressure. The only discipline: when something snags your ear, save it
+  (bind it to the quest as a motif). Wandering is search; the saves are the
+  sediment. An hour that produces one snag was a good hour.
 
 ---
 
