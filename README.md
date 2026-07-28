@@ -49,11 +49,12 @@ able to hear the pieces and play with the instrument without installing
 anything.
 
 That copy is a Cloudflare Worker serving static assets — the same shape as
-`magic-proximity-proto`. `scripts/build.mjs` puts exactly two files in
+`magic-proximity-proto`. `scripts/build.mjs` puts exactly three files in
 `dist/`:
 
 ```
 folio.html            -> dist/index.html
+auditor.html          -> dist/auditor.html
 quests/quest-log.json -> dist/quests/quest-log.json
 ```
 
@@ -81,11 +82,22 @@ The local server is unaffected: it answers a missing log with a JSON `404`,
 which is precisely how the page tells a real server apart from a static
 host.
 
+## The audit
+
+`auditor.html` is a blind-listening page to hand to somebody else: it plays a
+lineup of patterns from the quest log as **I, II, III…** — no names, no ids,
+shuffled fresh on every load — and asks three questions afterwards. Open it at
+**http://localhost:4173/auditor.html** locally or **/auditor.html** on the
+shared copy; `?ids=stray,lineup-a,lineup-b` chooses the lineup (that is also
+the default). A press-and-hold control at the bottom reveals which numeral was
+which, for after the verdict.
+
 ## What is where
 
 | | |
 |---|---|
 | `folio.html` | the whole app |
+| `auditor.html` | the blind lineup, for family verdicts |
 | `server.mjs` | the local server: static files + `GET`/`PUT /api/quest-log` |
 | `folio.cmd` | one-click start for the above |
 | `quests/quest-log.json` | the quest log on disk |

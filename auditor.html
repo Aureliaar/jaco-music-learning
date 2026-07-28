@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Audit</title>
+<style>
+  /* ---- The Audit — a blind listening page. Same manuscript language as
+         folio.html; see SPEC-LESSON-0.md. Touch and mouse only. ---- */
+  :root{
+    --ground:#EAE0CC;
+    --ink:#3B2F1E;
+    --faded:#A99C82;
+    --rule:#C9BCA0;
+    --gilt:#9C7A28;
+    --wash:#E0D2B4;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  }
+  html{font-size:17px;-webkit-text-size-adjust:100%;}
+  body{
+    margin:0;
+    min-height:100%;
+    background-color:var(--ground);
+    /* the one permitted vignette: 3% ink at the far corners, nothing else */
+    background-image:radial-gradient(ellipse 120% 110% at 50% 40%,
+      rgba(59,47,30,0) 45%, rgba(59,47,30,0.03) 100%);
+    background-repeat:no-repeat;
+    background-attachment:fixed;
+    color:var(--ink);
+    font-family:var(--serif);
+    font-size:1rem;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* nothing moves, nothing blinks */
+  *,*::before,*::after{animation:none !important;}
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{transition:none !important;}
+  }
+
+  main{
+    width:min(34rem,88vw);
+    margin:0 auto;
+    padding:3.2rem 0 4rem;
+  }
+
+  header{text-align:center;}
+  h1{
+    margin:0;
+    font-weight:400;
+    font-variant:small-caps;
+    letter-spacing:0.34em;
+    text-indent:0.34em;
+    font-size:1.9rem;
+    line-height:1.2;
+  }
+  .flourish{
+    display:flex;align-items:center;justify-content:center;gap:0.7em;
+    margin:0.7rem 0 0.9rem;
+    color:var(--gilt);font-size:1rem;line-height:1;
+  }
+  .flourish i{display:block;width:4.5rem;height:1px;background:var(--gilt);opacity:0.55;}
+  .flourish span{opacity:0.8;}
+
+  .standfirst{
+    margin:0;
+    color:var(--faded);
+    font-size:0.95rem;
+    text-align:center;
+    letter-spacing:0.02em;
+  }
+  .divider{height:1px;background:var(--rule);margin:1.6rem 0;}
+
+  /* ---- the lineup ---- */
+  .lineup{list-style:none;margin:0;padding:0;}
+  .entry{
+    display:flex;
+    align-items:center;
+    width:100%;
+    box-sizing:border-box;
+    background:transparent;
+    border:0;
+    border-top:1px solid var(--rule);
+    color:inherit;
+    font:inherit;
+    text-align:left;
+    padding:1.15rem 0.9rem;
+    min-height:4.6rem;
+    cursor:pointer;
+    touch-action:manipulation;
+    -webkit-tap-highlight-color:transparent;
+  }
+  /* the dividers above and below already bracket the list; one hairline
+     between neighbours is the whole ruling */
+  .lineup li:first-child .entry{border-top:0;}
+  .entry.on{background-color:var(--wash);}   /* flat wash, steady */
+  .entry .line{display:flex;align-items:baseline;gap:0.75em;width:100%;}
+  .entry .mark{
+    color:var(--gilt);
+    width:1.1em;flex:none;
+    font-size:1.05rem;line-height:1;
+  }
+  .entry .numeral{
+    font-variant:small-caps;
+    letter-spacing:0.2em;
+    font-size:1.45rem;
+    flex:1;
+  }
+  .entry .verb{
+    color:var(--faded);
+    font-variant:small-caps;
+    letter-spacing:0.16em;
+    font-size:0.92rem;
+    flex:none;
+  }
+  .entry.on .verb{color:var(--ink);}
+  .empty{color:var(--faded);font-size:0.95rem;}
+
+  /* ---- the rubric ---- */
+  .rubric h2{
+    margin:0 0 0.7rem;
+    font-weight:400;
+    font-variant:small-caps;
+    letter-spacing:0.16em;
+    font-size:1.05rem;
+  }
+  .rubric ol{margin:0;padding-left:1.4em;}
+  .rubric li{margin:0 0 0.75rem;}
+  .rubric p{margin:1.1rem 0 0;color:var(--faded);font-size:0.9rem;}
+
+  /* ---- the reveal, at the very bottom, quiet ---- */
+  .revealbar{margin-top:2.6rem;text-align:center;}
+  .hold{
+    display:inline-block;
+    background:transparent;border:0;
+    color:var(--faded);
+    font:inherit;
+    font-variant:small-caps;
+    letter-spacing:0.18em;
+    font-size:0.88rem;
+    padding:1rem 1.4rem;
+    cursor:pointer;
+    touch-action:none;
+    -webkit-tap-highlight-color:transparent;
+    -webkit-user-select:none;user-select:none;
+  }
+  .hold.armed{color:var(--ink);}
+  .revealed{display:none;margin-top:0.6rem;text-align:left;}
+  .revealed.on{display:block;}
+  .revealed dl{
+    display:grid;
+    grid-template-columns:4.5rem 1fr;
+    column-gap:1rem;row-gap:0.35rem;
+    margin:0.9rem 0 0;
+    font-size:0.95rem;
+  }
+  .revealed dt{color:var(--faded);font-variant:small-caps;letter-spacing:0.16em;}
+  .revealed dd{margin:0;}
+  .revealed p{margin:1rem 0 0;color:var(--faded);font-size:0.88rem;}
+
+  footer{
+    margin-top:2.4rem;
+    color:var(--faded);
+    font-size:0.85rem;
+    text-align:center;
+    min-height:1.4em;
+    letter-spacing:0.04em;
+  }
+</style>
+<script>
+/* The script lives in the head, above the page it draws, so that the body
+   holds nothing but what the listener is meant to see — the source is not
+   part of the DOM anyone can read for a clue. It therefore waits for the
+   document before it touches it. */
+(function(){
+  "use strict";
+
+  /* ================= what to audit ================= */
+  var DEFAULT_IDS = ["stray","lineup-a","lineup-b"];
+  var ROMAN = ["I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII"];
+
+  var lineupEl, footerEl, holdEl, revealEl, revealDl;
+
+  function say(msg){ footerEl.textContent = msg || " "; }
+
+  function wantedIds(){
+    var q = "";
+    try { q = new URLSearchParams(location.search).get("ids") || ""; }
+    catch (e){ q = ""; }
+    var list = q.split(",").map(function(s){ return s.trim(); })
+                .filter(function(s){ return s.length > 0; });
+    var seen = {}, out = [];
+    for (var i = 0; i < list.length; i++){
+      if (!seen[list[i]]){ seen[list[i]] = 1; out.push(list[i]); }
+    }
+    return out.length ? out : DEFAULT_IDS.slice();
+  }
+
+  /* ================= the log ================= */
+  /* The served copy has /api/quest-log. The static deploy has neither an API
+     nor a server: the log travelled with it, under ./quests/. Ask the first,
+     fall back to the second — a 404, a network error, or anything that is not
+     a quest log all mean the same thing here. */
+  function isLog(o){
+    return !!o && typeof o === "object" && !Array.isArray(o) && o.folio === "quest-log";
+  }
+  function fetchJSON(url){
+    return fetch(url, { cache: "no-store" }).then(function(r){
+      if (!r.ok) throw new Error(String(r.status));
+      return r.text();
+    }).then(function(t){ return JSON.parse(t); });
+  }
+  function loadLog(){
+    return fetchJSON("/api/quest-log").then(function(o){
+      if (!isLog(o)) throw new Error("not a quest log");
+      return o;
+    }).catch(function(){
+      return fetchJSON("./quests/quest-log.json").then(function(o){
+        if (!isLog(o)) throw new Error("not a quest log");
+        return o;
+      });
+    });
+  }
+
+  /* ---- a pattern, from wherever it lives ----
+     A touched workspace is what the composer actually wrote, so it wins; a
+     drill's own definition is the seed and stands in when nothing was ever
+     written there. */
+  var NOTE_RE = /^([A-G])(#|♯)?(-?\d{1,2})$/;
+  function validPattern(p){
+    if (!p || typeof p !== "object" || !Array.isArray(p.steps) || p.steps.length !== 16) return null;
+    var steps = [], i, v;
+    for (i = 0; i < 16; i++){
+      v = p.steps[i];
+      if (typeof v === "string" && NOTE_RE.test(v.trim())) steps.push(v.trim());
+      else steps.push(null);
+    }
+    var sounding = steps.some(function(s){ return !!s; });
+    if (!sounding) return null;
+    var tempo = (typeof p.tempo === "number" && isFinite(p.tempo) && p.tempo > 0) ? p.tempo : 112;
+    var loop = (p.loop === 4 || p.loop === 8) ? p.loop : 16;
+    return { steps: steps, tempo: tempo, loop: loop };
+  }
+  function patternFor(log, id){
+    var ws = log.quests && log.quests[id];
+    var p = ws && validPattern(ws.pattern);
+    if (p) return p;
+    var drills = Array.isArray(log.drills) ? log.drills : [];
+    for (var i = 0; i < drills.length; i++){
+      if (drills[i] && drills[i].id === id){
+        p = validPattern(drills[i].pattern);
+        if (p) return p;
+      }
+    }
+    return null;
+  }
+  function nameFor(log, id){
+    var drills = Array.isArray(log.drills) ? log.drills : [];
+    for (var i = 0; i < drills.length; i++){
+      if (drills[i] && drills[i].id === id && typeof drills[i].name === "string") return drills[i].name;
+    }
+    return null;
+  }
+
+  /* ================= audio — folio's voice, unchanged ================= */
+  var ctx = null, master = null;
+  var LOOKAHEAD_MS = 25, AHEAD = 0.1;
+  var ATTACK = 0.008, RELEASE = 0.040, TAIL = 0.006, LEVEL = 0.22;
+
+  var timer = null, live = [];
+  var nextStepTime = 0, schedStep = 0;
+  var current = null;              /* the entry now sounding, or null */
+  var scheduled = 0;               /* steps scheduled since the page opened */
+
+  function audio(){
+    if (!ctx){
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      ctx = new AC();
+      master = ctx.createGain();
+      master.gain.setValueAtTime(1, ctx.currentTime);
+      master.connect(ctx.destination);
+    }
+    if (ctx.state === "suspended" && ctx.resume) ctx.resume();
+    return ctx;
+  }
+
+  function freqOf(name){
+    var m = NOTE_RE.exec(name);
+    if (!m) return null;
+    var pc = {C:0,D:2,E:4,F:5,G:7,A:9,B:11}[m[1]] + (m[2] ? 1 : 0);
+    var midi = (parseInt(m[3], 10) + 1) * 12 + pc;
+    return 440 * Math.pow(2, (midi - 69) / 12);
+  }
+
+  /* triangle -> lowpass -> gain envelope; starts at 0, ends at 0, never clicks */
+  function playNote(name, at, dur){
+    var f = freqOf(name);
+    if (!f) return;
+    var osc = ctx.createOscillator();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(f, at);
+
+    var lp = ctx.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.setValueAtTime(2500, at);
+    lp.Q.setValueAtTime(0.7, at);
+
+    var g = ctx.createGain();
+    var relEnd = at + dur - TAIL;
+    var relStart = Math.max(at + ATTACK + 0.001, relEnd - RELEASE);
+    g.gain.setValueAtTime(0, at);
+    g.gain.linearRampToValueAtTime(LEVEL, at + ATTACK);
+    g.gain.setValueAtTime(LEVEL, relStart);
+    g.gain.linearRampToValueAtTime(0, relEnd);
+
+    osc.connect(lp); lp.connect(g); g.connect(master);
+    osc.start(at);
+    osc.stop(relEnd + 0.01);
+    live.push(osc);
+    osc.onended = function(){
+      var k = live.indexOf(osc);
+      if (k >= 0) live.splice(k, 1);
+      try { osc.disconnect(); lp.disconnect(); g.disconnect(); } catch (e){}
+    };
+  }
+
+  function scheduler(){
+    if (!current || !ctx) return;
+    var pat = current.pattern;
+    var dur = 60 / pat.tempo / 4;
+    /* a backgrounded tab throttles the timer; never schedule into the past */
+    if (nextStepTime < ctx.currentTime - 0.02) nextStepTime = ctx.currentTime + 0.02;
+    while (nextStepTime < ctx.currentTime + AHEAD){
+      var n = pat.steps[schedStep];
+      if (n) playNote(n, nextStepTime, dur);
+      nextStepTime += dur;
+      schedStep = (schedStep + 1) % pat.loop;
+      scheduled++;
+    }
+  }
+
+  function stop(){
+    if (timer){ clearInterval(timer); timer = null; }
+    if (ctx && master){
+      var t = ctx.currentTime;
+      master.gain.cancelScheduledValues(t);
+      master.gain.setValueAtTime(master.gain.value, t);
+      master.gain.linearRampToValueAtTime(0, t + 0.03);   /* fade, never a cut */
+      for (var i = 0; i < live.length; i++){
+        try { live[i].stop(t + 0.04); } catch (e){}
+      }
+      master.gain.setValueAtTime(1, t + 0.06);
+    }
+    if (current){ paint(current, false); current = null; }
+  }
+
+  function start(entry){
+    if (!audio()){ say("this browser has no audio"); return; }
+    current = entry;
+    schedStep = 0;
+    master.gain.cancelScheduledValues(ctx.currentTime);
+    master.gain.setValueAtTime(0, ctx.currentTime);
+    master.gain.linearRampToValueAtTime(1, ctx.currentTime + 0.02);
+    nextStepTime = ctx.currentTime + 0.06;
+    scheduler();
+    timer = setInterval(scheduler, LOOKAHEAD_MS);
+    paint(entry, true);
+    say(ctx.state !== "running" ? "tap once more to let the sound through" : "playing · " + entry.numeral);
+  }
+
+  function toggle(entry){
+    var wasCurrent = (current === entry);
+    stop();                       /* playing one always stops the others */
+    if (!wasCurrent) start(entry);
+    else say("stopped");
+  }
+
+  function paint(entry, on){
+    entry.btn.classList.toggle("on", on);
+    entry.mark.textContent = on ? "❧" : "";     /* a steady gilt fleuron */
+    entry.verb.textContent = on ? "stop" : "listen";
+    entry.btn.setAttribute("aria-pressed", on ? "true" : "false");
+  }
+
+  /* ================= render ================= */
+  function shuffle(a){
+    for (var i = a.length - 1; i > 0; i--){
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  var entries = [];
+
+  function render(list){
+    /* the array is shuffled before a single node is made, so the DOM knows
+       only the order the listener sees — and nothing else */
+    for (var i = 0; i < list.length; i++){
+      var it = list[i];
+      var li  = document.createElement("li");
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "entry";
+      btn.setAttribute("aria-pressed", "false");
+
+      var line = document.createElement("span");
+      line.className = "line";
+      var mark = document.createElement("span");
+      mark.className = "mark";
+      mark.setAttribute("aria-hidden", "true");
+      var num = document.createElement("span");
+      num.className = "numeral";
+      num.textContent = it.numeral;
+      var verb = document.createElement("span");
+      verb.className = "verb";
+      verb.textContent = "listen";
+      line.appendChild(mark); line.appendChild(num); line.appendChild(verb);
+
+      btn.appendChild(line);
+      li.appendChild(btn);
+      lineupEl.appendChild(li);
+
+      it.btn = btn; it.mark = mark; it.verb = verb;
+      (function(entry){
+        btn.addEventListener("click", function(){ toggle(entry); });
+      })(it);
+      entries.push(it);
+    }
+  }
+
+  /* ================= the reveal ================= */
+  /* Deliberate by construction: a press held for a second. A stray tap on the
+     way past cannot spoil the verdict. */
+  var HOLD_MS = 1000;
+  var holdTimer = null, revealed = false;
+
+  function doReveal(){
+    if (revealed) return;
+    revealed = true;
+    for (var i = 0; i < entries.length; i++){
+      var dt = document.createElement("dt");
+      dt.textContent = entries[i].numeral;
+      var dd = document.createElement("dd");
+      dd.textContent = entries[i].id + (entries[i].name ? " — " + entries[i].name : "");
+      revealDl.appendChild(dt); revealDl.appendChild(dd);
+    }
+    revealEl.classList.add("on");
+    holdEl.textContent = "the lineup";
+    holdEl.classList.remove("armed");
+    holdEl.disabled = true;
+    say("revealed");
+  }
+  function holdStart(){
+    if (revealed || holdTimer) return;
+    holdEl.classList.add("armed");
+    holdEl.textContent = "keep holding…";
+    holdTimer = setTimeout(function(){ holdTimer = null; doReveal(); }, HOLD_MS);
+  }
+  function holdEnd(){
+    if (holdTimer){ clearTimeout(holdTimer); holdTimer = null; }
+    if (revealed) return;
+    holdEl.classList.remove("armed");
+    holdEl.textContent = "reveal the lineup";
+  }
+  /* ================= boot ================= */
+  /* the log is asked for at once — it needs no document — and the page is
+     drawn when there is a page to draw on */
+  var ids = wantedIds();
+  var logPromise = loadLog();
+  logPromise.catch(function(){});   /* the real handler is attached at boot */
+
+  function boot(){
+    lineupEl = document.getElementById("lineup");
+    footerEl = document.getElementById("footer");
+    holdEl   = document.getElementById("hold");
+    revealEl = document.getElementById("revealed");
+    revealDl = document.getElementById("revealdl");
+
+    holdEl.addEventListener("pointerdown", function(e){ e.preventDefault(); holdStart(); });
+    holdEl.addEventListener("pointerup", holdEnd);
+    holdEl.addEventListener("pointercancel", holdEnd);
+    holdEl.addEventListener("pointerleave", holdEnd);
+    holdEl.addEventListener("contextmenu", function(e){ e.preventDefault(); });
+
+    say("gathering…");
+    settle();
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+  else boot();
+
+  function settle(){
+  logPromise.then(function(log){
+    var list = [], missing = 0;
+    for (var i = 0; i < ids.length; i++){
+      var p = patternFor(log, ids[i]);
+      if (!p){ missing++; continue; }                 /* an id with nothing behind it is simply skipped */
+      list.push({ id: ids[i], name: nameFor(log, ids[i]), pattern: p });
+    }
+    shuffle(list);
+    for (var k = 0; k < list.length; k++) list[k].numeral = ROMAN[k] || String(k + 1);
+
+    if (!list.length){
+      var p = document.createElement("li");
+      p.className = "empty";
+      p.textContent = "Nothing to hear here yet — the lineup is empty.";
+      lineupEl.appendChild(p);
+      holdEl.disabled = true;
+      say("nothing found");
+      return;
+    }
+    render(list);
+    say(list.length + " to hear" + (missing ? " · " + missing + " not found" : ""));
+  }).catch(function(){
+    var li = document.createElement("li");
+    li.className = "empty";
+    li.textContent = "The lineup could not be read.";
+    lineupEl.appendChild(li);
+    holdEl.disabled = true;
+    say("no quest log");
+  });
+  }
+
+  /* a small window for the test harness; carries no mapping */
+  window.__audit = {
+    count: function(){ return entries.length; },
+    numerals: function(){ return entries.map(function(e){ return e.numeral; }); },
+    playingNumeral: function(){ return current ? current.numeral : null; },
+    scheduled: function(){ return scheduled; },
+    revealed: function(){ return revealed; }
+  };
+})();
+</script>
+</head>
+<body>
+<main>
+  <header>
+    <h1>The Audit</h1>
+    <div class="flourish" aria-hidden="true"><i></i><span>&#10086;</span><i></i></div>
+    <p class="standfirst">A few short loops, unnamed. Each one plays until you
+       stop it &mdash; listen as long as you like, and as often.</p>
+  </header>
+
+  <div class="divider"></div>
+
+  <ul class="lineup" id="lineup" aria-label="the lineup"></ul>
+
+  <div class="divider"></div>
+
+  <section class="rubric">
+    <h2>Afterwards</h2>
+    <ol>
+      <li>One of these is a melody somebody composed; the others are its own
+          notes, put in a different order. Which one was composed?</li>
+      <li>Can you hum the one you picked, after two listens?</li>
+      <li>Would you let it play again?</li>
+    </ol>
+    <p>There are no wrong answers here &mdash; only honest ones. A shrug is an
+       answer too.</p>
+  </section>
+
+  <div class="revealbar">
+    <button type="button" class="hold" id="hold">reveal the lineup</button>
+    <div class="revealed" id="revealed">
+      <dl id="revealdl"></dl>
+      <p>For after the verdict, not before it.</p>
+    </div>
+  </div>
+
+  <footer id="footer">&nbsp;</footer>
+</main>
+</body>
+</html>

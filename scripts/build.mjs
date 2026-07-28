@@ -4,6 +4,7 @@
    what leaves the repository. This copies that short list into ./dist:
 
      folio.html              -> dist/index.html
+     auditor.html            -> dist/auditor.html            (the blind lineup)
      quests/quest-log.json   -> dist/quests/quest-log.json   (the seed)
 
    Everything else — CURRICULUM.md, QUESTS.md, BUDGET.md, SPEC-LESSON-0.md,
@@ -20,6 +21,7 @@ const DIST = path.join(ROOT, "dist");
 
 const FILES = [
   ["folio.html", "index.html"],
+  ["auditor.html", "auditor.html"],
   ["quests/quest-log.json", "quests/quest-log.json"]
 ];
 
