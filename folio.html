@@ -333,10 +333,11 @@
           <dt>F3</dt><dd>open or close the quest log</dd>
           <dt>F4</dt><dd>the pad's entry method: relative (contour) or absolute</dd>
           <dt>the arrows, here</dt><dd>the key of the piece: left, right move the tonic; up, down make it major or minor</dd>
-          <dt>in the quest log</dt><dd>the arrows choose a quest; enter opens its page and works there; enter on the quest you are already in returns to free play; C marks it complete; K links the log to a file on disk; F3 or escape closes</dd>
+          <dt>in the quest log</dt><dd>the arrows choose a quest; enter opens its page and works there; enter on the quest you are already in returns to free play; C marks it complete; F3 or escape closes</dd>
         </dl>
         <p>Notes are entered by position, not by letter, so the layout is the same on any keyboard. Entering a note advances the cursor.</p>
         <p>Every quest is a workspace: a whole page of its own &mdash; steps, title, tempo, loop and key &mdash; and one more page, free play, belongs to no quest. The page in front of you saves itself into the workspace you are in, on every change, as it always did; choosing another quest simply puts a different page in front of you. Nothing is bound, nothing is loaded, nothing is copied, and so nothing can be written over. The margins of this page carry the same thing quietly while you work: on the left every workspace and where you are, on the right the constraint you are under. A narrow window drops both rather than squeeze the column.</p>
+        <p>Opened from a file, the folio keeps everything in the browser alone. Started with folio.cmd and opened at http://localhost:4173, it also keeps the whole quest log in a real file &mdash; quests/quest&#8209;log.json &mdash; written a couple of seconds after every change, and read back when it opens. The footer says &middot;&#8239;synced while the quest log is open. If the server goes away the work carries on in the browser and the footer says so; the next change tries again.</p>
       </div>
       <div>
         <h2>The gamepad</h2>
@@ -383,7 +384,7 @@
       <div class="qpreview" id="qpreview"></div>
       <div class="qdstate" id="qdstate"></div>
     </div>
-    <p>Constraint &eacute;tudes, taken in any order and abandoned guiltlessly. Every quest is a workspace holding its own page &mdash; choosing one puts you in it, choosing it again returns to free play, and nothing is ever bound, loaded or lost: each page saves itself where it lives. &#10087; complete &middot; &#8226; something written &middot; &#9876; where you are. K links the log to a file on disk; Ctrl&#8239;+&#8239;S writes it out once, to be kept beside the folio at quests/quest&#8209;log.json.</p>
+    <p>Constraint &eacute;tudes, taken in any order and abandoned guiltlessly. Every quest is a workspace holding its own page &mdash; choosing one puts you in it, choosing it again returns to free play, and nothing is ever bound, loaded or lost: each page saves itself where it lives. &#10087; complete &middot; &#8226; something written &middot; &#9876; where you are. Served from folio.cmd, the whole log keeps itself in quests/quest&#8209;log.json; otherwise Ctrl&#8239;+&#8239;S writes it out once, to be kept at that same place.</p>
   </section>
 
   <div class="divider"></div>
@@ -730,10 +731,12 @@
     }
     rollLoop();
   }
+  var lastSaid = "‸ cursor row";
   function say(msg){
+    lastSaid = msg;
     footer.textContent = msg + (
       keyref.classList.contains("on")   ? " · F1 to close" :
-      questsEl.classList.contains("on") ? " · F3 to close" + dskNote() :
+      questsEl.classList.contains("on") ? " · F3 to close" + syncNote() :
                                           " · F1 for the key");
   }
   function renderAll(){ renderNotes(); renderCursor(); renderMeta(); renderLoop(); }
@@ -777,7 +780,7 @@
     }
     catch (e){ storageOK = false; say("autosave unavailable in this window"); }
     renderRails();
-    syncDisk();
+    syncPush();
   }
   function load(){
     var raw = null;
@@ -1254,138 +1257,104 @@
   function saveQuests(){ save(); }
   function loadQuests(){ return loadState(); }
 
-  /* ---- the log on disk ----
+  /* ---- the log on disk, over the little local server ----
      localStorage is invisible from outside the browser, so the state also
-     goes to a real file. File System Access works from `file://` in Chrome —
-     a file: page is a secure context — so the log can be *linked* to a file
-     once, by one keypress and one picker, and written from then on with no
-     further gesture. The handle survives in IndexedDB, which also works from
-     `file://`; a later boot asks for permission again on the first real key
-     or click, because a browser will not grant it silently.
+     goes to a real file — but only a server can put it there. Start
+     `folio.cmd` (or `node server.mjs`) and open http://localhost:4173, and
+     the quest log becomes `quests/quest-log.json` on disk, kept current
+     automatically.
 
-     All of it is optional. Where the API is missing the fallback is the old
-     path and nothing else changes: ctrl+S writes the same JSON by hand,
-     ctrl+O or a drop reads it back. */
-  var DSK_DB = "folio", DSK_STORE = "handles", DSK_NAME = "quest-log";
-  var DSK_DEBOUNCE = 2000;
-  var dskHandle = null;
-  var dskState = "unlinked";         /* unlinked | linked | denied | unavailable */
-  var dskTimer = null, dskArmed = false;
+     Two modes, decided once at boot by the protocol:
 
-  function dskAvailable(){
-    return typeof window.showSaveFilePicker === "function";
-  }
-  function dskNote(){
-    if (dskState === "linked")   return " · linked to disk";
-    if (dskState === "denied")   return " · the linked file needs permission";
-    if (dskState === "unavailable") return "";
-    return " · K links it to a file";
-  }
-  function idbOpen(cb){
-    if (!window.indexedDB){ cb(null); return; }
+     - over **http(s)** the server is the authority at boot (GET) and every
+       autosave pushes the whole v2 state back (PUT), coalesced so a burst of
+       note entry writes once. localStorage keeps its copy underneath as
+       cache and offline layer.
+     - from **file://** there is no server and nothing changes: localStorage
+       alone, exactly as before.
+
+     Failure is quiet and never blocking. If a push fails the footer says so
+     while the quest log is open, work continues in localStorage, and the
+     next change tries again. */
+  var SYNC_URL = "api/quest-log";
+  var SYNC_DEBOUNCE = 2000;
+  var syncOn = false;                /* set at boot: are we served over http? */
+  var syncState = "idle";            /* idle | ok | failed */
+  var syncTimer = null;
+  var syncMute = false;              /* true while applying the server's own state */
+
+  function httpOrigin(){
     try {
-      var req = window.indexedDB.open(DSK_DB, 1);
-      req.onupgradeneeded = function(){
-        try { req.result.createObjectStore(DSK_STORE); } catch (e){}
-      };
-      req.onsuccess = function(){ cb(req.result); };
-      req.onerror   = function(){ cb(null); };
-    } catch (e){ cb(null); }
+      return typeof location !== "undefined" &&
+             (location.protocol === "http:" || location.protocol === "https:");
+    } catch (e){ return false; }
   }
-  function dskRemember(h){
-    idbOpen(function(db){
-      if (!db) return;
-      try { db.transaction(DSK_STORE, "readwrite").objectStore(DSK_STORE).put(h, DSK_NAME); }
-      catch (e){}
-    });
+  function syncNote(){
+    if (!syncOn) return "";
+    if (syncState === "failed") return " · sync failed — working locally";
+    return " · synced";
   }
-  function dskRecall(cb){
-    idbOpen(function(db){
-      if (!db){ cb(null); return; }
-      try {
-        var r = db.transaction(DSK_STORE).objectStore(DSK_STORE).get(DSK_NAME);
-        r.onsuccess = function(){ cb(r.result || null); };
-        r.onerror   = function(){ cb(null); };
-      } catch (e){ cb(null); }
-    });
+  /* the server's copy wins at boot when there is one: it is the file a
+     collaborator or an agent can actually read, and it is what the last
+     session pushed. Anything missing or unreadable falls back to whatever
+     localStorage already loaded — never to an empty page. */
+  function applyServerState(o){
+    if (!isQuestLog(o)) return false;
+    if (!applyState(o)) return false;
+    cursor = 0;
+    /* the local cache is brought level with the server, without bouncing the
+       same state straight back at it */
+    syncMute = true;
+    try { save(); } finally { syncMute = false; }
+    renderAll(); renderQuests();
+    return true;
   }
-  function dskPermit(h, ask, cb){
-    if (!h || !h.queryPermission){ cb(true); return; }
-    var opt = { mode:"readwrite" };
-    try {
-      h.queryPermission(opt).then(function(st){
-        if (st === "granted"){ cb(true); return; }
-        if (!ask){ cb(false); return; }
-        h.requestPermission(opt).then(function(s2){ cb(s2 === "granted"); },
-                                      function(){ cb(false); });
-      }, function(){ cb(false); });
-    } catch (e){ cb(false); }
-  }
-  function dskWrite(){
-    if (!dskHandle) return;
+  function syncFlush(){
+    if (!syncOn || typeof fetch !== "function") return;
     var text = JSON.stringify(stateToJSON(), null, 2);
-    dskPermit(dskHandle, false, function(granted){
-      if (!granted){ dskState = "denied"; dskArm(); return; }
-      try {
-        dskHandle.createWritable().then(function(w){
-          return Promise.resolve(w.write(text)).then(function(){ return w.close(); });
-        }).then(function(){ dskState = "linked"; }, function(){ dskState = "denied"; });
-      } catch (e){ dskState = "denied"; }
-    });
-  }
-  /* every change, coalesced: a burst of note entry writes the file once */
-  function syncDisk(){
-    if (!dskHandle) return;
-    if (dskTimer) clearTimeout(dskTimer);
-    dskTimer = setTimeout(function(){ dskTimer = null; dskWrite(); }, DSK_DEBOUNCE);
-  }
-  function dskArm(){
-    if (dskArmed || !dskHandle) return;
-    dskArmed = true;
-    var go = function(){
-      try {
-        window.removeEventListener("keydown", go, true);
-        window.removeEventListener("pointerdown", go, true);
-      } catch (e){}
-      dskArmed = false;
-      dskPermit(dskHandle, true, function(granted){
-        dskState = granted ? "linked" : "denied";
-        if (granted) dskWrite();
-      });
-    };
     try {
-      window.addEventListener("keydown", go, true);
-      window.addEventListener("pointerdown", go, true);
-    } catch (e){ dskArmed = false; }
-  }
-  function linkDisk(){
-    if (!dskAvailable()){
-      say("this browser cannot link a file · ctrl+S writes one instead");
-      return;
-    }
-    try {
-      window.showSaveFilePicker({
-        suggestedName: "quest-log.json",
-        types: [{ description:"Folio quest log", accept:{ "application/json":[".json"] } }]
-      }).then(function(h){
-        dskHandle = h;
-        dskState = "linked";
-        dskRemember(h);
-        dskWrite();
-        say("the log writes itself to " + (h.name || "quest-log.json"));
-      }, function(){ say("not linked · nothing changed"); });
-    } catch (e){ say("this browser cannot link a file · ctrl+S writes one instead"); }
-  }
-  function dskBoot(){
-    if (!dskAvailable()){ dskState = "unavailable"; return; }
-    dskRecall(function(h){
-      if (!h) return;
-      dskHandle = h;
-      dskPermit(h, false, function(granted){
-        dskState = granted ? "linked" : "denied";
-        if (granted) dskWrite(); else dskArm();
+      fetch(SYNC_URL, {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: text
+      }).then(function(r){
+        var was = syncState;
+        syncState = (r && r.ok) ? "ok" : "failed";
+        if (syncState !== was) syncTouch();
+      }, function(){
+        var was = syncState;
+        syncState = "failed";
+        if (syncState !== was) syncTouch();
       });
-    });
+    } catch (e){ syncState = "failed"; syncTouch(); }
+  }
+  /* the footer carries the note only while the quest log is open, so it is
+     refreshed rather than announced */
+  function syncTouch(){
+    if (questsEl.classList.contains("on")) say(lastSaid);
+  }
+  /* every change, coalesced: a burst of note entry pushes once */
+  function syncPush(){
+    if (!syncOn || syncMute) return;
+    if (syncTimer) clearTimeout(syncTimer);
+    syncTimer = setTimeout(function(){ syncTimer = null; syncFlush(); }, SYNC_DEBOUNCE);
+  }
+  function syncBoot(){
+    syncOn = httpOrigin();
+    if (!syncOn || typeof fetch !== "function") return;
+    try {
+      fetch(SYNC_URL, { headers: { "accept": "application/json" } }).then(function(r){
+        if (!r) return;
+        if (r.status === 404){ syncState = "ok"; return; }   /* no log yet: ours becomes it */
+        if (!r.ok){ syncState = "failed"; syncTouch(); return; }
+        return r.json().then(function(o){
+          syncState = "ok";
+          if (applyServerState(o))
+            say("restored from the server ‸ cursor row" +
+                (activeQuest() ? " · ⚔ " + activeQuest().short : ""));
+        }, function(){ syncState = "failed"; syncTouch(); });
+      }, function(){ syncState = "failed"; syncTouch(); });
+    } catch (e){ syncState = "failed"; }
   }
 
   function exportQuests(){
@@ -1570,7 +1539,6 @@
            or back in free play if you are in it already */
         case "Enter": case "NumpadEnter": chooseWorkspace(); return;
         case "KeyC":      toggleComplete();return;
-        case "KeyK":      linkDisk();      return;
       }
       return;
     }
@@ -1905,7 +1873,7 @@
   applyViz();
   renderAll();
   renderQuests();
-  dskBoot();
+  syncBoot();
   if (!storageOK) say("autosave unavailable — export to keep your work");
   else if (restored)
     say("restored ‸ cursor row" + (activeQuest() ? " · ⚔ " + activeQuest().short : "") +

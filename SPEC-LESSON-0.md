@@ -19,8 +19,10 @@ editing it there is permitted and costs nothing but shame.
 
 ## Technical shape
 
-- **One file:** `folio.html`. Inline CSS + JS, zero dependencies, zero
-  network requests, zero build step. Opens from `file://`.
+- **One file:** `folio.html`. Inline CSS + JS, zero dependencies, zero build
+  step. Opens from `file://`, where it makes no network request at all.
+  Served over http by `server.mjs` it makes exactly two, both to that
+  server, both about the quest log — see "The log on disk".
 - **Audio:** Web Audio API. One oscillator voice.
 - **Persistence:** autosave to `localStorage` on every edit (into the active
   workspace — see "Quests as workspaces"); `Ctrl+S`
@@ -342,7 +344,6 @@ the entry method are preferences and do not belong to a workspace.
 | switch to that quest's workspace | `Enter` | ✕ (A) |
 | … the quest you are in: back to free play | `Enter` again | ✕ (A) again |
 | toggle complete | `KeyC` | ○ (B) |
-| link the log to a file on disk | `KeyK` | — |
 | export the whole state | `Ctrl+S` while the log is open | — |
 | import it | `Ctrl+O`, or drop the file anywhere | — |
 
@@ -399,6 +400,8 @@ whole (`display:none`) rather than squeeze the column.
 Quest state lives **outside the pattern file** — the save format is
 unchanged and gains no fields.
 
+- `quests/quest-log.json` holds the same document on disk whenever the app
+  is served by `server.mjs`, and is the authority at boot there.
 - `localStorage["folio.quests.v2"]` holds everything: the free-play page,
   every quest workspace that exists, the done flags and the active id.
 - `localStorage["folio.v1"]` keeps a copy of the **active** page, so an
@@ -445,36 +448,64 @@ No user data is lost, in either direction. The version-1 shape is also
 accepted on **import**, so an old `quest-log.json` on disk still opens and
 migrates the same way (`"motif"` is read wherever `"pattern"` is expected).
 
-### The log on disk
+### The log on disk — the local server (REPLACED the disk link, 2026-07-28)
 
 `localStorage` is invisible from outside the browser, so the state also goes
 to a real file — the one place a collaborator, or an agent reading the
 repository, can see the whole picture.
 
-**Linked (preferred).** The File System Access API. `K` on the quest page
-calls `showSaveFilePicker` for
-`quest-log.json`; the handle is kept in IndexedDB, and from then on every
-change writes the file automatically, debounced 2 s. On a later boot the
-handle is recalled and `queryPermission` is checked; if the grant has
-lapsed, `requestPermission` is retried on the **first real key or click**,
-since a browser will not grant it without a gesture.
+The first attempt at this (the same day) was a File System Access "disk
+link" on `K`: the save-file picker plus a handle kept in IndexedDB. It was
+verified only in a probe and **did nothing on the user's real Chrome from
+`file://`**. It is gone — code, binding and documentation — and is replaced
+by a proper backend, small enough to read in one sitting.
 
-*Verified on Chrome 2026-07 from `file://`:* a `file:` page reports
-`isSecureContext === true`, `showSaveFilePicker` / `showOpenFilePicker` /
-`FileSystemHandle.queryPermission` / `createWritable` all exist, and
-IndexedDB reads and writes normally. The picker itself needs a user gesture
-(headless it rejects with `AbortError`, as it has no UI to show), which is
-exactly what the `K` keypress provides.
+**`server.mjs`** — Node, zero npm dependencies (`node:http`,
+`node:fs/promises`, `node:path`, plus `node:os` for the LAN URL only). Start
+it by double-clicking **`folio.cmd`** (which is just
+`@node "%~dp0server.mjs" %*`) or with `node server.mjs`, then open
+**http://localhost:4173**.
 
-**Unlinked (fallback, unchanged).** `Ctrl+S` with the quest log open writes
-the same JSON by hand as `quest-log.json`, to be kept at
-`quests/quest-log.json`; `Ctrl+O` or a drag-and-drop reads it back. A quest
-log is recognised by its `"folio": "quest-log"` marker and opens as a quest
-log wherever it is dropped, without being mistaken for a pattern.
+| route | behaviour |
+|---|---|
+| `GET /` | `folio.html` |
+| `GET /<name>.{html,js,mjs,css,json,svg,png,ico}` | that file, from the repo root only |
+| `GET /api/quest-log` | `quests/quest-log.json`, or **404** if there is none yet |
+| `PUT /api/quest-log` | validates JSON with `"folio": "quest-log"`, writes a temp file and renames it over the real one (atomic — a reader never sees half a log), **204**. `400` on anything else |
 
-The footer says which state it is in, quietly, and only while the quest log
-is open: `· linked to disk`, `· K links it to a file`, `· the linked file
-needs permission`, or nothing at all where the browser has no picker.
+- Binds **127.0.0.1:4173**. `PORT` overrides the port. `--lan` binds
+  `0.0.0.0` instead and prints the LAN URL, for sharing with the family
+  later; the default stays localhost-only.
+- Static serving is **repo root only**: no subdirectories, no `..`, no
+  backslashes, and only the extensions above — so `GET /../BUDGET.md` and
+  `GET /BUDGET.md` are both refused (403 / 404). The pattern files under
+  `quests/` are reachable only through the API.
+- One quiet log line per request; `EADDRINUSE` prints what to do and exits 1.
+
+**In the app.** The mode is decided once at boot by
+`location.protocol`.
+
+- Over **http(s)**: at boot the app `GET`s the log and, if there is one,
+  **the server is the authority** — its state replaces whatever
+  `localStorage` had just loaded, the cursor returns to step 1, and the
+  footer says "restored from the server". A **404 is not a failure** (there
+  is simply no log yet; the first push creates it) and an unreachable or
+  unreadable server falls back to the localStorage state — never to an empty
+  page.
+- Every autosave also `PUT`s the whole version-2 state, debounced **2 s**
+  and fire-and-forget, so a burst of note entry writes once.
+- `localStorage` keeps working underneath in both modes, as cache and
+  offline layer; it is written first and always.
+- Failure is quiet and never blocks: the footer, only while the quest log is
+  open, says `· synced` or `· sync failed — working locally`, and the next
+  change retries.
+- From **`file://`** none of this happens and nothing else changes.
+
+**By hand (both modes, unchanged).** `Ctrl+S` with the quest log open writes
+the same JSON as `quest-log.json`, to be kept at `quests/quest-log.json`;
+`Ctrl+O` or a drag-and-drop reads it back. A quest log is recognised by its
+`"folio": "quest-log"` marker and opens as a quest log wherever it is
+dropped, without being mistaken for a pattern.
 
 The convention from `QUESTS.md` stands alongside all of this: finished
 pieces are still saved as `quests/<quest-name>.folio.json`, and `Ctrl+S` on
