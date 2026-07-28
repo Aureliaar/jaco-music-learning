@@ -4,7 +4,7 @@ Append-only. One line per tool-work session. $ = API-equivalent cost from
 the statusline (delta from session start to session end), honor-system,
 rounded up to $0.50.
 
-**Balance: $7.00** (bootstrap $50 − $55 spent + $12 quest rewards: Summit, Three Stones, White Space)
+**Balance: $11.00** (bootstrap $50 − $67 spent + $28 quest rewards: 7 of 8 L1 quests complete; Apprentice's Hand deferred to L3)
 
 Lesson 0 was ruled **free** (2026-07-27): the bootstrap was always meant to
 be gratis, and subagent usage isn't visible in the statusline anyway.
@@ -27,3 +27,9 @@ agent work is metered by the orchestrating session's statusline delta.
 | 2026-07-28 | reward | +4.00 | 9.00 | Quest complete: ⚔ Three Stones (step-16 anacrusis; verified via roll screenshot) |
 | 2026-07-28 | reward | +4.00 | 13.00 | Quest complete: ⚔ White Space (5 rests, none adjacent; palindromic arch; verified via roll screenshot) |
 | 2026-07-28 | HUD | 6.00 | 7.00 | Tempo control (F1 page, live-safe), seeded per-quest keys/tempos (rite built then withdrawn mid-flight) |
+| 2026-07-28 | HUD | 5.00 | 2.00 | Drill quests: assistant-deliverable études, live poll/merge delivery |
+| 2026-07-29 | reward | +4.00 | 6.00 | Quest complete: ⚔ Call and Answer (rising Q / falling A, one-note pivot) |
+| 2026-07-29 | reward | +4.00 | 10.00 | Quest complete: ⚔ Keep the Stray (E minor, two strays, chromatic descent) |
+| 2026-07-29 | reward | +4.00 | 14.00 | Quest complete: ⚔ Ouroboros (D minor, chromatic crawl at the seam) |
+| 2026-07-29 | reward | +4.00 | 18.00 | Quest complete: ⚔ The Ladder (all 7 of G major, hidden) |
+| 2026-07-29 | HUD | 7.00 | 11.00 | Auditor page: blind lineup listening, IT translation, deploy |
