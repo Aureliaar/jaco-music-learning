@@ -1768,12 +1768,15 @@
 
     /* L1 and R1 are the base octave — except in relative entry, where they
        are also the leap modifiers. There a bumper acts on release, and only
-       if it was not used as a modifier while it was down. */
+       if it was not used as a modifier while it was down: the release is
+       noted here and settled below, after the face buttons have had their
+       say, so that a leap made on this very frame still claims the bumper. */
+    var lGone = false, rGone = false;   /* let go this frame, verdict pending */
     if (relative){
       if (gpEdge(cur, GP_L1)) lbUsed = false;
       if (gpEdge(cur, GP_R1)) rbUsed = false;
-      if (!cur[GP_L1] && gpPrev[GP_L1] && !lbUsed) shiftOctave(-1);
-      if (!cur[GP_R1] && gpPrev[GP_R1] && !rbUsed) shiftOctave(1);
+      lGone = !cur[GP_L1] && !!gpPrev[GP_L1];
+      rGone = !cur[GP_R1] && !!gpPrev[GP_R1];
     } else {
       if (gpEdge(cur, GP_L1)) shiftOctave(-1);
       if (gpEdge(cur, GP_R1)) shiftOctave(1);
@@ -1793,13 +1796,18 @@
     } else if (relative){
       /* relative entry: bare, the face buttons are motion rather than pitch.
          A bumper widens the move — L1 a third, R1 a fifth, both a semitone
-         out of the key. ○ and □ ignore the bumpers. */
-      var lead = (cur[GP_L1] ? 1 : 0) + (cur[GP_R1] ? 2 : 0);
+         out of the key. ○ and □ ignore the bumpers.
+         A bumper counts as held if it is down now or was down on the frame
+         before: rolling off the bumper as the thumb lands is one movement,
+         and the poll must not read the two halves of it as a leap that lost
+         its modifier and a bare tap of the octave. */
+      var lDown = !!cur[GP_L1] || lGone, rDown = !!cur[GP_R1] || rGone;
+      var lead = (lDown ? 1 : 0) + (rDown ? 2 : 0);
       var wide = (lead === 1) ? 2 : (lead === 2) ? 4 : 1;    /* third, fifth, step */
       if (gpEdge(cur, GP_TRIANGLE) || gpEdge(cur, GP_CROSS)){
         var dir = gpEdge(cur, GP_TRIANGLE) ? 1 : -1;
-        if (cur[GP_L1]) lbUsed = true;
-        if (cur[GP_R1]) rbUsed = true;
+        if (lDown) lbUsed = true;
+        if (rDown) rbUsed = true;
         if (lead === 3) relStep(dir, true);                  /* a semitone out of key */
         else relStep(dir * wide, false);
       }
@@ -1854,6 +1862,11 @@
       gpNav(rx <= -STICK_DEAD || ry <= -STICK_DEAD, "back", -4, now);
       gpNav(rx >=  STICK_DEAD || ry >=  STICK_DEAD, "fwd",   4, now);
     }
+
+    /* the bumper released above: it is the octave only if nothing this frame
+       or before it spent the bumper on a leap */
+    if (lGone && !lbUsed) shiftOctave(-1);
+    if (rGone && !rbUsed) shiftOctave(1);
 
     gpPrev = cur;
   }
