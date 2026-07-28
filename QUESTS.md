@@ -5,6 +5,13 @@ specific phrasing decision until it becomes instinct. They are NOT the
 lesson deliverable; they're the training grounds around it. Take them in
 any order, repeat freely, abandon guiltlessly.
 
+**Reward (adopted 2026-07-28): +$4 HUD budget per quest, once per quest
+ever.** Evidence required: the quest's bound motif present in a committed
+`quests/quest-log.json`. Completion still means the constraint is met AND
+the result survived your ten-loop test — the reward changes the stakes,
+not the bar. One loop credits at most one quest (your pick); satisfying
+extra constraints at once is style points, not income.
+
 Rules of play:
 - Every quest inherits the current lesson's toolset (L1: one voice, fixed
   velocity, 16 steps).

@@ -45,6 +45,25 @@ is 1–2 real sessions of tool work. Scarcity is a feature. (If the first few
 ledger lines show these estimates are badly calibrated, rescale all
 remaining grants once, by one agreed factor — not per-lesson haggling.)
 
+## The quest system (adopted during L1, permanent from here on)
+
+Proven in Lesson 1, kept for every lesson: alongside each lesson's
+deliverable, a **quest board** of constraint-études — each quest is one
+forced decision, played inside the current toolset, seeded with a key and
+tempo chosen per quest. Rules carried forward from `QUESTS.md`:
+
+- Quests are optional side content; the lesson deliverable stays the gate.
+- **+$4 per quest, once ever, one quest per loop** — evidence on disk
+  (`quests/quest-log.json`), constraint met, ten-loop survived.
+- **The noodle rule stands:** aimless play inside a quest's constraint IS
+  the quest; save what snags.
+- **Drills** (assistant-delivered études, seeded live into the quest rail)
+  are free teaching aids, not rewarded — they install a concept, quests
+  train it.
+- Each lesson's full board is authored when the lesson unlocks (the
+  toolset defines what constraints are possible); the sketches below are
+  the direction, not the contract.
+
 ---
 
 ## Lesson 0 — Bootstrap (no music yet)
@@ -126,6 +145,12 @@ their home turf):**
 - *Motion test:* evaluator identifies at least one moment of contrary motion
   or genuine call-and-response, not parallel shadowing throughout.
 
+**Quest board (sketch):** ⚔ *The Shadow* — bass moves only in contrary
+motion to the melody. ⚔ *Ostinato* — bass is a repeating 4-note cell,
+melody free above it. ⚔ *Pass the Torch* — the call lives in one voice,
+the answer in the other. ⚔ *The Drone* — bass holds one pitch the whole
+loop; the melody must make it work.
+
 **Grant on pass:** +$20.
 
 ---
@@ -204,6 +229,12 @@ silver lion):**
 - *Don't-hate test:* the standing criterion — would the evaluator let it
   play again unprompted?
 
+**Quest board (sketch):** ⚔ *Two-Chord World* — the whole loop on two
+chords only. ⚔ *The Suspension* — one suspended note, held across the
+change, resolved on purpose. ⚔ *Common Tone* — every adjacent chord pair
+shares a note. ⚔ *Bassline First* — write the bass, then find the chords
+it implies.
+
 **Grant on pass:** +$30.
 
 ---
@@ -237,6 +268,11 @@ the same notes.
   fail.
 - *Accent-map test:* evaluator claps/taps the accent pattern back. If the
   accents are too uniform to find, fail.
+
+**Quest board (sketch):** ⚔ *Ghost Town* — same notes three times, three
+different accent maps, three different pieces. ⚔ *The Whisper* — one note
+per loop is barely audible; it must still matter. ⚔ *Drunk Grid* — the
+same loop at swing extremes, A/B'd until you can name your taste.
 
 **Grant on pass:** +$20.
 
@@ -276,6 +312,11 @@ melody — inside 8 voices. This is the "real Uematsu-tier" checkpoint.
   functioning groove.
 - *Don't-hate test*, standing.
 
+**Quest board (sketch):** ⚔ *64K or Die* — the kit budget as a puzzle box.
+⚔ *The Thief* — arrange so voice-stealing becomes an audible feature, not
+a bug. ⚔ *Drop Out* — one lane falls silent each bar, rotating; the groove
+must survive every absence.
+
 **Grant on pass:** +$30.
 
 ---
@@ -310,6 +351,11 @@ point — your call, but chosen, not defaulted).
   didn't intend, discuss; if they can't find one, fail.
 - *Civilian test:* a non-musician listens to the whole thing without
   checking their phone. Wildly unfair metric. Use it anyway.
+
+**Quest board (sketch):** ⚔ *Subtraction* — start with everything playing;
+you may only remove. ⚔ *The Long Way Up* — ninety seconds of build, no
+peak until it's earned. ⚔ *Transition Zoo* — the same two patterns joined
+three different ways.
 
 **Grant on pass:** +$30.
 
@@ -346,6 +392,12 @@ like **you**.
   apparently sounds like. If they can — you have a style. Curriculum
   complete.
 - *Don't-hate test*, standing, forever.
+
+**Quest board (sketch):** ⚔ *The Borrowed One* — one chord from the
+parallel key, placed like a stray note: inevitable. ⚔ *Nine Lives* — the
+same progression, recolored with extensions until it stops being
+four-chords. ⚔ *Displacement* — the loop's harmony shifted a beat against
+its melody; make the seasickness intentional.
 
 **Grant on pass:** the budget system retires. You've earned an unmetered
 tool — or the right to graduate to a commercial DAW, which will now feel

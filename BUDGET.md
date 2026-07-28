@@ -4,7 +4,7 @@ Append-only. One line per tool-work session. $ = API-equivalent cost from
 the statusline (delta from session start to session end), honor-system,
 rounded up to $0.50.
 
-**Balance: $8.00** (bootstrap $50 − $5 gamepad − $3 entry modes − $2 removal − $5 audio/loop/pad − $5 quest tracker − $14 roll view − $8 contour entry)
+**Balance: $7.00** (bootstrap $50 − $55 spent + $12 quest rewards: Summit, Three Stones, White Space)
 
 Lesson 0 was ruled **free** (2026-07-27): the bootstrap was always meant to
 be gratis, and subagent usage isn't visible in the statusline anyway.
@@ -22,3 +22,8 @@ agent work is metered by the orchestrating session's statusline delta.
 | 2026-07-28 | HUD | 5.00 | 30.00 | Quest tracker: in-app quest log, motif binding, objective display, quests/quest-log.json |
 | 2026-07-28 | HUD | 14.00 | 16.00 | The roll: F2/R3 alternate view — time horizontal, pitch as height, colour by pitch class; arrows/d-pad 4-way nav, right stick by beats; quest log rebound to F3/select |
 | 2026-07-28 | HUD | 8.00 | 8.00 | Relative (contour) entry: scale-step face buttons, bumper leaps, key concept, F4/hold-Select toggle |
+| 2026-07-28 | reward | +4.00 | 12.00 | Quest complete: ⚔ The Summit (honor system — bind UX failure ate the evidence; melody verified via roll screenshot) |
+| 2026-07-28 | HUD | 7.00 | 5.00 | Quest workspaces: per-quest autosaved patterns, side rails, K-link disk sync, no bind step |
+| 2026-07-28 | reward | +4.00 | 9.00 | Quest complete: ⚔ Three Stones (step-16 anacrusis; verified via roll screenshot) |
+| 2026-07-28 | reward | +4.00 | 13.00 | Quest complete: ⚔ White Space (5 rests, none adjacent; palindromic arch; verified via roll screenshot) |
+| 2026-07-28 | HUD | 6.00 | 7.00 | Tempo control (F1 page, live-safe), seeded per-quest keys/tempos (rite built then withdrawn mid-flight) |
