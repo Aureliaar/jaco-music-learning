@@ -1,6 +1,172 @@
 {
   "folio": "quest-log",
-  "version": 1,
-  "active": null,
-  "quests": {}
+  "version": 2,
+  "active": "callanswer",
+  "free": {
+    "version": 1,
+    "title": "untitled folio",
+    "tempo": 104,
+    "loop": 16,
+    "key": "C major",
+    "steps": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "quests": {
+    "whitespace": {
+      "done": false,
+      "pattern": {
+        "version": 1,
+        "title": "untitled folio",
+        "tempo": 112,
+        "loop": 16,
+        "key": "C major",
+        "steps": [
+          "C3",
+          "F2",
+          "E2",
+          null,
+          "C3",
+          "D3",
+          null,
+          "E3",
+          "F3",
+          "E3",
+          null,
+          "C3",
+          "B2",
+          null,
+          "B2",
+          null
+        ]
+      }
+    },
+    "summit": {
+      "done": false,
+      "pattern": {
+        "version": 1,
+        "title": "untitled folio",
+        "tempo": 112,
+        "loop": 16,
+        "key": "D major",
+        "steps": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    },
+    "stones": {
+      "done": false,
+      "pattern": {
+        "version": 1,
+        "title": "untitled folio",
+        "tempo": 100,
+        "loop": 16,
+        "key": "A minor",
+        "steps": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    },
+    "ouroboros": {
+      "done": false,
+      "pattern": {
+        "version": 1,
+        "title": "untitled folio",
+        "tempo": 100,
+        "loop": 16,
+        "key": "D minor",
+        "steps": [
+          "D4",
+          "F4",
+          "A4",
+          "C5",
+          "A4",
+          "G4",
+          "A4",
+          "F4",
+          "D4",
+          null,
+          "C4",
+          "C#4",
+          "D4",
+          "D#4",
+          "C4",
+          null
+        ]
+      }
+    },
+    "callanswer": {
+      "done": false,
+      "pattern": {
+        "version": 1,
+        "title": "untitled folio",
+        "tempo": 104,
+        "loop": 16,
+        "key": "F major",
+        "steps": [
+          "F4",
+          "E4",
+          "D4",
+          null,
+          "C#5",
+          "C5",
+          "A#4",
+          null,
+          "F4",
+          "E4",
+          "F4",
+          null,
+          "F4",
+          "F#4",
+          "F4",
+          null
+        ]
+      }
+    }
+  }
 }

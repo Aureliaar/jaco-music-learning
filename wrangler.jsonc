@@ -1,0 +1,23 @@
+// The shared copy of the folio: an assets-only Cloudflare Worker.
+//
+//   node scripts/build.mjs      # produce ./dist (the page + the quest log)
+//   npx wrangler deploy         # put ./dist on https://folio.<subdomain>.workers.dev
+//
+// Only ./dist is deployed, and ./dist holds exactly two things: folio.html as
+// index.html, and quests/quest-log.json. The curriculum, the études and the
+// ledger stay in the repository and are never published.
+//
+// `not_found_handling` is deliberately left at its default: an unknown path
+// must 404, because that 404 is how the page recognises a static host and
+// switches to its read-only mode. A single-page-application fallback would
+// answer /api/quest-log with the page itself and hide the difference.
+{
+  "name": "folio",
+  "compatibility_date": "2026-06-22",
+  "observability": {
+    "enabled": true
+  },
+  "assets": {
+    "directory": "./dist"
+  }
+}

@@ -61,7 +61,13 @@ function send(req, res, status, body, type){
 async function getLog(req, res){
   let text;
   try { text = await fs.readFile(LOG_FILE, "utf8"); }
-  catch { send(req, res, 404, "no quest log yet"); return; }
+  catch {
+    /* 404, but in JSON on purpose: this is how the page tells a real server
+       with no log yet (keep syncing — ours becomes the log) apart from a
+       static host with no /api at all (read-only copy). */
+    send(req, res, 404, '{"folio":"quest-log","absent":true}\n', MIME[".json"]);
+    return;
+  }
   send(req, res, 200, text, MIME[".json"]);
 }
 

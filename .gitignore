@@ -1,0 +1,10 @@
+# The deploy artifact: built by scripts/build.mjs, never committed.
+dist/
+
+# Wrangler / Cloudflare local state
+.wrangler/
+
+# Local working dirs
+node_modules/
+.claude/
+tmp/

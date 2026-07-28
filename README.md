@@ -42,6 +42,45 @@ hand in either mode.
 If the server stops mid-session the page carries on in `localStorage`, says
 so quietly in the footer, and picks the sync back up on the next change.
 
+## Sharing it
+
+There is a third way to open it: a copy on the web, for people who should be
+able to hear the pieces and play with the instrument without installing
+anything.
+
+That copy is a Cloudflare Worker serving static assets — the same shape as
+`magic-proximity-proto`. `scripts/build.mjs` puts exactly two files in
+`dist/`:
+
+```
+folio.html            -> dist/index.html
+quests/quest-log.json -> dist/quests/quest-log.json
+```
+
+Nothing else leaves the repository: `CURRICULUM.md`, `QUESTS.md`,
+`BUDGET.md`, `SPEC-LESSON-0.md` and `server.mjs` are not published.
+
+```
+npm run build      # node scripts/build.mjs
+npm run deploy     # build, then npx wrangler deploy   (needs `wrangler login` once)
+```
+
+Pushing to `main` does the same by itself, through
+`.github/workflows/deploy.yml`, once the repository has a remote and the
+`CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID` secrets.
+
+**What the shared copy does.** There is no server behind it, so the page
+notices at boot — `/api/quest-log` is not there — and goes read-only: it
+never writes anything back. On a browser that has nothing of its own yet it
+reads the committed `quests/quest-log.json` once, as a seed, so the pieces
+are there to hear on the first visit. Everything the visitor then writes
+lives in their own `localStorage` and goes nowhere. The footer says
+`· read-only copy` while the quest log is open.
+
+The local server is unaffected: it answers a missing log with a JSON `404`,
+which is precisely how the page tells a real server apart from a static
+host.
+
 ## What is where
 
 | | |
@@ -51,6 +90,7 @@ so quietly in the footer, and picks the sync back up on the next change.
 | `folio.cmd` | one-click start for the above |
 | `quests/quest-log.json` | the quest log on disk |
 | `quests/*.folio.json` | finished pieces, one per quest |
+| `scripts/build.mjs`, `wrangler.jsonc` | the shared copy on the web |
 | `SPEC-LESSON-0.md` | the contract |
 | `CURRICULUM.md`, `QUESTS.md`, `BUDGET.md` | the course, the études, the ledger |
 

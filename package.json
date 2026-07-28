@@ -1,0 +1,13 @@
+{
+  "name": "folio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A keyboard-native step sequencer on an illuminated page. No dependencies; this file exists only to describe the deploy of the shared copy.",
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "build": "node scripts/build.mjs",
+    "deploy": "node scripts/build.mjs && npx wrangler deploy"
+  },
+  "license": "ISC"
+}

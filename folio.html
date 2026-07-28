@@ -340,6 +340,7 @@
         <p>The key and the tempo both belong to the page you are on, and so to the workspace it lives in: each quest keeps its own, free play keeps its own, and changing one changes nothing anywhere else. Either may be changed while the loop runs; the change is heard at the next step, without a restart. A quest's page arrives already tuned &mdash; its own key and its own tempo, chosen to suit its constraint &mdash; so there is nothing to decide before writing; change them here whenever you like, and the change stays with that quest. Free play always begins in C major at 112.</p>
         <p>Every quest is a workspace: a whole page of its own &mdash; steps, title, tempo, loop and key &mdash; and one more page, free play, belongs to no quest. The page in front of you saves itself into the workspace you are in, on every change, as it always did; choosing another quest simply puts a different page in front of you. Nothing is bound, nothing is loaded, nothing is copied, and so nothing can be written over. The margins of this page carry the same thing quietly while you work: on the left every workspace and where you are, on the right the constraint you are under. A narrow window drops both rather than squeeze the column.</p>
         <p>Opened from a file, the folio keeps everything in the browser alone. Started with folio.cmd and opened at http://localhost:4173, it also keeps the whole quest log in a real file &mdash; quests/quest&#8209;log.json &mdash; written a couple of seconds after every change, and read back when it opens. The footer says &middot;&#8239;synced while the quest log is open. If the server goes away the work carries on in the browser and the footer says so; the next change tries again.</p>
+        <p>A copy of the folio can also be put on an ordinary web host and sent to somebody. There is no server behind that copy, so it never sends anything anywhere: it reads the quest log that travelled with it once, on a browser that has nothing of its own yet, and after that everything the reader writes is theirs and stays in their browser. The footer says &middot;&#8239;read&#8209;only copy while the quest log is open.</p>
       </div>
       <div>
         <h2>The gamepad</h2>
@@ -1324,8 +1325,10 @@
      while the quest log is open, work continues in localStorage, and the
      next change tries again. */
   var SYNC_URL = "api/quest-log";
+  var SEED_URL = "quests/quest-log.json";
   var SYNC_DEBOUNCE = 2000;
   var syncOn = false;                /* set at boot: are we served over http? */
+  var staticMode = false;            /* served over http, but by a dumb host */
   var syncState = "idle";            /* idle | ok | failed */
   var syncTimer = null;
   var syncMute = false;              /* true while applying the server's own state */
@@ -1337,6 +1340,7 @@
     } catch (e){ return false; }
   }
   function syncNote(){
+    if (staticMode) return " · read-only copy";
     if (!syncOn) return "";
     if (syncState === "failed") return " · sync failed — working locally";
     return " · synced";
@@ -1386,22 +1390,74 @@
     if (syncTimer) clearTimeout(syncTimer);
     syncTimer = setTimeout(function(){ syncTimer = null; syncFlush(); }, SYNC_DEBOUNCE);
   }
-  function syncBoot(){
+  /* ---- the third mode: a shared copy on a static host ----
+     The page can also be put on an ordinary web host (the deployed copy the
+     family opens). There is no server there, so there is no `/api` at all:
+     the boot GET comes back as a 404 that is *not* JSON, or does not come
+     back. That is the tell, and it is the one thing that separates a static
+     host from `server.mjs` — which answers `/api/quest-log` with JSON even
+     when the file is missing (404 `{"absent":true}`), so the empty-server
+     case keeps writing as it always did.
+
+     On a static host the folio becomes read-only towards the outside: it
+     never PUTs. It does read `quests/quest-log.json` once — the committed
+     copy that travels with the page — and only if this browser has nothing
+     of its own yet. So the pieces are there to hear on a first visit, and
+     from then on the visitor's own work lives in their own localStorage and
+     is never sent anywhere. The footer says so quietly. */
+  function jsonish(r){
+    var t = "";
+    try { t = (r.headers && r.headers.get && r.headers.get("content-type")) || ""; }
+    catch (e){ t = ""; }
+    return t.toLowerCase().indexOf("json") >= 0;
+  }
+  /* the committed log, read once, as a seed and nothing more */
+  function seedBoot(){
+    if (typeof fetch !== "function") return;
+    try {
+      fetch(SEED_URL, { headers: { "accept": "application/json" } }).then(function(r){
+        if (!r || !r.ok) return;
+        return r.json().then(function(o){
+          if (applyServerState(o))
+            say("the shared quest log ‸ cursor row" +
+                (activeQuest() ? " · ⚔ " + activeQuest().short : ""));
+        }, function(){});
+      }, function(){});
+    } catch (e){}
+  }
+  function goStatic(fresh){
+    staticMode = true;
+    syncOn = false;                  /* nothing is ever pushed from here */
+    syncState = "idle";
+    syncTouch();
+    if (fresh) seedBoot();           /* only when this browser is empty */
+  }
+  function syncBoot(fresh){
     syncOn = httpOrigin();
-    if (!syncOn || typeof fetch !== "function") return;
+    if (!syncOn) return;
+    if (typeof fetch !== "function"){ syncOn = false; return; }
     try {
       fetch(SYNC_URL, { headers: { "accept": "application/json" } }).then(function(r){
         if (!r) return;
-        if (r.status === 404){ syncState = "ok"; return; }   /* no log yet: ours becomes it */
+        if (r.status === 404){
+          /* server.mjs says so in JSON; a static host says it in HTML or text */
+          if (jsonish(r)) syncState = "ok";      /* no log yet: ours becomes it */
+          else goStatic(fresh);
+          return;
+        }
         if (!r.ok){ syncState = "failed"; syncTouch(); return; }
         return r.json().then(function(o){
           syncState = "ok";
           if (applyServerState(o))
             say("restored from the server ‸ cursor row" +
                 (activeQuest() ? " · ⚔ " + activeQuest().short : ""));
-        }, function(){ syncState = "failed"; syncTouch(); });
-      }, function(){ syncState = "failed"; syncTouch(); });
-    } catch (e){ syncState = "failed"; }
+        }, function(){
+          /* a 200 that is not a quest log at all — a host answering every
+             path with the page itself. Not a server: a static copy. */
+          goStatic(fresh);
+        });
+      }, function(){ goStatic(fresh); });        /* no /api on this host */
+    } catch (e){ goStatic(fresh); }
   }
 
   function exportQuests(){
@@ -1934,7 +1990,7 @@
   applyViz();
   renderAll();
   renderQuests();
-  syncBoot();
+  syncBoot(!restored);               /* fresh browser? then a seed is allowed */
   if (!storageOK) say("autosave unavailable — export to keep your work");
   else if (restored)
     say("restored ‸ cursor row" + (activeQuest() ? " · ⚔ " + activeQuest().short : "") +

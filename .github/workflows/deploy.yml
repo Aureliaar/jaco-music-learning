@@ -1,0 +1,33 @@
+name: Deploy to Cloudflare Workers
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          # wrangler 4.x requires Node >= 22.
+          node-version: '22'
+
+      # No dependencies: the build is a copy into ./dist of the two files
+      # that are allowed to leave the repository.
+      - name: Build
+        run: node scripts/build.mjs
+
+      - name: Deploy to Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          # The action's default wrangler can't deploy an assets-only Worker
+          # (no `main` script). Pin a modern one.
+          wranglerVersion: '4.103.0'
