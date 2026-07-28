@@ -86,7 +86,9 @@ host.
 
 `auditor.html` is a blind-listening page to hand to somebody else: it plays a
 lineup of patterns from the quest log as **I, II, III…** — no names, no ids,
-shuffled fresh on every load — and asks three questions afterwards. Open it at
+shuffled fresh on every load — and asks three questions afterwards. Every word
+on it is **in Italian**, because the auditors are; the code, the ids and the
+query parameter stay English. Open it at
 **http://localhost:4173/auditor.html** locally or **/auditor.html** on the
 shared copy; `?ids=stray,lineup-a,lineup-b` chooses the lineup (that is also
 the default). A press-and-hold control at the bottom reveals which numeral was

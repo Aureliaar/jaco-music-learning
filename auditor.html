@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The Audit</title>
+<title>L’Audizione</title>
 <style>
-  /* ---- The Audit — a blind listening page. Same manuscript language as
+  /* ---- L’Audizione — a blind listening page, in Italian for the family. Same manuscript language as
          folio.html; see SPEC-LESSON-0.md. Touch and mouse only. ---- */
   :root{
     --ground:#EAE0CC;
@@ -356,7 +356,7 @@
   }
 
   function start(entry){
-    if (!audio()){ say("this browser has no audio"); return; }
+    if (!audio()){ say("questo browser non ha audio"); return; }
     current = entry;
     schedStep = 0;
     master.gain.cancelScheduledValues(ctx.currentTime);
@@ -366,20 +366,20 @@
     scheduler();
     timer = setInterval(scheduler, LOOKAHEAD_MS);
     paint(entry, true);
-    say(ctx.state !== "running" ? "tap once more to let the sound through" : "playing · " + entry.numeral);
+    say(ctx.state !== "running" ? "tocca ancora una volta per far uscire il suono" : "suona · " + entry.numeral);
   }
 
   function toggle(entry){
     var wasCurrent = (current === entry);
     stop();                       /* playing one always stops the others */
     if (!wasCurrent) start(entry);
-    else say("stopped");
+    else say("fermato");
   }
 
   function paint(entry, on){
     entry.btn.classList.toggle("on", on);
     entry.mark.textContent = on ? "❧" : "";     /* a steady gilt fleuron */
-    entry.verb.textContent = on ? "stop" : "listen";
+    entry.verb.textContent = on ? "ferma" : "ascolta";
     entry.btn.setAttribute("aria-pressed", on ? "true" : "false");
   }
 
@@ -415,7 +415,7 @@
       num.textContent = it.numeral;
       var verb = document.createElement("span");
       verb.className = "verb";
-      verb.textContent = "listen";
+      verb.textContent = "ascolta";
       line.appendChild(mark); line.appendChild(num); line.appendChild(verb);
 
       btn.appendChild(line);
@@ -447,22 +447,22 @@
       revealDl.appendChild(dt); revealDl.appendChild(dd);
     }
     revealEl.classList.add("on");
-    holdEl.textContent = "the lineup";
+    holdEl.textContent = "i nomi";
     holdEl.classList.remove("armed");
     holdEl.disabled = true;
-    say("revealed");
+    say("svelato");
   }
   function holdStart(){
     if (revealed || holdTimer) return;
     holdEl.classList.add("armed");
-    holdEl.textContent = "keep holding…";
+    holdEl.textContent = "tieni premuto…";
     holdTimer = setTimeout(function(){ holdTimer = null; doReveal(); }, HOLD_MS);
   }
   function holdEnd(){
     if (holdTimer){ clearTimeout(holdTimer); holdTimer = null; }
     if (revealed) return;
     holdEl.classList.remove("armed");
-    holdEl.textContent = "reveal the lineup";
+    holdEl.textContent = "svela i nomi";
   }
   /* ================= boot ================= */
   /* the log is asked for at once — it needs no document — and the page is
@@ -484,7 +484,7 @@
     holdEl.addEventListener("pointerleave", holdEnd);
     holdEl.addEventListener("contextmenu", function(e){ e.preventDefault(); });
 
-    say("gathering…");
+    say("raccolgo…");
     settle();
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
@@ -504,21 +504,21 @@
     if (!list.length){
       var p = document.createElement("li");
       p.className = "empty";
-      p.textContent = "Nothing to hear here yet — the lineup is empty.";
+      p.textContent = "Qui non c’è ancora niente da ascoltare.";
       lineupEl.appendChild(p);
       holdEl.disabled = true;
-      say("nothing found");
+      say("niente da ascoltare");
       return;
     }
     render(list);
-    say(list.length + " to hear" + (missing ? " · " + missing + " not found" : ""));
+    say(list.length + " da ascoltare" + (missing ? " · " + missing + (missing === 1 ? " non trovato" : " non trovati") : ""));
   }).catch(function(){
     var li = document.createElement("li");
     li.className = "empty";
-    li.textContent = "The lineup could not be read.";
+    li.textContent = "Non è stato possibile leggere l’elenco.";
     lineupEl.appendChild(li);
     holdEl.disabled = true;
-    say("no quest log");
+    say("elenco non leggibile");
   });
   }
 
@@ -536,35 +536,37 @@
 <body>
 <main>
   <header>
-    <h1>The Audit</h1>
+    <h1>L&rsquo;Audizione</h1>
     <div class="flourish" aria-hidden="true"><i></i><span>&#10086;</span><i></i></div>
-    <p class="standfirst">A few short loops, unnamed. Each one plays until you
-       stop it &mdash; listen as long as you like, and as often.</p>
+    <p class="standfirst">Alcuni brevi giri di note, senza nome. Ognuno suona
+       finch&eacute; non lo fermi &mdash; ascoltali quanto vuoi, e quante volte
+       vuoi.</p>
   </header>
 
   <div class="divider"></div>
 
-  <ul class="lineup" id="lineup" aria-label="the lineup"></ul>
+  <ul class="lineup" id="lineup" aria-label="i giri di note"></ul>
 
   <div class="divider"></div>
 
   <section class="rubric">
-    <h2>Afterwards</h2>
+    <h2>Dopo l&rsquo;ascolto</h2>
     <ol>
-      <li>One of these is a melody somebody composed; the others are its own
-          notes, put in a different order. Which one was composed?</li>
-      <li>Can you hum the one you picked, after two listens?</li>
-      <li>Would you let it play again?</li>
+      <li>Uno di questi &egrave; una melodia composta da qualcuno; gli altri
+          sono le stesse note, rimesse in un altro ordine. Qual &egrave;
+          quello composto?</li>
+      <li>Riesci a canticchiare quello che hai scelto, dopo due ascolti?</li>
+      <li>Lo lasceresti suonare ancora?</li>
     </ol>
-    <p>There are no wrong answers here &mdash; only honest ones. A shrug is an
-       answer too.</p>
+    <p>Non ci sono risposte sbagliate &mdash; solo risposte sincere. Anche
+       un&rsquo;alzata di spalle &egrave; una risposta.</p>
   </section>
 
   <div class="revealbar">
-    <button type="button" class="hold" id="hold">reveal the lineup</button>
+    <button type="button" class="hold" id="hold">svela i nomi</button>
     <div class="revealed" id="revealed">
       <dl id="revealdl"></dl>
-      <p>For after the verdict, not before it.</p>
+      <p>Per dopo il verdetto, non per prima.</p>
     </div>
   </div>
 
