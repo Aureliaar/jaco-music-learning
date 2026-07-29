@@ -101,6 +101,12 @@ const hook = `
     schedFrom: function(s){ schedStep = s; nextStepTime = 0; queue.length = 0; },
     audioInit: function(){ audio(); },
     rows: rows, pollPads: pollPads, bars: bars,
+    intervalName: _g("intervalName"), pitchName: _g("pitchName"),
+    get ivls(){ return _g("ivls"); },
+    get barNames(){ return _g("barNames"); }, get barNames2(){ return _g("barNames2"); },
+    get showNames(){ return _g("showNames"); },
+    setNames: _g("setNames"), toggleNames: _g("toggleNames"),
+    NAMES_KEY: _g("NAMES_KEY"), rollEl: roll,
     get viz(){return viz;}, toggleViz: toggleViz, VIZ_KEY: VIZ_KEY,
     get relative(){return relative;}, setRelative: setRelative, toggleRelative: toggleRelative,
     ENTRY_KEY: ENTRY_KEY,
@@ -1385,7 +1391,15 @@ ok("the mode is decided by the protocol",
    /location\.protocol === "http:"/.test(html) && /location\.protocol === "https:"/.test(html));
 ok("no File System Access remains", !/showSaveFilePicker|showOpenFilePicker/.test(html));
 ok("no IndexedDB handle store remains", !/indexedDB/i.test(html));
-ok("no K binding remains", !/KeyK/.test(html));
+/* K was the old bind-a-motif key. Binding is gone — every quest is a
+   workspace — and the position was free, so K is now the names on the
+   drawing and nothing else. */
+ok("no binding of motifs remains",
+   !/bindMotif|keepMotif|bindQuest|takeMotif/i.test(html));
+ok("K is the names now, and only that",
+   /case "KeyK":\s*\n\s*e\.preventDefault\(\); toggleNames\(\); return;/.test(html));
+ok("and it appears nowhere else in the keymap",
+   (html.match(/"KeyK"/g) || []).length === 1);
 ok("ctrl+O still opens a log by hand", /code === "KeyO"/.test(html));
 ok("a dropped file is still read", /addEventListener\("drop"/.test(html));
 closePages();
@@ -2203,6 +2217,145 @@ ok("the two steps are one 88-bpm step apart",
    sounded.map(s=>s.at));
 T.setPlaying(false);
 closePages();
+
+/* ================= 6. the names: pitches, and the interval between ======== */
+console.log("\n== the note name, with its octave ==");
+qreset();
+eq("middle C is C4", T.nameOfMidi(60), "C4");
+eq("and C4 is MIDI 60", T.midiOf("C4"), 60);
+eq("the bottom of the range is C2", T.nameOfMidi(T.MIDI_LO), "C2");
+eq("and C2 is MIDI 36", T.midiOf("C2"), 36);
+eq("the top of the range is C6", T.nameOfMidi(T.MIDI_HI), "C6");
+eq("and C6 is MIDI 84", T.midiOf("C6"), 84);
+eq("a semitone under middle C is B3", T.nameOfMidi(59), "B3");
+eq("and one over it is C#4", T.nameOfMidi(61), "C#4");
+eq("A440 is A4", T.nameOfMidi(69), "A4");
+eq("the label drops the column's alignment dash", T.pitchName("C4"), "C4");
+eq("and writes a real sharp sign", T.pitchName("F#3"), "F♯3");
+eq("at the bottom of the range", T.pitchName("C2"), "C2");
+eq("at the top of it", T.pitchName("C6"), "C6");
+eq("and says nothing about a rest", T.pitchName(null), "");
+
+console.log("\n== the interval names ==");
+const IVL = ["P1","m2","M2","m3","M3","P4","TT","P5","m6","M6","m7","M7","P8"];
+for (let n = 0; n <= 12; n++) eq(n + " semitones is " + IVL[n], T.intervalName(n), IVL[n]);
+eq("the tritone is TT and not a number", T.intervalName(6), "TT");
+eq("13 semitones compounds to m9", T.intervalName(13), "m9");
+eq("14 to M9", T.intervalName(14), "M9");
+eq("15 to m10", T.intervalName(15), "m10");
+eq("16 to M10", T.intervalName(16), "M10");
+eq("17 to P11", T.intervalName(17), "P11");
+eq("18 — a tritone and an octave — to TT11", T.intervalName(18), "TT11");
+eq("19 to P12", T.intervalName(19), "P12");
+eq("21 to M13", T.intervalName(21), "M13");
+eq("23 to M14", T.intervalName(23), "M14");
+eq("two octaves to P15", T.intervalName(24), "P15");
+eq("27 to m17", T.intervalName(27), "m17");
+eq("30 to TT18", T.intervalName(30), "TT18");
+eq("three octaves to P22", T.intervalName(36), "P22");
+eq("the whole range, C2 to C6, is P29", T.intervalName(T.MIDI_HI - T.MIDI_LO), "P29");
+eq("direction is not named — a crossed pair reads the same",
+   T.intervalName(-7), T.intervalName(7));
+eq("nor at the octave", T.intervalName(-12), "P8");
+
+console.log("\n== the names, on the drawing ==");
+qreset(); useRoll();
+duet({0:"C4", 2:"F#3", 5:"C4"}, {0:"C3", 1:"G2", 5:"E3"});
+eq("every sounding bar in the lead is labelled", T.barNames[0].textContent, "C4");
+eq("sharps included", T.barNames[2].textContent, "F♯3");
+eq("and the bass's bars too", T.barNames2[0].textContent, "C3");
+eq("the bass label at its own step", T.barNames2[1].textContent, "G2");
+ok("a rest's bar is not drawn at all", T.bars[1].style.display === "none");
+eq("there is one interval slot per step", T.ivls.length, 16);
+eq("both voices sounding: the interval is written",
+   T.ivls[0].firstChild.textContent, "P8");
+ok("and the slot is shown", T.ivls[0].classList.contains("on"));
+eq("the same step, in the same column", T.ivls[0].style.left, "0%");
+eq("as wide as the step", T.ivls[0].style.width, "6.25%");
+eq("a minor sixth, named", T.ivls[5].firstChild.textContent, "m6");
+ok("only the lead sounds: nothing is named", !T.ivls[2].classList.contains("on"));
+ok("only the bass sounds: nothing is named", !T.ivls[1].classList.contains("on"));
+ok("neither sounds: nothing is named", !T.ivls[3].classList.contains("on"));
+duet({0:"C4"}, {0:"F#3"});
+eq("a tritone is named like anything else", T.ivls[0].firstChild.textContent, "TT");
+duet({0:"C6"}, {0:"C2"});
+eq("and the widest pair on the page compounds", T.ivls[0].firstChild.textContent, "P29");
+duet({0:"C4"}, {0:"C4"});
+eq("two voices on the same pitch is a unison", T.ivls[0].firstChild.textContent, "P1");
+duet({0:"E3"}, {0:"C4"});
+eq("the bass above the lead names the same distance",
+   T.ivls[0].firstChild.textContent, "m6");
+duet({15:"C4"}, {15:"C3"}, { loop:8 });
+ok("past the loop, the interval is drawn back with the bars",
+   T.ivls[15].classList.contains("outside") && T.bars[15].classList.contains("outside"));
+duet({0:"C4"}, {0:"C3"});
+ok("inside it, it is not", !T.ivls[0].classList.contains("outside"));
+
+console.log("\n== the names describe, and nothing more ==");
+ok("no interval is ranked anywhere in the app",
+   !/consonan|dissonan|harsh|clash|tense interval|good interval|bad interval/i.test(html));
+/* the only modifier the label ever takes is the one the bars take: past the
+   loop. Nothing sorts intervals into kinds. */
+eq("the label takes only the two modifiers the bars take: shown, and past the loop",
+   [...new Set(html.match(/\.ivl\.[a-z]+/g) || [])].sort(), [".ivl.on", ".ivl.outside"]);
+const rollIvlSrc = (/function rollIntervals[\s\S]*?\n  \}/.exec(src) || ["" ])[0];
+ok("the function that writes them exists", /el\.firstChild\.textContent = intervalName/.test(rollIvlSrc));
+ok("and nothing else is ever added to the label at runtime",
+   !/classList\.(add|toggle|remove)\((?!"on"|"outside")/.test(rollIvlSrc), rollIvlSrc.slice(0, 200));
+ok("the label is drawn in the page's own ink", /\.ivl\{[^}]*color:var\(--ink\)/.test(html.replace(/\s+/g,"")));
+ok("and the bar's name in the page's own ground",
+   /\.barname\{[^}]*color:rgba\(234,224,204/.test(html.replace(/\s+/g,"")));
+ok("still no pure white or black anywhere", !/#fff\b|#ffffff|#000\b|#000000/i.test(html));
+ok("and still nothing that blinks", !/@keyframes/.test(html));
+
+console.log("\n== K puts the names away ==");
+qreset(); useRoll();
+duet({0:"C4"}, {0:"C3"});
+ok("they are on to begin with", T.showNames === true);
+ok("and the roll is not marked otherwise", !T.rollEl.classList.contains("nonames"));
+key("KeyK");
+ok("K puts them away", T.showNames === false);
+ok("the roll says so, and only the roll", T.rollEl.classList.contains("nonames"));
+eq("the preference is kept, not the document", store[T.NAMES_KEY], "off");
+eq("and nothing was written into the page", T.doc.steps[0], "C4");
+eq("the interval is still computed underneath",
+   T.ivls[0].firstChild.textContent, "P8");
+ok("the footer said so", /names/.test(ids.footer.textContent), ids.footer.textContent);
+key("KeyK");
+ok("K brings them back", T.showNames === true);
+ok("and the mark is gone", !T.rollEl.classList.contains("nonames"));
+eq("the preference again", store[T.NAMES_KEY], "on");
+ok("K is not a note key", !("KeyK" in T.NOTE_KEYS));
+T.cursor = 0;
+key("KeyK");
+eq("and never moves the cursor", T.cursor, 0);
+key("KeyK");
+/* the pages own the keyboard while they are up, as they always have */
+T.toggleKeyref();
+const namesWere = T.showNames;
+key("KeyK");
+eq("K is inert while the key page is up", T.showNames, namesWere);
+T.toggleKeyref();
+T.toggleQuests();
+key("KeyK");
+eq("and while the quest log is up", T.showNames, namesWere);
+T.toggleQuests();
+qreset();
+
+console.log("\n== the key page documents the names ==");
+ok("K has a row of its own", /<dt>K<\/dt>/.test(keyPage));
+ok("it says what it does", /the names on the drawing/.test(keyPage));
+ok("and that they start on", /They are on to begin with/.test(keyPage));
+ok("the octave convention is written down",
+   /C4 is middle C/.test(keyPage) && /C2 to C6/.test(keyPage));
+ok("the simple interval names are listed",
+   /P1, m2, M2, m3, M3, P4, TT, P5, m6, M6, m7, M7, P8/.test(keyPage));
+ok("the compound convention is named and shown",
+   /compound name/.test(keyPage) && /m10/.test(keyPage) && /P15/.test(keyPage));
+ok("the tritone's compound is spelled out", /TT11/.test(keyPage));
+ok("direction is said not to be named", /never the direction/.test(keyPage));
+ok("and the page says plainly that it judges nothing",
+   /Nothing here judges/.test(keyPage) && /for the ear/.test(keyPage));
 
 console.log("\n== the page of the key documents both ==");
 ok("the tempo has a row on the keyboard side", /the tempo, down and up by four/.test(html));

@@ -333,6 +333,156 @@ function freePort(start){
   await b.shot(__dirname + "/two-voices-roll.png");
   ok("no runtime errors from any of the two-voice work", errors.length === 0, errors);
 
+  /* ---- the names on the drawing, in a real browser ----
+     The roll could draw a pitch but never say it. Now every bar carries its
+     note and its octave, and where both voices sound the interval between
+     them is written between the two bars. Laid out for real, not inspected:
+     a label that renders to nothing has shipped from this repo before. */
+  console.log("\n== the names on the drawing ==");
+  const K = { key:"k", vk:75 };
+  async function toLead(){
+    for (let i = 0; i < 3; i++){
+      if (/ · lead/.test(await meta2())) return;
+      await b.key("Tab", { key:"Tab", vk:9 });
+    }
+  }
+  async function setOctave(n){
+    for (let i = 0; i < 6; i++){
+      const m = /octave (\d)/.exec(await meta2());
+      if (!m || Number(m[1]) === n) return;
+      if (Number(m[1]) < n) await b.key("PageUp", { key:"PageUp", vk:33 });
+      else await b.key("PageDown", { key:"PageDown", vk:34 });
+    }
+  }
+  async function clearVoice(){
+    await b.key("Home", { key:"Home", vk:36 });
+    for (let i = 0; i < 16; i++) await b.key("Period", { key:".", vk:190 });
+  }
+  if (!(await on("roll"))) await b.key("F2", { key:"F2", vk:113 });
+  await toLead();
+  await clearVoice();
+  await b.key("Tab", { key:"Tab", vk:9 });
+  await clearVoice();
+  await b.key("Tab", { key:"Tab", vk:9 });          /* back in the lead */
+  /* the lead: C4 E4 G4 on the first three steps */
+  await setOctave(4);
+  await b.key("Home", { key:"Home", vk:36 });
+  await b.key("KeyZ", { key:"z", vk:90 });
+  await b.key("KeyC", { key:"c", vk:67 });
+  await b.key("KeyB", { key:"b", vk:66 });
+  /* the bass: C2 on step 1, nothing on step 2, A2 on step 3 */
+  await b.key("Tab", { key:"Tab", vk:9 });
+  await setOctave(2);
+  await b.key("Home", { key:"Home", vk:36 });
+  await b.key("KeyZ", { key:"z", vk:90 });
+  await b.key("ArrowDown", { key:"ArrowDown", vk:40 });
+  await b.key("KeyN", { key:"n", vk:78 });
+  await wait(150);
+
+  const named = await b.eval(`(function(){
+    var bs = document.querySelectorAll('#rollfield .bar'), o = [];
+    for (var i = 0; i < bs.length; i++){
+      if (bs[i].style.display !== 'block') continue;
+      var n = bs[i].querySelector('.barname');
+      var r = n.getBoundingClientRect(), q = bs[i].getBoundingClientRect();
+      o.push([i, n.textContent, Math.round(r.width), Math.round(r.height),
+              Math.abs((r.top + r.height/2) - (q.top + q.height/2)) < 3]);
+    }
+    return o;
+  })()`);
+  ok("every drawn bar carries a name", named.length === 5, named);
+  ok("the lead's notes are named with their octave",
+     named.filter(n => n[0] % 2 === 0).map(n => n[1]).join(",") === "C4,E4,G4", named);
+  ok("and the bass's, two octaves down",
+     named.filter(n => n[0] % 2 === 1).map(n => n[1]).join(",") === "C2,A2", named);
+  ok("each name really has width and height on the page",
+     named.every(n => n[2] > 6 && n[3] > 4), named);
+  ok("and each sits on its own bar", named.every(n => n[4]), named);
+
+  const iv = await b.eval(`(function(){
+    var es = document.querySelectorAll('#rollfield .ivl'), o = [];
+    for (var i = 0; i < es.length; i++){
+      if (getComputedStyle(es[i]).display === 'none') continue;
+      var r = es[i].getBoundingClientRect();
+      o.push([i, es[i].textContent, Math.round(r.width), Math.round(r.height)]);
+    }
+    return o;
+  })()`);
+  ok("an interval is written only where both voices sound", iv.length === 2, iv);
+  ok("C4 over C2 is named as two octaves", iv[0] && iv[0][1] === "P15", iv);
+  /* G4 over A2 is a minor seventh and an octave: a minor fourteenth */
+  ok("and G4 over A2 as a compound fourteenth", iv[1] && iv[1][1] === "m14", iv);
+  ok("the step with only a lead on it says nothing",
+     iv.every(x => x[0] !== 1), iv);
+  ok("both labels are really laid out", iv.every(x => x[2] > 8 && x[3] > 6), iv);
+
+  const placed = await b.eval(`(function(){
+    var bs = document.querySelectorAll('#rollfield .bar');
+    var lead = bs[0].getBoundingClientRect(), bass = bs[1].getBoundingClientRect();
+    var lab = document.querySelectorAll('#rollfield .ivl')[0].getBoundingClientRect();
+    var field = document.getElementById('rollfield').getBoundingClientRect();
+    var c = lab.top + lab.height / 2;
+    return { between: c > lead.top + lead.height/2 && c < bass.top + bass.height/2,
+             inColumn: lab.left + lab.width/2 > lead.left - 4 &&
+                       lab.left + lab.width/2 < lead.right + 8,
+             inField: lab.left >= field.left - 1 && lab.right <= field.right + 1,
+             c: Math.round(c), lead: Math.round(lead.top + lead.height/2),
+             bass: Math.round(bass.top + bass.height/2) };
+  })()`);
+  ok("the interval is written between the two notes it names", placed.between, placed);
+  ok("in the column of the step it belongs to", placed.inColumn, placed);
+  ok("and nothing spills off the drawing", placed.inField, placed);
+  await b.shot(__dirname + "/roll-names.png");
+
+  await b.key("KeyK", K);
+  await wait(120);
+  const off = await b.eval(`(function(){
+    var n = document.querySelector('#rollfield .barname');
+    var e = document.querySelectorAll('#rollfield .ivl')[0];
+    var bars = 0, bs = document.querySelectorAll('#rollfield .bar');
+    for (var i = 0; i < bs.length; i++) if (bs[i].style.display === 'block') bars++;
+    return [getComputedStyle(n).display, getComputedStyle(e).display, bars,
+            document.getElementById('roll').className];
+  })()`);
+  ok("K puts every name away", off[0] === "none" && off[1] === "none", off);
+  ok("and the drawing itself is untouched", off[2] === 5, off);
+  ok("the roll carries the mark", /nonames/.test(off[3]), off);
+  ok("the footer says so",
+     /names/.test(await footer()), await footer());
+  await b.shot(__dirname + "/roll-nonames.png");
+  await b.key("KeyK", K);
+  await wait(120);
+  const back = await b.eval(
+    "[getComputedStyle(document.querySelector('#rollfield .barname')).display," +
+    "getComputedStyle(document.querySelectorAll('#rollfield .ivl')[0]).display," +
+    "document.getElementById('roll').className]");
+  ok("K brings them back", back[0] !== "none" && back[1] !== "none", back);
+  ok("and the mark is gone", !/nonames/.test(back[2]), back);
+  ok("K wrote nothing into the page",
+     (await b.eval("document.querySelectorAll('#rollfield .bar')[0].style.display")) === "block");
+
+  /* the column names its notes too, as it always has */
+  await b.key("F2", { key:"F2", vk:113 });
+  await wait(120);
+  const col0 = await rowText(0);
+  ok("the column names the same two notes, with octaves",
+     /C-4/.test(col0) && /C-2/.test(col0), col0);
+  await b.key("F2", { key:"F2", vk:113 });
+
+  /* and the key page explains the whole convention */
+  await b.key("F1", { key:"F1", vk:112 });
+  await wait(120);
+  const kp = await b.eval("document.getElementById('keyref').textContent");
+  ok("the key page gives K a row", /the names on the drawing/.test(kp));
+  ok("it fixes the octave convention", /C4 is middle C/.test(kp) && /C2 to C6/.test(kp));
+  ok("it lists the simple interval names",
+     /P1, m2, M2, m3, M3, P4, TT, P5, m6, M6, m7, M7, P8/.test(kp));
+  ok("it names the compound convention", /compound name/.test(kp) && /m10/.test(kp));
+  ok("including the tritone's", /TT11/.test(kp));
+  ok("and says plainly that nothing here judges", /Nothing here judges/.test(kp));
+  await b.key("F1", { key:"F1", vk:112 });
+  ok("no runtime errors from any of the naming work", errors.length === 0, errors);
+
   await b.shot(__dirname + "/boot-seeded.png");
   clearInterval(drain);
   b.close();

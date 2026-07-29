@@ -186,6 +186,45 @@
   .bar.back{opacity:0.45;}
   .bar.back.outside{opacity:0.2;}
   .bar.cur{box-shadow:0 0 0 1px var(--ink);}   /* the roll's answer to bold */
+  /* ---- the names on the drawing ----
+     The roll says pitch with height and colour, which is quick to read and
+     impossible to name. So each bar carries its own note, small, laid on the
+     bar itself in the page's own ground colour; and where both voices sound
+     at once the interval between them is written between the two bars. Both
+     are descriptions and nothing else: no interval is coloured, ranked or
+     warned about — the ear decides, the page only says what it is. */
+  .barname{
+    position:absolute;
+    left:0;right:0;top:50%;
+    transform:translateY(-50%);
+    text-align:center;
+    font-size:0.6rem;
+    line-height:1;
+    letter-spacing:0.02em;
+    color:rgba(234,224,204,0.94);
+    white-space:nowrap;
+    pointer-events:none;
+  }
+  .ivl{
+    position:absolute;
+    display:none;                    /* shown by a class, so K can overrule it */
+    text-align:center;
+    font-size:0.62rem;
+    line-height:1.3;
+    color:var(--ink);
+    white-space:nowrap;
+    pointer-events:none;
+  }
+  .ivl span{
+    background-color:var(--ground);
+    padding:0 0.28em;
+    border-radius:0.35rem;
+    letter-spacing:0.03em;
+  }
+  .ivl.on{display:block;}
+  .ivl.outside{opacity:0.4;}
+  /* K puts them away; the drawing is the same drawing underneath */
+  .roll.nonames .barname,.roll.nonames .ivl{display:none;}
   .rollbase{
     display:grid;
     grid-template-columns:repeat(16,1fr);
@@ -467,6 +506,7 @@
           <dt>ctrl + S</dt><dd>export the page you are on as a .folio.json &mdash; or, with the quest log open, every workspace at once as quest&#8209;log.json</dd>
           <dt>ctrl + O</dt><dd>import either (or drop a file on the page); a quest log opens as a quest log wherever it lands</dd>
           <dt>F2</dt><dd>the roll: the page drawn instead of written &mdash; time runs right, height is pitch, colour is the note</dd>
+          <dt>K</dt><dd>the names on the drawing, away and back: each bar's note and the interval between the voices. They are on to begin with, and nothing on the page changes either way</dd>
           <dt>F1</dt><dd>close this page of the key</dd>
           <dt>F3</dt><dd>open or close the quest log</dd>
           <dt>F4</dt><dd>the pad's entry method: relative (contour) or absolute</dd>
@@ -477,6 +517,7 @@
         </dl>
         <p>Notes are entered by position, not by letter, so the layout is the same on any keyboard. Entering a note advances the cursor.</p>
         <p>The page holds two voices &mdash; a lead and a bass &mdash; and they play together, from the one clock. They are written one at a time: the strip above the page names both and marks the one in hand, the column gives each a place of its own beside the step number, and in the roll they are drawn in the same field, the voice you are not in a shade back. Tab changes hands. Everything else &mdash; the key, the tempo, the loop, the whole page &mdash; the two share; only the notes and the timbre are their own. The bass is rounder and darker, so a bass written up in the melody's octave still sounds like the bass. Solo (O) and mute (P) act on the voice you are in; solo, if any voice has it, is what decides, and a change is heard on the next step without a restart. A page written before there were two voices opens exactly as it always did, with a silent bass under it.</p>
+        <p>The drawing names what it draws. Every bar in the roll carries its own note &mdash; C4, F&#9839;3 &mdash; with the octave numbered the international way, so that C4 is middle C and the page runs from C2 to C6. The column has always named its notes in the same alphabet, a dash standing in where there is no sharp, so that the two columns line up. Where both voices sound on the same step the roll also writes the interval between them, small, between the two bars. Below the octave the short names are the usual ones &mdash; P1, m2, M2, m3, M3, P4, TT, P5, m6, M6, m7, M7, P8 &mdash; and wider than an octave the compound name is used: the simple number plus seven for every octave crossed, so a minor third and an octave is m10, a fifth and an octave is P12, two octaves is P15. The tritone keeps its name and takes the compound number with it: TT, then TT11, then TT18. Only the distance is named, never the direction, so it reads the same whichever voice is on top. Nothing here judges: no interval is coloured, ranked, or marked as wanting anything. The page says what the two notes are; what they are worth is for the ear. K puts the whole lot away and brings it back.</p>
         <p>The key and the tempo both belong to the page you are on, and so to the workspace it lives in: each quest keeps its own, free play keeps its own, and changing one changes nothing anywhere else. Either may be changed while the loop runs; the change is heard at the next step, without a restart. A quest's page arrives already tuned &mdash; its own key and its own tempo, chosen to suit its constraint &mdash; so there is nothing to decide before writing; change them here whenever you like, and the change stays with that quest. Free play always begins in C major at 112.</p>
         <p>Every quest is a workspace: a whole page of its own &mdash; steps, title, tempo, loop and key &mdash; and one more page, free play, belongs to no quest. The page in front of you saves itself into the workspace you are in, on every change, as it always did; choosing another quest simply puts a different page in front of you. Nothing is bound, nothing is loaded, nothing is copied, and so nothing can be written over. The margins of this page carry the same thing quietly while you work: on the left every workspace and where you are, on the right the constraint you are under. A narrow window drops both rather than squeeze the column.</p>
         <p>Below the eight, under a hairline, sit the drills: short &eacute;tudes written into the quest log from outside, each with its own page already on it. They are workspaces like any other &mdash; enter one, write, mark it complete &mdash; and when the folio is served, a drill added to the log while this page is open simply appears in the list, quietly, without a reload and without disturbing a line of what you have written.</p>
@@ -665,6 +706,32 @@
     if (!m) return "·";
     return m[1] + (m[2] ? "♯" : "-") + m[3];
   }
+  /* the same name without the column's alignment dash: what a bar is labelled
+     with, and what anyone would write on a page — C4, F♯3, the octave number
+     international (C4 is middle C, MIDI 60) */
+  function pitchName(s){
+    var m = NOTE_RE.exec(s);
+    if (!m) return "";
+    return m[1] + (m[2] ? "♯" : "") + m[3];
+  }
+
+  /* ---- naming the distance between two notes ----
+     Descriptive only. An interval is a number of semitones; below the octave
+     it has the ordinary short name, and above it the compound one, which is
+     the simple number plus seven for every octave crossed: a minor third and
+     an octave is a minor tenth, m10. The tritone keeps its name and takes the
+     compound number with it, so TT is a tritone and TT11 is a tritone and an
+     octave. Direction is not named: the distance is what is measured, so a
+     crossed pair reads the same as an uncrossed one. */
+  var IVL_QUALITY = ["P","m","M","m","M","P","TT","P","m","M","m","M"];
+  var IVL_NUMBER  = [ 1,  2,  2,  3,  3,  4,  4,   5,  6,  6,  7,  7 ];
+  function intervalName(semitones){
+    var n = Math.abs(Math.round(semitones));
+    var oct = Math.floor(n / 12), r = n - oct * 12;
+    var num = IVL_NUMBER[r] + 7 * oct;
+    if (r === 6) return oct ? "TT" + num : "TT";
+    return IVL_QUALITY[r] + num;
+  }
 
   /* ================= the key of the piece =================
      A key is a tonic and a mode. It is not a data model change: steps stay
@@ -814,20 +881,30 @@
   rollfield.appendChild(rollCur);
   var octlines = [];
   var bars = [], bars2 = [], baseCells = [];
-  var vbars = [bars, bars2];
+  var barNames = [], barNames2 = [];
+  var vbars = [bars, bars2], vbarNames = [barNames, barNames2];
+  /* one per step: the interval between the voices, written where both sound */
+  var ivls = [];
+  function barWithName(store, names){
+    var b = document.createElement("div");
+    b.className = "bar";
+    b.style.display = "none";
+    var nm = document.createElement("span");
+    nm.className = "barname";
+    b.appendChild(nm);
+    rollfield.appendChild(b);
+    store.push(b); names.push(nm);
+  }
   for (i = 0; i < STEPS; i++){
-    var bar = document.createElement("div");
-    bar.className = "bar";
-    bar.style.display = "none";
-    rollfield.appendChild(bar);
-    bars.push(bar);
+    barWithName(bars, barNames);
     /* the second voice's bars, drawn in the same field: pitch already keeps
        them apart, and the voice not in hand is drawn a shade back */
-    var bar2 = document.createElement("div");
-    bar2.className = "bar";
-    bar2.style.display = "none";
-    rollfield.appendChild(bar2);
-    bars2.push(bar2);
+    barWithName(bars2, barNames2);
+    var ivl = document.createElement("div");
+    ivl.className = "ivl";
+    ivl.appendChild(document.createElement("span"));
+    rollfield.appendChild(ivl);
+    ivls.push(ivl);
     var cell = document.createElement("span");
     cell.textContent = (i % 4 === 0) ? String(i + 1) : "";
     rollbase.appendChild(cell);
@@ -877,7 +954,31 @@
         b.style.height = (100 / span) + "%";
         b.style.backgroundColor = PC_COLOR[parseNote(n).pc];
         b.classList.toggle("back", v !== voice);
+        vbarNames[v][i].textContent = pitchName(n);
       }
+    }
+    rollIntervals(hi, span);
+  }
+  /* the interval, on the steps where both voices sound and nowhere else:
+     written between the two bars, at the midpoint of the distance it names */
+  function rollIntervals(hi, span){
+    var lead = vsteps(0), bass = vsteps(1), i, a, z, ma, mz, el;
+    for (i = 0; i < STEPS; i++){
+      el = ivls[i];
+      a = lead[i]; z = bass[i];
+      ma = a ? midiOf(a) : null;
+      mz = z ? midiOf(z) : null;
+      /* only where both voices sound; a rest in either is nothing to name */
+      if (ma === null || mz === null){ el.classList.remove("on"); continue; }
+      el.firstChild.textContent = intervalName(ma - mz);
+      el.classList.add("on");
+      el.style.left = (i * 6.25) + "%";
+      el.style.width = "6.25%";
+      /* a bar's centre is half a semitone below its top edge; the label sits
+         halfway between the two centres, lifted by half its own line */
+      el.style.top = "calc(" + ((hi - (ma + mz) / 2 + 0.5) / span * 100) +
+                     "% - 0.4rem)";
+      el.classList.toggle("outside", i >= doc.loop);
     }
   }
   function rollCursor(){
@@ -896,6 +997,7 @@
     for (var i = 0; i < STEPS; i++){
       bars[i].classList.toggle("outside", i >= doc.loop);
       bars2[i].classList.toggle("outside", i >= doc.loop);
+      ivls[i].classList.toggle("outside", i >= doc.loop);
     }
   }
 
@@ -908,6 +1010,26 @@
     roll.classList.toggle("on", !page && viz === "roll");
     voicesEl.classList.toggle("off", page);   /* the strip belongs to the page */
   }
+  /* ---- the names, put away and brought back ----
+     They are on by default: the drawing was mute about pitch and that was the
+     one thing it could not say. K is beside L by position, and takes them all
+     away at once — the bars' notes and the intervals between the voices — for
+     when the shape alone is what is wanted. A preference, like the view and
+     the entry method; it is not part of any document and nothing is written
+     into the page by any of this. */
+  var showNames = true;
+  var NAMES_KEY = "folio.names";
+
+  function applyNames(){ roll.classList.toggle("nonames", !showNames); }
+  function setNames(on){
+    showNames = !!on;
+    try { localStorage.setItem(NAMES_KEY, showNames ? "on" : "off"); } catch (e){}
+    applyNames();
+    say(showNames ? "the names · each note, and the interval where both voices sound"
+                  : "the names, off · the shape alone");
+  }
+  function toggleNames(){ setNames(!showNames); }
+
   function toggleViz(){
     viz = (viz === "column") ? "roll" : "column";
     try { localStorage.setItem(VIZ_KEY, viz); } catch (e){}
@@ -2378,6 +2500,9 @@
       case "PageDown":   e.preventDefault(); shiftOctave(-1); return;
       case "KeyL":
         e.preventDefault(); cycleLoop(); return;
+      /* beside it by position: the names on the drawing, away and back */
+      case "KeyK":
+        e.preventDefault(); toggleNames(); return;
       /* the two keys past the end of the upper row: solo, then mute, both on
          the voice in hand. The solo test wants one key, not a menu. */
       case "KeyO":
@@ -2686,7 +2811,9 @@
   var restored = bootState();
   try { if (localStorage.getItem(VIZ_KEY) === "column") viz = "column"; } catch (e){}
   try { if (localStorage.getItem(ENTRY_KEY) === "relative") relative = true; } catch (e){}
+  try { if (localStorage.getItem(NAMES_KEY) === "off") showNames = false; } catch (e){}
   applyViz();
+  applyNames();
   renderAll();
   renderQuests();
   syncBoot(!restored);               /* fresh browser? then a seed is allowed */
