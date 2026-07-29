@@ -93,11 +93,13 @@
     display:flex;
     flex-direction:column;
     align-items:stretch;
-    width:13rem;
+    width:17.4rem;
   }
   .row{
     display:grid;
-    grid-template-columns:1.5em 1.1em 2.3em 1.1em 3.4em;
+    /* fleuron, caret, step number, then a column for each voice */
+    grid-template-columns:1.5em 1.1em 2.3em 3.7em 3.7em;
+    column-gap:0.7em;
     align-items:center;
     height:2.35em;                   /* > 2.2 em, generously spaced */
     border-top:1px solid rgba(201,188,160,0.45);
@@ -112,7 +114,43 @@
   .num{color:var(--faded);text-align:right;font-size:0.9em;}
   .note{color:var(--ink);text-align:left;letter-spacing:0.04em;}
   .note.empty{color:var(--faded);}
+  /* the voice not being written into: present, readable, a shade back */
+  .note.dim{color:var(--faded);}
   .row.cursor .note{font-weight:700;}         /* the only bold in the app */
+  .row.cursor .note.dim{font-weight:400;}     /* and only on the voice in hand */
+
+  /* ---- the two voices, named above the page ----
+     Which line the hands are in, and what each is doing. Quiet: the one in
+     hand is in ink over a gilt hairline, the other is faded. Nothing moves. */
+  .voices{
+    display:flex;
+    justify-content:center;
+    align-items:baseline;
+    gap:2.4rem;
+    margin:0 0 0.55rem;
+    font-variant:small-caps;
+    letter-spacing:0.14em;
+    font-size:0.86rem;
+    color:var(--faded);
+  }
+  .voices.off{display:none;}
+  .vname{
+    display:block;
+    padding:0 0.2em 0.22rem;
+    border-bottom:1px solid transparent;
+    cursor:pointer;
+  }
+  .vname.on{color:var(--ink);border-bottom-color:var(--gilt);}
+  .vmark{
+    display:block;
+    text-align:center;
+    font-variant:normal;
+    letter-spacing:0.04em;
+    font-size:0.8rem;
+    color:var(--faded);
+    min-height:1.2em;
+  }
+  .vmark.solo{color:var(--gilt);}
   /* steps beyond the loop length: present, editable, quieter on the page */
   .row.outside .num,.row.outside .note{color:var(--faded);}
 
@@ -144,6 +182,9 @@
     border-radius:999px;
   }
   .bar.outside{opacity:0.4;}
+  /* the voice not in hand: a shade back, and a shade further past the loop */
+  .bar.back{opacity:0.45;}
+  .bar.back.outside{opacity:0.2;}
   .bar.cur{box-shadow:0 0 0 1px var(--ink);}   /* the roll's answer to bold */
   .rollbase{
     display:grid;
@@ -395,6 +436,11 @@
   </header>
   <div class="divider"></div>
 
+  <div class="voices" id="voices" aria-label="the voices">
+    <div><span class="vname" id="vname0">lead</span><span class="vmark" id="vmark0"></span></div>
+    <div><span class="vname" id="vname1">bass</span><span class="vmark" id="vmark1"></span></div>
+  </div>
+
   <section class="column" id="column" aria-label="pattern"></section>
 
   <section class="roll" id="roll" aria-label="pattern, drawn">
@@ -416,6 +462,8 @@
           <dt>page up, page down</dt><dd>base octave up, down (C2&ndash;C6)</dd>
           <dt>space</dt><dd>play or stop; playback loops</dd>
           <dt>L</dt><dd>loop length: the whole page &rarr; 8 &rarr; 4 &rarr; whole again</dd>
+          <dt>tab</dt><dd>the other voice &mdash; the lead, the bass, and round again. Everything you type goes into the one named above the page</dd>
+          <dt>the two keys past the end of the upper row</dt><dd>O solos the voice you are in, P mutes it; either again undoes it</dd>
           <dt>ctrl + S</dt><dd>export the page you are on as a .folio.json &mdash; or, with the quest log open, every workspace at once as quest&#8209;log.json</dd>
           <dt>ctrl + O</dt><dd>import either (or drop a file on the page); a quest log opens as a quest log wherever it lands</dd>
           <dt>F2</dt><dd>the roll: the page drawn instead of written &mdash; time runs right, height is pitch, colour is the note</dd>
@@ -428,6 +476,7 @@
           <dt>in the quest log</dt><dd>the arrows choose a quest; enter opens its page and works there; enter on the quest you are already in returns to free play; C marks it complete; F3 or escape closes</dd>
         </dl>
         <p>Notes are entered by position, not by letter, so the layout is the same on any keyboard. Entering a note advances the cursor.</p>
+        <p>The page holds two voices &mdash; a lead and a bass &mdash; and they play together, from the one clock. They are written one at a time: the strip above the page names both and marks the one in hand, the column gives each a place of its own beside the step number, and in the roll they are drawn in the same field, the voice you are not in a shade back. Tab changes hands. Everything else &mdash; the key, the tempo, the loop, the whole page &mdash; the two share; only the notes and the timbre are their own. The bass is rounder and darker, so a bass written up in the melody's octave still sounds like the bass. Solo (O) and mute (P) act on the voice you are in; solo, if any voice has it, is what decides, and a change is heard on the next step without a restart. A page written before there were two voices opens exactly as it always did, with a silent bass under it.</p>
         <p>The key and the tempo both belong to the page you are on, and so to the workspace it lives in: each quest keeps its own, free play keeps its own, and changing one changes nothing anywhere else. Either may be changed while the loop runs; the change is heard at the next step, without a restart. A quest's page arrives already tuned &mdash; its own key and its own tempo, chosen to suit its constraint &mdash; so there is nothing to decide before writing; change them here whenever you like, and the change stays with that quest. Free play always begins in C major at 112.</p>
         <p>Every quest is a workspace: a whole page of its own &mdash; steps, title, tempo, loop and key &mdash; and one more page, free play, belongs to no quest. The page in front of you saves itself into the workspace you are in, on every change, as it always did; choosing another quest simply puts a different page in front of you. Nothing is bound, nothing is loaded, nothing is copied, and so nothing can be written over. The margins of this page carry the same thing quietly while you work: on the left every workspace and where you are, on the right the constraint you are under. A narrow window drops both rather than squeeze the column.</p>
         <p>Below the eight, under a hairline, sit the drills: short &eacute;tudes written into the quest log from outside, each with its own page already on it. They are workspaces like any other &mdash; enter one, write, mark it complete &mdash; and when the folio is served, a drill added to the log while this page is open simply appears in the list, quietly, without a reload and without disturbing a line of what you have written.</p>
@@ -445,10 +494,11 @@
           <dt>R3 (right stick click)</dt><dd>the roll: the page drawn or written</dd>
           <dt>&#9633; (X), bare</dt><dd>clear the step</dd>
           <dt>&#9675; (B), bare</dt><dd>back to step 1</dd>
+          <dt>&#9651; (Y), bare</dt><dd>the other voice &mdash; in absolute entry, where it is free. In relative entry &#9651; is a move, so the voice is the settings crossbar's third slot; the crossbar has it in either method</dd>
           <dt>L1, R1 (LB, RB)</dt><dd>base octave down, up</dd>
           <dt>select (create)</dt><dd>play or stop &mdash; from any page, and while any page is up</dd>
           <dt>start (options)</dt><dd>the settings crossbar: the eight slots become items, not notes. Start again, or &#9675;, puts it down</dd>
-          <dt>&hellip; its eight slots</dt><dd>&#8592; the quest log &middot; &#8593; the key &middot; &#8594; the entry method &middot; &#8595; the view &middot; &#9675; close &middot; &#10005; the quest log again, the item the list is headed by</dd>
+          <dt>&hellip; its eight slots</dt><dd>&#8592; the quest log &middot; &#8593; the key &middot; &#8594; the voice &middot; &#8595; the entry method &middot; &#9633; solo &middot; &#9651; mute &middot; &#9675; close &middot; &#10005; the quest log again, the item the list is headed by</dd>
           <dt>d&#8209;pad, bare</dt><dd>any direction moves the cursor; hold to repeat. In the roll the drawing decides: &#8592;&#8594; are time, &#8593;&#8595; nudge the note under the cursor a step of the key</dd>
           <dt>left stick</dt><dd>the same, up and down only; in the roll, both axes</dd>
           <dt>right stick</dt><dd>the cursor by fours, beat to beat</dd>
@@ -476,7 +526,9 @@
     <p>Start raised this; start puts it down again, and so does &#9675;. While it
       is up the eight slots are items instead of notes &mdash; the d&#8209;pad on the left,
       the face buttons on the right, each read left, up, right, down. The
-      quest log sits in the first slot and is what &#10005; confirms.</p>
+      quest log sits in the first slot and is what &#10005; confirms. The view
+      &mdash; the roll or the column &mdash; is not here: it is R3, and F2, where
+      it has always been.</p>
   </section>
 
   <section class="quests" id="quests" aria-label="quest log">
@@ -532,6 +584,19 @@
      fine step of one, and a range wide enough for a study and no wider */
   var TEMPO_MIN = 60, TEMPO_MAX = 180, TEMPO_STEP = 4, TEMPO_FINE = 1;
 
+  /* ---- two voices, from Lesson 2 on ----
+     The page holds two monophonic lines that play together and are written
+     one at a time. They share everything a page has always shared — title,
+     tempo, loop, key — and differ only in their notes and their timbre.
+
+     `steps` stays exactly what it was: the lead. The second voice is a new
+     optional field beside it, so a page written before Lesson 2 — a file, a
+     quest workspace, a drill's seed — loads and plays precisely as it did,
+     with a silent bass underneath it. Nothing was renamed and nothing moved. */
+  var VOICES = 2;
+  var VOICE_NAMES = ["lead", "bass"];
+  var VOICE_FIELD = ["steps", "bass"];
+
   /* a page: the whole document. Every workspace holds one of these. */
   function defaultDoc(){
     return {
@@ -540,12 +605,37 @@
       tempo: 112,
       loop: STEPS,           /* playback repeats the first `loop` steps: 4, 8, or 16 */
       key: DEFAULT_KEY,      /* the key of the piece: relative entry counts in it */
-      steps: new Array(STEPS).fill(null)
+      steps: new Array(STEPS).fill(null),   /* the lead */
+      bass: new Array(STEPS).fill(null),    /* the second voice */
+      mute: [false, false],
+      solo: [false, false]
     };
   }
   var doc = defaultDoc();
   var baseOctave = 4;      // C2 - C6
   var cursor = 0;
+  var voice = 0;           /* which voice the hands are writing into */
+
+  /* Every reader of a voice goes through here, and every one of them tolerates
+     a page that predates the second voice: the field is made on first touch
+     rather than assumed. The same for the two flag pairs. */
+  function vsteps(v){
+    var f = VOICE_FIELD[v || 0];
+    if (!doc[f]) doc[f] = new Array(STEPS).fill(null);
+    return doc[f];
+  }
+  function docSteps(d, v){
+    var a = d && d[VOICE_FIELD[v || 0]];
+    return Array.isArray(a) ? a : null;
+  }
+  function flag(kind, v){ var a = doc[kind]; return !!(a && a[v]); }
+  function setFlag(kind, v, on){
+    if (!Array.isArray(doc[kind])) doc[kind] = [false, false];
+    doc[kind][v] = !!on;
+  }
+  function anySolo(){ return flag("solo", 0) || flag("solo", 1); }
+  /* solo wins over mute, as it does on every desk ever built */
+  function audible(v){ return anySolo() ? flag("solo", v) : !flag("mute", v); }
   var storageOK = true;
   var droppedMarks = false;   /* the last thing validated carried "x" entries */
 
@@ -659,6 +749,9 @@
   var settingsEl = document.getElementById("settings");
   var xbarPad = document.getElementById("xbarpad");
   var xbarFace = document.getElementById("xbarface");
+  var voicesEl = document.getElementById("voices");
+  var vnames = [document.getElementById("vname0"), document.getElementById("vname1")];
+  var vmarks = [document.getElementById("vmark0"), document.getElementById("vmark1")];
   var qlist  = document.getElementById("qlist");
   var qfree  = document.getElementById("qfree");
   var qfreesigil = document.getElementById("qfreesigil");
@@ -681,11 +774,13 @@
     var fl = document.createElement("span"); fl.className = "fleuron";
     var ca = document.createElement("span"); ca.className = "caret";
     var nu = document.createElement("span"); nu.className = "num"; nu.textContent = String(i + 1);
-    var sp = document.createElement("span");
+    /* one column per voice, side by side, in the order they are named above */
     var no = document.createElement("span"); no.className = "note empty"; no.textContent = "·";
-    row.appendChild(fl); row.appendChild(ca); row.appendChild(nu); row.appendChild(sp); row.appendChild(no);
+    var no2 = document.createElement("span"); no2.className = "note empty dim"; no2.textContent = "·";
+    row.appendChild(fl); row.appendChild(ca); row.appendChild(nu);
+    row.appendChild(no); row.appendChild(no2);
     column.appendChild(row);
-    rows.push({ el: row, fleuron: fl, caret: ca, note: no });
+    rows.push({ el: row, fleuron: fl, caret: ca, note: no, note2: no2, notes: [no, no2] });
   }
 
   /* ---- the roll, built once; bars and octave rules are laid out on edit ----
@@ -718,13 +813,21 @@
   rollCur.className = "rollcur";
   rollfield.appendChild(rollCur);
   var octlines = [];
-  var bars = [], baseCells = [];
+  var bars = [], bars2 = [], baseCells = [];
+  var vbars = [bars, bars2];
   for (i = 0; i < STEPS; i++){
     var bar = document.createElement("div");
     bar.className = "bar";
     bar.style.display = "none";
     rollfield.appendChild(bar);
     bars.push(bar);
+    /* the second voice's bars, drawn in the same field: pitch already keeps
+       them apart, and the voice not in hand is drawn a shade back */
+    var bar2 = document.createElement("div");
+    bar2.className = "bar";
+    bar2.style.display = "none";
+    rollfield.appendChild(bar2);
+    bars2.push(bar2);
     var cell = document.createElement("span");
     cell.textContent = (i % 4 === 0) ? String(i + 1) : "";
     rollbase.appendChild(cell);
@@ -735,11 +838,16 @@
 
   function rollLayout(){
     /* fit the pitch window to the notes on the page, never tighter than two
-       octaves, recomputed only on edits — user-initiated, never while idle */
-    var lo = Infinity, hi = -Infinity, i, m;
-    for (i = 0; i < STEPS; i++){
-      m = doc.steps[i] ? midiOf(doc.steps[i]) : null;
-      if (m !== null){ if (m < lo) lo = m; if (m > hi) hi = m; }
+       octaves, recomputed only on edits — user-initiated, never while idle.
+       Both voices are inside the window: a bass that fell off the bottom of
+       the drawing would be a bass you could not see. */
+    var lo = Infinity, hi = -Infinity, i, m, v, s;
+    for (v = 0; v < VOICES; v++){
+      s = vsteps(v);
+      for (i = 0; i < STEPS; i++){
+        m = s[i] ? midiOf(s[i]) : null;
+        if (m !== null){ if (m < lo) lo = m; if (m > hi) hi = m; }
+      }
     }
     if (lo > hi){ lo = 48; hi = 71; }          /* empty page: around middle C */
     lo -= 3; hi += 3;
@@ -756,16 +864,20 @@
       octlines.push(ln);
     }
 
-    for (i = 0; i < STEPS; i++){
-      var v = doc.steps[i];
-      if (!v){ bars[i].style.display = "none"; continue; }
-      m = midiOf(v);
-      bars[i].style.display = "block";
-      bars[i].style.left = (i * 6.25 + 0.7) + "%";
-      bars[i].style.width = "4.85%";
-      bars[i].style.top = ((hi - m) / span * 100) + "%";
-      bars[i].style.height = (100 / span) + "%";
-      bars[i].style.backgroundColor = PC_COLOR[parseNote(v).pc];
+    for (v = 0; v < VOICES; v++){
+      s = vsteps(v);
+      for (i = 0; i < STEPS; i++){
+        var n = s[i], b = vbars[v][i];
+        if (!n){ b.style.display = "none"; continue; }
+        m = midiOf(n);
+        b.style.display = "block";
+        b.style.left = (i * 6.25 + 0.7) + "%";
+        b.style.width = "4.85%";
+        b.style.top = ((hi - m) / span * 100) + "%";
+        b.style.height = (100 / span) + "%";
+        b.style.backgroundColor = PC_COLOR[parseNote(n).pc];
+        b.classList.toggle("back", v !== voice);
+      }
     }
   }
   function rollCursor(){
@@ -773,13 +885,18 @@
     rollCur.style.width = "6.25%";
     for (var i = 0; i < STEPS; i++){
       var on = (i === cursor);
-      bars[i].classList.toggle("cur", on);
+      /* the ring marks the step under the cursor in the voice in hand only */
+      bars[i].classList.toggle("cur", on && voice === 0);
+      bars2[i].classList.toggle("cur", on && voice === 1);
       baseCells[i].classList.toggle("cur", on);
       baseCells[i].textContent = on ? "‸" : (i % 4 === 0 ? String(i + 1) : "");
     }
   }
   function rollLoop(){
-    for (var i = 0; i < STEPS; i++) bars[i].classList.toggle("outside", i >= doc.loop);
+    for (var i = 0; i < STEPS; i++){
+      bars[i].classList.toggle("outside", i >= doc.loop);
+      bars2[i].classList.toggle("outside", i >= doc.loop);
+    }
   }
 
   /* the pages (key, quest log) are exclusive; whichever is open, both views
@@ -789,6 +906,7 @@
                settingsEl.classList.contains("on");
     column.style.display = (!page && viz === "column") ? "flex" : "none";
     roll.classList.toggle("on", !page && viz === "roll");
+    voicesEl.classList.toggle("off", page);   /* the strip belongs to the page */
   }
   function toggleViz(){
     viz = (viz === "column") ? "roll" : "column";
@@ -800,13 +918,30 @@
   var shownPlayhead = -1;
 
   function renderNotes(){
-    for (var i = 0; i < STEPS; i++){
-      var v = doc.steps[i];
-      var el = rows[i].note;
-      if (v){ el.textContent = display(v); el.className = "note"; }
-      else  { el.textContent = "·";   el.className = "note empty"; }
+    for (var v = 0; v < VOICES; v++){
+      var s = vsteps(v), back = (v === voice) ? "" : " dim";
+      for (var i = 0; i < STEPS; i++){
+        var n = s[i], el = rows[i].notes[v];
+        if (n){ el.textContent = display(n); el.className = "note" + back; }
+        else  { el.textContent = "·";        el.className = "note empty" + back; }
+      }
     }
     rollLayout();
+    renderVoices();
+  }
+  /* the strip above the page: which line is in hand, and what each is doing */
+  function renderVoices(){
+    for (var v = 0; v < VOICES; v++){
+      vnames[v].classList.toggle("on", v === voice);
+      var st = voiceState(v);
+      vmarks[v].textContent = st === "solo" ? "solo"
+                            : st === "muted" ? "muted"
+                            : st ? "—" : "";
+      vmarks[v].className = "vmark" + (st === "solo" ? " solo" : "");
+    }
+    voicesEl.classList.toggle("off",
+      keyref.classList.contains("on") || questsEl.classList.contains("on") ||
+      settingsEl.classList.contains("on"));
   }
   function renderCursor(){
     for (var i = 0; i < STEPS; i++){
@@ -835,9 +970,11 @@
   }
   function renderMeta(){
     var obj = activeQuest();
+    var st = voiceState(voice);
     meta.textContent = doc.title + " · " + doc.tempo + " · octave " + baseOctave +
                        " · " + doc.key +
                        (doc.loop < STEPS ? " · loop " + doc.loop : "") +
+                       " · " + voiceName(voice) + (st ? " (" + st + ")" : "") +
                        (relative ? " · relative" : "") +
                        (obj ? " · ⚔ " + obj.short : "");
   }
@@ -859,20 +996,38 @@
   function renderAll(){ renderNotes(); renderCursor(); renderMeta(); renderLoop(); }
 
   /* ================= persistence ================= */
-  function validate(obj){
-    if (!obj || typeof obj !== "object" || Array.isArray(obj)) return null;
-    if (!Array.isArray(obj.steps) || obj.steps.length !== STEPS) return null;
-    var steps = [];
-    droppedMarks = false;
+  /* one voice's sixteen steps, read the way they have always been read */
+  function readSteps(arr){
+    if (!Array.isArray(arr) || arr.length !== STEPS) return null;
+    var out = [];
     for (var i = 0; i < STEPS; i++){
-      var v = obj.steps[i];
-      if (v === null || v === undefined){ steps.push(null); continue; }
+      var v = arr[i];
+      if (v === null || v === undefined){ out.push(null); continue; }
       /* a rhythm mark from the removed two-pass entry: accepted, then dropped */
-      if (v === LEGACY_MARK){ steps.push(null); droppedMarks = true; continue; }
+      if (v === LEGACY_MARK){ out.push(null); droppedMarks = true; continue; }
       var p = parseNote(v);
       if (!p) return null;
-      steps.push(NAMES[p.pc] + p.oct);
+      out.push(NAMES[p.pc] + p.oct);
     }
+    return out;
+  }
+  function silence(){ return new Array(STEPS).fill(null); }
+  function readFlags(a){
+    var out = [];
+    for (var i = 0; i < VOICES; i++) out.push(!!(Array.isArray(a) && a[i]));
+    return out;
+  }
+  function validate(obj){
+    if (!obj || typeof obj !== "object" || Array.isArray(obj)) return null;
+    droppedMarks = false;
+    var steps = readSteps(obj.steps);
+    if (!steps) return null;
+    /* The second voice is optional and permissive, as the key is: a page from
+       before Lesson 2 has no `bass` at all and gets a silent one, and a `bass`
+       that cannot be read is silence rather than a rejected file — the lead is
+       what the file is for, and it is never risked for the sake of the bass. */
+    var bass = (obj.bass === null || obj.bass === undefined)
+                 ? silence() : (readSteps(obj.bass) || silence());
     var tempo = (typeof obj.tempo === "number" && isFinite(obj.tempo) && obj.tempo > 0) ? obj.tempo : 112;
     var title = (typeof obj.title === "string" && obj.title.trim()) ? obj.title.trim().slice(0, 60) : "untitled folio";
     /* version 1 files may carry a loop length; anything but 4 or 8 means the whole page */
@@ -880,7 +1035,9 @@
     /* the key is optional and permissive: a file without one is in C major,
        and so is a file whose key cannot be read */
     var key = normalizeKey(obj.key);
-    return { version: 1, title: title, tempo: tempo, loop: loop, key: key, steps: steps };
+    return { version: 1, title: title, tempo: tempo, loop: loop, key: key,
+             steps: steps, bass: bass,
+             mute: readFlags(obj.mute), solo: readFlags(obj.solo) };
   }
   /* The autosave is now the autosave of a workspace. Every modification runs
      through here, exactly as before; what changed is where it lands — the
@@ -980,27 +1137,39 @@
   window.addEventListener("pointerdown", unlockAudio, true);
   window.addEventListener("keydown", unlockAudio, true);
 
-  /* One note: triangle -> lowpass -> gain envelope. Gain starts at 0 and ends
-     at 0, so nothing ever switches on or off abruptly. Release finishes
+  /* ---- the two timbres ----
+     The lead is the voice the folio has always had: a triangle under a gentle
+     lowpass, bright enough to carry a tune. The bass is rounder and darker on
+     purpose — a sine, a low cutoff, a slower attack and a longer release — so
+     that the two lines separate by colour as well as by pitch, and a bass
+     written up in the melody's octave still reads as the bass. */
+  var TONE = [
+    { type:"triangle", cut:2500, q:0.7, level:LEVEL, attack:ATTACK, release:RELEASE },
+    { type:"sine",     cut:820,  q:0.9, level:0.30,  attack:0.014, release:0.070 }
+  ];
+
+  /* One note: oscillator -> lowpass -> gain envelope. Gain starts at 0 and
+     ends at 0, so nothing ever switches on or off abruptly. Release finishes
      TAIL seconds before the next step begins. */
-  function playNote(name, at, dur){
+  function playNote(name, at, dur, v){
     var f = noteToFreq(name);
     if (!f) return;
+    var t = TONE[v || 0] || TONE[0];
     var osc = ctx.createOscillator();
-    osc.type = "triangle";
+    osc.type = t.type;
     osc.frequency.setValueAtTime(f, at);
 
     var lp = ctx.createBiquadFilter();
     lp.type = "lowpass";
-    lp.frequency.setValueAtTime(2500, at);
-    lp.Q.setValueAtTime(0.7, at);
+    lp.frequency.setValueAtTime(t.cut, at);
+    lp.Q.setValueAtTime(t.q, at);
 
     var g = ctx.createGain();
     var relEnd = at + dur - TAIL;
-    var relStart = Math.max(at + ATTACK + 0.001, relEnd - RELEASE);
+    var relStart = Math.max(at + t.attack + 0.001, relEnd - t.release);
     g.gain.setValueAtTime(0, at);
-    g.gain.linearRampToValueAtTime(LEVEL, at + ATTACK);
-    g.gain.setValueAtTime(LEVEL, relStart);
+    g.gain.linearRampToValueAtTime(t.level, at + t.attack);
+    g.gain.setValueAtTime(t.level, relStart);
     g.gain.linearRampToValueAtTime(0, relEnd);
 
     osc.connect(lp); lp.connect(g); g.connect(master);
@@ -1023,8 +1192,14 @@
       queue.length = 0;
     }
     while (nextStepTime < ctx.currentTime + AHEAD){
-      var n = doc.steps[schedStep];
-      if (n) playNote(n, nextStepTime, dur);
+      /* both voices, in step, from the one clock — a mute or a solo is read
+         here and nowhere else, so it lands on the next scheduled step without
+         a restart, exactly as a tempo change does */
+      for (var v = 0; v < VOICES; v++){
+        if (!audible(v)) continue;
+        var n = vsteps(v)[schedStep];
+        if (n) playNote(n, nextStepTime, dur, v);
+      }
       queue.push({ step: schedStep, time: nextStepTime });
       nextStepTime += dur;
       schedStep = (schedStep + 1) % doc.loop;
@@ -1075,7 +1250,9 @@
       say("press any key or click once to enable sound");
       return;
     }
-    playNote(name, ctx.currentTime + 0.01, stepDur() * 1.6);
+    /* auditioned in the voice being written into, so the ear is told which
+       line it just changed even before it hears it in the loop */
+    playNote(name, ctx.currentTime + 0.01, stepDur() * 1.6, voice);
   }
 
   /* Playhead UI is driven by the audio clock: a step lights when its
@@ -1093,7 +1270,8 @@
 
   /* ================= editing ================= */
   function advance(){ cursor = (cursor + 1) % STEPS; renderCursor(); }
-  function setStep(i, v){ doc.steps[i] = v; renderNotes(); save(); }
+  /* every edit lands in the voice the hands are in, and nowhere else */
+  function setStep(i, v){ vsteps(voice)[i] = v; renderNotes(); save(); }
 
   function writeNote(name, tail){
     var at = cursor + 1;
@@ -1119,10 +1297,10 @@
   var ENTRY_KEY = "folio.entry";      /* a preference, not part of the document */
 
   function anchorMidi(){
-    var span = (cursor < doc.loop) ? doc.loop : STEPS;
+    var span = (cursor < doc.loop) ? doc.loop : STEPS, s = vsteps(voice);
     for (var k = 1; k <= span; k++){
       var i = ((cursor - k) % span + span) % span;
-      if (doc.steps[i]) return clampMidi(midiOf(doc.steps[i]));
+      if (s[i]) return clampMidi(midiOf(s[i]));
     }
     return null;
   }
@@ -1143,7 +1321,7 @@
   }
   /* the note under the cursor, moved a scale step, staying where it is */
   function nudge(n){
-    var v = doc.steps[cursor];
+    var v = vsteps(voice)[cursor];
     if (!v){ say("step " + (cursor + 1) + " is empty — nothing to nudge"); return; }
     var m = clampMidi(moveDegrees(clampMidi(midiOf(v)), n));
     var name = nameOfMidi(m);
@@ -1160,6 +1338,37 @@
                  : "absolute entry · the crossbar");
   }
   function toggleRelative(){ setRelative(!relative); }
+
+  /* ---- choosing a voice, and taking one away ----
+     One voice is written into at a time; both always play. Choosing is not a
+     mode and costs nothing — the cursor stays where it is, the loop keeps
+     running, and the other line is still on the page in front of you, only
+     quieter. Solo and mute are what the ear needs to check its work: the
+     brother's solo test is one keystroke. */
+  function voiceName(v){ return VOICE_NAMES[v]; }
+  function voiceState(v){
+    if (anySolo()) return flag("solo", v) ? "solo" : "silent under the solo";
+    return flag("mute", v) ? "muted" : "";
+  }
+  function setVoice(v){
+    voice = ((v % VOICES) + VOICES) % VOICES;
+    renderNotes(); renderCursor(); renderMeta(); renderVoices();
+    var st = voiceState(voice);
+    say("the " + voiceName(voice) + (st ? " · " + st : ""));
+  }
+  function nextVoice(){ setVoice(voice + 1); }
+  function toggleSolo(v){
+    v = (v === undefined) ? voice : v;
+    setFlag("solo", v, !flag("solo", v));
+    renderMeta(); renderVoices(); save();
+    say(flag("solo", v) ? "the " + voiceName(v) + " alone" : "both voices again");
+  }
+  function toggleMute(v){
+    v = (v === undefined) ? voice : v;
+    setFlag("mute", v, !flag("mute", v));
+    renderMeta(); renderVoices(); save();
+    say("the " + voiceName(v) + (flag("mute", v) ? " · muted" : " · back"));
+  }
 
   /* the key is set on the key page, where it is also explained */
   function shiftTonic(d){
@@ -1247,14 +1456,18 @@
     { glyph:"↑", label:"the key",
       value:function(){ return "the bindings, and the key of the piece"; },
       run:function(){ closeSettings(); toggleKeyref(); } },
-    { glyph:"→", label:"entry method",
+    { glyph:"→", label:"the voice",
+      value:function(){ return voiceName(voice); },
+      run:function(){ nextVoice(); renderSettings(); } },
+    { glyph:"↓", label:"entry method",
       value:function(){ return relative ? "relative" : "absolute"; },
       run:function(){ toggleRelative(); renderSettings(); } },
-    { glyph:"↓", label:"the view",
-      value:function(){ return (viz === "roll") ? "the roll" : "the column"; },
-      run:function(){ toggleViz(); applyViz(); renderSettings(); } },
-    { glyph:"□", label:"", value:function(){ return ""; }, run:null },
-    { glyph:"△", label:"", value:function(){ return ""; }, run:null },
+    { glyph:"□", label:"solo",
+      value:function(){ return flag("solo", voice) ? "on" : "off"; },
+      run:function(){ toggleSolo(); renderSettings(); } },
+    { glyph:"△", label:"mute",
+      value:function(){ return flag("mute", voice) ? "on" : "off"; },
+      run:function(){ toggleMute(); renderSettings(); } },
     { glyph:"○", label:"close",
       value:function(){ return "back to the page"; },
       run:function(){ closeSettings(); } },
@@ -1287,6 +1500,16 @@
     }
   }
   buildSettings();
+  /* the strip answers the mouse too: a name chooses that voice, its mark
+     under it takes it away and gives it back */
+  for (i = 0; i < VOICES; i++){
+    vnames[i].addEventListener("click", (function(n){
+      return function(){ setVoice(n); };
+    })(i));
+    vmarks[i].addEventListener("click", (function(n){
+      return function(){ toggleMute(n); };
+    })(i));
+  }
   function renderSettings(){
     for (var i = 0; i < 8; i++){
       var s = SETTINGS[i], r = xslots[i];
@@ -1300,6 +1523,10 @@
     var s = SETTINGS[i];
     if (!s || !s.run){ say("nothing on that slot yet"); return; }
     s.run();
+  }
+  function anyPage(){
+    return keyref.classList.contains("on") || questsEl.classList.contains("on") ||
+           settingsEl.classList.contains("on");
   }
   function closeSettings(){
     if (!settingsEl.classList.contains("on")) return;
@@ -1487,7 +1714,11 @@
   }
   function docHasNotes(d){
     if (!d) return false;
-    for (var i = 0; i < STEPS; i++) if (d.steps[i]) return true;
+    for (var v = 0; v < VOICES; v++){
+      var s = docSteps(d, v);
+      if (!s) continue;
+      for (var i = 0; i < STEPS; i++) if (s[i]) return true;
+    }
     return false;
   }
   function questPage(id){ return (id === qActive) ? doc : (wsDoc[id] || null); }
@@ -1913,38 +2144,52 @@
   /* the contour: the selected quest's page in the roll's language, shrunk —
      one coloured dab per sounding step, pitch as height. No rules, no grid,
      no numbers; it is there to be recognised, not read. */
-  var qdabs = [];
+  var qdabs = [], qdabs2 = [], vdabs;
   for (qi = 0; qi < STEPS; qi++){
     var qd = document.createElement("div");
     qd.className = "qdab";
     qd.style.display = "none";
     qpreview.appendChild(qd);
     qdabs.push(qd);
+    var qd2 = document.createElement("div");
+    qd2.className = "qdab";
+    qd2.style.display = "none";
+    qpreview.appendChild(qd2);
+    qdabs2.push(qd2);
   }
+  vdabs = [qdabs, qdabs2];
   function renderContour(id){
-    var d = questPage(id), lo = Infinity, hi = -Infinity, i, m, v;
-    for (i = 0; d && i < STEPS; i++){
-      m = d.steps[i] ? midiOf(d.steps[i]) : null;
-      if (m !== null){ if (m < lo) lo = m; if (m > hi) hi = m; }
+    var d = questPage(id), lo = Infinity, hi = -Infinity, i, m, v, s, n;
+    for (v = 0; v < VOICES; v++){
+      s = docSteps(d, v);
+      for (i = 0; s && i < STEPS; i++){
+        m = s[i] ? midiOf(s[i]) : null;
+        if (m !== null){ if (m < lo) lo = m; if (m > hi) hi = m; }
+      }
     }
     if (lo > hi){
-      for (i = 0; i < STEPS; i++) qdabs[i].style.display = "none";
+      for (v = 0; v < VOICES; v++)
+        for (i = 0; i < STEPS; i++) vdabs[v][i].style.display = "none";
       return;
     }
     lo -= 2; hi += 2;
     while (hi - lo + 1 < 14){ lo--; hi++; }   /* a shape, neither flattened nor exaggerated */
     var span = hi - lo + 1;
-    for (i = 0; i < STEPS; i++){
-      v = d.steps[i];
-      if (!v){ qdabs[i].style.display = "none"; continue; }
-      m = midiOf(v);
-      qdabs[i].style.display = "block";
-      qdabs[i].style.left = (i * 6.25 + 1.1) + "%";
-      qdabs[i].style.width = "4%";
-      qdabs[i].style.height = "0.34rem";
-      qdabs[i].style.top = "calc(" + ((hi - m) / span * 100) + "% - 0.17rem)";
-      qdabs[i].style.backgroundColor = PC_COLOR[parseNote(v).pc];
-      qdabs[i].style.opacity = (i >= d.loop) ? "0.4" : "1";
+    for (v = 0; v < VOICES; v++){
+      s = docSteps(d, v);
+      for (i = 0; i < STEPS; i++){
+        var dab = vdabs[v][i];
+        n = s ? s[i] : null;
+        if (!n){ dab.style.display = "none"; continue; }
+        m = midiOf(n);
+        dab.style.display = "block";
+        dab.style.left = (i * 6.25 + 1.1) + "%";
+        dab.style.width = "4%";
+        dab.style.height = "0.34rem";
+        dab.style.top = "calc(" + ((hi - m) / span * 100) + "% - 0.17rem)";
+        dab.style.backgroundColor = PC_COLOR[parseNote(n).pc];
+        dab.style.opacity = (i >= d.loop) ? "0.4" : (v ? "0.7" : "1");
+      }
     }
   }
   /* the sword means one thing only — the workspace you are in — so the
@@ -2060,9 +2305,15 @@
     /* the pad's entry method, from either hand */
     if (code === "F4"){ e.preventDefault(); toggleRelative(); return; }
 
-    /* tab does nothing, but it is swallowed so that focus never wanders off
-       the page */
-    if (code === "Tab"){ e.preventDefault(); return; }
+    /* tab is the other voice — the one key that changes which line the hands
+       are in. It is swallowed either way, so focus never wanders off the page,
+       and it is inert while a page (the key, the quest log, the crossbar) is
+       up, exactly as note entry is. */
+    if (code === "Tab"){
+      e.preventDefault();
+      if (!anyPage()) nextVoice();
+      return;
+    }
 
     /* the settings crossbar is a page as well; it belongs to the pad, so the
        keyboard only needs the way out of it */
@@ -2127,6 +2378,12 @@
       case "PageDown":   e.preventDefault(); shiftOctave(-1); return;
       case "KeyL":
         e.preventDefault(); cycleLoop(); return;
+      /* the two keys past the end of the upper row: solo, then mute, both on
+         the voice in hand. The solo test wants one key, not a menu. */
+      case "KeyO":
+        e.preventDefault(); toggleSolo(); return;
+      case "KeyP":
+        e.preventDefault(); toggleMute(); return;
       case "F2":
         e.preventDefault(); toggleViz(); return;
       case "Space":
@@ -2360,9 +2617,12 @@
       gpNav(rx >=  STICK_DEAD || ry >=  STICK_DEAD, "fwd",   4, now);
     } else {
       /* no trigger: the bare face buttons act alone, FFXIV style —
-         □ clears the step, ○ returns to step 1 */
+         □ clears the step, ○ returns to step 1, △ is the other voice.
+         (In relative entry △ is a move, so the voice lives on the settings
+         crossbar's third slot instead; the crossbar has it in either method.) */
       if (gpEdge(cur, GP_SQUARE)) clearStep();
       else if (gpEdge(cur, GP_CIRCLE)) jump(0);
+      else if (gpEdge(cur, GP_TRIANGLE)) nextVoice();
       /* both d-pad pairs walk the cursor, as both arrow pairs do — except
          in the roll, where the drawing decides: left and right are time
          (d-pad and left stick alike), up and down nudge the note under

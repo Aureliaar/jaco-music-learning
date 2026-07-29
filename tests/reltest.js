@@ -34,7 +34,7 @@ const ids = {};
  "roll","rollfield","rollbase",
  "qfree","qfreesigil","qdname","qdtext","qdteach","qdstate","qpreview",
  "railquests","railtitle","railtext","railteach","railstate",
- "settings","xbarpad","xbarface"].forEach(i=>ids[i]=mkEl("div"));
+ "settings","xbarpad","xbarface","voices","vname0","vname1","vmark0","vmark1"].forEach(i=>ids[i]=mkEl("div"));
 let keyHandler = null;
 const document = {
   getElementById: i => (i in ids ? ids[i] : null),
@@ -88,6 +88,12 @@ const hook = `
   var _g = function(n){ try { return eval(n); } catch(e){ return undefined; } };
   window.__t = { get doc(){return doc;}, get cursor(){return cursor;}, set cursor(v){cursor=v;},
     get baseOctave(){return baseOctave;}, set baseOctave(v){baseOctave=v;},
+    get voice(){ return _g("voice"); }, setVoice: _g("setVoice"),
+    nextVoice: _g("nextVoice"), toggleSolo: _g("toggleSolo"), toggleMute: _g("toggleMute"),
+    audible: _g("audible"), vsteps: _g("vsteps"), flag: _g("flag"),
+    voiceState: _g("voiceState"), renderVoices: _g("renderVoices"),
+    VOICES: _g("VOICES"), VOICE_NAMES: _g("VOICE_NAMES"), TONE: _g("TONE"),
+    bars2: _g("bars2"), qdabs2: _g("qdabs2"),
     enterNote: enterNote, clearStep: clearStep, moveCursor: moveCursor,
     validate: validate, importText: importText, save: save, load: load, scheduler: scheduler,
     setDoc: function(d){ doc = d; renderAll(); },
@@ -188,7 +194,9 @@ function blank(){ return new Array(16).fill(null); }
 function useColumn(){ if (T.viz !== "column") T.toggleViz(); }
 function useRoll(){ if (T.viz !== "roll") T.toggleViz(); }
 function reset(){
-  T.setDoc({ version:1, title:"untitled folio", tempo:112, loop:16, key:"C major", steps: blank() });
+  T.setDoc({ version:1, title:"untitled folio", tempo:112, loop:16, key:"C major",
+             steps: blank(), bass: blank(), mute:[false,false], solo:[false,false] });
+  T.setVoice(0);                        /* the lead is the baseline hand */
   T.cursor = 0;
   T.baseOctave = 4;
   T.setRelative(false);
@@ -198,8 +206,11 @@ function reset(){
 function steps(o){ const s = blank(); for (const k in o) s[k|0] = o[k]; return s; }
 function page(o, extra){
   T.setDoc(Object.assign({ version:1, title:"t", tempo:112, loop:16, key:"C major",
-                           steps: steps(o) }, extra||{}));
+                           steps: steps(o), bass: blank(),
+                           mute:[false,false], solo:[false,false] }, extra||{}));
 }
+/* a page with something in the second voice as well */
+function duet(lead, bass, extra){ page(lead, Object.assign({ bass: steps(bass) }, extra||{})); }
 
 /* ---------- pad helpers ---------- */
 function pad(down, axes){
@@ -260,6 +271,7 @@ reset();
 page({0:"C4", 2:"F#3"});
 eq("note glyph", T.rows[0].note.textContent, "C-4");
 eq("note class", T.rows[0].note.className, "note");
+eq("the second voice sits beside it", T.rows[0].note2.className, "note empty dim");
 eq("empty glyph", T.rows[1].note.textContent, "\u00b7");
 eq("empty class", T.rows[1].note.className, "note empty");
 eq("sharp glyph", T.rows[2].note.textContent, "F\u266f3");
@@ -303,14 +315,14 @@ eq("natural minor scale", T.SCALES.minor, [0,2,3,5,7,8,10]);
 console.log("\n== the key is shown in the header ==");
 reset();
 eq("the meta line names the key", ids.metatext.textContent,
-   "untitled folio \u00b7 112 \u00b7 octave 4 \u00b7 C major");
+   "untitled folio \u00b7 112 \u00b7 octave 4 \u00b7 C major \u00b7 lead");
 T.setKey("E minor");
 eq("and follows it", ids.metatext.textContent,
-   "untitled folio \u00b7 112 \u00b7 octave 4 \u00b7 E minor");
+   "untitled folio \u00b7 112 \u00b7 octave 4 \u00b7 E minor \u00b7 lead");
 reset();
 key("KeyL");
 eq("loop still reads after the key", ids.metatext.textContent,
-   "untitled folio \u00b7 112 \u00b7 octave 4 \u00b7 C major \u00b7 loop 8");
+   "untitled folio \u00b7 112 \u00b7 octave 4 \u00b7 C major \u00b7 loop 8 \u00b7 lead");
 reset();
 
 console.log("\n== setting the key on the key page ==");
@@ -348,7 +360,7 @@ const withKey = JSON.parse(T.exportJSON());
 eq("export carries the key", withKey.key, "E minor");
 eq("and is still version 1", withKey.version, 1);
 eq("the pattern file has exactly the version-1 fields",
-   Object.keys(withKey).sort(), ["key","loop","steps","tempo","title","version"]);
+   Object.keys(withKey).sort(), ["bass","key","loop","mute","solo","steps","tempo","title","version"]);
 const keyless = { version:1, title:"keyless", tempo:112, loop:16, steps: steps({0:"C4"}) };
 eq("a file with no key validates", T.validate(keyless).key, "C major");
 eq("a file with a key keeps it", T.validate(Object.assign({}, keyless, {key:"g minor"})).key, "G minor");
@@ -396,11 +408,11 @@ ok("holding select is the transport too, and nothing else", !T.relative);
 ok("still no page opened", !ids.keyref.classList.contains("on") &&
    !ids.settings.classList.contains("on"));
 holdLong(GP.SEL);
-/* the entry method, from the crossbar's third slot */
-press(GP.START); press(GP.DR);
-ok("the crossbar's third slot turns relative entry on", T.relative);
+/* the entry method, from the crossbar's fourth slot */
+press(GP.START); press(GP.DD);
+ok("the crossbar's fourth slot turns relative entry on", T.relative);
 ok("and the crossbar stays up for the next item", ids.settings.classList.contains("on"));
-press(GP.DR);
+press(GP.DD);
 ok("the same slot turns it off again", !T.relative);
 press(GP.B);
 ok("○ closes the crossbar", !ids.settings.classList.contains("on"));
@@ -642,9 +654,12 @@ eq("the first slot is the quest log", T.xslots[0].label.textContent, "the quest 
 ok("and it is the one the list is headed by",
    /head/.test(T.xslots[0].el.className), T.xslots[0].el.className);
 eq("the second is the key", T.xslots[1].label.textContent, "the key");
-eq("the third is the entry method", T.xslots[2].label.textContent, "entry method");
-eq("which shows where it stands", T.xslots[2].value.textContent, "absolute");
-eq("the fourth is the view", T.xslots[3].label.textContent, "the view");
+eq("the third is the voice", T.xslots[2].label.textContent, "the voice");
+eq("which names the one in hand", T.xslots[2].value.textContent, "lead");
+eq("the fourth is the entry method", T.xslots[3].label.textContent, "entry method");
+eq("which shows where it stands", T.xslots[3].value.textContent, "absolute");
+eq("□ is solo", T.xslots[4].label.textContent, "solo");
+eq("△ is mute", T.xslots[5].label.textContent, "mute");
 eq("○ is close", T.xslots[6].label.textContent, "close");
 eq("✕ repeats the quest log", T.xslots[7].label.textContent, "the quest log");
 /* the eight slots are items, so they are not pitches */
@@ -658,15 +673,19 @@ press(GP.START); press(GP.X);
 ok("✕ confirms the same item", ids.quests.classList.contains("on"));
 key("F3");
 reset();
-press(GP.START); press(GP.DD);
-eq("the fourth slot flips the view", T.viz, "roll");
+press(GP.START); press(GP.DR);
+eq("the third slot changes hands", T.voice, 1);
 ok("and stays up", ids.settings.classList.contains("on"));
-eq("the slot says where the view now is", T.xslots[3].value.textContent, "the roll");
-press(GP.DD);                            /* back to the column baseline */
-eq("and flips it back", T.viz, "column");
-press(GP.SQ); press(GP.TR);
-ok("the two empty slots do nothing", ids.settings.classList.contains("on"));
-ok("and say so", /nothing on that slot yet/.test(ids.footer.textContent), ids.footer.textContent);
+eq("the slot names the voice now in hand", T.xslots[2].value.textContent, "bass");
+press(GP.SQ);
+ok("□ solos it", T.flag("solo", 1));
+eq("and the slot says so", T.xslots[4].value.textContent, "on");
+press(GP.SQ);
+press(GP.TR);
+ok("△ mutes it", T.flag("mute", 1));
+press(GP.TR);
+press(GP.DR);                            /* back to the lead */
+eq("and the third slot brings the hands back", T.voice, 0);
 /* the transport reaches through it, as it reaches through every page */
 press(GP.SEL);
 ok("select still transports from inside the crossbar",
@@ -689,6 +708,257 @@ press(GP.START); key("F3");
 ok("F3 reaches the quest log from inside it", ids.quests.classList.contains("on"));
 ok("and the crossbar stood down there too", !ids.settings.classList.contains("on"));
 key("F3");
+reset();
+
+/* ================= the second voice (Lesson 2) ================= */
+console.log("\n== two voices: the model ==");
+reset();
+eq("there are two of them", T.VOICES, 2);
+eq("named lead and bass", T.VOICE_NAMES, ["lead","bass"]);
+eq("the lead is the hand a page opens in", T.voice, 0);
+eq("the lead is still the old `steps` field", T.doc.steps.length, 16);
+eq("and the bass is beside it", T.doc.bass.length, 16);
+eq("neither is muted", T.doc.mute, [false,false]);
+eq("neither is soloed", T.doc.solo, [false,false]);
+/* the two timbres are genuinely different, and the bass is the darker */
+ok("the lead keeps the triangle it always had", T.TONE[0].type === "triangle", T.TONE[0]);
+ok("the bass is a rounder wave", T.TONE[1].type !== T.TONE[0].type, T.TONE[1]);
+ok("under a much lower cutoff", T.TONE[1].cut < T.TONE[0].cut / 2, [T.TONE[0].cut, T.TONE[1].cut]);
+ok("with a slower attack and a longer release",
+   T.TONE[1].attack > T.TONE[0].attack && T.TONE[1].release > T.TONE[0].release, T.TONE[1]);
+
+console.log("\n== a page from before the second voice ==");
+const legacy = { version:1, title:"before", tempo:104, loop:8, key:"E minor",
+                 steps: steps({0:"E4", 4:"G4", 8:"B4"}) };
+const lv = T.validate(legacy);
+ok("it still validates", !!lv);
+eq("its lead is untouched", lv.steps, legacy.steps);
+eq("its tempo, loop and key are untouched", [lv.tempo, lv.loop, lv.key], [104, 8, "E minor"]);
+eq("it gains a silent bass", lv.bass, blank());
+eq("and neither flag set", [lv.mute, lv.solo], [[false,false],[false,false]]);
+ok("a bass that cannot be read is silence, not a rejected file",
+   JSON.stringify(T.validate(Object.assign({}, legacy, { bass:"nonsense" })).bass) ===
+   JSON.stringify(blank()));
+ok("and the lead survives that intact",
+   JSON.stringify(T.validate(Object.assign({}, legacy, { bass:["zz"] })).steps) ===
+   JSON.stringify(legacy.steps));
+ok("a broken lead is still a rejected file",
+   T.validate({ version:1, steps:new Array(16).fill("zz"), bass: blank() }) === null);
+const withBass = Object.assign({}, legacy, { bass: steps({0:"E2", 8:"B2"}) });
+eq("a page that has one keeps it", T.validate(withBass).bass[0], "E2");
+eq("marks in the bass are dropped as they are in the lead",
+   T.validate(Object.assign({}, legacy, { bass: steps({0:"x", 1:"C2"}) })).bass.slice(0,2),
+   [null, "C2"]);
+/* it opens, and it plays, exactly as it did */
+reset();
+T.importText(JSON.stringify(legacy), "before");
+eq("opened, its lead is on the page", T.doc.steps.slice(0,1), ["E4"]);
+eq("with nothing in the bass", T.doc.bass, blank());
+T.audioInit(); T.setPlaying(true);
+sounded.length = 0; nowT = 0; T.schedFrom(0);
+T.scheduler();
+eq("and one voice is what sounds", sounded.length, 1);
+T.setPlaying(false);
+
+console.log("\n== the hands change voice ==");
+reset();
+key("KeyZ");
+eq("a note goes into the lead", T.doc.steps[0], "C4");
+eq("and not into the bass", T.doc.bass[0], null);
+key("Tab");
+eq("tab changes hands", T.voice, 1);
+eq("and leaves the cursor where it was", T.cursor, 1);
+key("KeyZ");
+eq("now the note goes into the bass", T.doc.bass[1], "C4");
+eq("and the lead is untouched", T.doc.steps[1], null);
+key("Tab");
+eq("tab comes back", T.voice, 0);
+eq("the two voices are round, not a stack", T.VOICES, 2);
+/* clearing, the cursor, and nudge all follow the hand */
+reset();
+duet({0:"C4"}, {0:"C2"});
+T.cursor = 0; key("Tab"); key("Period");
+eq("clear takes the bass note", T.doc.bass[0], null);
+eq("and leaves the lead's", T.doc.steps[0], "C4");
+reset();
+duet({0:"E4"}, {0:"E2"}); T.cursor = 0; key("Tab"); T.setRelative(true);
+hold(GP.DR);
+eq("nudge moves the bass note", T.doc.bass[0], "F2");
+eq("and not the lead's", T.doc.steps[0], "E4");
+/* the anchor relative entry counts from is the hand's own line */
+reset();
+duet({15:"C5"}, {15:"C3"}); T.setRelative(true); key("Tab");
+hold(GP.TR);
+eq("a step up is counted from the bass's own anchor", T.doc.bass[0], "D3");
+/* the pages hold tab still, as they hold note entry */
+reset();
+key("F3"); key("Tab");
+eq("tab is inert in the quest log", T.voice, 0);
+key("F3");
+key("F1"); key("Tab");
+eq("and on the key page", T.voice, 0);
+key("F1");
+press(GP.START); key("Tab");
+eq("and inside the settings crossbar", T.voice, 0);
+key("Escape");
+/* the pad: bare △ in absolute entry, a move in relative */
+reset();
+press(GP.TR);
+eq("bare △ changes hands in absolute entry", T.voice, 1);
+eq("and writes nothing", T.doc.bass.filter(Boolean).length, 0);
+press(GP.TR);
+eq("and back", T.voice, 0);
+reset(); page({15:"C4"}); T.setRelative(true);
+hold(GP.TR);
+eq("in relative entry △ is still a move", T.doc.steps[0], "D4");
+eq("and did not change hands", T.voice, 0);
+
+console.log("\n== solo and mute ==");
+reset();
+duet({0:"C4"}, {0:"C2"});
+ok("both voices are audible at rest", T.audible(0) && T.audible(1));
+key("KeyP");
+ok("P mutes the voice in hand", !T.audible(0));
+ok("and leaves the other alone", T.audible(1));
+ok("the strip says so", /muted/.test(ids.vmark0.textContent), ids.vmark0.textContent);
+ok("and so does the header", /lead \(muted\)/.test(ids.metatext.textContent), ids.metatext.textContent);
+key("KeyP");
+ok("P again gives it back", T.audible(0));
+key("Tab"); key("KeyO");
+ok("O solos the voice in hand", T.audible(1));
+ok("and takes the other away", !T.audible(0));
+ok("the strip marks the solo", /solo/.test(ids.vmark1.textContent), ids.vmark1.textContent);
+key("KeyO");
+ok("O again brings both back", T.audible(0) && T.audible(1));
+/* solo beats mute, as it does on every desk */
+reset(); duet({0:"C4"}, {0:"C2"});
+key("KeyP");                                  /* the lead muted */
+key("Tab"); key("KeyO");                      /* the bass soloed */
+ok("a soloed voice is heard even so", T.audible(1));
+key("Tab"); key("KeyO");
+ok("and a muted voice soloed is heard too", T.audible(0), [T.doc.mute, T.doc.solo]);
+/* what the scheduler actually does with all that */
+function heard(){
+  T.audioInit(); T.setPlaying(true);
+  sounded.length = 0; nowT = 0; T.schedFrom(0);
+  T.scheduler();
+  T.setPlaying(false);
+  return sounded.map(s => Math.round(s.freq)).sort((a,b) => a - b);
+}
+reset(); duet({0:"C4"}, {0:"C2"});
+eq("both voices sound together", heard(), [65, 262]);
+key("KeyP");
+eq("a muted lead leaves the bass alone", heard(), [65]);
+key("KeyP"); key("Tab"); key("KeyP");
+eq("a muted bass leaves the lead alone", heard(), [262]);
+key("KeyP"); key("KeyO");
+eq("a soloed bass is the only thing left", heard(), [65]);
+key("KeyO");
+eq("and letting go brings both back", heard(), [65, 262]);
+/* the two lines are in step, from the one clock */
+reset(); duet({0:"C4", 1:"E4"}, {0:"C2", 1:"C2"});
+T.audioInit(); T.setPlaying(true);
+sounded.length = 0; nowT = 0; T.schedFrom(0);
+T.scheduler(); nowT = 0.14; T.scheduler();
+ok("each step sounds both voices at the same instant",
+   sounded.length >= 4 && sounded[0].at === sounded[1].at &&
+   sounded[2].at === sounded[3].at, sounded);
+ok("and the second step is a step later",
+   sounded[2].at > sounded[0].at, sounded.map(s => s.at));
+T.setPlaying(false);
+
+console.log("\n== the two voices on the page ==");
+reset();
+duet({0:"C4"}, {0:"C2"});
+eq("the lead is written in its own column", T.rows[0].note.textContent, "C-4");
+eq("and the bass beside it", T.rows[0].note2.textContent, "C-2");
+eq("the hand's voice is in ink", T.rows[0].note.className, "note");
+eq("the other a shade back", T.rows[0].note2.className, "note dim");
+key("Tab");
+eq("changing hands changes which is which", T.rows[0].note.className, "note dim");
+eq("and the other comes forward", T.rows[0].note2.className, "note");
+ok("the strip marks the hand", ids.vname1.classList.contains("on"));
+ok("and unmarks the other", !ids.vname0.classList.contains("on"));
+key("Tab");
+/* the roll draws both, in the one field */
+reset();
+duet({0:"C4"}, {0:"C2"});
+eq("a bar is drawn for the lead", T.bars[0].style.display, "block");
+eq("and one for the bass", T.bars2[0].style.display, "block");
+ok("the bass's is the lower of the two",
+   parseFloat(T.bars2[0].style.top) > parseFloat(T.bars[0].style.top),
+   [T.bars[0].style.top, T.bars2[0].style.top]);
+ok("the voice not in hand is drawn a shade back",
+   /back/.test(T.bars2[0].className) && !/back/.test(T.bars[0].className),
+   [T.bars[0].className, T.bars2[0].className]);
+key("Tab");
+ok("and that follows the hand",
+   /back/.test(T.bars[0].className) && !/back/.test(T.bars2[0].className));
+key("Tab");
+/* a bass well below the lead must still be inside the drawing */
+reset();
+duet({0:"C5"}, {0:"C2"});
+ok("the window opens wide enough to hold both",
+   parseFloat(T.bars2[0].style.top) <= 100 && parseFloat(T.bars2[0].style.top) >= 0,
+   T.bars2[0].style.top);
+ok("and neither bar falls off it",
+   parseFloat(T.bars[0].style.top) >= 0 && parseFloat(T.bars[0].style.top) <= 100);
+/* the header names the hand */
+reset();
+ok("the header names the voice in hand", / · lead$/.test(ids.metatext.textContent),
+   ids.metatext.textContent);
+key("Tab");
+ok("and follows it", / · bass$/.test(ids.metatext.textContent), ids.metatext.textContent);
+key("Tab");
+
+console.log("\n== the second voice is saved and read back ==");
+reset();
+duet({0:"C4", 4:"E4"}, {0:"C2", 8:"G2"});
+key("Tab"); key("KeyP"); key("Tab");
+const both = JSON.parse(T.exportJSON());
+eq("the file carries the lead", both.steps[0], "C4");
+eq("and the bass", both.bass[8], "G2");
+eq("and the flags", both.mute, [false, true]);
+eq("the file's fields are the version-1 six and the three new ones",
+   Object.keys(both).sort(),
+   ["bass","key","loop","mute","solo","steps","tempo","title","version"]);
+eq("and it is still version 1", both.version, 1);
+T.setDoc(T.validate(both));
+eq("read back, the bass is where it was", T.doc.bass[8], "G2");
+eq("and the mute with it", T.doc.mute[1], true);
+/* the autosave, and the workspace it lives in */
+qreset();
+duet({0:"C4"}, {0:"C2"});
+T.save();
+eq("the autosave carries the bass", JSON.parse(store["folio.v1"]).bass[0], "C2");
+const st = T.stateToJSON();
+eq("and so does the whole state", st.free.bass[0], "C2");
+qreset();
+T.applyState({ folio:"quest-log", version:2, active:null,
+  quests:{ summit:{ done:false, pattern:{ version:1, title:"t", tempo:112, loop:16,
+    key:"C major", steps: steps({0:"C4"}) } } } });
+ok("a quest workspace written before the second voice still loads",
+   !!T.wsDoc.summit, T.wsDoc.summit);
+eq("with a silent bass under it", T.wsDoc.summit.bass, blank());
+ok("and the log still says it has something written", T.questHasContent("summit"));
+qreset();
+T.applyState({ folio:"quest-log", version:2, active:null,
+  quests:{ summit:{ done:false, pattern:{ version:1, title:"t", tempo:112, loop:16,
+    key:"C major", steps: blank(), bass: steps({0:"C2"}) } } } });
+ok("a workspace with only a bass line counts as written in",
+   T.questHasContent("summit"));
+
+console.log("\n== the key page documents the second voice ==");
+const twoPage = html.slice(html.indexOf('id="keyref"'), html.indexOf('id="settings"'));
+ok("it names both voices", /a lead and a bass/.test(twoPage));
+ok("tab is documented", /<dt>tab<\/dt>/.test(twoPage));
+ok("so are solo and mute", /O solos/.test(twoPage) && /P mutes/.test(twoPage));
+ok("it says the bass is the darker", /rounder and darker/.test(twoPage));
+ok("it promises the old pages still open",
+   /written before there were two voices/.test(twoPage));
+ok("the crossbar lists the voice, solo and mute",
+   /the voice/.test(twoPage) && /solo/.test(twoPage) && /mute/.test(twoPage));
+ok("bare △ is documented as the other voice", /the other voice/.test(twoPage));
 reset();
 
 console.log("\n== the scheduler still only sounds real notes ==");
@@ -825,7 +1095,7 @@ ok("the footer says where you are", /the summit/.test(ids.footer.textContent), i
 key("F3");
 ok("the meta line shows it quietly", /⚔ the summit$/.test(ids.metatext.textContent), ids.metatext.textContent);
 ok("in the ordinary meta shape",
-   /^untitled folio · 112 · octave 4 · D major · ⚔ the summit$/.test(ids.metatext.textContent),
+   /^untitled folio · 112 · octave 4 · D major · lead · ⚔ the summit$/.test(ids.metatext.textContent),
    ids.metatext.textContent);
 eq("stored as the id", JSON.parse(store[T.QUEST_KEY]).active, Q[2].id);
 eq("and the storage key is version 2", JSON.parse(store[T.QUEST_KEY]).version, 2);
@@ -1044,7 +1314,7 @@ eq("ctrl+S on the pattern still writes the pattern", JSON.parse(blobs[0]).steps.
 eq("and it writes the active workspace", JSON.parse(blobs[0]).steps[0], "E5");
 eq("and it carries the key", JSON.parse(blobs[0]).key, "G major");
 eq("the pattern file gains no quest fields",
-   Object.keys(JSON.parse(blobs[0])).sort(), ["key","loop","steps","tempo","title","version"]);
+   Object.keys(JSON.parse(blobs[0])).sort(), ["bass","key","loop","mute","solo","steps","tempo","title","version"]);
 T.resetQuests(); delete store[T.QUEST_KEY];
 T.importText(JSON.stringify(onDisk), "quest-log.json");
 eq("a quest log file restores the active workspace", T.qActive, Q[0].id);
@@ -1863,7 +2133,7 @@ eq("and coming back out of a seeded quest leaves it that way", T.doc.key, "C maj
 eq("with its tempo", T.doc.tempo, 112);
 ok("the pattern file gains no seed field",
    Object.keys(JSON.parse(T.exportJSON())).sort().join() ===
-   ["key","loop","steps","tempo","title","version"].join());
+   ["bass","key","loop","mute","solo","steps","tempo","title","version"].join());
 
 console.log("\n== the seed is a starting value, not a rule ==");
 qreset(); key("F3"); key("Enter"); key("F3");        /* ladder: G major 120 */

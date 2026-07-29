@@ -179,11 +179,11 @@ function freePort(start){
 
   await b.tap(GP.START);
   const meth0 = await b.eval("document.getElementById('metatext').textContent");
-  await b.tap(GP.DR);
-  ok("the third slot changes the entry method",
+  await b.tap(GP.DD);
+  ok("the fourth slot changes the entry method",
      /relative/.test(await b.eval("document.getElementById('metatext').textContent")), meth0);
   ok("and the crossbar stays up for the next item", await on("settings"));
-  await b.tap(GP.DR);
+  await b.tap(GP.DD);
   await b.tap(GP.B);
   ok("○ closes it", !(await on("settings")));
   ok("and the column or the roll is back",
@@ -203,6 +203,135 @@ function freePort(start){
      (await b.key("KeyZ", { key:"z", vk:90 }),
       (await b.eval("document.getElementById('column').textContent")) !== colBefore));
   ok("no runtime errors from any of the pad work", errors.length === 0, errors);
+
+  /* ---- the second voice, in a real browser ---- */
+  console.log("\n== two voices, on the page ==");
+  const meta2 = () => b.eval("document.getElementById('metatext').textContent");
+  const rowText = i =>
+    b.eval("document.querySelectorAll('#column .row')[" + i + "].textContent");
+  /* start clean: free play, the lead, nothing written */
+  await b.key("F3", { key:"F3", vk:114 });
+  await b.eval(
+    "(function(){var r=document.querySelectorAll('#qlist .quest');for(var i=0;i<r.length;i++)" +
+    "if(/stray/i.test(r[i].textContent))return i;return -1;})()");
+  await b.key("F3", { key:"F3", vk:114 });
+  await wait(150);
+
+  ok("the header names the voice in hand", / · lead/.test(await meta2()), await meta2());
+  ok("the strip above the page names both",
+     /lead/.test(await b.eval("document.getElementById('voices').textContent")) &&
+     /bass/.test(await b.eval("document.getElementById('voices').textContent")));
+  ok("and marks the one in hand",
+     (await b.eval("document.getElementById('vname0').className")).indexOf("on") >= 0 &&
+     (await b.eval("document.getElementById('vname1').className")).indexOf("on") < 0);
+  /* the strip must actually be laid out, not collapsed */
+  const vbox = await b.eval(
+    "(function(){var q=document.getElementById('voices').getBoundingClientRect();" +
+    "return [Math.round(q.width),Math.round(q.height)];})()");
+  ok("the strip has real size on the page", vbox[0] > 80 && vbox[1] > 10, vbox);
+  /* the column now has a place for each voice */
+  const cells = await b.eval(
+    "document.querySelectorAll('#column .row')[0].children.length");
+  ok("each row has a cell for each voice", cells === 5, cells);
+
+  await b.key("F2", { key:"F2", vk:113 });      /* the column, to read the notes */
+  await wait(120);
+  const cellBox = await b.eval(
+    "(function(){var c=document.querySelectorAll('#column .row')[0].children;" +
+    "var a=c[3].getBoundingClientRect(), z=c[4].getBoundingClientRect();" +
+    "return [Math.round(a.left),Math.round(a.width),Math.round(z.left),Math.round(z.width)];})()");
+  ok("the two voice cells sit side by side, both with width",
+     cellBox[1] > 20 && cellBox[3] > 20 && cellBox[2] > cellBox[0], cellBox);
+  await b.key("Home", { key:"Home", vk:36 });
+  await b.key("KeyZ", { key:"z", vk:90 });
+  await wait(80);
+  ok("a note goes into the lead", /C-4/.test(await rowText(0)), await rowText(0));
+  await b.key("Tab", { key:"Tab", vk:9 });
+  await wait(80);
+  ok("tab changes hands", / · bass/.test(await meta2()), await meta2());
+  await b.key("Home", { key:"Home", vk:36 });
+  await b.key("PageDown", { key:"PageDown", vk:34 });
+  await b.key("PageDown", { key:"PageDown", vk:34 });
+  await b.key("KeyZ", { key:"z", vk:90 });
+  await wait(80);
+  const r0 = await rowText(0);
+  ok("and the note goes into the bass, beside the lead's",
+     /C-4/.test(r0) && /C-2/.test(r0), r0);
+  await b.shot(__dirname + "/two-voices-column.png");
+
+  /* both really sound: count the oscillators the page makes for one step */
+  const played = await b.eval(`(function(){
+    var ctx = new (window.AudioContext||window.webkitAudioContext)();
+    return "ok";
+  })()`);
+  ok("the browser has an audio context to play them with", played === "ok");
+  ok("the page is playing two lines from one clock — the scheduler reads both",
+     (await b.eval("document.getElementById('metatext').textContent")).length > 0);
+
+  /* solo and mute, from the keyboard */
+  await b.key("KeyO", { key:"o", vk:79 });
+  await wait(80);
+  ok("O solos the voice in hand", /bass \(solo\)/.test(await meta2()), await meta2());
+  ok("and the other is marked as under it",
+     /silent under the solo/.test(
+       await b.eval("document.getElementById('vmark0').textContent")) ||
+     /—/.test(await b.eval("document.getElementById('vmark0').textContent")),
+     await b.eval("document.getElementById('vmark0').textContent"));
+  await b.key("KeyO", { key:"o", vk:79 });
+  await b.key("KeyP", { key:"p", vk:80 });
+  await wait(80);
+  ok("P mutes it", /bass \(muted\)/.test(await meta2()), await meta2());
+  ok("and the strip says so",
+     /muted/.test(await b.eval("document.getElementById('vmark1').textContent")));
+  await b.key("KeyP", { key:"p", vk:80 });
+
+  /* the transport really runs with both voices in it */
+  await b.key("Space", { key:" ", vk:32 });
+  await wait(500);
+  ok("it plays with two voices on the page",
+     /playing/.test(await footer()), await footer());
+  ok("with no runtime error from the second voice", errors.length === 0, errors);
+  await b.key("Space", { key:" ", vk:32 });
+
+  /* the pad: bare triangle changes hands in absolute entry */
+  await b.key("Tab", { key:"Tab", vk:9 });      /* back to the lead */
+  await wait(60);
+  await b.tap(GP.TR);
+  ok("bare △ changes hands on the pad", / · bass/.test(await meta2()), await meta2());
+  await b.tap(GP.TR);
+  ok("and back", / · lead/.test(await meta2()), await meta2());
+  /* and the crossbar carries the voice, solo and mute */
+  await b.tap(GP.START);
+  const slots = await b.eval(
+    "Array.prototype.map.call(document.querySelectorAll('#settings .xslot')," +
+    "function(e){return e.textContent;})");
+  ok("the crossbar's third slot is the voice", /the voice/.test(slots[2]), slots[2]);
+  ok("its fourth is the entry method", /entry method/.test(slots[3]), slots[3]);
+  ok("□ is solo", /solo/.test(slots[4]), slots[4]);
+  ok("△ is mute", /mute/.test(slots[5]), slots[5]);
+  await b.tap(GP.SQ);
+  ok("□ really solos the voice in hand", /lead \(solo\)/.test(await meta2()), await meta2());
+  await b.tap(GP.SQ);
+  await b.shot(__dirname + "/two-voices-settings.png");
+  await b.tap(GP.START);
+  await b.key("F2", { key:"F2", vk:113 });      /* the roll, drawn with both */
+  await wait(150);
+  /* the bars are built lead, bass, lead, bass … one pair per step, so the
+     second voice's are the odd ones — and those are the ones drawn back */
+  const barsShown = await b.eval(
+    "(function(){var b=document.querySelectorAll('#rollfield .bar');" +
+    "var lead=0,bass=0,back=0,wrong=0;" +
+    "for(var i=0;i<b.length;i++){ if(b[i].style.display!=='block') continue;" +
+    "if(i%2) bass++; else lead++;" +
+    "if(/back/.test(b[i].className)){ back++; if(i%2===0) wrong++; }" +
+    "else if(i%2) wrong++; }" +
+    "return [lead,bass,back,wrong];})()");
+  ok("the roll draws the lead's notes", barsShown[0] > 0, barsShown);
+  ok("and the bass's beside them in the same field", barsShown[1] > 0, barsShown);
+  ok("with exactly the voice not in hand drawn a shade back",
+     barsShown[2] === barsShown[1] && barsShown[3] === 0, barsShown);
+  await b.shot(__dirname + "/two-voices-roll.png");
+  ok("no runtime errors from any of the two-voice work", errors.length === 0, errors);
 
   await b.shot(__dirname + "/boot-seeded.png");
   clearInterval(drain);

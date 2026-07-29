@@ -179,6 +179,24 @@ const SEAM = { id:"drill-seam", name:"the seam drill",
      final.free.steps[0] === "G3" && final.free.steps[1] === "D4", final.free.steps.slice(0,3));
   ok("the quest workspace kept its melody",
      final.quests.whitespace.pattern.steps[0] === "A3", final.quests.whitespace.pattern.steps.slice(0,4));
+  /* the log seeded above is single-track throughout — written before the
+     second voice existed. Round-tripped through the running app it must come
+     back with every note where it was, and a silent bass added beneath it. */
+  ok("a single-track workspace round-trips unchanged",
+     JSON.stringify(final.quests.whitespace.pattern.steps) ===
+     JSON.stringify(seeded.quests.whitespace.pattern.steps),
+     final.quests.whitespace.pattern.steps);
+  ok("and gains a silent second voice, not a broken one",
+     Array.isArray(final.quests.whitespace.pattern.bass) &&
+     final.quests.whitespace.pattern.bass.length === 16 &&
+     final.quests.whitespace.pattern.bass.every(v => v === null),
+     final.quests.whitespace.pattern.bass);
+  ok("free play, written before it too, is silent underneath",
+     Array.isArray(final.free.bass) && final.free.bass.every(v => v === null),
+     final.free.bass);
+  ok("the drill's seed pattern is untouched on disk",
+     JSON.stringify(final.drills.find(d => d.id === "drill-itch").pattern.steps) ===
+     JSON.stringify(ITCH.pattern.steps));
   ok("the drill's own workspace is saved",
      final.quests["drill-seam"] && final.quests["drill-seam"].pattern.steps[0] === "D4",
      final.quests["drill-seam"]);

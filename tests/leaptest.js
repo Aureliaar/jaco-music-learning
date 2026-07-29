@@ -33,7 +33,7 @@ const ids = {};
  "roll","rollfield","rollbase",
  "qfree","qfreesigil","qdname","qdtext","qdteach","qdstate","qpreview",
  "railquests","railtitle","railtext","railteach","railstate",
- "settings","xbarpad","xbarface"].forEach(i=>ids[i]=mkEl("div"));
+ "settings","xbarpad","xbarface","voices","vname0","vname1","vmark0","vmark1"].forEach(i=>ids[i]=mkEl("div"));
 let keyHandler = null;
 const document = {
   getElementById: i => (i in ids ? ids[i] : null),
