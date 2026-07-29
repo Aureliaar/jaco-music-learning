@@ -158,6 +158,10 @@
   .roll{
     display:none;
     width:100%;
+    box-sizing:border-box;
+    /* the margin the drawing keeps for its names: the octave rules are named
+       at the side of the line, off the drawing rather than on top of it */
+    padding-left:2.7rem;
     flex-direction:column;
   }
   .roll.on{display:flex;}
@@ -165,8 +169,10 @@
     position:relative;
     height:36.9rem;                  /* with the base strip, the column's height: nothing shifts */
   }
-  /* one hairline per C — a sparse octave ruling, a quiet staff, never a grid */
-  .octline{position:absolute;left:0;right:0;height:1px;background:var(--rule);opacity:0.55;}
+  /* one hairline per C — a sparse octave ruling, a quiet staff, never a grid.
+     The tint is in the colour rather than in `opacity`, so that the name the
+     line carries is not faded along with it. */
+  .octline{position:absolute;left:0;right:0;height:1px;background:rgba(201,188,160,0.55);}
   /* and one per beat — the 4ths, upright, as quiet as the C rules */
   .beatline{position:absolute;top:0;bottom:0;width:1px;background:var(--rule);opacity:0.55;}
   .rollwash{position:absolute;top:0;bottom:0;background-color:var(--wash);display:none;}
@@ -188,43 +194,84 @@
   .bar.cur{box-shadow:0 0 0 1px var(--ink);}   /* the roll's answer to bold */
   /* ---- the names on the drawing ----
      The roll says pitch with height and colour, which is quick to read and
-     impossible to name. So each bar carries its own note, small, laid on the
-     bar itself in the page's own ground colour; and where both voices sound
-     at once the interval between them is written between the two bars. Both
-     are descriptions and nothing else: no interval is coloured, ranked or
-     warned about — the ear decides, the page only says what it is. */
-  .barname{
+     impossible to name. It is not made readable by writing a note on every
+     bar — that is sixteen labels for a shape one is trying to see. So the
+     drawing is named the way a chart is: the octave rules carry their pitch
+     once each, in the margin at the side of the line; a note being placed or
+     moved raises one more line of its own, at its own pitch, named in the
+     same margin and then let go of; and where both voices sound at once the
+     interval between them is written on a tie drawn between the two bars, so
+     that the name belongs to that pair and to nothing else. All of it is
+     description and nothing else: no interval is coloured, ranked or warned
+     about — the ear decides, the page only says what it is. */
+  .octname,.gname{
     position:absolute;
-    left:0;right:0;top:50%;
+    right:100%;
+    top:50%;
     transform:translateY(-50%);
-    text-align:center;
-    font-size:0.6rem;
+    padding-right:0.55rem;
+    text-align:right;
+    font-size:0.62rem;
     line-height:1;
-    letter-spacing:0.02em;
-    color:rgba(234,224,204,0.94);
+    letter-spacing:0.03em;
+    color:var(--faded);
     white-space:nowrap;
     pointer-events:none;
   }
+  /* ---- the pitch in hand ----
+     While a note is placed or moved, one more hairline is drawn across the
+     roll at that note's pitch, parallel to the octave rules and named beside
+     them. It is not a state and it is not a cursor: it arrives gently, waits,
+     and fades out over a second of its own accord. Nothing blinks. */
+  .rollguide{
+    position:absolute;left:0;right:0;height:1px;
+    background:rgba(59,47,30,0.32);
+    opacity:0;
+    transition:opacity 1.1s ease-out;
+    pointer-events:none;
+  }
+  .rollguide.on{opacity:1;transition:opacity 0.22s ease-out;}
+  .rollguide .gname{color:var(--ink);}
+  /* the interval: the slot is drawn from the centre of the upper bar to the
+     centre of the lower one, so it is the pair, not a place on the page */
   .ivl{
     position:absolute;
     display:none;                    /* shown by a class, so K can overrule it */
-    text-align:center;
-    font-size:0.62rem;
-    line-height:1.3;
     color:var(--ink);
-    white-space:nowrap;
     pointer-events:none;
   }
+  /* the tie: a stroke of ink down the middle of the pair, faded away to
+     nothing at both ends so that it meets neither bar and is never a ruled
+     line — sixteen of these must not add up to anything like a grid */
+  .ivl i{
+    position:absolute;
+    left:50%;top:0;bottom:0;width:1px;margin-left:-0.5px;
+    background:linear-gradient(to bottom,
+      rgba(59,47,30,0) 0%, rgba(59,47,30,0.26) 32%,
+      rgba(59,47,30,0.26) 68%, rgba(59,47,30,0) 100%);
+  }
+  /* and the name rides the middle of it, as a small rounded dab of the page's
+     own wash with the ruling colour for a rim: the shape of the notes it sits
+     between, in the page's colours instead of theirs */
   .ivl span{
-    background-color:var(--ground);
-    padding:0 0.28em;
-    border-radius:0.35rem;
+    position:absolute;
+    left:50%;top:50%;
+    transform:translate(-50%,-50%);
+    z-index:1;                       /* over the tie it hangs on */
+    background-color:var(--wash);
+    box-shadow:0 0 0 1px rgba(201,188,160,0.8);
+    padding:0.08rem 0.36rem 0.12rem;
+    border-radius:999px;
+    font-size:0.62rem;
+    line-height:1.1;
     letter-spacing:0.03em;
+    white-space:nowrap;
   }
   .ivl.on{display:block;}
   .ivl.outside{opacity:0.4;}
-  /* K puts them away; the drawing is the same drawing underneath */
-  .roll.nonames .barname,.roll.nonames .ivl{display:none;}
+  /* K puts the names away — the rules', the guide's and the intervals' — and
+     the drawing underneath is the same drawing */
+  .roll.nonames .octname,.roll.nonames .gname,.roll.nonames .ivl{display:none;}
   .rollbase{
     display:grid;
     grid-template-columns:repeat(16,1fr);
@@ -511,7 +558,7 @@
           <dt>ctrl + S</dt><dd>export the page you are on as a .folio.json &mdash; or, with the quest log open, every workspace at once as quest&#8209;log.json</dd>
           <dt>ctrl + O</dt><dd>import either (or drop a file on the page); a quest log opens as a quest log wherever it lands</dd>
           <dt>F2</dt><dd>the roll: the page drawn instead of written &mdash; time runs right, height is pitch, colour is the note</dd>
-          <dt>K</dt><dd>the names on the drawing, away and back: each bar's note and the interval between the voices. They are on to begin with, and nothing on the page changes either way</dd>
+          <dt>K</dt><dd>the names on the drawing, away and back: the octave rules' names in the margin, the guide's, and the interval between the voices. They are on to begin with, and nothing on the page changes either way</dd>
           <dt>F1</dt><dd>close this page of the key</dd>
           <dt>F3</dt><dd>open or close the quest log</dd>
           <dt>F4</dt><dd>the pad's entry method: relative (contour) or absolute</dd>
@@ -522,7 +569,7 @@
         </dl>
         <p>Notes are entered by position, not by letter, so the layout is the same on any keyboard. Entering a note advances the cursor.</p>
         <p>The page holds two voices &mdash; a lead and a bass &mdash; and they play together, from the one clock. They are written one at a time: the strip above the page names both and marks the one in hand, the column gives each a place of its own beside the step number, and in the roll they are drawn in the same field, the voice you are not in a shade back. Tab changes hands. Everything else &mdash; the key, the tempo, the loop, the whole page &mdash; the two share; only the notes and the timbre are their own. The bass is rounder and darker, so a bass written up in the melody's octave still sounds like the bass. Solo (O) and mute (P) act on the voice you are in; solo, if any voice has it, is what decides, and a change is heard on the next step without a restart. A page written before there were two voices opens exactly as it always did, with a silent bass under it.</p>
-        <p>The drawing names what it draws. Every bar in the roll carries its own note &mdash; C4, F&#9839;3 &mdash; with the octave numbered the international way, so that C4 is middle C and the page runs from C2 to C6. The column has always named its notes in the same alphabet, a dash standing in where there is no sharp, so that the two columns line up. Where both voices sound on the same step the roll also writes the interval between them, small, between the two bars. Below the octave the short names are the usual ones &mdash; P1, m2, M2, m3, M3, P4, TT, P5, m6, M6, m7, M7, P8 &mdash; and wider than an octave the compound name is used: the simple number plus seven for every octave crossed, so a minor third and an octave is m10, a fifth and an octave is P12, two octaves is P15. The tritone keeps its name and takes the compound number with it: TT, then TT11, then TT18. Only the distance is named, never the direction, so it reads the same whichever voice is on top. Nothing here judges: no interval is coloured, ranked, or marked as wanting anything. The page says what the two notes are; what they are worth is for the ear. K puts the whole lot away and brings it back.</p>
+        <p>The drawing names what it draws, in its margin rather than on top of itself. Every C in view is ruled across the roll and named once, at the side of its line &mdash; C2, C3, C4 &mdash; with the octave numbered the international way, so that C4 is middle C and the page runs from C2 to C6. Place a note, or move one, and a line of its own is drawn at that note's pitch, parallel to those rules and named beside them; it holds for a moment and then fades, so the pitch is said when you ask for it and the drawing is left alone the rest of the time. The column has always named its notes in the same alphabet, a dash standing in where there is no sharp, so that the two columns line up. Where both voices sound on the same step the roll also writes the interval between them, on a hairline tie drawn from the one bar to the other, so that the name belongs to that pair of notes and to nothing else however far apart the voices are. Below the octave the short names are the usual ones &mdash; P1, m2, M2, m3, M3, P4, TT, P5, m6, M6, m7, M7, P8 &mdash; and wider than an octave the compound name is used: the simple number plus seven for every octave crossed, so a minor third and an octave is m10, a fifth and an octave is P12, two octaves is P15. The tritone keeps its name and takes the compound number with it: TT, then TT11, then TT18. Only the distance is named, never the direction, so it reads the same whichever voice is on top. Nothing here judges: no interval is coloured, ranked, or marked as wanting anything. The page says what the two notes are; what they are worth is for the ear. K puts the whole lot away and brings it back.</p>
         <p>The key and the tempo both belong to the page you are on, and so to the workspace it lives in: each quest keeps its own, free play keeps its own, and changing one changes nothing anywhere else. Either may be changed while the loop runs; the change is heard at the next step, without a restart. A quest's page arrives already tuned &mdash; its own key and its own tempo, chosen to suit its constraint &mdash; so there is nothing to decide before writing; change them here whenever you like, and the change stays with that quest. Free play always begins in C major at 112.</p>
         <p>Every quest is a workspace: a whole page of its own &mdash; steps, title, tempo, loop and key &mdash; and one more page, free play, belongs to no quest. The page in front of you saves itself into the workspace you are in, on every change, as it always did; choosing another quest simply puts a different page in front of you. Nothing is bound, nothing is loaded, nothing is copied, and so nothing can be written over. The margins of this page carry the same thing quietly while you work: on the left every workspace and where you are, on the right the constraint you are under. A narrow window drops both rather than squeeze the column.</p>
         <p>Below the eight, under a hairline, sit the drills: short &eacute;tudes written into the quest log from outside, each with its own page already on it. They are workspaces like any other &mdash; enter one, write, mark it complete &mdash; and when the folio is served, a drill added to the log while this page is open simply appears in the list, quietly, without a reload and without disturbing a line of what you have written.</p>
@@ -888,32 +935,42 @@
   var rollCur = document.createElement("div");
   rollCur.className = "rollcur";
   rollfield.appendChild(rollCur);
+  /* the guide: one line, laid at the pitch of whatever note is in hand. It
+     goes in before the bars so that the bars are drawn over it. */
+  var rollGuide = document.createElement("div");
+  rollGuide.className = "rollguide";
+  var guideName = document.createElement("span");
+  guideName.className = "gname";
+  rollGuide.appendChild(guideName);
+  rollfield.appendChild(rollGuide);
   var octlines = [];
   var bars = [], bars2 = [], baseCells = [];
-  var barNames = [], barNames2 = [];
-  var vbars = [bars, bars2], vbarNames = [barNames, barNames2];
-  /* one per step: the interval between the voices, written where both sound */
-  var ivls = [];
-  function barWithName(store, names){
+  var vbars = [bars, bars2];
+  /* one per step: the interval between the voices, written where both sound —
+     the label itself, and the tie that hangs it between the two bars */
+  var ivls = [], ivlTies = [];
+  function mkBar(store){
     var b = document.createElement("div");
     b.className = "bar";
     b.style.display = "none";
-    var nm = document.createElement("span");
-    nm.className = "barname";
-    b.appendChild(nm);
     rollfield.appendChild(b);
-    store.push(b); names.push(nm);
+    store.push(b);
   }
   for (i = 0; i < STEPS; i++){
-    barWithName(bars, barNames);
+    mkBar(bars);
     /* the second voice's bars, drawn in the same field: pitch already keeps
        them apart, and the voice not in hand is drawn a shade back */
-    barWithName(bars2, barNames2);
+    mkBar(bars2);
     var ivl = document.createElement("div");
     ivl.className = "ivl";
+    /* the name first, so that the label is the slot's first child as it has
+       always been; the tie is lifted over by the stacking order, not by the
+       document order */
     ivl.appendChild(document.createElement("span"));
+    var tie = document.createElement("i");
+    ivl.appendChild(tie);
     rollfield.appendChild(ivl);
-    ivls.push(ivl);
+    ivls.push(ivl); ivlTies.push(tie);
     var cell = document.createElement("span");
     cell.textContent = (i % 4 === 0) ? String(i + 1) : "";
     rollbase.appendChild(cell);
@@ -939,6 +996,9 @@
     lo -= 3; hi += 3;
     while (hi - lo + 1 < 24){ lo--; hi++; }
     var span = hi - lo + 1;
+    /* what the drawing currently is, kept for whatever is laid on it after
+       the fact — the guide, which outlives any single edit */
+    rollHi = hi; rollSpan = span;
 
     for (i = 0; i < octlines.length; i++) rollfield.removeChild(octlines[i]);
     octlines = [];
@@ -946,6 +1006,11 @@
       var ln = document.createElement("div");
       ln.className = "octline";
       ln.style.top = ((hi - m + 0.5) / span * 100) + "%";
+      /* the rule says which C it is, once, at the side of the line */
+      var on = document.createElement("span");
+      on.className = "octname";
+      on.textContent = pitchName(nameOfMidi(m));
+      ln.appendChild(on);
       rollfield.insertBefore(ln, rollfield.firstChild);   /* under wash and bars */
       octlines.push(ln);
     }
@@ -963,15 +1028,19 @@
         b.style.height = (100 / span) + "%";
         b.style.backgroundColor = PC_COLOR[parseNote(n).pc];
         b.classList.toggle("back", v !== voice);
-        vbarNames[v][i].textContent = pitchName(n);
       }
     }
     rollIntervals(hi, span);
+    placeGuide();
   }
-  /* the interval, on the steps where both voices sound and nowhere else:
-     written between the two bars, at the midpoint of the distance it names */
+  /* the interval, on the steps where both voices sound and nowhere else.
+     The slot is not a point on the page: it is drawn from the centre of the
+     upper bar down to the centre of the lower one, which is the distance it
+     names. The tie hangs down that length and the name rides its middle, so
+     the label reads as belonging to those two notes however far apart the
+     voices are. */
   function rollIntervals(hi, span){
-    var lead = vsteps(0), bass = vsteps(1), i, a, z, ma, mz, el;
+    var lead = vsteps(0), bass = vsteps(1), i, a, z, ma, mz, el, top, d;
     for (i = 0; i < STEPS; i++){
       el = ivls[i];
       a = lead[i]; z = bass[i];
@@ -983,12 +1052,40 @@
       el.classList.add("on");
       el.style.left = (i * 6.25) + "%";
       el.style.width = "6.25%";
-      /* a bar's centre is half a semitone below its top edge; the label sits
-         halfway between the two centres, lifted by half its own line */
-      el.style.top = "calc(" + ((hi - (ma + mz) / 2 + 0.5) / span * 100) +
-                     "% - 0.4rem)";
+      /* a bar's centre is half a semitone below its top edge */
+      top = (ma > mz) ? ma : mz;
+      d = Math.abs(ma - mz);
+      el.style.top = ((hi - top + 0.5) / span * 100) + "%";
+      el.style.height = (d / span * 100) + "%";
+      /* the two voices on one pitch have no distance to tie across */
+      ivlTies[i].style.display = d ? "block" : "none";
       el.classList.toggle("outside", i >= doc.loop);
     }
+  }
+  /* ---- the pitch in hand, shown while it is in hand ----
+     Placing a note, or moving one, draws a line across the roll at that
+     note's pitch — the octave rules' own line, borrowed for a moment and
+     named in the same margin — and then lets go of it: it holds for a beat
+     or so and fades out over a second. It is drawn from the same numbers the
+     bars are, so a relayout carries it along rather than stranding it. */
+  var rollHi = 71, rollSpan = 24;
+  var guideMidi = null, guideTimer = null;
+  var GUIDE_HOLD = 1300;
+  function placeGuide(){
+    if (guideMidi === null) return;
+    rollGuide.style.top = ((rollHi - guideMidi + 0.5) / rollSpan * 100) + "%";
+  }
+  function showGuide(m){
+    if (m === null || m === undefined) return;
+    guideMidi = m;
+    guideName.textContent = pitchName(nameOfMidi(m));
+    placeGuide();
+    rollGuide.classList.add("on");
+    if (guideTimer) clearTimeout(guideTimer);
+    guideTimer = setTimeout(function(){
+      guideTimer = null;
+      rollGuide.classList.remove("on");     /* the long fade takes it from here */
+    }, GUIDE_HOLD);
   }
   function rollCursor(){
     rollCur.style.left = (cursor * 6.25) + "%";
@@ -1022,8 +1119,9 @@
   /* ---- the names, put away and brought back ----
      They are on by default: the drawing was mute about pitch and that was the
      one thing it could not say. K is beside L by position, and takes them all
-     away at once — the bars' notes and the intervals between the voices — for
-     when the shape alone is what is wanted. A preference, like the view and
+     away at once — the octave rules' names, the guide's, and the intervals
+     between the voices — for when the shape alone is what is wanted, which is
+     most of the time. A preference, like the view and
      the entry method; it is not part of any document and nothing is written
      into the page by any of this. */
   var showNames = true;
@@ -1034,7 +1132,7 @@
     showNames = !!on;
     try { localStorage.setItem(NAMES_KEY, showNames ? "on" : "off"); } catch (e){}
     applyNames();
-    say(showNames ? "the names · each note, and the interval where both voices sound"
+    say(showNames ? "the names · the octave rules, and the interval where both voices sound"
                   : "the names, off · the shape alone");
   }
   function toggleNames(){ setNames(!showNames); }
@@ -1407,6 +1505,7 @@
   function writeNote(name, tail){
     var at = cursor + 1;
     setStep(cursor, name);
+    showGuide(midiOf(name));         /* the drawing says which pitch that was */
     audition(name);
     advance();
     say(display(name) + " at step " + at + (tail ? " · " + tail : ""));
@@ -1457,6 +1556,7 @@
     var m = clampMidi(moveDegrees(clampMidi(midiOf(v)), n));
     var name = nameOfMidi(m);
     setStep(cursor, name);
+    showGuide(m);                    /* the note moved: the line moves with it */
     audition(name);
     say(display(name) + " at step " + (cursor + 1));
   }

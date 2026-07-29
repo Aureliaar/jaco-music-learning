@@ -103,8 +103,11 @@ const hook = `
     audioInit: function(){ audio(); },
     rows: rows, pollPads: pollPads, bars: bars,
     intervalName: _g("intervalName"), pitchName: _g("pitchName"),
-    get ivls(){ return _g("ivls"); },
-    get barNames(){ return _g("barNames"); }, get barNames2(){ return _g("barNames2"); },
+    get ivls(){ return _g("ivls"); }, get ivlTies(){ return _g("ivlTies"); },
+    get octlines(){ return _g("octlines"); },
+    get rollGuide(){ return _g("rollGuide"); }, get guideName(){ return _g("guideName"); },
+    get guideMidi(){ return _g("guideMidi"); },
+    showGuide: _g("showGuide"), GUIDE_HOLD: _g("GUIDE_HOLD"),
     get showNames(){ return _g("showNames"); },
     setNames: _g("setNames"), toggleNames: _g("toggleNames"),
     NAMES_KEY: _g("NAMES_KEY"), rollEl: roll,
@@ -2351,14 +2354,32 @@ eq("direction is not named — a crossed pair reads the same",
    T.intervalName(-7), T.intervalName(7));
 eq("nor at the octave", T.intervalName(-12), "P8");
 
+/* ---- re-pointed, 2026-07-29 ----
+   The first cut of this wrote a note on every bar in the roll. Sixteen labels
+   over a shape one is trying to *see* is not a drawing, so the names moved off
+   the bars: the octave rules carry a pitch each, once, in the margin at the
+   side of the line, and a note being placed or moved raises a line of its own
+   there for a moment. The coverage below follows them; nothing was dropped. */
 console.log("\n== the names, on the drawing ==");
 qreset(); useRoll();
 duet({0:"C4", 2:"F#3", 5:"C4"}, {0:"C3", 1:"G2", 5:"E3"});
-eq("every sounding bar in the lead is labelled", T.barNames[0].textContent, "C4");
-eq("sharps included", T.barNames[2].textContent, "F♯3");
-eq("and the bass's bars too", T.barNames2[0].textContent, "C3");
-eq("the bass label at its own step", T.barNames2[1].textContent, "G2");
-ok("a rest's bar is not drawn at all", T.bars[1].style.display === "none");
+ok("no bar carries a name of its own any more", !/barname/.test(html));
+ok("and none is built with one", T.bars[0].children.length === 0 &&
+   T.bars2[0].children.length === 0);
+ok("the drawing is still drawn: a rest's bar is not there at all",
+   T.bars[1].style.display === "none");
+ok("every octave rule in view is named, once",
+   T.octlines.length > 0 &&
+   T.octlines.every(l => l.children.length === 1 && /^C\d$/.test(l.firstChild.textContent)),
+   T.octlines.map(l => l.firstChild && l.firstChild.textContent));
+eq("this page, from G2 to C4, rules C3 and C4",
+   T.octlines.map(l => l.firstChild.textContent), ["C3", "C4"]);
+eq("and each name sits in the margin, beside its own line",
+   T.octlines.map(l => l.firstChild.className), ["octname", "octname"]);
+duet({0:"C6"}, {0:"C2"});
+eq("the whole range rules every C in it",
+   T.octlines.map(l => l.firstChild.textContent), ["C2","C3","C4","C5","C6"]);
+duet({0:"C4", 2:"F#3", 5:"C4"}, {0:"C3", 1:"G2", 5:"E3"});
 eq("there is one interval slot per step", T.ivls.length, 16);
 eq("both voices sounding: the interval is written",
    T.ivls[0].firstChild.textContent, "P8");
@@ -2384,6 +2405,32 @@ ok("past the loop, the interval is drawn back with the bars",
 duet({0:"C4"}, {0:"C3"});
 ok("inside it, it is not", !T.ivls[0].classList.contains("outside"));
 
+/* ---- re-pointed, 2026-07-29 ----
+   The label used to float at the vertical midpoint between the two bars,
+   attached to nothing; with the voices far apart it read as a chip in empty
+   space. The slot is now the pair itself — drawn from the centre of the upper
+   bar down to the centre of the lower one, with a tie of ink down its middle
+   and the name riding that tie. Same text, same column, same two modifiers. */
+console.log("\n== the interval belongs to the pair it names ==");
+duet({0:"C4"}, {0:"C3"});
+eq("the slot hangs from the centre of the upper bar", T.ivls[0].style.top, "26%");
+eq("and is as tall as the distance it names", T.ivls[0].style.height, "48%");
+eq("there is one tie per step", T.ivlTies.length, 16);
+eq("the pair's tie is drawn down it", T.ivlTies[0].style.display, "block");
+eq("and the name still rides it as the slot's first child",
+   T.ivls[0].firstChild.textContent, "P8");
+duet({0:"C4"}, {0:"C4"});
+eq("a unison has no distance to tie across", T.ivlTies[0].style.display, "none");
+eq("and the slot no height", T.ivls[0].style.height, "0%");
+ok("but the pair is named all the same",
+   T.ivls[0].firstChild.textContent === "P1" && T.ivls[0].classList.contains("on"));
+duet({0:"E3"}, {0:"C4"});
+eq("crossed, the slot still hangs from whichever note is on top",
+   T.ivls[0].style.top, "34%");
+eq("and is still as tall as the distance", T.ivls[0].style.height, "32%");
+duet({0:"C4", 4:"G4"}, {0:"C3", 4:"C3"});
+ok("a step with no pair has no tie shown", !T.ivls[1].classList.contains("on"));
+
 console.log("\n== the names describe, and nothing more ==");
 ok("no interval is ranked anywhere in the app",
    !/consonan|dissonan|harsh|clash|tense interval|good interval|bad interval/i.test(html));
@@ -2395,11 +2442,72 @@ const rollIvlSrc = (/function rollIntervals[\s\S]*?\n  \}/.exec(src) || ["" ])[0
 ok("the function that writes them exists", /el\.firstChild\.textContent = intervalName/.test(rollIvlSrc));
 ok("and nothing else is ever added to the label at runtime",
    !/classList\.(add|toggle|remove)\((?!"on"|"outside")/.test(rollIvlSrc), rollIvlSrc.slice(0, 200));
-ok("the label is drawn in the page's own ink", /\.ivl\{[^}]*color:var\(--ink\)/.test(html.replace(/\s+/g,"")));
-ok("and the bar's name in the page's own ground",
-   /\.barname\{[^}]*color:rgba\(234,224,204/.test(html.replace(/\s+/g,"")));
+const css = html.replace(/\s+/g,"");
+ok("the label is drawn in the page's own ink", /\.ivl\{[^}]*color:var\(--ink\)/.test(css));
+ok("and rides a dab of the page's own wash",
+   /\.ivlspan\{[^}]*background-color:var\(--wash\)/.test(css));
+ok("with the ruling colour for a rim, and no harder edge than that",
+   /\.ivlspan\{[^}]*box-shadow:0001pxrgba\(201,188,160/.test(css));
+ok("and it is a dab, not a box", /\.ivlspan\{[^}]*border-radius:999px/.test(css));
+/* the tie is sixteen short vertical strokes at worst; a solid rule at every
+   step would be the one pattern this page may not draw, so it is a gradient
+   that has faded to nothing before it reaches either bar */
+ok("the tie fades to nothing at both ends rather than ruling a line",
+   /\.ivli\{[^}]*linear-gradient\(tobottom,rgba\(59,47,30,0\)0%/.test(css) &&
+   /rgba\(59,47,30,0\)100%\)/.test(css));
+ok("and it is a hairline, an ink wash of a quarter at its darkest",
+   /\.ivli\{[^}]*width:1px/.test(css) && !/\.ivli\{[^}]*rgba\(59,47,30,0\.[4-9]/.test(css));
+ok("the names in the margin are in the page's faded ink",
+   /\.octname,\.gname\{[^}]*color:var\(--faded\)/.test(css));
+ok("and each is off the drawing, past its left edge",
+   /\.octname,\.gname\{[^}]*right:100%/.test(css));
 ok("still no pure white or black anywhere", !/#fff\b|#ffffff|#000\b|#000000/i.test(html));
 ok("and still nothing that blinks", !/@keyframes/.test(html));
+
+/* ---- new, 2026-07-29: the pitch in hand ----
+   The bars no longer say what they are, so the moment of placing or moving a
+   note does: a line is drawn across the roll at that pitch, parallel to the
+   octave rules and named in the same margin, and then let go of. */
+console.log("\n== the pitch in hand raises a line of its own ==");
+qreset(); useRoll();
+ok("the guide is a line of the drawing's own, built down",
+   /rollGuide\.className = "rollguide";/.test(src) &&
+   T.rollGuide.classList.contains("rollguide"));
+eq("its name is drawn in the same margin", T.guideName.className, "gname");
+T.rollGuide.classList.remove("on");        /* whatever the sections above left up */
+ok("and nothing but writing raises it", !T.rollGuide.classList.contains("on"));
+T.cursor = 0; T.baseOctave = 4;
+key("KeyZ");
+ok("placing a note raises it", T.rollGuide.classList.contains("on"));
+eq("at that note's own pitch", T.guideMidi, 60);
+eq("named as the octave rules are named", T.guideName.textContent, "C4");
+key("KeyD");
+eq("the next note takes it with it, sharp and all", T.guideName.textContent, "D♯4");
+eq("and the line follows the pitch", T.guideMidi, 63);
+T.cursor = 0;
+T.nudge(1);
+eq("nudging the note under the cursor moves it too", T.guideName.textContent, "D4");
+ok("and it is still up", T.rollGuide.classList.contains("on"));
+eq("nothing of it is written into the page", T.doc.steps[0], "D4");
+duet({0:"C4"}, {0:"C3"});
+T.showGuide(60);
+eq("the line is laid where this drawing puts that pitch — the bar's own centre",
+   T.rollGuide.style.top, "26%");
+T.showGuide(48);
+eq("and moves with the pitch it is given", T.rollGuide.style.top, "74%");
+/* it lets go of itself: the hold, then the fade the stylesheet does. A
+   transition, never an animation — nothing on this page may blink. */
+ok("the hold is about a second", T.GUIDE_HOLD >= 800 && T.GUIDE_HOLD <= 2000, T.GUIDE_HOLD);
+ok("and it takes the line down by itself",
+   /guideTimer = setTimeout\(function\(\)\{[\s\S]{0,120}rollGuide\.classList\.remove\("on"\)/.test(src));
+ok("the arrival is gentle and the fade slow",
+   /\.rollguide\{[^}]*transition:opacity1\.1s/.test(css) &&
+   /\.rollguide\.on\{[^}]*transition:opacity0\.22s/.test(css));
+ok("the guide is a hairline of ink, not a wall",
+   /\.rollguide\{[^}]*height:1px/.test(css) &&
+   /\.rollguide\{[^}]*background:rgba\(59,47,30,0\.3/.test(css));
+ok("and it answers no key of its own — it is raised by writing, and nothing else",
+   !/showGuide/.test(src.slice(src.indexOf("document.addEventListener(\"keydown\""))));
 
 console.log("\n== K puts the names away ==");
 qreset(); useRoll();
@@ -2410,6 +2518,12 @@ key("KeyK");
 ok("K puts them away", T.showNames === false);
 ok("the roll says so, and only the roll", T.rollEl.classList.contains("nonames"));
 eq("the preference is kept, not the document", store[T.NAMES_KEY], "off");
+ok("the mark takes all three away together — the rules', the guide's, the intervals'",
+   /\.roll\.nonames\.octname,\.roll\.nonames\.gname,\.roll\.nonames\.ivl\{display:none;?\}/.test(css));
+ok("and the lines themselves stay: it is the names that go, not the drawing",
+   !/\.roll\.nonames\.octline/.test(css) && !/\.roll\.nonames\.rollguide/.test(css));
+eq("the octave rules are still ruled and still named underneath",
+   T.octlines.map(l => l.firstChild.textContent).length > 0, true);
 eq("and nothing was written into the page", T.doc.steps[0], "C4");
 eq("the interval is still computed underneath",
    T.ivls[0].firstChild.textContent, "P8");
@@ -2441,6 +2555,13 @@ ok("it says what it does", /the names on the drawing/.test(keyPage));
 ok("and that they start on", /They are on to begin with/.test(keyPage));
 ok("the octave convention is written down",
    /C4 is middle C/.test(keyPage) && /C2 to C6/.test(keyPage));
+ok("it says the names are in the margin, not on the bars",
+   /named once, at the side of its line/.test(keyPage));
+ok("it says what placing or moving a note raises",
+   /Place a note, or move one/.test(keyPage) && /holds for a moment and then fades/.test(keyPage));
+ok("and it says the interval is tied to its pair",
+   /hairline tie/.test(keyPage) && /belongs to that pair of notes/.test(keyPage));
+ok("K's own row lists all three", /the octave rules' names in the margin, the guide's/.test(keyPage));
 ok("the simple interval names are listed",
    /P1, m2, M2, m3, M3, P4, TT, P5, m6, M6, m7, M7, P8/.test(keyPage));
 ok("the compound convention is named and shown",
@@ -2477,7 +2598,8 @@ ok("and the roll is not marked nameless", !T.rollEl.classList.contains("nonames"
 duet({0:"E4"}, {0:"C4"});
 eq("the workspace walked into names its own interval",
    T.ivls[0].firstChild.textContent, "M3");
-eq("and its own pitches", T.barNames[0].textContent, "E4");
+eq("and is ruled and named for its own pitches",
+   T.octlines.map(l => l.firstChild.textContent), ["C4", "C5"]);
 key("KeyK");
 ok("K still answers after all of that", T.rollEl.classList.contains("nonames"));
 eq("and the interval is still computed underneath",
