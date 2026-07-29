@@ -4,7 +4,8 @@
    frame, the face button edges several frames later, and the releases are
    staggered, which is how a hand actually plays it. */
 const fs = require("fs");
-const path = "E:/experiments/daw/folio.html";
+const REPO = require("path").resolve(__dirname, "..").split("\\").join("/");
+const path = REPO + "/folio.html";
 const html = fs.readFileSync(path, "utf8");
 const src = html.slice(html.indexOf("<script>") + 8, html.lastIndexOf("</script>"));
 

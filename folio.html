@@ -268,7 +268,8 @@
     border-radius:0.5rem;
     cursor:pointer;
   }
-  /* the default item, marked as the playhead row is: a flat wash, no glow */
+  /* the slots the mode is chiefly for — the workspace, up and down — marked
+     as the playhead row is: a flat wash, no glow */
   .xslot.head{background-color:var(--wash);}
   .xslot .xg{display:block;color:var(--gilt);font-size:1.15em;line-height:1.3;}
   .xslot .xl{display:block;letter-spacing:0.04em;}
@@ -407,6 +408,10 @@
   .rail.right .rline{justify-content:flex-end;}
   .rline .rn{color:var(--faded);}
   .rline.act .rn{color:var(--ink);}
+  /* the pad, walking the rail while start is held up: the line you are on
+     takes the same flat wash the playhead row takes. It moves with the thumb
+     and it never blinks — a wash, not a cursor. */
+  .rline.nav{background-color:var(--wash);border-radius:0.3rem;}
   .rline .rg{color:var(--gilt);width:1em;text-align:center;flex:none;}
   .rail .rtext{color:var(--ink);margin-top:0.2rem;line-height:1.62;}
   .rail .rteach{margin-top:0.6rem;font-style:italic;}
@@ -494,11 +499,13 @@
           <dt>R3 (right stick click)</dt><dd>the roll: the page drawn or written</dd>
           <dt>&#9633; (X), bare</dt><dd>clear the step</dd>
           <dt>&#9675; (B), bare</dt><dd>back to step 1</dd>
-          <dt>&#9651; (Y), bare</dt><dd>the other voice &mdash; in absolute entry, where it is free. In relative entry &#9651; is a move, so the voice is the settings crossbar's third slot; the crossbar has it in either method</dd>
+          <dt>&#9651; (Y), bare</dt><dd>the other voice &mdash; in absolute entry, where it is free. In relative entry &#9651; is a move, so the voice lives on the settings crossbar's &#8592; and &#8594;; the crossbar has it in either method</dd>
           <dt>L1, R1 (LB, RB)</dt><dd>base octave down, up</dd>
           <dt>select (create)</dt><dd>play or stop &mdash; from any page, and while any page is up</dd>
-          <dt>start (options)</dt><dd>the settings crossbar: the eight slots become items, not notes. Start again, or &#9675;, puts it down</dd>
-          <dt>&hellip; its eight slots</dt><dd>&#8592; the quest log &middot; &#8593; the key &middot; &#8594; the voice &middot; &#8595; the entry method &middot; &#9633; solo &middot; &#9651; mute &middot; &#9675; close &middot; &#10005; the quest log again, the item the list is headed by</dd>
+          <dt>start (options)</dt><dd>the settings crossbar: the eight slots become items, not notes. Start again, &#9675;, or escape puts it down</dd>
+          <dt>&hellip; its eight slots</dt><dd>&#8593; &#8595; the workspace, walked in the left margin &middot; &#8592; &#8594; the voice, round the ring &middot; &#9633; solo &middot; &#9651; mute &middot; &#9675; close &middot; &#10005; the entry method</dd>
+          <dt>&hellip; &#8593; and &#8595; there</dt><dd>the highlight moves down the workspaces in the left margin and you are already in the one it is on &mdash; nothing to confirm, and no list opened first. Hold to walk. Free play is the first line, the drills the last</dd>
+          <dt>&hellip; what is not there</dt><dd>the key page (F1, and R3 off it), the quest log (F3), and the view (R3, F2). None of them has a slot</dd>
           <dt>d&#8209;pad, bare</dt><dd>any direction moves the cursor; hold to repeat. In the roll the drawing decides: &#8592;&#8594; are time, &#8593;&#8595; nudge the note under the cursor a step of the key</dd>
           <dt>left stick</dt><dd>the same, up and down only; in the roll, both axes</dd>
           <dt>right stick</dt><dd>the cursor by fours, beat to beat</dd>
@@ -525,10 +532,12 @@
     </div>
     <p>Start raised this; start puts it down again, and so does &#9675;. While it
       is up the eight slots are items instead of notes &mdash; the d&#8209;pad on the left,
-      the face buttons on the right, each read left, up, right, down. The
-      quest log sits in the first slot and is what &#10005; confirms. The view
+      the face buttons on the right, each read left, up, right, down.
+      &#8593; and &#8595; walk the workspaces in the left margin: the highlight moves
+      and you are already in that workspace, so there is nothing to confirm and
+      no list to open first. &#8592; and &#8594; go round the voices. The view
       &mdash; the roll or the column &mdash; is not here: it is R3, and F2, where
-      it has always been.</p>
+      it has always been, and neither is the key: that is F1.</p>
   </section>
 
   <section class="quests" id="quests" aria-label="quest log">
@@ -1356,7 +1365,11 @@
     var st = voiceState(voice);
     say("the " + voiceName(voice) + (st ? " · " + st : ""));
   }
-  function nextVoice(){ setVoice(voice + 1); }
+  /* the voices are a ring, walked in the order they are named above the page.
+     Two of them for now; a lesson that adds a third adds it to that list and
+     nothing here changes. */
+  function cycleVoice(d){ setVoice(voice + d); }
+  function nextVoice(){ cycleVoice(1); }
   function toggleSolo(v){
     v = (v === undefined) ? voice : v;
     setFlag("solo", v, !flag("solo", v));
@@ -1428,6 +1441,7 @@
     keyref.classList.toggle("on", on);
     if (on){ questsEl.classList.remove("on"); settingsEl.classList.remove("on"); }
     applyViz();
+    renderRails();                   /* the pad's wash goes with the mode */
     say(on ? "the key, by position" : "‸ cursor row");
   }
   function toggleQuests(){
@@ -1435,6 +1449,7 @@
     questsEl.classList.toggle("on", on);
     if (on){ keyref.classList.remove("on"); settingsEl.classList.remove("on"); }
     applyViz();
+    renderRails();
     if (on) renderQuests();
     say(on ? "the quest log · " + selQuest().short : "‸ cursor row");
   }
@@ -1445,23 +1460,29 @@
      same order the crossbar always reads — left, up, right, down, then □ △ ○ ✕
      — so the hand that knows the crossbar already knows this.
 
-     The quest log is the head of the list: it holds the first slot, it is the
-     one marked, and ✕ confirms it. Everything here is reachable from the
-     keyboard too (F1, F3, F4); the crossbar exists so that the pad never has
-     to borrow a key. */
+     What the mode is chiefly for is the left margin: ↑ and ↓ walk the
+     workspaces there, and walking is arriving — the highlight moves and you
+     are already in that workspace. There is no list to open first and nothing
+     to confirm, so no slot opens a page of any kind. ← and → go round the
+     voices, in the order the strip above the page names them, which is the
+     order more of them will join.
+
+     The key page is not here at all: it is F1, and R3 off it. The quest log
+     is not here either: it is F3, and the margin has already replaced what
+     one would have come here to do. */
   var SETTINGS = [
-    { glyph:"←", label:"the quest log",
-      value:function(){ return "where the work lives"; },
-      run:function(){ closeSettings(); toggleQuests(); }, head:true },
-    { glyph:"↑", label:"the key",
-      value:function(){ return "the bindings, and the key of the piece"; },
-      run:function(){ closeSettings(); toggleKeyref(); } },
+    { glyph:"←", label:"the voice",
+      value:function(){ return voiceName(voice); },
+      run:function(){ cycleVoice(-1); renderSettings(); } },
+    { glyph:"↑", label:"the workspace",
+      value:function(){ return workspaceName(); },
+      run:function(){ railStep(-1); }, head:true },
     { glyph:"→", label:"the voice",
       value:function(){ return voiceName(voice); },
-      run:function(){ nextVoice(); renderSettings(); } },
-    { glyph:"↓", label:"entry method",
-      value:function(){ return relative ? "relative" : "absolute"; },
-      run:function(){ toggleRelative(); renderSettings(); } },
+      run:function(){ cycleVoice(1); renderSettings(); } },
+    { glyph:"↓", label:"the workspace",
+      value:function(){ return workspaceName(); },
+      run:function(){ railStep(1); }, head:true },
     { glyph:"□", label:"solo",
       value:function(){ return flag("solo", voice) ? "on" : "off"; },
       run:function(){ toggleSolo(); renderSettings(); } },
@@ -1471,9 +1492,9 @@
     { glyph:"○", label:"close",
       value:function(){ return "back to the page"; },
       run:function(){ closeSettings(); } },
-    { glyph:"✕", label:"the quest log",
-      value:function(){ return "the item above, confirmed"; },
-      run:function(){ closeSettings(); toggleQuests(); } }
+    { glyph:"✕", label:"entry method",
+      value:function(){ return relative ? "relative" : "absolute"; },
+      run:function(){ toggleRelative(); renderSettings(); } }
   ];
   /* the diamond each cluster is drawn as: left, up, right, down */
   var XPOS = [["26%","50%"],["50%","16%"],["74%","50%"],["50%","84%"]];
@@ -1532,6 +1553,7 @@
     if (!settingsEl.classList.contains("on")) return;
     settingsEl.classList.remove("on");
     applyViz();
+    renderRails();                   /* the margin stops being the pad's */
     say("‸ cursor row");
   }
   function toggleSettings(){
@@ -1540,7 +1562,8 @@
     if (on){ keyref.classList.remove("on"); questsEl.classList.remove("on"); }
     applyViz();
     if (on) renderSettings();
-    say(on ? "settings · the eight slots are items" : "‸ cursor row");
+    renderRails();
+    say(on ? "settings · ↑↓ the workspace, ←→ the voice" : "‸ cursor row");
   }
 
   /* ================= quests as workspaces =================
@@ -1753,6 +1776,33 @@
     }
     switchWorkspace(id);
     if (id === null){ say("free play · no constraint"); return; }
+    var q = questById(id);
+    say(q.short + " · its own page" + (questHasContent(id) ? "" : ", empty"));
+  }
+  /* ---- the left margin, walked by the pad ----
+     Start gives the d-pad the workspace rail, in the order the rail draws it:
+     free play first, then every quest and every drill. There is no separate
+     selection to keep — the line the highlight is on *is* the workspace you
+     are in, so a step up or down is a switch, and the switch is the whole
+     interaction. Nothing is confirmed and no page is opened on the way. */
+  function railOrder(){
+    var out = [null], i;
+    for (i = 0; i < ALL.length; i++) out.push(ALL[i].id);
+    return out;
+  }
+  function workspaceName(){
+    var q = activeQuest();
+    return q ? q.short : "free play";
+  }
+  function railStep(d){
+    var order = railOrder(), n = order.length, i;
+    var at = order.indexOf(qActive);
+    if (at < 0) at = 0;
+    var id = order[((at + d) % n + n) % n];
+    for (i = 0; i < ALL.length; i++) if (ALL[i].id === id){ qsel = i; break; }
+    switchWorkspace(id);
+    if (settingsEl.classList.contains("on")) renderSettings();
+    if (!id){ say("free play · no constraint"); return; }
     var q = questById(id);
     say(q.short + " · its own page" + (questHasContent(id) ? "" : ", empty"));
   }
@@ -2268,11 +2318,16 @@
   }
   buildRailRows();
   function renderRails(){
+    /* while start is up the d-pad is walking this list, so the line it is on
+       is washed as well as marked — the pad's own highlight, and calm */
+    var nav = settingsEl.classList.contains("on");
     rrows[0].el.classList.toggle("act", !qActive);
+    rrows[0].el.classList.toggle("nav", nav && !qActive);
     rrows[0].glyph.textContent = qActive ? "" : "⚔";
     for (var i = 0; i < ALL.length && i + 1 < rrows.length; i++){
       var id = ALL[i].id, r = rrows[i + 1];
       r.el.classList.toggle("act", id === qActive);
+      r.el.classList.toggle("nav", nav && id === qActive);
       r.glyph.textContent = questGlyph(id);
     }
     var q = activeQuest();
@@ -2503,16 +2558,27 @@
 
     /* start raises the settings crossbar, and puts it down again. While it is
        up the eight slots are items, read in the crossbar's own order, and
-       nothing else on the pad reaches the pattern. */
+       nothing else on the pad reaches the pattern.
+
+       ↑ and ↓ are the workspace rail in the left margin, and they hold to
+       repeat as every other list on the pad does — so they are driven by
+       gpNav rather than by the edge loop, which skips them. */
     if (settingsEl.classList.contains("on")){
-      if (gpEdge(cur, GP_START)){ closeSettings(); gpPrev = cur; return; }
+      if (gpEdge(cur, GP_START)){ closeSettings(); navReset(); gpPrev = cur; return; }
       for (i = 0; i < 8; i++){
+        if (i === 1 || i === 3) continue;         /* the rail, held below */
         if (gpEdge(cur, GP_SLOTS[i])){ runSetting(i); break; }
       }
-      navReset();
+      if (settingsEl.classList.contains("on")){
+        var sy = (gp.axes && gp.axes.length > 1) ? gp.axes[1] : 0;
+        gpNav(cur[GP_DU] || sy <= -STICK_DEAD, "up",   -1, now, railStep);
+        gpNav(cur[GP_DD] || sy >=  STICK_DEAD, "down",  1, now, railStep);
+      } else navReset();                          /* ○ put it down */
       gpPrev = cur; return;
     }
-    if (gpEdge(cur, GP_START)){ toggleSettings(); gpPrev = cur; return; }
+    /* raising it hands the d-pad to the margin, so whatever hold the page had
+       is forgotten first — the first step of the rail should be a step */
+    if (gpEdge(cur, GP_START)){ toggleSettings(); navReset(); gpPrev = cur; return; }
 
     /* the key page holds the piece's two settings, both reachable without a
        keyboard: d-pad left and right move the tonic, △ or ✕ make it major or
@@ -2619,7 +2685,7 @@
       /* no trigger: the bare face buttons act alone, FFXIV style —
          □ clears the step, ○ returns to step 1, △ is the other voice.
          (In relative entry △ is a move, so the voice lives on the settings
-         crossbar's third slot instead; the crossbar has it in either method.) */
+         crossbar's ← and → instead; the crossbar has it in either method.) */
       if (gpEdge(cur, GP_SQUARE)) clearStep();
       else if (gpEdge(cur, GP_CIRCLE)) jump(0);
       else if (gpEdge(cur, GP_TRIANGLE)) nextVoice();

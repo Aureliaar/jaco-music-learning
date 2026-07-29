@@ -7,7 +7,7 @@ const fs = require("fs");
 const net = require("net");
 const { launch } = require("./cdp.js");
 
-const REPO = "E:/experiments/daw";
+const REPO = require("path").resolve(__dirname, "..").split("\\").join("/");
 const LOG  = REPO + "/quests/quest-log.json";
 const BACK = __dirname + "/quest-log.drillbackup.json";
 

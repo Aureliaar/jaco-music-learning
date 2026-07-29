@@ -5,7 +5,8 @@
    chromatic escape, anchors, the snap rule, nudge, clamping, the key field
    and the entry-method toggle. */
 const fs = require("fs");
-const path = "E:/experiments/daw/folio.html";
+const REPO = require("path").resolve(__dirname, "..").split("\\").join("/");
+const path = REPO + "/folio.html";
 const html = fs.readFileSync(path, "utf8");
 const src = html.slice(html.indexOf("<script>") + 8, html.lastIndexOf("</script>"));
 
@@ -124,6 +125,8 @@ const hook = `
     toggleQuests: toggleQuests, toggleKeyref: toggleKeyref,
     toggleSettings: _g("toggleSettings"), closeSettings: _g("closeSettings"),
     runSetting: _g("runSetting"), renderSettings: _g("renderSettings"),
+    railStep: _g("railStep"), railOrder: _g("railOrder"),
+    workspaceName: _g("workspaceName"), cycleVoice: _g("cycleVoice"),
     get SETTINGS(){ return _g("SETTINGS"); },
     get xslots(){ return _g("xslots"); },
     loadQuests: loadQuests, saveQuests: saveQuests, renderQuests: renderQuests,
@@ -338,12 +341,17 @@ key("KeyZ"); eq("note keys are still inert on the key page", T.doc.steps.filter(
 ok("the key is autosaved", JSON.parse(store["folio.v1"]).key === "B major",
    JSON.parse(store["folio.v1"]).key);
 key("Escape"); ok("escape closes the page", !ids.keyref.classList.contains("on"));
-/* the pad reaches the same setting — by way of the settings crossbar, which
-   is what start raises now */
+/* the pad reaches the same setting on the key page itself. Start no longer
+   leads there: the key has no slot in the settings crossbar at all, and F1
+   (with R3 to leave) is the whole of the way in and out. */
 reset();
 press(GP.START); ok("start raises the settings crossbar", ids.settings.classList.contains("on"));
-press(GP.DU);    ok("its second slot opens the key page", ids.keyref.classList.contains("on"));
-ok("and the crossbar stood down behind it", !ids.settings.classList.contains("on"));
+ok("no slot of it is the key page any more",
+   T.SETTINGS.every(s => !/^the key$/.test(s.label)), T.SETTINGS.map(s => s.label));
+ok("and nothing it does opens one", !ids.keyref.classList.contains("on"));
+press(GP.START);
+ok("start put it down again", !ids.settings.classList.contains("on"));
+key("F1"); ok("F1 is the way to the key page", ids.keyref.classList.contains("on"));
 press(GP.DR); eq("d-pad right moves the tonic up", T.doc.key, "C# major");
 press(GP.DL); press(GP.DL); eq("d-pad left moves it down", T.doc.key, "B major");
 press(GP.TR); eq("triangle makes it minor", T.doc.key, "B minor");
@@ -408,14 +416,19 @@ ok("holding select is the transport too, and nothing else", !T.relative);
 ok("still no page opened", !ids.keyref.classList.contains("on") &&
    !ids.settings.classList.contains("on"));
 holdLong(GP.SEL);
-/* the entry method, from the crossbar's fourth slot */
-press(GP.START); press(GP.DD);
-ok("the crossbar's fourth slot turns relative entry on", T.relative);
+/* the entry method has moved to ✕: the d-pad's four slots are the workspace
+   and the voice now, and ✕ was freed by the quest log leaving the mode */
+press(GP.START); press(GP.X);
+ok("the crossbar's ✕ turns relative entry on", T.relative);
 ok("and the crossbar stays up for the next item", ids.settings.classList.contains("on"));
-press(GP.DD);
+press(GP.X);
 ok("the same slot turns it off again", !T.relative);
+ok("and it opens no page on the way",
+   !ids.quests.classList.contains("on") && !ids.keyref.classList.contains("on"));
 press(GP.B);
 ok("○ closes the crossbar", !ids.settings.classList.contains("on"));
+ok("F4 is still the keyboard's way to the same setting",
+   (function(){ key("F4"); const on = T.relative; key("F4"); return on && !T.relative; })());
 
 console.log("\n== relative moves from an anchor ==");
 function rel(setup, buttons, opts){
@@ -650,33 +663,90 @@ press(GP.START);
 ok("the pattern stands down while it is up", ids.column.style.display === "none" &&
    !ids.roll.classList.contains("on"), ids.column.style.display);
 eq("its eight slots are labelled", T.xslots.length, 8);
-eq("the first slot is the quest log", T.xslots[0].label.textContent, "the quest log");
-ok("and it is the one the list is headed by",
-   /head/.test(T.xslots[0].el.className), T.xslots[0].el.className);
-eq("the second is the key", T.xslots[1].label.textContent, "the key");
-eq("the third is the voice", T.xslots[2].label.textContent, "the voice");
-eq("which names the one in hand", T.xslots[2].value.textContent, "lead");
-eq("the fourth is the entry method", T.xslots[3].label.textContent, "entry method");
-eq("which shows where it stands", T.xslots[3].value.textContent, "absolute");
+eq("← is the voice", T.xslots[0].label.textContent, "the voice");
+eq("which names the one in hand", T.xslots[0].value.textContent, "lead");
+eq("↑ is the workspace", T.xslots[1].label.textContent, "the workspace");
+eq("which names where you are", T.xslots[1].value.textContent, "free play");
+ok("and the workspace is what the mode is headed by",
+   /head/.test(T.xslots[1].el.className), T.xslots[1].el.className);
+eq("→ is the voice as well", T.xslots[2].label.textContent, "the voice");
+eq("↓ is the workspace as well", T.xslots[3].label.textContent, "the workspace");
+ok("and marked the same", /head/.test(T.xslots[3].el.className), T.xslots[3].el.className);
 eq("□ is solo", T.xslots[4].label.textContent, "solo");
 eq("△ is mute", T.xslots[5].label.textContent, "mute");
 eq("○ is close", T.xslots[6].label.textContent, "close");
-eq("✕ repeats the quest log", T.xslots[7].label.textContent, "the quest log");
-/* the eight slots are items, so they are not pitches */
-press(GP.DL);
-ok("d-pad left opens the quest log", ids.quests.classList.contains("on"));
-ok("and the crossbar closed behind it", !ids.settings.classList.contains("on"));
-eq("nothing was written to the page", T.doc.steps.filter(Boolean).length, 0);
-key("F3");
+eq("✕ is the entry method", T.xslots[7].label.textContent, "entry method");
+eq("which shows where it stands", T.xslots[7].value.textContent, "absolute");
+/* the two items that used to be here are gone from it entirely */
+ok("no slot of it is the quest log",
+   T.SETTINGS.every(s => !/quest/i.test(s.label)), T.SETTINGS.map(s => s.label));
+ok("and none is the key page",
+   T.SETTINGS.every(s => !/^the key$/.test(s.label)), T.SETTINGS.map(s => s.label));
+ok("so none of them opens a page at all",
+   (function(){
+     for (let i = 0; i < 8; i++){
+       if (i === 6) continue;                    /* ○ is the way out, not a page */
+       T.runSetting(i);
+       if (ids.quests.classList.contains("on") || ids.keyref.classList.contains("on")) return false;
+     }
+     return true;
+   })());
+press(GP.B);
 reset();
-press(GP.START); press(GP.X);
-ok("✕ confirms the same item", ids.quests.classList.contains("on"));
-key("F3");
-reset();
-press(GP.START); press(GP.DR);
-eq("the third slot changes hands", T.voice, 1);
+
+console.log("\n== start walks the left margin, and walking is arriving ==");
+closePages(); T.resetDrills(); T.resetQuests(); reset();
+press(GP.START);
+eq("free play is the line it starts on", T.qActive, null);
+eq("and the slot says so", T.xslots[1].value.textContent, "free play");
+ok("the rail washes that line for the pad", /nav/.test(T.rrows[0].el.className),
+   T.rrows[0].el.className);
+press(GP.DD);
+eq("d-pad down lands in the first workspace", T.qActive, T.QUESTS[0].id);
+ok("with no page opened to do it",
+   !ids.quests.classList.contains("on") && !ids.keyref.classList.contains("on"));
+ok("and the crossbar still up", ids.settings.classList.contains("on"));
+eq("the slot names where you are now", T.xslots[1].value.textContent, T.QUESTS[0].short);
+eq("the quest log's own selection followed", T.qsel, 0);
+ok("the rail wash moved with it", /nav/.test(T.rrows[1].el.className) &&
+   !/nav/.test(T.rrows[0].el.className), T.rrows.map(r => r.el.className));
+eq("exactly one line is washed", T.rrows.filter(r => /nav/.test(r.el.className)).length, 1);
+ok("and the washed line is the one you are in",
+   /act/.test(T.rrows[1].el.className), T.rrows[1].el.className);
+press(GP.DD);
+eq("down again, the second", T.qActive, T.QUESTS[1].id);
+press(GP.DU); press(GP.DU);
+eq("up walks back through free play", T.qActive, null);
+press(GP.DU);
+eq("and wraps round to the last workspace", T.qActive, T.QUESTS[T.QUESTS.length - 1].id);
+press(GP.DD);
+eq("and round again to free play", T.qActive, null);
+holdLong(GP.DD);
+eq("holding walks the list", T.qActive, T.QUESTS[1].id);
+/* the left stick agrees with the d-pad, as it does on every other list */
+stick([0, 1]);
+eq("the left stick walks it too", T.qActive, T.QUESTS[2].id);
+press(GP.START);
+ok("start puts the mode down", !ids.settings.classList.contains("on"));
+eq("and the wash goes with it", T.rrows.filter(r => /nav/.test(r.el.className)).length, 0);
+ok("but the workspace it left you in is where you are",
+   T.qActive === T.QUESTS[2].id, T.qActive);
+closePages(); T.resetQuests(); reset();
+
+console.log("\n== the voice is a ring, walked by ← and → ==");
+press(GP.START);
+press(GP.DR);
+eq("→ changes hands", T.voice, 1);
 ok("and stays up", ids.settings.classList.contains("on"));
-eq("the slot names the voice now in hand", T.xslots[2].value.textContent, "bass");
+eq("the slot names the voice now in hand", T.xslots[0].value.textContent, "bass");
+press(GP.DR);
+eq("→ again comes round to the lead", T.voice, 0);
+press(GP.DL);
+eq("← walks the ring the other way", T.voice, 1);
+press(GP.DL);
+eq("and back", T.voice, 0);
+eq("the ring is the order the voices are named in", T.VOICE_NAMES, ["lead","bass"]);
+press(GP.DR);
 press(GP.SQ);
 ok("□ solos it", T.flag("solo", 1));
 eq("and the slot says so", T.xslots[4].value.textContent, "on");
@@ -684,8 +754,8 @@ press(GP.SQ);
 press(GP.TR);
 ok("△ mutes it", T.flag("mute", 1));
 press(GP.TR);
-press(GP.DR);                            /* back to the lead */
-eq("and the third slot brings the hands back", T.voice, 0);
+press(GP.DL);                            /* back to the lead */
+eq("and ← brings the hands back", T.voice, 0);
 /* the transport reaches through it, as it reaches through every page */
 press(GP.SEL);
 ok("select still transports from inside the crossbar",
@@ -1020,7 +1090,7 @@ ok("and the line that says what it teaches",
    Q.every(q=>typeof q.teaches === "string" && q.teaches.length > 20), Q.map(q=>q.teaches));
 /* the real descriptions, not a compression of them: a phrase from each
    quest in QUESTS.md must appear verbatim in the app */
-const questsMd = fs.readFileSync("E:/experiments/daw/QUESTS.md", "utf8").replace(/\s+/g," ");
+const questsMd = fs.readFileSync(REPO + "/QUESTS.md", "utf8").replace(/\s+/g," ");
 const PHRASES = {
   ladder:      ["Coverage disguised as melody", "using the whole tonal space"],
   whitespace:  ["not parked in one hole", "the pause as a placed note"],
@@ -1324,8 +1394,8 @@ eq("and free play with it", T.doc.steps[0], "C4");
 ok("a pattern file is still a pattern file",
    !T.isQuestLog({version:1,title:"t",tempo:112,steps:blank()}));
 ok("quests/quest-log.json exists on disk",
-   fs.existsSync("E:/experiments/daw/quests/quest-log.json"));
-const repoLog = JSON.parse(fs.readFileSync("E:/experiments/daw/quests/quest-log.json","utf8"));
+   fs.existsSync(REPO + "/quests/quest-log.json"));
+const repoLog = JSON.parse(fs.readFileSync(REPO + "/quests/quest-log.json","utf8"));
 ok("and the app can read it", T.isQuestLog(repoLog));
 T.resetQuests();
 T.importText(JSON.stringify(repoLog), "quest-log.json");
@@ -1903,6 +1973,16 @@ ok("it says select is the transport", /select \(create\)/.test(keyPage) &&
 ok("it says start raises the settings crossbar",
    /start \(options\)/.test(keyPage) && /settings crossbar/.test(keyPage));
 ok("it lists the crossbar's slots", /its eight slots/.test(keyPage));
+ok("it says ↑↓ there are the workspaces in the left margin",
+   /the workspace, walked in the left margin/.test(keyPage));
+ok("and that walking is arriving",
+   /you are already in the one it is on/.test(keyPage));
+ok("it says ←→ there are the voice", /the voice, round the ring/.test(keyPage));
+ok("it puts the entry method on ✕", /&#10005; the entry method/.test(keyPage));
+ok("it says the quest log and the key have no slot",
+   /what is not there/.test(keyPage) && /None of them has a slot/.test(keyPage));
+ok("the crossbar no longer offers the quest log",
+   !/&#8592; the quest log/.test(keyPage));
 ok("it no longer promises select walks the pages", !/the pages in turn/.test(keyPage));
 ok("nor that a held select changes the method", !/hold select/.test(keyPage));
 ok("it names R3 as the way off the key page", /R3 closes it/.test(keyPage));
@@ -1937,7 +2017,7 @@ ok("no bind or load key survives on the key page",
    !/binds the pattern|loads that motif/.test(keyPage), keyPage.match(/bind\w*|load\w*/g));
 
 console.log("\n== the spec records it ==");
-const spec = fs.readFileSync("E:/experiments/daw/SPEC-LESSON-0.md", "utf8");
+const spec = fs.readFileSync(REPO + "/SPEC-LESSON-0.md", "utf8");
 ok("the spec has a relative-entry section", /Relative entry \(contour mode\)/.test(spec));
 for (const s of ["anchor", "snap", "\"key\"", "hold select", "F4", "nudge"])
   ok("the spec covers " + s, spec.indexOf(s) >= 0);
@@ -2236,7 +2316,7 @@ ok("with the schema", /"drills": \[/.test(spec) && /"drill-itch"/.test(spec));
 ok("the merge rule", /and nothing else, ever/.test(spec));
 ok("the ETag", /ETag/.test(spec) && /If-None-Match/.test(spec));
 ok("and the server-side preservation", /keeps any\s*\n?drill whose id the incoming body does not mention/.test(spec));
-const diskLog = JSON.parse(fs.readFileSync("E:/experiments/daw/quests/quest-log.json","utf8"));
+const diskLog = JSON.parse(fs.readFileSync(REPO + "/quests/quest-log.json","utf8"));
 ok("the committed log carries the first drill",
    Array.isArray(diskLog.drills) && diskLog.drills.some(d => d.id === "drill-itch"));
 const itchOnDisk = (diskLog.drills || []).find(d => d.id === "drill-itch") || {};
@@ -2256,7 +2336,7 @@ ok("with the drill in the list", T.drillById("drill-itch") !== null);
 qreset();
 
 console.log("\n== the server itself ==");
-const srv = fs.readFileSync("E:/experiments/daw/server.mjs", "utf8");
+const srv = fs.readFileSync(REPO + "/server.mjs", "utf8");
 ok("it depends on nothing but node", !/^import .*from "(?!node:)/m.test(srv));
 ok("it serves folio.html as the index", /INDEX = "folio.html"/.test(srv));
 ok("it refuses traversal", /indexOf\("\.\."\) >= 0/.test(srv));
@@ -2265,7 +2345,7 @@ ok("it checks the marker before writing", /obj\.folio !== "quest-log"/.test(srv)
 ok("it binds localhost by default", /LAN \? "0\.0\.0\.0" : "127\.0\.0\.1"/.test(srv));
 ok("PORT is honoured", /process\.env\.PORT/.test(srv));
 ok("and a taken port is explained", /EADDRINUSE/.test(srv));
-ok("folio.cmd starts it", /server\.mjs/.test(fs.readFileSync("E:/experiments/daw/folio.cmd","utf8")));
+ok("folio.cmd starts it", /server\.mjs/.test(fs.readFileSync(REPO + "/folio.cmd","utf8")));
 ok("the log carries an ETag", /createHash\("sha1"\)/.test(srv) && /"etag": tag/.test(srv));
 ok("and honours If-None-Match", /if-none-match/.test(srv) && /writeHead\(304/.test(srv));
 ok("a PUT answers with the tag it wrote", /writeHead\(204, \{ "etag": etagOf\(text2\) \}\)/.test(srv));
@@ -2273,7 +2353,7 @@ ok("a stale PUT cannot lose a drill on disk",
    /disk\.drills\.filter/.test(srv) && /!have\.has\(d\.id\)/.test(srv));
 ok("and only drills are preserved that way", /Nothing else on disk is preserved/.test(srv));
 ok("the README says how to run it",
-   /folio\.cmd/.test(fs.readFileSync("E:/experiments/daw/README.md","utf8")));
+   /folio\.cmd/.test(fs.readFileSync(REPO + "/README.md","utf8")));
 
 syncLive().then(drillsLive).then(function(){
   console.log("\n" + pass + " passed, " + fail + " failed\n");
