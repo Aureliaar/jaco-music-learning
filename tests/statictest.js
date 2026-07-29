@@ -8,7 +8,7 @@ const net = require("net");
 const path = require("path");
 const { launch } = require("./cdp.js");
 
-const REPO = "E:/experiments/daw";
+const REPO = require("path").resolve(__dirname, "..").split("\\").join("/");
 const DIST = REPO + "/dist";
 
 let pass = 0, fail = 0;

@@ -5,7 +5,7 @@ const fs = require("fs");
 const net = require("net");
 const { launch } = require("./cdp.js");
 
-const REPO = "E:/experiments/daw";
+const REPO = require("path").resolve(__dirname, "..").split("\\").join("/");
 const LOG  = REPO + "/quests/quest-log.json";
 const BACK = __dirname + "/quest-log.bootbackup.json";
 
@@ -137,11 +137,11 @@ function freePort(start){
      (await b.eval("document.getElementById('column').style.display")) === "none");
   ok("the crossbar is drawn as eight slots",
      (await b.eval("document.querySelectorAll('#settings .xslot').length")) === 8);
-  ok("the quest log heads the list",
-     (await b.eval("document.querySelectorAll('#settings .xslot')[0].textContent"))
-       .indexOf("the quest log") >= 0);
+  ok("the workspace heads the list",
+     (await b.eval("document.querySelectorAll('#settings .xslot')[1].textContent"))
+       .indexOf("the workspace") >= 0);
   ok("and is the marked one",
-     (await b.eval("document.querySelectorAll('#settings .xslot')[0].className"))
+     (await b.eval("document.querySelectorAll('#settings .xslot')[1].className"))
        .indexOf("head") >= 0);
   /* it must actually be laid out — a page that renders to nothing shipped once */
   const box = await b.eval(
@@ -161,31 +161,70 @@ function freePort(start){
   ok("and no slot is off the page",
      box.every(q => q[0] >= 0 && q[1] >= 0), box);
 
-  await b.tap(GP.DL);
-  ok("the first slot opens the quest log", await on("quests"));
-  ok("and the crossbar stood down behind it", !(await on("settings")));
-  await b.key("F3", { key:"F3", vk:114 });
+  /* nothing in the mode is a page any more: the quest log and the key are
+     both gone from it, and neither can be reached from a slot */
+  const labels = await b.eval(
+    "Array.prototype.map.call(document.querySelectorAll('#settings .xslot .xl')," +
+    "function(e){return e.textContent;})");
+  ok("no slot of it is the quest log", labels.every(l => !/quest/i.test(l)), labels);
+  ok("and none is the key page", labels.every(l => l !== "the key"), labels);
+  await b.tap(GP.DL); await b.tap(GP.DR); await b.tap(GP.DU); await b.tap(GP.DD);
+  ok("walking every d-pad slot opens no page",
+     !(await on("quests")) && !(await on("keyref")), labels);
+  ok("and the mode is still up", await on("settings"));
 
-  await b.tap(GP.START);
-  await b.tap(GP.X);
-  ok("✕ confirms the same item", await on("quests"));
-  await b.key("F3", { key:"F3", vk:114 });
-
-  await b.tap(GP.START);
+  /* ↑ and ↓ are the workspaces in the left margin, and walking is arriving */
+  const where = () => b.eval("document.getElementById('railtitle').textContent");
+  const slotv = () => b.eval("document.querySelectorAll('#settings .xslot')[1].textContent");
+  const here0 = await where();
+  await b.tap(GP.DD);
+  const here1 = await where();
+  ok("d-pad down lands in the next workspace", here1 !== here0, [here0, here1]);
+  ok("without opening the quest log to do it", !(await on("quests")));
+  ok("and the slot names where you are", (await slotv()).length > 12, await slotv());
+  ok("the left rail washes the line the pad is on",
+     (await b.eval("document.querySelectorAll('#railquests .rline.nav').length")) === 1);
+  ok("and it is the line you are in",
+     (await b.eval("document.querySelectorAll('#railquests .rline.nav')[0].className"))
+       .indexOf("act") >= 0);
+  ok("the rail is really drawn, not collapsed",
+     (await b.eval("Math.round(document.querySelectorAll" +
+       "('#railquests .rline.nav')[0].getBoundingClientRect().width)")) > 20,
+     await b.eval("Math.round(document.getElementById('raill').getBoundingClientRect().width)"));
   await b.tap(GP.DU);
-  ok("the second slot opens the key page", await on("keyref"));
-  await b.tap(GP.R3);
-  ok("R3 is the way off the key page", !(await on("keyref")));
+  ok("and up walks back to where it started", (await where()) === here0, [here0, await where()]);
 
-  await b.tap(GP.START);
-  const meth0 = await b.eval("document.getElementById('metatext').textContent");
-  await b.tap(GP.DD);
-  ok("the fourth slot changes the entry method",
-     /relative/.test(await b.eval("document.getElementById('metatext').textContent")), meth0);
+  /* ← and → are the voice, a ring */
+  const meta1 = () => b.eval("document.getElementById('metatext').textContent");
+  const v0 = await meta1();
+  await b.tap(GP.DR);
+  ok("→ changes hands", (await meta1()) !== v0, [v0, await meta1()]);
+  await b.tap(GP.DR);
+  ok("→ again comes round the ring", (await meta1()) === v0, [v0, await meta1()]);
+  await b.tap(GP.DL);
+  ok("← walks it the other way", (await meta1()) !== v0);
+  await b.tap(GP.DL);
+  ok("and back", (await meta1()) === v0);
+
+  const meth0 = await meta1();
+  await b.tap(GP.X);
+  ok("✕ changes the entry method", /relative/.test(await meta1()), meth0);
   ok("and the crossbar stays up for the next item", await on("settings"));
-  await b.tap(GP.DD);
+  await b.tap(GP.X);
+  ok("and ✕ again puts it back", !/relative/.test(await meta1()), await meta1());
   await b.tap(GP.B);
   ok("○ closes it", !(await on("settings")));
+  ok("and the rail wash goes with it",
+     (await b.eval("document.querySelectorAll('#railquests .rline.nav').length")) === 0);
+
+  /* the key page and the quest log kept their own keys */
+  await b.key("F1", { key:"F1", vk:112 });
+  ok("F1 still opens the key page", await on("keyref"));
+  await b.tap(GP.R3);
+  ok("R3 is still the way off it", !(await on("keyref")));
+  await b.key("F3", { key:"F3", vk:114 });
+  ok("F3 still opens the quest log", await on("quests"));
+  await b.key("F3", { key:"F3", vk:114 });
   ok("and the column or the roll is back",
      (await on("roll")) ||
      (await b.eval("document.getElementById('column').style.display")) === "flex");
@@ -305,8 +344,9 @@ function freePort(start){
   const slots = await b.eval(
     "Array.prototype.map.call(document.querySelectorAll('#settings .xslot')," +
     "function(e){return e.textContent;})");
-  ok("the crossbar's third slot is the voice", /the voice/.test(slots[2]), slots[2]);
-  ok("its fourth is the entry method", /entry method/.test(slots[3]), slots[3]);
+  ok("the crossbar's → is the voice", /the voice/.test(slots[2]), slots[2]);
+  ok("its ↓ is the workspace", /the workspace/.test(slots[3]), slots[3]);
+  ok("and ✕ is the entry method", /entry method/.test(slots[7]), slots[7]);
   ok("□ is solo", /solo/.test(slots[4]), slots[4]);
   ok("△ is mute", /mute/.test(slots[5]), slots[5]);
   await b.tap(GP.SQ);
