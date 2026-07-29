@@ -114,6 +114,96 @@ function freePort(start){
      await b.eval("document.querySelectorAll('#column .row')[0].textContent"));
   ok("still no runtime errors after all of that", errors.length === 0, errors);
 
+  /* ---- the pad, in a real browser: select is the transport, start raises
+     the settings crossbar, and the quest log is one press away inside it ---- */
+  console.log("\n== the settings crossbar, on a real pad ==");
+  const GP = { X:0, B:1, SQ:2, TR:3, L1:4, R1:5, L2:6, R2:7, SEL:8, START:9,
+               L3:10, R3:11, DU:12, DD:13, DL:14, DR:15 };
+  await b.padInstall();
+  await b.pad([]);                          /* the pad says hello */
+  const footer = () => b.eval("document.getElementById('footer').textContent");
+  const on = id => b.eval("document.getElementById('" + id + "').classList.contains('on')");
+
+  await b.tap(GP.SEL);
+  ok("select starts the transport", /playing/.test(await footer()), await footer());
+  ok("and opened no page", !(await on("settings")) && !(await on("quests")) &&
+     !(await on("keyref")));
+  await b.tap(GP.SEL);
+  ok("select stops it again", /stopped/.test(await footer()), await footer());
+
+  await b.tap(GP.START);
+  ok("start raises the settings crossbar", await on("settings"));
+  ok("and the pattern stands down", !(await on("roll")) &&
+     (await b.eval("document.getElementById('column').style.display")) === "none");
+  ok("the crossbar is drawn as eight slots",
+     (await b.eval("document.querySelectorAll('#settings .xslot').length")) === 8);
+  ok("the quest log heads the list",
+     (await b.eval("document.querySelectorAll('#settings .xslot')[0].textContent"))
+       .indexOf("the quest log") >= 0);
+  ok("and is the marked one",
+     (await b.eval("document.querySelectorAll('#settings .xslot')[0].className"))
+       .indexOf("head") >= 0);
+  /* it must actually be laid out — a page that renders to nothing shipped once */
+  const box = await b.eval(
+    "(function(){var r=document.querySelectorAll('#settings .xslot');" +
+    "var o=[];for(var i=0;i<r.length;i++){var q=r[i].getBoundingClientRect();" +
+    "o.push([Math.round(q.left),Math.round(q.top),Math.round(q.width),Math.round(q.height)]);}" +
+    "return o;})()");
+  ok("every slot has real width and height on the page",
+     box.every(q => q[2] > 40 && q[3] > 10), box);
+  /* each cluster is a diamond — left and up are neither in the same column nor
+     on the same line — and the face cluster sits beside the d-pad's, not under */
+  ok("each cluster is drawn as a diamond",
+     box[0][0] !== box[1][0] && box[0][1] !== box[1][1] &&
+     box[4][0] !== box[5][0] && box[4][1] !== box[5][1], box);
+  ok("and the face cluster sits beside the d-pad's, not under it",
+     box[4][0] > box[2][0] && Math.abs(box[4][1] - box[0][1]) < 20, box);
+  ok("and no slot is off the page",
+     box.every(q => q[0] >= 0 && q[1] >= 0), box);
+
+  await b.tap(GP.DL);
+  ok("the first slot opens the quest log", await on("quests"));
+  ok("and the crossbar stood down behind it", !(await on("settings")));
+  await b.key("F3", { key:"F3", vk:114 });
+
+  await b.tap(GP.START);
+  await b.tap(GP.X);
+  ok("✕ confirms the same item", await on("quests"));
+  await b.key("F3", { key:"F3", vk:114 });
+
+  await b.tap(GP.START);
+  await b.tap(GP.DU);
+  ok("the second slot opens the key page", await on("keyref"));
+  await b.tap(GP.R3);
+  ok("R3 is the way off the key page", !(await on("keyref")));
+
+  await b.tap(GP.START);
+  const meth0 = await b.eval("document.getElementById('metatext').textContent");
+  await b.tap(GP.DR);
+  ok("the third slot changes the entry method",
+     /relative/.test(await b.eval("document.getElementById('metatext').textContent")), meth0);
+  ok("and the crossbar stays up for the next item", await on("settings"));
+  await b.tap(GP.DR);
+  await b.tap(GP.B);
+  ok("○ closes it", !(await on("settings")));
+  ok("and the column or the roll is back",
+     (await on("roll")) ||
+     (await b.eval("document.getElementById('column').style.display")) === "flex");
+
+  await b.tap(GP.START);
+  await b.shot(__dirname + "/settings-crossbar.png");
+  const colBefore = await b.eval("document.getElementById('column').textContent");
+  await b.key("KeyZ", { key:"z", vk:90 });
+  await b.key("KeyQ", { key:"q", vk:81 });
+  ok("note keys write nothing while it is up",
+     (await b.eval("document.getElementById('column').textContent")) === colBefore);
+  await b.key("Escape", { key:"Escape", vk:27 });
+  ok("escape closes it", !(await on("settings")));
+  ok("and a note goes in again once it is down",
+     (await b.key("KeyZ", { key:"z", vk:90 }),
+      (await b.eval("document.getElementById('column').textContent")) !== colBefore));
+  ok("no runtime errors from any of the pad work", errors.length === 0, errors);
+
   await b.shot(__dirname + "/boot-seeded.png");
   clearInterval(drain);
   b.close();

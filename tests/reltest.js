@@ -33,7 +33,8 @@ const ids = {};
 ["column","footer","metatext","keyref","picker","quests","qlist",
  "roll","rollfield","rollbase",
  "qfree","qfreesigil","qdname","qdtext","qdteach","qdstate","qpreview",
- "railquests","railtitle","railtext","railteach","railstate"].forEach(i=>ids[i]=mkEl("div"));
+ "railquests","railtitle","railtext","railteach","railstate",
+ "settings","xbarpad","xbarface"].forEach(i=>ids[i]=mkEl("div"));
 let keyHandler = null;
 const document = {
   getElementById: i => (i in ids ? ids[i] : null),
@@ -115,6 +116,10 @@ const hook = `
     get qState(){return qState;},
     get wsFree(){return wsFree;}, get wsDoc(){return wsDoc;},
     toggleQuests: toggleQuests, toggleKeyref: toggleKeyref,
+    toggleSettings: _g("toggleSettings"), closeSettings: _g("closeSettings"),
+    runSetting: _g("runSetting"), renderSettings: _g("renderSettings"),
+    get SETTINGS(){ return _g("SETTINGS"); },
+    get xslots(){ return _g("xslots"); },
     loadQuests: loadQuests, saveQuests: saveQuests, renderQuests: renderQuests,
     questsToJSON: stateToJSON, isQuestLog: isQuestLog, exportQuests: exportQuests,
     applyState: applyState, loadState: loadState, stateToJSON: stateToJSON,
@@ -176,11 +181,18 @@ function eq(name, a, b){ ok(name, JSON.stringify(a) === JSON.stringify(b), {got:
 function key(code, opts){ keyHandler(Object.assign({ code, preventDefault(){}, repeat:false,
   ctrlKey:false, metaKey:false, altKey:false }, opts||{})); }
 function blank(){ return new Array(16).fill(null); }
+/* The written column was the default view when this suite was first written;
+   the roll is the default now. Everything below the roll's own section reads
+   the column and its d-pad bindings (↑↓ time, ←→ nudge), so the baseline is
+   set explicitly here rather than assumed. */
+function useColumn(){ if (T.viz !== "column") T.toggleViz(); }
+function useRoll(){ if (T.viz !== "roll") T.toggleViz(); }
 function reset(){
   T.setDoc({ version:1, title:"untitled folio", tempo:112, loop:16, key:"C major", steps: blank() });
   T.cursor = 0;
   T.baseOctave = 4;
   T.setRelative(false);
+  useColumn();
   sounded.length = 0;
 }
 function steps(o){ const s = blank(); for (const k in o) s[k|0] = o[k]; return s; }
@@ -255,7 +267,10 @@ eq("sharp glyph", T.rows[2].note.textContent, "F\u266f3");
 console.log("\n== the roll ==");
 reset();
 ok("the roll is in the markup", /id="roll"/.test(html) && /id="rollfield"/.test(html));
-eq("the column is the default view", T.viz, "column");
+/* the shipped default: the page arrives drawn, not written */
+ok("the roll is the view a fresh browser gets", /var viz = "roll";/.test(src),
+   (/var viz = "[a-z]+";/.exec(src) || [])[0]);
+eq("reset puts the suite back in the column", T.viz, "column");
 key("F2"); eq("F2 shows the roll", T.viz, "roll");
 ok("the roll section is on", ids.roll.classList.contains("on"));
 eq("the column stands down", ids.column.style.display, "none");
@@ -311,17 +326,20 @@ key("KeyZ"); eq("note keys are still inert on the key page", T.doc.steps.filter(
 ok("the key is autosaved", JSON.parse(store["folio.v1"]).key === "B major",
    JSON.parse(store["folio.v1"]).key);
 key("Escape"); ok("escape closes the page", !ids.keyref.classList.contains("on"));
-/* the pad reaches the same setting */
+/* the pad reaches the same setting — by way of the settings crossbar, which
+   is what start raises now */
 reset();
-press(GP.SEL); ok("select opens the key page", ids.keyref.classList.contains("on"));
+press(GP.START); ok("start raises the settings crossbar", ids.settings.classList.contains("on"));
+press(GP.DU);    ok("its second slot opens the key page", ids.keyref.classList.contains("on"));
+ok("and the crossbar stood down behind it", !ids.settings.classList.contains("on"));
 press(GP.DR); eq("d-pad right moves the tonic up", T.doc.key, "C# major");
 press(GP.DL); press(GP.DL); eq("d-pad left moves it down", T.doc.key, "B major");
 press(GP.TR); eq("triangle makes it minor", T.doc.key, "B minor");
 press(GP.X);  eq("cross makes it major", T.doc.key, "B major");
 eq("the pattern cursor never moved", T.cursor, 0);
-press(GP.SEL); press(GP.SEL);     /* key -> quests -> closed */
-ok("the pages closed again", !ids.keyref.classList.contains("on") &&
-   !ids.quests.classList.contains("on"));
+press(GP.R3);
+ok("R3 is the way out of the key page", !ids.keyref.classList.contains("on"));
+ok("and it did not flip the view on the way", T.viz, "column");
 
 console.log("\n== the key travels in the save file ==");
 reset();
@@ -365,19 +383,27 @@ eq("the choice is a preference", store[T.ENTRY_KEY], "relative");
 key("F4"); ok("F4 turns it off", !T.relative);
 eq("stored as absolute", store[T.ENTRY_KEY], "absolute");
 eq("and the header is quiet again", ids.metatext.textContent.indexOf("relative"), -1);
-/* the pad: a tap walks the pages, a hold changes the method */
+/* the pad: select is the transport now, and the method is a crossbar item */
 reset();
-press(GP.SEL); ok("a tap of select still opens the key page", ids.keyref.classList.contains("on"));
-ok("a tap does not change the method", !T.relative);
-press(GP.SEL); ok("a second tap opens the quest log", ids.quests.classList.contains("on"));
-press(GP.SEL); ok("a third closes the pages", !ids.quests.classList.contains("on"));
+press(GP.SEL);
+ok("select transports", /playing|stopped/.test(ids.footer.textContent), ids.footer.textContent);
+ok("select opens no page", !ids.keyref.classList.contains("on") &&
+   !ids.quests.classList.contains("on") && !ids.settings.classList.contains("on"));
+ok("and does not change the method", !T.relative);
+press(GP.SEL);
 holdLong(GP.SEL);
-ok("holding select turns relative entry on", T.relative);
-ok("and it did not open a page", !ids.keyref.classList.contains("on") &&
-   !ids.quests.classList.contains("on"));
+ok("holding select is the transport too, and nothing else", !T.relative);
+ok("still no page opened", !ids.keyref.classList.contains("on") &&
+   !ids.settings.classList.contains("on"));
 holdLong(GP.SEL);
-ok("holding again turns it off", !T.relative);
-ok("still no page opened", !ids.keyref.classList.contains("on"));
+/* the entry method, from the crossbar's third slot */
+press(GP.START); press(GP.DR);
+ok("the crossbar's third slot turns relative entry on", T.relative);
+ok("and the crossbar stays up for the next item", ids.settings.classList.contains("on"));
+press(GP.DR);
+ok("the same slot turns it off again", !T.relative);
+press(GP.B);
+ok("○ closes the crossbar", !ids.settings.classList.contains("on"));
 
 console.log("\n== relative moves from an anchor ==");
 function rel(setup, buttons, opts){
@@ -603,9 +629,67 @@ press(GP.L3); eq("relative: L3 is still the loop", T.doc.loop, 8);
 press(GP.R3); eq("relative: R3 is still the roll", T.viz, "roll");
 press(GP.R3);
 reset();
-press(GP.START); ok("start transports", /playing|stopped/.test(ids.footer.textContent),
-   ids.footer.textContent);
+press(GP.START); ok("start raises the settings crossbar", ids.settings.classList.contains("on"));
+press(GP.START); ok("and start puts it down again", !ids.settings.classList.contains("on"));
+
+console.log("\n== the settings crossbar ==");
+reset();
 press(GP.START);
+ok("the pattern stands down while it is up", ids.column.style.display === "none" &&
+   !ids.roll.classList.contains("on"), ids.column.style.display);
+eq("its eight slots are labelled", T.xslots.length, 8);
+eq("the first slot is the quest log", T.xslots[0].label.textContent, "the quest log");
+ok("and it is the one the list is headed by",
+   /head/.test(T.xslots[0].el.className), T.xslots[0].el.className);
+eq("the second is the key", T.xslots[1].label.textContent, "the key");
+eq("the third is the entry method", T.xslots[2].label.textContent, "entry method");
+eq("which shows where it stands", T.xslots[2].value.textContent, "absolute");
+eq("the fourth is the view", T.xslots[3].label.textContent, "the view");
+eq("○ is close", T.xslots[6].label.textContent, "close");
+eq("✕ repeats the quest log", T.xslots[7].label.textContent, "the quest log");
+/* the eight slots are items, so they are not pitches */
+press(GP.DL);
+ok("d-pad left opens the quest log", ids.quests.classList.contains("on"));
+ok("and the crossbar closed behind it", !ids.settings.classList.contains("on"));
+eq("nothing was written to the page", T.doc.steps.filter(Boolean).length, 0);
+key("F3");
+reset();
+press(GP.START); press(GP.X);
+ok("✕ confirms the same item", ids.quests.classList.contains("on"));
+key("F3");
+reset();
+press(GP.START); press(GP.DD);
+eq("the fourth slot flips the view", T.viz, "roll");
+ok("and stays up", ids.settings.classList.contains("on"));
+eq("the slot says where the view now is", T.xslots[3].value.textContent, "the roll");
+press(GP.DD);                            /* back to the column baseline */
+eq("and flips it back", T.viz, "column");
+press(GP.SQ); press(GP.TR);
+ok("the two empty slots do nothing", ids.settings.classList.contains("on"));
+ok("and say so", /nothing on that slot yet/.test(ids.footer.textContent), ids.footer.textContent);
+/* the transport reaches through it, as it reaches through every page */
+press(GP.SEL);
+ok("select still transports from inside the crossbar",
+   /playing|stopped/.test(ids.footer.textContent), ids.footer.textContent);
+press(GP.SEL);
+/* a trigger raises no pitches here: the slots are items */
+hold(GP.L2, GP.SQ);
+eq("a trigger writes no note while the crossbar is up", T.doc.steps.filter(Boolean).length, 0);
+ok("and the crossbar is still up", ids.settings.classList.contains("on"));
+key("Escape");
+ok("escape closes it", !ids.settings.classList.contains("on"));
+eq("and the column came back", ids.column.style.display, "flex");
+press(GP.START); key("KeyZ");
+eq("note keys are inert while it is up", T.doc.steps.filter(Boolean).length, 0);
+key("F1");
+ok("F1 reaches the key page from inside it", ids.keyref.classList.contains("on"));
+ok("and the crossbar stood down", !ids.settings.classList.contains("on"));
+key("F1");
+press(GP.START); key("F3");
+ok("F3 reaches the quest log from inside it", ids.quests.classList.contains("on"));
+ok("and the crossbar stood down there too", !ids.settings.classList.contains("on"));
+key("F3");
+reset();
 
 console.log("\n== the scheduler still only sounds real notes ==");
 reset();
@@ -648,7 +732,7 @@ function closePages(){
   if (ids.keyref.classList.contains("on")) T.toggleKeyref();
 }
 function qreset(){
-  closePages(); reset(); T.resetDrills(); T.resetQuests();
+  closePages(); reset(); useColumn(); T.resetDrills(); T.resetQuests();
   delete store[T.QUEST_KEY]; delete store[T.QUEST_KEY_V1];
   T.syncOn = false; T.syncState = "idle";
 }
@@ -1540,10 +1624,19 @@ async function drillsLive(){
 
 /* ================= 5. the documentation ================= */
 console.log("\n== the key page documents it all ==");
-const keyPage = html.slice(html.indexOf('id="keyref"'), html.indexOf('id="quests"'));
+const keyPage = html.slice(html.indexOf('id="keyref"'), html.indexOf('id="settings"'));
 for (const s of ["F1","F2","F3","F4","R3","L3","quest log","the roll"])
   ok("the key page mentions " + s, keyPage.indexOf(s) >= 0);
-ok("it names the entry-method toggle", /hold select/.test(keyPage));
+ok("it names the entry-method toggle", /the entry method/.test(keyPage));
+ok("it says select is the transport", /select \(create\)/.test(keyPage) &&
+   /play or stop/.test(keyPage));
+ok("it says start raises the settings crossbar",
+   /start \(options\)/.test(keyPage) && /settings crossbar/.test(keyPage));
+ok("it lists the crossbar's slots", /its eight slots/.test(keyPage));
+ok("it no longer promises select walks the pages", !/the pages in turn/.test(keyPage));
+ok("nor that a held select changes the method", !/hold select/.test(keyPage));
+ok("it names R3 as the way off the key page", /R3 closes it/.test(keyPage));
+ok("escape is documented", /closes whichever page is up/.test(keyPage));
 ok("it documents relative entry", /in relative entry/.test(keyPage));
 ok("it names the leaps", /a third/.test(keyPage) && /a fifth/.test(keyPage));
 ok("it names the chromatic escape", /a semitone, out of the key/.test(keyPage));

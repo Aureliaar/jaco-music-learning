@@ -36,8 +36,11 @@ const seen = [];
   (function walk(d, p){ for (const e of fs.readdirSync(d, { withFileTypes:true }))
     e.isDirectory() ? walk(path.join(d, e.name), p + e.name + "/") : listed.push(p + e.name); })(DIST, "");
   listed.sort();
-  ok("dist holds the page and the seed and nothing else",
-     JSON.stringify(listed) === JSON.stringify(["index.html","quests/quest-log.json"]), listed);
+  /* the auditor page joined the deploy after this harness was written: the
+     instrument, the blind lineup page, and the seed — and nothing else */
+  ok("dist holds the pages and the seed and nothing else",
+     JSON.stringify(listed) === JSON.stringify(
+       ["auditor.html","index.html","quests/quest-log.json"]), listed);
   for (const secret of ["BUDGET.md","CURRICULUM.md","QUESTS.md","SPEC-LESSON-0.md","server.mjs"])
     ok("the deploy leaves " + secret + " at home", !listed.includes(secret));
 

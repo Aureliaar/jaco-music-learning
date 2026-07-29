@@ -32,7 +32,8 @@ const ids = {};
 ["column","footer","metatext","keyref","picker","quests","qlist",
  "roll","rollfield","rollbase",
  "qfree","qfreesigil","qdname","qdtext","qdteach","qdstate","qpreview",
- "railquests","railtitle","railtext","railteach","railstate"].forEach(i=>ids[i]=mkEl("div"));
+ "railquests","railtitle","railtext","railteach","railstate",
+ "settings","xbarpad","xbarface"].forEach(i=>ids[i]=mkEl("div"));
 let keyHandler = null;
 const document = {
   getElementById: i => (i in ids ? ids[i] : null),

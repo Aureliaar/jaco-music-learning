@@ -8,3 +8,9 @@ dist/
 node_modules/
 .claude/
 tmp/
+
+# What the harnesses leave behind: browser profiles, screenshots, and the
+# backups they take of the quest log before driving it.
+tests/prof-*/
+tests/*.png
+tests/quest-log.*backup.json
