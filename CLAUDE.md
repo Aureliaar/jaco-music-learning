@@ -77,3 +77,8 @@ evaluators). Curriculum restructured 2026-07-31: L3 = duration/holds
 harmony/chords, groove/samples/arrangement/endgame shifted to L5–L8.
 L2 gate: self-tests in CURRICULUM.md L2. Quest authoring rules:
 QUEST-COPY.md.
+
+Backlog (billable, build only when asked): quest-log UX pass — the flat
+quest list won't scale past L2's board; probably per-lesson tabs (player
+suggested tabs, 2026-07-31). Design against migraine rules; sigil/parchment
+idiom.
