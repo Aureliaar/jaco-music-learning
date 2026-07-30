@@ -1,6 +1,6 @@
 # Folio — a lesson-gated toy DAW (learning project)
 
-Luca is learning music composition (craft layer) through a toy DAW that
+The player is learning music composition (craft layer) through a toy DAW that
 grows one primitive per lesson. The tool is the cage; the music is the
 point. Read `CURRICULUM.md` (lessons + quest system), `QUESTS.md` (L1
 board + rules), `BUDGET.md` (HUD budget ledger) before proposing anything.
@@ -26,7 +26,7 @@ board + rules), `BUDGET.md` (HUD budget ledger) before proposing anything.
 - `server.mjs` — static serve (repo root only) + GET/PUT `/api/quest-log`
   (ETag, atomic writes, drill-preservation on stale PUTs).
 - `quests/quest-log.json` — all workspaces (v2 schema: free + per-quest
-  patterns + `drills` array). The single file to READ to see Luca's music.
+  patterns + `drills` array). The single file to READ to see the player's music.
 - `auditor.html` — blind lineup listening; `?ids=a,b,c` picks entries.
 - `tests/` — harnesses rescued from session scratchpads (reltest.js was
   ~833 checks; drilltest/statictest/bootcheck/leaptest drive headless
@@ -40,7 +40,7 @@ board + rules), `BUDGET.md` (HUD budget ledger) before proposing anything.
    state) and CLOBBERS any on-disk edit to quest-log.json — except drill
    definitions, which server+client merge non-destructively. To deliver a
    drill: append to `drills` in the file; the app adopts it within ~10 s,
-   no reload. To edit anything ELSE on disk: tell Luca to reload the tab
+   no reload. To edit anything ELSE on disk: tell the player to reload the tab
    FIRST (server wins on boot). To REMOVE a drill: edit file, then tab
    reload (client re-donates known defs otherwise).
 2. **Feature work is quest-metered** (BUDGET.md, revised 2026-07-31 —

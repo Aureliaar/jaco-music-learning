@@ -14,7 +14,7 @@ law; the *Teaches:* line is the one place poetry is allowed. See the L1
 board for the register — "Coverage disguised as melody" is the ceiling
 for flourish inside a constraint.
 
-**Never use absolute note names in copy aimed at Luca** (permanent
+**Never use absolute note names in copy aimed at the player** (permanent
 rule). Relative language only:
 
 - step positions + voice ("bass, step 9")
@@ -25,18 +25,18 @@ rule). Relative language only:
 ## Anatomy of a quest entry
 
 1. **Title** — short, evocative, ⚔ sigil; lowercase in-app. The title
-   may be a metaphor but must not mislead: "the latecomer" told Luca
+   may be a metaphor but must not mislead: "the latecomer" told the player
    nothing about prep/re-strike/resolve, and that vagueness was cited in
    the failure ruling.
 2. **Constraints** — en-dash bullets, each one grid-checkable (format
    spec below).
 3. ***Teaches:*** — italic line naming the concept, AFTER the
-   constraints. Luca derives concepts empirically and wants the name
+   constraints. The player derives concepts empirically and wants the name
    afterward. This line carries the poetry; it is not part of the rules.
 
 ## The constraint rule
 
-**Quests are constraints, not goals** (Luca's ruling, 2026-07-31).
+**Quests are constraints, not goals** (player ruling, 2026-07-31).
 Simple, prescriptive "do X / don't do X", checkable from the grid.
 "Did you know you can make that happen? Make it happen!" needs an
 in-person instructor and can't be scored — that's why The Chord That
@@ -94,7 +94,7 @@ The house pattern (Hocket: the Hiccup, post-rework):
 
 ## The perception gate
 
-Perceptual win-conditions are acceptable ONLY when Luca's own ear is
+Perceptual win-conditions are acceptable ONLY when the player's own ear is
 the judge and the target is a feeling he already recognizes — the
 ten-loop test is the only perception gate. "Stopping playback must feel
 like an interruption" (Ouroboros) is fine: his ear, a feeling he knows.
@@ -125,6 +125,6 @@ Before a quest ships to a board or the rail:
 - Any vague shorthand a terser draft smuggled in?
 - Any absolute note names? (Rewrite in relative language.)
 - Does the title mislead about what's being asked?
-- Is the win condition Luca's own ear, or someone else's perception?
+- Is the win condition the player's own ear, or someone else's perception?
 - Is it one constraint space, or a bundle wanting a split?
 - Does the concept name live in *Teaches:*, after the law?
