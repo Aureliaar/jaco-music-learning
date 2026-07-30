@@ -78,7 +78,16 @@ harmony/chords, groove/samples/arrangement/endgame shifted to L5–L8.
 L2 gate: self-tests in CURRICULUM.md L2. Quest authoring rules:
 QUEST-COPY.md.
 
-Backlog (billable, build only when asked): quest-log UX pass — the flat
-quest list won't scale past L2's board; probably per-lesson tabs (player
-suggested tabs, 2026-07-31). Design against migraine rules; sigil/parchment
-idiom.
+Backlog — pre-L3 UX pass (player's list, 2026-07-31; scope/pricing judged
+at build time, some items warranty):
+1. Tabs for quests (flat list won't scale past L2's board).
+2. Reorder / favorite system for quests.
+3. DELETE absolute mode on gamepad entirely.
+4. Easier voice switch.
+5. Rework L2/R2 usage (player doesn't know what they do and is confused —
+   partly a discoverability failure, treat as warranty-adjacent).
+6. Key help more contextually visible.
+7. Don't hide the main folio during crossbar (Start) mode.
+8. Better voice management — UX to be defined, must anticipate 3 voices
+   (L3.2/L4 horizon).
+Design against migraine rules; sigil/parchment idiom.
