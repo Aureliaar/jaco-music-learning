@@ -2,417 +2,343 @@
 
 Craft-layer music education via a toy DAW that grows one primitive at a time.
 The tool is the cage; the music is the point. Physics and theory layers are
-assumed absorbed by osmosis (family) and are invoked only when a lesson needs
-them, never front-loaded.
+assumed absorbed by osmosis and are invoked only when a lesson needs them,
+never front-loaded.
 
 ## Ground rules
 
 1. **Music gates tooling.** Lesson N+1's toolset gets built only after Lesson
-   N's deliverable passes evaluation. No exceptions, including "but it would
-   be easy to add."
-2. **The HUD budget is the only currency for tool work.** See ledger rules
-   below. Composition help, listening feedback, theory questions, and
-   transcription help are free and unlimited — the budget throttles
+   N's deliverable passes. No exceptions, including "but it would be easy to
+   add."
+2. **Quests are the currency for tool work** (economy revised 2026-07-31,
+   see `BUDGET.md`): 2 completed quests = 1 small feature; bigger features
+   cost proportionally more, judged honestly; a lesson pass grants 1 feature
+   of any size. Free and unlimited: bug fixes/warranty, feedback on the
+   music, theory, drills, transcription help, infra. The economy throttles
    *tool-building*, not learning.
 3. **Deliverables are finished, not perfect.** "A minimal piece I don't hate"
    means: you would voluntarily listen to it once more, a week later.
-4. **Family evaluation is binding.** A lesson passes when the assigned
-   evaluator says it passes against the rubric — not when you're tired of it.
-   Evaluators judge the rubric only; "I'd have done it differently" is not a
-   fail condition.
+4. **Evaluation is self-administered** (revised 2026-07-31; the family-verdict
+   system is scrapped as a planning mechanism). Standing gates for every
+   deliverable: the *ten-loop test* (played ten times consecutively without
+   reaching for stop) and the *week-later test* (rule 3). Each lesson lists
+   additional self-tests; where a test names something checkable from the
+   grid, the assistant audits it. Outside ears are optional garnish,
+   recruited ad hoc if ever — never load-bearing, never scheduled.
 5. **QWERTY-native always.** Every feature must be fully operable without a
    mouse before it counts as shipped.
+6. **Introduce alone — the pare-down rule** (adopted at L3, running method
+   from here on): when a lesson adds a new primitive, other complexity is
+   temporarily stripped. Phase **N.1** = the new primitive over basics only
+   (usually one voice); phase **N.2** = reintegrate the full prior toolset.
+   Same trick as introducing a line alone in a mix, applied to learning.
 
-## HUD budget ledger
+## The quest system (adopted during L1, permanent)
 
-- **Unit: $ API-equivalent** (the statusline cost number). Wall-time is
-  gameable by parallel agents; raw token counts are muddied by cache
-  write/read asymmetry; the $ figure already weights all of that correctly
-  and is visible at all times. Honor system, tracked in `BUDGET.md` (one
-  line per session: date, lesson, $ spent, what was built). Record the
-  statusline delta from session start to session end.
-- **What counts against budget:** new features, UI/ergonomics changes,
-  refactors, keybinding work, visualizations, "while you're in there" asks.
-- **What's free:** bug fixes for shipped features (broken ≠ new), feedback on
-  your music, theory/craft discussion, rubric arbitration.
-- **Carryover:** unspent budget rolls forward. Overdraft: not allowed — if
-  the tank is dry, you compose with what you have, which is the entire point.
-- **Grants** are listed per lesson and unlock **on pass**, not on start.
-
-Bootstrap grant (Lesson 0): **$50**. Typical per-lesson grant: $20–30. A
-focused feature session runs roughly $10–20 of API-equivalent, so each grant
-is 1–2 real sessions of tool work. Scarcity is a feature. (If the first few
-ledger lines show these estimates are badly calibrated, rescale all
-remaining grants once, by one agreed factor — not per-lesson haggling.)
-
-## The quest system (adopted during L1, permanent from here on)
-
-Proven in Lesson 1, kept for every lesson: alongside each lesson's
-deliverable, a **quest board** of constraint-études — each quest is one
-forced decision, played inside the current toolset, seeded with a key and
-tempo chosen per quest. Rules carried forward from `QUESTS.md`:
-
-- Quests are optional side content; the lesson deliverable stays the gate.
-- **+$4 per quest, once ever, one quest per loop** — evidence on disk
-  (`quests/quest-log.json`), constraint met, ten-loop survived.
-- **The noodle rule stands:** aimless play inside a quest's constraint IS
-  the quest; save what snags.
-- **Drills** (assistant-delivered études, seeded live into the quest rail)
-  are free teaching aids, not rewarded — they install a concept, quests
-  train it.
-- Each lesson's full board is authored when the lesson unlocks (the
-  toolset defines what constraints are possible); the sketches below are
-  the direction, not the contract.
+Alongside each lesson's deliverable, a **quest board** of constraint-études —
+each quest is one forced decision, played inside the current toolset, seeded
+with a key and tempo per quest. Rules live in `QUESTS.md`; authoring rules in
+`QUEST-COPY.md` (constraints not goals; grid-checkable; one rail-line per
+bullet). The board is authored when the lesson unlocks; sketches below are
+direction, not contract. The noodle rule stands: aimless play inside the
+constraint IS the quest. Drills (assistant-delivered études) are free
+teaching aids — they install a concept, quests train it.
 
 ---
 
-## Lesson 0 — Bootstrap (no music yet)
+## Lesson 0 — Bootstrap (no music yet) — DONE
 
-**Toolset built:** the minimal core. One monophonic voice (single waveform),
-16-step grid, one pattern, fixed tempo, fixed velocity, QWERTY note entry
-(tracker-style: `Z`-row = octave 1, `Q`-row = octave 2), space = play/stop,
+**Toolset built:** the minimal core. One monophonic voice, 16-step grid, one
+pattern, fixed tempo, fixed velocity, QWERTY note entry, space = play/stop,
 save/load. Browser-based (Web Audio).
 
-**Goal:** the tool exists, boots in under a second, and you can enter and
-play back a scale without touching the mouse.
-
-**Budget:** $50 bootstrap grant. This is the only lesson where tool work
-*is* the deliverable.
-
 ---
 
-## Lesson 1 — Monophony: phrasing
+## Lesson 1 — Monophony: phrasing — PASSED 2026-07-29
 
 **Toolset:** Lesson 0 core only. One voice. No chords, no second track, no
-velocity, no swing. Pattern length may be extended to 32/64 steps (this is
-the one freebie — melody needs room to breathe).
+velocity, no swing.
 
 **Craft focus:** phrasing. Where a line breathes, where it peaks, what makes
-eight notes a *sentence* instead of a sequence. Repetition vs. variation:
-the AABA-shaped instinct.
+eight notes a *sentence* instead of a sequence. Repetition vs. variation.
 
-**References:**
-- Uematsu — *Prelude* (FF crystal theme): a monophonic arpeggio that has
-  carried an entire franchise. Proof that one voice is enough.
-- Uematsu — *Terra's Theme* (FFVI): the melody line alone, ignore the
-  accompaniment. Notice where it rests.
-- Uematsu — *To Zanarkand* (FFX): right hand only. Phrase lengths are uneven
-  and it's better for it.
-- Exercise before composing: transcribe one of the above (melody only) by
-  ear into the tool. Transcription help is free.
+**References:** Uematsu — *Prelude*; *Terra's Theme* (melody alone; notice
+where it rests); *To Zanarkand* (right hand only; uneven phrase lengths).
 
-**Deliverable:** one original monophonic loop, 16–64 steps, that survives ten
-consecutive repetitions without you reaching for the stop button.
-
-**Evaluation rubric (any one family member):**
-- *Hum test:* after two listens, can they hum it back? (Memorability.)
-- *Sentence test:* can they point to where the phrase "breathes"? If they
-  can't find a single resting point, fail.
-- *Ten-loop test:* played ten times in a row — do they ask you to stop it
-  before it ends? Asking = fail.
-
-**Grant on pass:** +$20.
+**Deliverable:** one original monophonic loop that survives the ten-loop
+test. (Historical rubric: hum test, sentence test, ten-loop test.)
 
 ---
 
-## Lesson 2 — Two voices: bass and counterpoint
+## Lesson 2 — Two voices: bass and counterpoint — IN PROGRESS
 
-**Toolset:** a second monophonic track (independent pattern, own waveform —
-give it something bass-shaped). Still no velocity, no chords-as-object, no
-swing.
+**Toolset:** a second monophonic track (own waveform, bass-shaped). Still no
+velocity, no chords-as-object, no swing, no held notes.
 
 **Craft focus:** the bass is not the melody's shadow. Contrary and oblique
 motion, call-and-response, ostinato under a moving line. Implied harmony:
 two voices are enough to make the ear hear chords that aren't there.
 
-**References:**
-- Uematsu — *The Decisive Battle* (FFVI): bass ostinato doing relentless
-  work under a free melody.
-- Uematsu — *Battle Theme* (FFIV): the bassline is a character, not a floor.
-- Chicane — *Offshore*: listen to just the bass + lead relationship in the
-  main section; it's a two-voice piece wearing a production costume.
+**References:** Uematsu — *The Decisive Battle* (bass ostinato under a free
+melody); *Battle Theme* (FFIV — the bassline is a character, not a floor).
+Chicane — *Offshore* (a two-voice piece wearing a production costume).
 
 **Deliverable:** one original two-voice loop where the bass line, soloed, is
 independently interesting.
 
-**Evaluation rubric (a brother — electronic composition degree makes this
-their home turf):**
-- *Solo test:* each voice played alone must stand up as a line. A bass that
-  only makes sense with the melody on top = fail.
-- *Implied-harmony test:* evaluator names the chords they *hear*. If they
-  hear a progression (any progression) from two monophonic lines, pass this
-  criterion — you've made the ear do the harmonic work.
-- *Motion test:* evaluator identifies at least one moment of contrary motion
-  or genuine call-and-response, not parallel shadowing throughout.
+**Self-tests (plus the standing gates):**
+- *Solo test:* each voice played alone stands up as a line.
+- *Implied-harmony test:* you can hear a progression happening — the
+  vertical implies chords nobody is playing.
+- *Motion test:* at least one moment of contrary motion or genuine
+  call-and-response, not parallel shadowing throughout. (Grid-checkable;
+  assistant audits on request.)
 
-**Quest board (sketch):** ⚔ *The Shadow* — bass moves only in contrary
-motion to the melody. ⚔ *Ostinato* — bass is a repeating 4-note cell,
-melody free above it. ⚔ *Pass the Torch* — the call lives in one voice,
-the answer in the other. ⚔ *The Drone* — bass holds one pitch the whole
-loop; the melody must make it work.
-
-**Grant on pass:** +$20.
+**Quest board:** see `QUESTS.md` (shadow, ostinato, torch, drone, three
+hockets, oil and water; latecomer failed by design, chord-that-isnt
+removed — both rulings recorded there).
 
 ---
 
 ## Interlude — The Scriptorium (repeatable)
 
-*Available any time after Lesson 2 passes. May be taken as many times as
-you like; each pass produces one kit.*
+*Available any time after Lesson 2 passes. Each pass produces one kit.*
 
-**What it is:** a curation lesson. The SNES sound was not a synth aesthetic
-but a compression one — real instruments recorded, truncated, loop-spliced,
-and crammed into 64KB of sample RAM. Curating a kit under that constraint
-*reproduces the cause* of the sound instead of imitating the effect. This
-is ear training disguised as librarianship.
+A curation lesson. The SNES sound was a compression aesthetic — real
+instruments truncated, loop-spliced, crammed into 64KB of sample RAM.
+Curating a kit under that constraint *reproduces the cause* of the sound.
+Ear training disguised as librarianship.
 
 **Toolset (first pass only):** a minimal sampled voice — one track type
-that plays a single WAV per note, pitched via playback rate, chosen from
-the active kit. Full sampler (multi-sample kits, drum lanes, voice
-stealing) still arrives at Lesson 5.
+playing a single WAV per note, pitched via playback rate, from the active
+kit. Full sampler arrives with the samples lesson.
 
-**The work, per pass:**
-1. Pick a target texture (e.g. "FFVI strings," "FFVII electric piano,"
-   "Decisive Battle bass"). One texture per pass.
-2. Source candidate recordings from anywhere — provenance is explicitly out
-   of scope for this self-learning project; the archive you don't have to
-   go digging in is the best archive.
-3. Truncate, downsample, and loop-splice until the whole kit fits a
-   **64KB budget** (hard cap, tool-enforced once L5 exists; honor system
-   before that). The mangling is the craft: where you cut the sustain loop
-   *is* the timbre.
-4. Write one manifest line per sample in `kits/<name>/manifest.md`: source,
-   root pitch, loop points, what you sacrificed to fit.
+**Per pass:** pick one target texture; source recordings (provenance out of
+scope); truncate/downsample/loop-splice into a **64KB budget** (honor
+system until tool-enforced); one manifest line per sample in
+`kits/<name>/manifest.md`.
 
-**Evaluation rubric (a brother, blind):**
-- *Texture test:* your kit plays a passage next to the reference console
-  texture it targets. Evaluator says whether the kit "belongs on the
-  console." Close-but-wrong (too clean, too long, too hi-fi) = fail —
-  too *good* is the characteristic failure mode here.
-- *Budget check:* 64KB, no exceptions. An over-budget kit isn't a kit,
-  it's a folder.
-
-**Grant on pass:** +$10 per pass, capped at three granted passes (curation
-is a rabbit hole; the cap is the rope).
+**Self-test:** play your kit next to the reference console texture. Too
+clean, too long, too hi-fi = fail — too *good* is the characteristic
+failure mode. Budget check: 64KB, no exceptions.
 
 ---
 
-## Lesson 3 — Polyphony: progressions and voice leading
+## Lesson 3 — Duration: the held note
 
-**Toolset:** a chord-capable track (3–4 simultaneous notes), variable note
-lengths (sustain beyond one step). This is the biggest single unlock in the
-curriculum; expect it to eat the full grant.
+**Toolset:** notes can sustain past one step (variable note length). That's
+the entire unlock. Entry/edit UX designed at build time, QWERTY-native.
 
-**Craft focus:** progressions as loops — the four-chord engine and how to
-make it not sound like one. Voice leading by ear: the smallest movement
-between chords, common tones, why inversions exist. The loop-specific skill:
-a progression that *cycles*, where bar 4 wants bar 1 back.
+**Phases (pare-down rule, first application):**
+- **3.1 — holds alone:** ONE voice. The L1 cage plus duration, nothing
+  else. Re-learn phrasing where sound can ring.
+- **3.2 — holds with two voices:** the L2 toolset returns. Suspensions
+  become honest; sustained notes against moving ones.
 
-**References:**
-- Uematsu — *Aerith's Theme* (FFVII): the progression under the melody, and
-  how the bass walks between chords.
-- Uematsu — *Searching for Friends* (FFVI): loop-native progression that
-  never fatigues.
-- Chicane — *Sunstroke* or *Poppiholla*: diatonic loops with suspensions and
-  pedal tones doing the emotional lifting — the exact trick you'll want.
+**Craft focus:** the difference between a rest, a breath, and a hold. Note
+*endings* as decisions — release is an event, not an absence. Tension by
+sustain (a note that won't quit is withholding in another channel). Legato
+phrase arcs. The seam when something rings across it. In 3.2: oblique
+motion with actual sustain (the drone quest, now honest), and the
+suspension — prepare, hold into the clash, resolve down — finally hearable
+as you do it.
 
-**Deliverable:** one original loop: chord track + bass + melody (all three
-prior skills in one piece), 8+ bars, that cycles seamlessly.
+**References:** Uematsu — *To Zanarkand* (right hand — the held-note melody
+that was explicitly out of reach in L1); *Terra's Theme* (melody: where
+holds do the breathing rests used to do); *Aerith's Theme* (melody line
+only — sustain as emotional load-bearing).
 
-**Evaluation rubric (father — this is the composition lesson, bring the
-silver lion):**
-- *Voice-leading test:* evaluator watches the chord track (or hears it
-  soloed) and flags any chord change that "jumps" gratuitously. More than
-  one flagged jump = fail.
-- *Cycle test:* does the last bar create the want for the first bar? Play
-  the loop stopping at the end — does the evaluator feel the cut?
-- *Don't-hate test:* the standing criterion — would the evaluator let it
-  play again unprompted?
+**Deliverables:**
+- **3.1:** one original one-voice loop whose phrasing depends on holds —
+  self-test: the *cut test* — the same loop with every hold chopped back to
+  a 16th must be audibly worse. Plus standing gates.
+- **3.2:** one original two-voice loop containing at least one deliberate
+  suspension (held into the clash, resolved by step — grid-checkable,
+  assistant audits). Plus standing gates.
 
-**Quest board (sketch):** ⚔ *Two-Chord World* — the whole loop on two
-chords only. ⚔ *The Suspension* — one suspended note, held across the
-change, resolved on purpose. ⚔ *Common Tone* — every adjacent chord pair
-shares a note. ⚔ *Bassline First* — write the bass, then find the chords
-it implies.
+**Quest board (sketch — authored at unlock, per QUEST-COPY.md):**
+⚔ *The Long Note* — exactly one note of four-plus steps. ⚔ *All Ring* —
+no rests at all; only holds may breathe. ⚔ *The Suspension* (3.2, the
+latecomer's rematch with real scaffolding). ⚔ *The Apprentice's Hand*
+(3.1, returns from L1 — transcription with the recording playing, now that
+holds make it honest). ⚔ *Ring the Seam* — one note sounds across the
+loop point.
 
-**Grant on pass:** +$30.
-
----
-
-## Lesson 4 — Velocity and swing: groove
-
-**Toolset:** per-note velocity (entered/edited via keyboard, e.g. hold a
-modifier + row for accent levels), global swing amount, per-track humanize
-(small random timing/velocity offsets).
-
-**Craft focus:** the difference between a grid and a groove. Accent
-patterns; ghost notes; why the same notes at uniform velocity sound like a
-doorbell. Swing as a spectrum, not a switch.
-
-**References:**
-- Uematsu — *Vamo' alla Flamenco* (FFIX): sequenced music that grooves;
-  listen for the accent pattern, not the notes.
-- Fox Capture Plan — *疾走する閃光* (or anything off *trinity*): piano-trio
-  dynamics — the same figure hit five different ways in eight bars.
-- Any FFVI battle track at low volume: notice which notes poke out. That's
-  velocity doing arrangement's job.
-
-**Deliverable:** take your Lesson 3 loop and produce two versions: dead
-(uniform velocity) and alive (velocity + swing). The alive version must be
-the same notes.
-
-**Evaluation rubric (a brother):**
-- *Blind A/B:* evaluator hears both versions unlabeled and must (a)
-  correctly identify the treated one, (b) describe it with a word like
-  "groove," "feel," "human," or equivalent. If they can't tell them apart,
-  fail.
-- *Accent-map test:* evaluator claps/taps the accent pattern back. If the
-  accents are too uniform to find, fail.
-
-**Quest board (sketch):** ⚔ *Ghost Town* — same notes three times, three
-different accent maps, three different pieces. ⚔ *The Whisper* — one note
-per loop is barely audible; it must still matter. ⚔ *Drunk Grid* — the
-same loop at swing extremes, A/B'd until you can name your taste.
-
-**Grant on pass:** +$20.
+**On pass (3.2 complete):** 1 feature of any size.
 
 ---
 
-## Lesson 5 — Samples: drums and SNES parity
+## Lesson 4 — Harmony: progressions and voice leading
 
-**Toolset:** the full sample-playback track type (multi-sample kits, drum
-lanes, pitch across the QWERTY rows), 8-voice total polyphony cap
-**enforced by the tool** (voices steal, SNES-style), and tool-enforced 64KB
-kit budget. Instruments come from your Scriptorium kits — by now you should
-have at least one; if not, an Interlude pass is the prerequisite.
+**Toolset:** a chord-capable track (3–4 simultaneous notes). Biggest single
+unlock in the curriculum.
 
-**Craft focus:** drum programming (kick/snare/hat grammar); texture — what a
-sampled instrument does that a raw waveform can't; arranging *within* a hard
-voice budget, which forces every Uematsu trick (drop the pad when the melody
-peaks; the bass and kick share a register, so they take turns).
+**Phases:** **4.1** — chord track + one melodic voice only (the L2/L3
+bass rests); progressions as loops, the four-chord engine and how to make
+it not sound like one. **4.2** — full stack: chords + bass + melody, all
+prior skills in one piece.
 
-**References:**
-- Uematsu — *Terra's Theme* (FFVI), full arrangement this time: count the
-  simultaneous voices at any moment. It's never more than 8. Learn what he
-  *leaves out* at each moment.
-- Uematsu — *Dancing Mad* (FFVI): maximalism inside 8 voices.
-- Chicane — *Saltwater*: percussion layering — how few drum elements are
-  actually playing at once.
+**Craft focus:** voice leading by ear — smallest movement between chords,
+common tones (notes that keep ringing through a change — L3 made this
+audible), why inversions exist. The loop-specific skill: a progression
+that *cycles*, where bar 4 wants bar 1 back.
 
-**Deliverable:** one original loop at full SNES parity — drums, bass, chords,
-melody — inside 8 voices. This is the "real Uematsu-tier" checkpoint.
+**References:** Uematsu — *Aerith's Theme* (progression under the melody;
+the bass walks between chords); *Searching for Friends* (loop-native
+progression that never fatigues). Chicane — *Sunstroke* / *Poppiholla*
+(diatonic loops with suspensions and pedal tones doing the lifting).
 
-**Evaluation rubric (whole family, informal listening session):**
-- *Era test:* does it sound like it could score a 16-bit RPG scene? Ask them
-  to name the scene (menu? town? battle? overworld?). If they can name one,
-  the idiom landed.
-- *Subtraction test:* evaluator picks one element to mute; if the loop
-  collapses entirely, arrangement is too fragile — everything was
-  load-bearing melody. One element should be able to drop and leave a
-  functioning groove.
-- *Don't-hate test*, standing.
+**Deliverable (4.2):** one original loop — chords + bass + melody, 8+ bars,
+cycling seamlessly.
 
-**Quest board (sketch):** ⚔ *64K or Die* — the kit budget as a puzzle box.
-⚔ *The Thief* — arrange so voice-stealing becomes an audible feature, not
-a bug. ⚔ *Drop Out* — one lane falls silent each bar, rotating; the groove
-must survive every absence.
+**Self-tests:** *voice-leading test* — solo the chord track; any change
+that jumps gratuitously gets rewritten (assistant audits movement per
+change on request). *Cycle test* — stop the loop at the end: do you feel
+the cut? Standing gates as ever.
 
-**Grant on pass:** +$30.
+**Quest board (sketch):** ⚔ *Two-Chord World* · ⚔ *Common Tone* — every
+adjacent chord pair shares a note · ⚔ *Bassline First* — write the bass,
+find the chords it implies · ⚔ *Nine Lives* seed: same progression,
+recolored.
+
+**On pass:** 1 feature of any size.
 
 ---
 
-## Lesson 6 — Arrangement: patterns into pieces
+## Lesson 5 — Velocity and swing: groove
 
-**Toolset:** pattern chaining / song mode (sequence patterns into an
-arrangement), per-pattern track mutes, and one macro control (e.g. a filter
-or volume ramp) for builds.
+**Toolset:** per-note velocity (keyboard-entered accents), global swing,
+per-track humanize.
 
-**Craft focus:** the time dimension. Intro/build/peak/breakdown/outro; the
-Chicane skill of making 6 minutes out of 8 bars via subtraction and
-addition; transitions (the fill, the drop-out, the riser). Loops are
-sentences; this is the paragraph.
+**Craft focus:** grid vs. groove. Accent patterns; ghost notes; why uniform
+velocity sounds like a doorbell. Swing as a spectrum.
 
-**References:**
-- Chicane — *Offshore*, full length, with a pen: timestamp every moment
-  something enters or leaves. The resulting list *is* the lesson.
-- Chicane — *Saltwater*: the long build as delayed gratification.
-- Uematsu — *Kids Run Through the City Corner* (FFVII): small-scale
-  arrangement — even a 90-second loop-based cue has an arc.
+**References:** Uematsu — *Vamo' alla Flamenco* (sequenced music that
+grooves — the accent pattern, not the notes). Fox Capture Plan — anything
+off *trinity* (the same figure hit five ways in eight bars). Any FFVI
+battle track at low volume: which notes poke out — velocity doing
+arrangement's job.
 
-**Deliverable:** one original piece, 2.5+ minutes, built from your patterns,
-with a beginning, a peak, and an ending (a real ending or a designed loop
-point — your call, but chosen, not defaulted).
+**Deliverable:** the Lesson 4 loop in two versions — dead (uniform) and
+alive (velocity + swing), same notes. Self-test: a week later, blind-ish
+shuffle; if you can't instantly tell which is which, the treatment did
+nothing.
 
-**Evaluation rubric (a brother, plus one civilian if available):**
-- *Map test:* evaluator sketches the energy curve on paper while listening.
-  If the curve is flat, fail. If their curve matches your intended one,
-  distinction.
-- *Peak test:* evaluator points to the peak. If they point somewhere you
-  didn't intend, discuss; if they can't find one, fail.
-- *Civilian test:* a non-musician listens to the whole thing without
-  checking their phone. Wildly unfair metric. Use it anyway.
+**Quest board (sketch):** ⚔ *Ghost Town* — same notes, three accent maps,
+three pieces · ⚔ *The Whisper* — one barely-audible note that must still
+matter · ⚔ *Drunk Grid* — swing extremes A/B'd until you can name your
+taste.
 
-**Quest board (sketch):** ⚔ *Subtraction* — start with everything playing;
-you may only remove. ⚔ *The Long Way Up* — ninety seconds of build, no
-peak until it's earned. ⚔ *Transition Zoo* — the same two patterns joined
-three different ways.
-
-**Grant on pass:** +$30.
+**On pass:** 1 feature of any size.
 
 ---
 
-## Lesson 7 — Harmony endgame: the Fox Capture Plan tier
+## Lesson 6 — Samples: drums and SNES parity
 
-**Toolset:** your call — this is the graduation project, and by now you know
-what your workflow is missing. Candidates: chord extensions display,
-scale-highlighting in the note rows, audio export, a second macro. Spend the
-accumulated carryover.
+**Toolset:** full sample playback (multi-sample kits, drum lanes), 8-voice
+polyphony cap **enforced by the tool** (voices steal, SNES-style),
+tool-enforced 64KB kit budget. Instruments come from Scriptorium kits — at
+least one is a prerequisite.
 
-**Craft focus:** extended harmony (7ths, 9ths, sus voicings) as *color*, not
-homework; borrowed chords; rhythmic displacement of a progression; the
-piano-trio texture translated to your sequenced world.
+**Craft focus:** drum programming (kick/snare/hat grammar); texture;
+arranging *within* a hard voice budget — which forces every Uematsu trick
+(drop the pad when the melody peaks; bass and kick share a register, so
+they take turns).
 
-**References:**
-- Fox Capture Plan — *trinity* (album): pick one track, transcribe the
-  progression (help is free), and identify what makes it not-four-chords.
-- Uematsu — *You're Not Alone* (FFIX): his own extended-harmony peak;
-  the bridge does things Lessons 1–6 didn't teach you. Find them.
-- Chicane — anything, but now listen for the sus chords you couldn't name in
-  Lesson 3.
+**References:** Uematsu — *Terra's Theme* (full arrangement: count voices —
+never more than 8; learn what he *leaves out*); *Dancing Mad* (maximalism
+inside 8 voices). Chicane — *Saltwater* (how few drum elements actually
+play at once).
 
-**Deliverable:** one original piece, any length ≥ 2 minutes, that uses at
-least one harmonic device from this lesson *on purpose*, in your own style —
-not pastiche of the references. This is the first deliverable meant to sound
-like **you**.
+**Deliverable:** one original loop at full SNES parity — drums, bass,
+chords, melody — inside 8 voices.
 
-**Evaluation rubric (father, final boss):**
-- *Device test:* you name the harmonic device you used, before playback. The
-  evaluator confirms they heard it doing work (not decoration).
-- *Signature test:* evaluator says one true sentence about what "your music"
-  apparently sounds like. If they can — you have a style. Curriculum
-  complete.
-- *Don't-hate test*, standing, forever.
+**Self-tests:** *era test* — could it score a 16-bit RPG scene? Name the
+scene. *Subtraction test* — mute any one element; if the loop collapses
+entirely, everything was load-bearing melody. Standing gates.
+
+**Quest board (sketch):** ⚔ *64K or Die* · ⚔ *The Thief* — voice-stealing
+as an audible feature · ⚔ *Drop Out* — one lane silent each bar, rotating.
+
+**On pass:** 1 feature of any size.
+
+---
+
+## Lesson 7 — Arrangement: patterns into pieces
+
+**Toolset:** pattern chaining / song mode, per-pattern track mutes, one
+macro control (filter or volume ramp) for builds.
+
+**Craft focus:** the time dimension. Intro/build/peak/breakdown/outro;
+making 6 minutes out of 8 bars via subtraction and addition; transitions
+(the fill, the drop-out, the riser). Loops are sentences; this is the
+paragraph. (The relentless textures parked during L2 — ostinato and the
+relentless drone — cash in here as section devices.)
+
+**References:** Chicane — *Offshore*, full length, with a pen: timestamp
+every entrance and exit; the list *is* the lesson. *Saltwater* (the long
+build as delayed gratification). Uematsu — *Kids Run Through the City
+Corner* (even a 90-second cue has an arc).
+
+**Deliverable:** one original piece, 2.5+ minutes, with a beginning, a
+peak, and an ending (real or designed loop point — chosen, not defaulted).
+
+**Self-tests:** sketch your intended energy curve before assembling; a week
+later, listen and sketch what you *hear* — the two curves should agree. If
+the heard curve is flat, fail.
+
+**Quest board (sketch):** ⚔ *Subtraction* — start with everything; only
+removal allowed · ⚔ *The Long Way Up* — ninety seconds of build, no early
+peak · ⚔ *Transition Zoo* — the same two patterns joined three ways.
+
+**On pass:** 1 feature of any size.
+
+---
+
+## Lesson 8 — Harmony endgame: the Fox Capture Plan tier
+
+**Toolset:** your call — the graduation project; by now you know what your
+workflow is missing.
+
+**Craft focus:** extended harmony (7ths, 9ths, sus voicings) as *color*;
+borrowed chords; rhythmic displacement of a progression; the piano-trio
+texture translated to your sequenced world.
+
+**References:** Fox Capture Plan — *trinity*: one track, transcribe the
+progression (help is free), identify what makes it not-four-chords.
+Uematsu — *You're Not Alone* (the bridge does things Lessons 1–7 didn't
+teach; find them). Chicane — now listen for the sus chords you couldn't
+name in Lesson 4.
+
+**Deliverable:** one original piece, ≥ 2 minutes, using at least one
+harmonic device from this lesson *on purpose*, in your own style — not
+pastiche. The first deliverable meant to sound like **you**.
+
+**Self-tests:** *device test* — name the device before playback, then
+confirm on listening that it does work, not decoration. *Signature test* —
+write one true sentence about what "your music" sounds like. If you can,
+you have a style. Standing gates, forever.
 
 **Quest board (sketch):** ⚔ *The Borrowed One* — one chord from the
-parallel key, placed like a stray note: inevitable. ⚔ *Nine Lives* — the
-same progression, recolored with extensions until it stops being
-four-chords. ⚔ *Displacement* — the loop's harmony shifted a beat against
-its melody; make the seasickness intentional.
+parallel key, placed like a stray: inevitable · ⚔ *Nine Lives* — the same
+progression recolored with extensions until it stops being four-chords ·
+⚔ *Displacement* — harmony shifted a beat against melody; intentional
+seasickness.
 
-**Grant on pass:** the budget system retires. You've earned an unmetered
-tool — or the right to graduate to a commercial DAW, which will now feel
-like unlocking cheat codes for a game you already know how to play.
+**On pass:** the economy retires. You've earned an unmetered tool — or the
+right to graduate to a commercial DAW, which will now feel like cheat
+codes for a game you already know.
 
 ---
 
 ## Appendix: rules of arbitration
 
-- Rubric disputes: the evaluator's reading wins. You may re-attempt a failed
-  lesson immediately and infinitely; failing costs nothing but pride.
-- If a family member wants to add a rubric criterion, they may — one per
-  lesson, agreed before you start composing, not after.
-- If two lessons in a row pass on the first attempt, the family is being too
-  nice. Tell them the rubric says so. (This clause is the rubric saying so.)
-- Budget disputes: what counts as "bug fix" vs "new feature" — if the
-  behavior was never demonstrated working, it's a feature. Ledger is
+- Self-evaluation disputes don't exist; be honest. Grid-checkable claims
+  (constraints, motion, suspensions) the assistant audits from
+  `quests/quest-log.json` on request.
+- Re-attempts are immediate, infinite, and cost nothing but pride.
+- Economy disputes: what counts as "bug fix" vs "new feature" — if the
+  behavior was never demonstrated working, it's warranty. Ledger is
   append-only.
+- If outside ears ever get recruited for a listen, that's a bonus data
+  point, not a gate — nothing in this file waits on anyone else.

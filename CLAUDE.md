@@ -9,8 +9,9 @@ board + rules), `BUDGET.md` (HUD budget ledger) before proposing anything.
 
 - `folio.cmd` (or `node server.mjs`) → http://localhost:4173 — the synced
   instrument. `server.mjs` is zero-dependency Node.
-- `http://localhost:4173/auditor.html` — blind family-evaluation page
-  (Italian).
+- `http://localhost:4173/auditor.html` — blind lineup-listening page
+  (Italian). NOTE: plays the lead voice only (pre-L2); optional now that
+  evaluation is self-administered.
 - Deploy: `npm run deploy` (build → Cloudflare Worker, assets-only).
   Live: https://folio.jacopo-sinigaglia.workers.dev (instrument, static
   read-only mode) and `/auditor.html`. The deployed quest-log is a
@@ -63,11 +64,16 @@ board + rules), `BUDGET.md` (HUD budget ledger) before proposing anything.
 6. Windows console is cp932 — Python on quest-log.json needs
    `encoding='utf-8'` both directions.
 
-## Where the project stands (2026-07-29)
+## Where the project stands (2026-07-31)
 
-Lesson 1 (monophony/phrasing) effectively complete: 7 of 8 quests done
-(Apprentice's Hand deferred to L3 — transcription needs note durations).
-Awaiting: family verdict via the auditor lineup (stray + 2 shuffled
-decoys) → L1 pass → +$20 → build Lesson 2 (second voice). Balance $11.
-Next tool build after L2 unlock: a second monophonic track (see
-CURRICULUM.md L2 + its quest board sketch).
+L1 passed. L2 (two voices) in progress: tool built; quests closed —
+shadow, ostinato, oil and water, drone, hocket hiccup + snap; latecomer
+failed (design ruling in QUESTS.md), chord-that-isnt removed. Open:
+torch, hocket handoff, 7 Part II reprises. Economy: quest barter (see
+rule 2); balance in BUDGET.md. **Evaluation is now self-administered**
+(family-verdict system scrapped 2026-07-31 — never plan around outside
+evaluators). Curriculum restructured 2026-07-31: L3 = duration/holds
+(phases 3.1 one voice, 3.2 two voices — the pare-down rule), L4 =
+harmony/chords, groove/samples/arrangement/endgame shifted to L5–L8.
+L2 gate: self-tests in CURRICULUM.md L2. Quest authoring rules:
+QUEST-COPY.md.
