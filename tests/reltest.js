@@ -232,6 +232,13 @@ function page(o, extra){
 }
 /* a page with something in the second voice as well */
 function duet(lead, bass, extra){ page(lead, Object.assign({ bass: steps(bass) }, extra||{})); }
+/* ---- re-pointed, 2026-07-31 ----
+   The roll's horizontal rules sit on the *home* note of the page's key rather
+   than always on C, and each margin label now carries two words: the pitch,
+   and what that pitch is to the piece. So the name is the label's first child
+   instead of the label itself. */
+function ruleNames(){ return T.octlines.map(l => l.firstChild.children[0].textContent); }
+function ruleHomes(){ return T.octlines.map(l => l.firstChild.children[1].textContent); }
 
 /* ---------- pad helpers ---------- */
 function pad(down, axes){
@@ -2412,17 +2419,16 @@ ok("and none is built with one", T.bars[0].children.length === 0 &&
    T.bars2[0].children.length === 0);
 ok("the drawing is still drawn: a rest's bar is not there at all",
    T.bars[1].style.display === "none");
-ok("every octave rule in view is named, once",
+ok("every home rule in view is named, once",
    T.octlines.length > 0 &&
-   T.octlines.every(l => l.children.length === 1 && /^C\d$/.test(l.firstChild.textContent)),
-   T.octlines.map(l => l.firstChild && l.firstChild.textContent));
-eq("this page, from G2 to C4, rules C3 and C4",
-   T.octlines.map(l => l.firstChild.textContent), ["C3", "C4"]);
+   T.octlines.every(l => l.children.length === 1 && /^C\d$/.test(l.firstChild.children[0].textContent)),
+   ruleNames());
+eq("this page, in C major from G2 to C4, rules C3 and C4", ruleNames(), ["C3", "C4"]);
 eq("and each name sits in the margin, beside its own line",
    T.octlines.map(l => l.firstChild.className), ["octname", "octname"]);
 duet({0:"C6"}, {0:"C2"});
-eq("the whole range rules every C in it",
-   T.octlines.map(l => l.firstChild.textContent), ["C2","C3","C4","C5","C6"]);
+eq("the whole range, in C major, rules every C in it",
+   ruleNames(), ["C2","C3","C4","C5","C6"]);
 duet({0:"C4", 2:"F#3", 5:"C4"}, {0:"C3", 1:"G2", 5:"E3"});
 eq("there is one interval slot per step", T.ivls.length, 16);
 eq("both voices sounding: the interval is written",
@@ -2508,6 +2514,95 @@ ok("and each is off the drawing, past its left edge",
 ok("still no pure white or black anywhere", !/#fff\b|#ffffff|#000\b|#000000/i.test(html));
 ok("and still nothing that blinks", !/@keyframes/.test(html));
 
+/* ---- new, 2026-07-31: the rules sit on home ----
+   The drawing always ruled C, whatever the page was in, so a piece in G major
+   was read against a line that meant nothing to it. The rules now sit on the
+   tonic of the page's key, at every octave in view, and each carries the word
+   home under its name: the reference one can see is the note the music comes
+   home to, and distance from the line is distance from home. Nothing else
+   about the drawing moves — the window, the bars, the beats, the ties and the
+   guide are all exactly what they were. */
+console.log("\n== the home rules sit on the key's own note ==");
+qreset(); useRoll();
+duet({0:"C4"}, {0:"C3"});
+eq("in C major the rules are the Cs, as they always were", ruleNames(), ["C3","C4"]);
+duet({0:"C4"}, {0:"C3"}, { key:"G major" });
+eq("the same page in G major rules the Gs instead", ruleNames(), ["G2","G3"]);
+ok("and not one C is ruled", ruleNames().every(n => /^G/.test(n)), ruleNames());
+duet({0:"C4"}, {0:"C3"}, { key:"A minor" });
+eq("A minor comes home to A, not to its relative major's C",
+   ruleNames(), ["A2","A3"]);
+duet({0:"C4"}, {0:"C3"}, { key:"F# major" });
+eq("a sharp tonic is ruled and named as one", ruleNames(), ["F♯2","F♯3","F♯4"]);
+duet({0:"C6"}, {0:"C2"}, { key:"E minor" });
+eq("the whole range rules one line per octave, on the tonic",
+   ruleNames(), ["E2","E3","E4","E5"]);
+/* one per octave and no more: the ruling stays as sparse as it ever was */
+duet({0:"C6"}, {0:"C2"});
+const wideC = ruleNames().length;
+duet({0:"C6"}, {0:"C2"}, { key:"B major" });
+ok("no key rules more lines than C major did", ruleNames().length <= wideC,
+   [wideC, ruleNames()]);
+
+console.log("\n== each rule says its pitch, and what that pitch is ==");
+duet({0:"G4"}, {0:"G3"}, { key:"G major" });
+eq("every rule carries a name and a marker, in that order",
+   T.octlines.map(l => l.firstChild.children.map(c => c.className)),
+   T.octlines.map(() => ["opn", "ohome"]));
+eq("the marker says home, once per line", ruleHomes(),
+   T.octlines.map(() => "home"));
+eq("and the name is still the pitch the tool would write",
+   ruleNames(), ["G3","G4"]);
+eq("both words are inside the one label K takes away",
+   T.octlines.map(l => l.firstChild.className), ["octname", "octname"]);
+const homeRule = T.octlines[T.octlines.length - 1];
+const halfStep = parseFloat(homeRule.style.top) - parseFloat(T.bars[0].style.top);
+ok("the rule runs through the middle of a note that lands on it",
+   Math.abs(halfStep * 2 - parseFloat(T.bars[0].style.height)) < 1e-9,
+   [homeRule.style.top, T.bars[0].style.top, T.bars[0].style.height]);
+ok("the marker is the page's own gilt, not a new colour",
+   /\.octname\.ohome\{[^}]*color:var\(--gilt\)/.test(css));
+ok("and it is smaller than the name it hangs under, and quieter",
+   /\.octname\.ohome\{[^}]*font-size:0\.9em/.test(css) &&
+   /\.octname\.ohome\{[^}]*opacity:0\.72/.test(css));
+ok("the rules themselves are no louder than they ever were — a hairline at 0.55",
+   /\.octline\{[^}]*height:1px/.test(css) &&
+   /\.octline\{[^}]*background:rgba\(201,188,160,0\.55\)/.test(css));
+ok("and the guide's name is still a name alone, with no marker on it",
+   T.guideName.children.length === 0);
+
+console.log("\n== the key moves the rules, there and then ==");
+qreset(); useRoll();
+duet({0:"C4"}, {0:"C3"});
+const barsBefore = T.bars.map(b => [b.style.top, b.style.height, b.style.display]);
+eq("C major, before anything is touched", ruleNames(), ["C3","C4"]);
+T.shiftTonic(2);
+eq("the key moved to D major", T.doc.key, "D major");
+eq("and the rules moved with it, without a redraw of anything else",
+   ruleNames(), ["D3","D4"]);
+eq("the bars did not move a hair",
+   T.bars.map(b => [b.style.top, b.style.height, b.style.display]), barsBefore);
+eq("and nothing was written into the page", [T.doc.steps[0], T.doc.bass[0]], ["C4","C3"]);
+T.toggleKeyMode();
+eq("major to minor keeps the same home", T.doc.key, "D minor");
+eq("so the rules stay where they are", ruleNames(), ["D3","D4"]);
+T.shiftTonic(-2);
+eq("and back to C", ruleNames(), ["C3","C4"]);
+/* the marker travels with them */
+eq("the marker is still under every name", ruleHomes(), ["home","home"]);
+/* a workspace arrives in its own key, and is drawn against its own home */
+closePages(); T.resetQuests(); reset(); useRoll();
+T.switchWorkspace("ladder");
+eq("the ladder's page arrives in its seeded key", T.doc.key, "G major");
+ok("and its empty page is ruled on G", ruleNames().every(n => /^G/.test(n)), ruleNames());
+T.switchWorkspace("whitespace");
+eq("white space is seeded in A minor", T.doc.key, "A minor");
+ok("so its page is ruled on A", ruleNames().every(n => /^A/.test(n)), ruleNames());
+T.switchWorkspace(null);
+ok("free play is C major and ruled on C",
+   T.doc.key === "C major" && ruleNames().every(n => /^C/.test(n)), ruleNames());
+closePages(); T.resetQuests(); qreset();
+
 /* ---- new, 2026-07-29: the pitch in hand ----
    The bars no longer say what they are, so the moment of placing or moving a
    note does: a line is drawn across the roll at that pitch, parallel to the
@@ -2566,8 +2661,8 @@ ok("the mark takes all three away together — the rules', the guide's, the inte
    /\.roll\.nonames\.octname,\.roll\.nonames\.gname,\.roll\.nonames\.ivl\{display:none;?\}/.test(css));
 ok("and the lines themselves stay: it is the names that go, not the drawing",
    !/\.roll\.nonames\.octline/.test(css) && !/\.roll\.nonames\.rollguide/.test(css));
-eq("the octave rules are still ruled and still named underneath",
-   T.octlines.map(l => l.firstChild.textContent).length > 0, true);
+eq("the home rules are still ruled and still named underneath",
+   ruleNames().length > 0, true);
 eq("and nothing was written into the page", T.doc.steps[0], "C4");
 eq("the interval is still computed underneath",
    T.ivls[0].firstChild.textContent, "P8");
@@ -2605,7 +2700,14 @@ ok("it says what placing or moving a note raises",
    /Place a note, or move one/.test(keyPage) && /holds for a moment and then fades/.test(keyPage));
 ok("and it says the interval is tied to its pair",
    /hairline tie/.test(keyPage) && /belongs to that pair of notes/.test(keyPage));
-ok("K's own row lists all three", /the octave rules' names in the margin, the guide's/.test(keyPage));
+ok("K's own row lists all three", /the home rules' names in the margin, the guide's/.test(keyPage));
+ok("the page says the ruled line is home, and that it follows the key",
+   /home note of the page/.test(keyPage) && /the tonic of its key/.test(keyPage) &&
+   /they move the moment the key does/.test(keyPage));
+ok("and it says what that buys: distance from the line is distance from home",
+   /how far a note sits from it is how far it is from home/.test(keyPage));
+ok("with the three keys spelled out",
+   /in C major those rules are the Cs, in G major the Gs, in A minor the As/.test(keyPage));
 ok("the simple interval names are listed",
    /P1, m2, M2, m3, M3, P4, TT, P5, m6, M6, m7, M7, P8/.test(keyPage));
 ok("the compound convention is named and shown",
@@ -2642,8 +2744,7 @@ ok("and the roll is not marked nameless", !T.rollEl.classList.contains("nonames"
 duet({0:"E4"}, {0:"C4"});
 eq("the workspace walked into names its own interval",
    T.ivls[0].firstChild.textContent, "M3");
-eq("and is ruled and named for its own pitches",
-   T.octlines.map(l => l.firstChild.textContent), ["C4", "C5"]);
+eq("and is ruled and named for its own pitches", ruleNames(), ["C4", "C5"]);
 key("KeyK");
 ok("K still answers after all of that", T.rollEl.classList.contains("nonames"));
 eq("and the interval is still computed underneath",

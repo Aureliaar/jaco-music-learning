@@ -441,28 +441,95 @@ function freePort(start){
   ok("the five notes are drawn", bare[0] === 5, bare);
   ok("and not one of them carries a label", bare[1] === 0 && bare[2] === 0, bare);
 
-  /* the octave rules, named once each in the margin the roll keeps for them */
-  const ruled = await b.eval(`(function(){
+  /* ---- re-pointed and extended, 2026-07-31 ----
+     The rules sit on the home note of the page's key rather than on C, and
+     each margin label carries the pitch with the word home under it. This page
+     is the stray quest's, seeded in E minor, so its home is E. */
+  const rules = () => b.eval(`(function(){
     var ls = document.querySelectorAll('#rollfield .octline'), o = [];
     var f = document.getElementById('rollfield').getBoundingClientRect();
     for (var i = 0; i < ls.length; i++){
       var n = ls[i].querySelector('.octname');
       if (!n) { o.push([i, null]); continue; }
+      var p = n.querySelector('.opn'), h = n.querySelector('.ohome');
       var r = n.getBoundingClientRect(), q = ls[i].getBoundingClientRect();
-      o.push([i, n.textContent, Math.round(r.width), Math.round(r.height),
+      var pr = p ? p.getBoundingClientRect() : null;
+      var hr = h ? h.getBoundingClientRect() : null;
+      o.push([i, p && p.textContent, Math.round(r.width), Math.round(r.height),
               Math.abs((r.top + r.height/2) - q.top) < 3,       /* on its own line */
               r.right <= f.left + 1,                            /* off the drawing */
-              r.left >= 0]);                                    /* and still on the page */
+              r.left >= 0,                                      /* and still on the page */
+              h && h.textContent,
+              /* the marker hangs under the name, smaller than it */
+              !!(pr && hr) && hr.top >= pr.bottom - 1 &&
+                parseFloat(getComputedStyle(h).fontSize) <
+                parseFloat(getComputedStyle(p).fontSize),
+              hr ? Math.round(hr.width) : 0,
+              getComputedStyle(h).color]);
     }
     return o;
   })()`);
-  ok("every octave rule in view carries a name", ruled.length >= 2 &&
+  const ruled = await rules();
+  ok("every home rule in view carries a name", ruled.length >= 2 &&
      ruled.every(r => r[1]), ruled);
-  ok("each of them a C, with its octave", ruled.every(r => /^C[0-9]$/.test(r[1])), ruled);
+  ok("each of them the page's own home — E, this being E minor",
+     ruled.every(r => /^E[0-9]$/.test(r[1])), ruled);
   ok("each really laid out", ruled.every(r => r[2] > 6 && r[3] > 4), ruled);
   ok("each level with its own line", ruled.every(r => r[4]), ruled);
   ok("and each in the margin, clear of the drawing but on the page",
      ruled.every(r => r[5] && r[6]), ruled);
+  ok("each says what that pitch is to the piece", ruled.every(r => r[7] === "home"), ruled);
+  ok("the marker sits under the name, and smaller", ruled.every(r => r[8]), ruled);
+  ok("and it is really drawn", ruled.every(r => r[9] > 10), ruled);
+  ok("in the page's gilt", ruled.every(r => /156, ?122, ?40/.test(r[10])), ruled);
+  await b.shot(__dirname + "/roll-home-eminor.png");
+
+  /* ---- and the key moves them, live ----
+     The key page's arrows move the tonic; the rules must be somewhere else the
+     moment they do, with nothing else on the drawing disturbed. */
+  const barTops = () => b.eval(
+    "[].map.call(document.querySelectorAll('#rollfield .bar')," +
+    "function(b){return [b.style.top, b.style.height, b.style.display];})");
+  const beforeKey = await barTops();
+  await b.key("F1", { key:"F1", vk:112 });
+  await wait(80);
+  for (let i = 0; i < 3; i++) await b.key("ArrowRight", { key:"ArrowRight", vk:39 });
+  await wait(150);
+  ok("three steps of the tonic reach G minor",
+     /G minor/.test(await b.eval("document.getElementById('metatext').textContent")),
+     await b.eval("document.getElementById('metatext').textContent"));
+  await b.key("F1", { key:"F1", vk:112 });
+  await wait(150);
+  const moved = await rules();
+  ok("the rules moved to the new home, without a reload",
+     moved.length >= 2 && moved.every(r => /^G[0-9]$/.test(r[1])), moved);
+  ok("and each still says home", moved.every(r => r[7] === "home"), moved);
+  ok("still in the margin, level with its own line",
+     moved.every(r => r[4] && r[5] && r[6]), moved);
+  ok("and the notes on the drawing did not move at all",
+     JSON.stringify(await barTops()) === JSON.stringify(beforeKey), beforeKey);
+  await b.shot(__dirname + "/roll-home-gminor.png");
+  /* major or minor does not change where home is */
+  await b.key("F1", { key:"F1", vk:112 });
+  await b.key("ArrowUp", { key:"ArrowUp", vk:38 });
+  await wait(120);
+  await b.key("F1", { key:"F1", vk:112 });
+  await wait(120);
+  const maj = await rules();
+  ok("G major has the same home as G minor",
+     maj.every(r => /^G[0-9]$/.test(r[1])), maj);
+  /* and back to the page's own key, exactly as it was found */
+  await b.key("F1", { key:"F1", vk:112 });
+  await b.key("ArrowUp", { key:"ArrowUp", vk:38 });
+  for (let i = 0; i < 3; i++) await b.key("ArrowLeft", { key:"ArrowLeft", vk:37 });
+  await wait(120);
+  await b.key("F1", { key:"F1", vk:112 });
+  await wait(150);
+  const backHome = await rules();
+  ok("back in E minor, the rules are the Es again",
+     backHome.every(r => /^E[0-9]$/.test(r[1])), backHome);
+  ok("and the drawing is still the drawing",
+     JSON.stringify(await barTops()) === JSON.stringify(beforeKey), backHome);
 
   const iv = await b.eval(`(function(){
     var es = document.querySelectorAll('#rollfield .ivl'), o = [];
@@ -603,9 +670,12 @@ function freePort(start){
             getComputedStyle(g).display,
             /* the lines themselves are the drawing, and stay */
             getComputedStyle(document.querySelector('#rollfield .octline')).display,
-            document.querySelectorAll('#rollfield .octline').length];
+            document.querySelectorAll('#rollfield .octline').length,
+            /* the home marker goes with the name it hangs under */
+            document.querySelector('#rollfield .ohome').getClientRects().length];
   })()`);
   ok("K puts every name away", off[0] === "none" && off[1] === "none", off);
+  ok("the home marker goes with them", off[7] === 0, off);
   ok("the guide's name with them", off[4] === "none", off);
   ok("but not the rules they are names for", off[5] !== "none" && off[6] >= 2, off);
   ok("and the drawing itself is untouched", off[2] === 5, off);
@@ -640,6 +710,9 @@ function freePort(start){
   ok("it fixes the octave convention", /C4 is middle C/.test(kp) && /C2 to C6/.test(kp));
   ok("it says the rules are named at their side",
      /named once, at the side of its line/.test(kp));
+  ok("and that the ruled line is the page's home note",
+     /home note of the page/.test(kp) && /the tonic of its key/.test(kp) &&
+     /in G major the Gs/.test(kp));
   ok("and that placing or moving a note raises one more",
      /Place a note, or move one/.test(kp) && /holds for a moment and then fades/.test(kp));
   ok("and that the interval hangs on a tie between the pair",
