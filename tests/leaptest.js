@@ -91,6 +91,7 @@ const hook = `
     pollPads: pollPads, relStep: relStep, moveDegrees: moveDegrees,
     nameOfMidi: nameOfMidi, anchorMidi: anchorMidi,
     get relative(){return relative;}, setRelative: setRelative,
+    get viz(){return viz;}, toggleViz: toggleViz, nudge: nudge,
     get lbUsed(){return lbUsed;}, get rbUsed(){return rbUsed;} };
 `;
 const patched = src.replace(/\}\)\(\);\s*$/, hook + "\n})();");
@@ -371,6 +372,105 @@ for (const key of ["C major","E minor","F# major","A minor"]){
   }
 }
 ok("144 leaps in four keys, from twelve anchors, all on the right side", wrong === 0, wrong);
+
+/* ================= 8. the same hand, on the d-pad =========================
+   The bumpers are a modifier for a *move*, and the nudge is a move: the same
+   scale step, made on a note already written instead of on the next one. So
+   both bumpers held take it out of the key exactly as they take △ and ✕ —
+   and, this being the harness for how a hand actually plays it, the bumper is
+   down for several frames before the direction edges, and let go afterwards.
+   The view decides which pair of the d-pad carries the nudge: ←→ in the
+   column, ↑↓ in the roll, so both are played here. */
+console.log("\n== the chromatic escape, held, then the d-pad ==");
+function useRoll(){ if (T.viz !== "roll") T.toggleViz(); }
+function useColumn(){ if (T.viz !== "column") T.toggleViz(); }
+/* a page with the note under the cursor, which is what a nudge needs */
+function stageAt(note, key){
+  T.setDoc({ version:1, title:"t", tempo:112, loop:16, key: key || "C major",
+             steps: steps({0: note === undefined ? "C4" : note}) });
+  T.cursor = 0;
+  T.baseOctave = 4;
+  T.setRelative(true);
+  gamepads = [pad([])]; T.pollPads(); frame([]);
+}
+/* the modifier settles, the direction edges, then both are let go */
+function nudgeHeld(mods, dir, note, key){
+  stageAt(note, key);
+  frames(3, mods);
+  frame(mods.concat([dir]));
+  frames(2, mods);
+  frames(2, []);
+  return { note: wrote(), oct: oct() };
+}
+useColumn();
+let d;
+d = nudgeHeld([GP.L1, GP.R1], GP.DR);
+eq("both bumpers held, then d-pad right: a semitone up", d.note, "C#4");
+eq("and the bumpers were spent on it, not on the octave", d.oct, 4);
+d = nudgeHeld([GP.L1, GP.R1], GP.DL);
+eq("both held, then d-pad left: a semitone down", d.note, "B3");
+eq("still no octave shift on the release", d.oct, 4);
+d = nudgeHeld([GP.L1], GP.DR);
+eq("L1 alone is not the hatch: a step of the key", d.note, "D4");
+d = nudgeHeld([GP.R1], GP.DR);
+eq("nor is R1 alone", d.note, "D4");
+d = nudgeHeld([], GP.DR);
+eq("and bare it is the step it always was", d.note, "D4");
+/* the bumper let go before the direction, and the other way round */
+stageAt();
+frames(3, [GP.L1, GP.R1]);
+frame([GP.L1, GP.R1, GP.DR]);
+frames(2, [GP.DR]);                   /* the bumpers first */
+frames(2, []);
+eq("the bumpers released before the d-pad: still a semitone", wrote(), "C#4");
+eq("and neither of them read as the octave", oct(), 4);
+stageAt();
+frames(3, [GP.L1, GP.R1]);
+frame([GP.L1, GP.R1, GP.DR]);
+frames(2, [GP.L1, GP.R1]);            /* the d-pad first */
+frames(2, []);
+eq("the d-pad released first: the same semitone", wrote(), "C#4");
+eq("and the same still octave", oct(), 4);
+/* rolling onto the bumpers as the thumb lands — the one-movement case the
+   face buttons already tolerate */
+stageAt();
+frame([GP.L1, GP.R1]);
+frame([GP.DR]);                       /* the bumpers are gone this very frame */
+frames(2, []);
+eq("rolling off the bumpers as the d-pad lands is still one move", wrote(), "C#4");
+eq("and not a leap that lost its modifier plus two octave taps", oct(), 4);
+console.log("\n== and in the roll, where the pairs trade places ==");
+useRoll();
+d = nudgeHeld([GP.L1, GP.R1], GP.DU);
+eq("both held, then d-pad up: a semitone up", d.note, "C#4");
+eq("the octave did not move", d.oct, 4);
+d = nudgeHeld([GP.L1, GP.R1], GP.DD);
+eq("both held, then d-pad down: a semitone down", d.note, "B3");
+d = nudgeHeld([], GP.DU);
+eq("bare, the roll's up is a step of the key", d.note, "D4");
+d = nudgeHeld([GP.L1, GP.R1], GP.DU, "E4");
+eq("from E4 a semitone up is F4", d.note, "F4");
+d = nudgeHeld([GP.L1, GP.R1], GP.DD, "F4");
+eq("and from F4 a semitone down is E4", d.note, "E4");
+d = nudgeHeld([GP.L1, GP.R1], GP.DU, "E4", "E minor");
+eq("the key does not enter into it: E4 up is F4 in E minor too", d.note, "F4");
+useColumn();
+/* every semitone nudge, up and down, from twelve anchors in four keys */
+console.log("\n== the hatch is a semitone, from anywhere, in any key ==");
+const SEMI = n => { const m = /^([A-G]#?)(\d)$/.exec(n); const N =
+  ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+  return (parseInt(m[2],10) + 1) * 12 + N.indexOf(m[1]); };
+let off = 0;
+for (const key of ["C major","E minor","F# major","A minor"]){
+  for (const a of ["C4","D4","E4","F4","F#4","G4","A4","A#4","B4","C#4","D#4","G#4"]){
+    const up = nudgeHeld([GP.L1, GP.R1], GP.DR, a, key);
+    const dn = nudgeHeld([GP.L1, GP.R1], GP.DL, a, key);
+    if (SEMI(up.note) !== SEMI(a) + 1){ off++; console.log("      up was not a semitone", key, a, up.note); }
+    if (SEMI(dn.note) !== SEMI(a) - 1){ off++; console.log("      down was not a semitone", key, a, dn.note); }
+    if (up.oct !== 4 || dn.oct !== 4){ off++; console.log("      the octave moved", key, a); }
+  }
+}
+ok("96 chromatic nudges in four keys, from twelve anchors, all exact", off === 0, off);
 
 console.log("\n" + pass + " passed, " + fail + " failed\n");
 process.exit(fail ? 1 : 0);

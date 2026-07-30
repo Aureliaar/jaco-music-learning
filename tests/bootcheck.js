@@ -807,6 +807,47 @@ function freePort(start){
      /D-4/.test(await stepText(2)), await stepText(2));
   await b.tap(GP.SQ);
   ok("a rest on the pad advances two, as a note does", (await at()) === 6, await at());
+
+  /* ---- the chromatic escape hatch, on a real pad ----
+     L1 and R1 held together mean one thing in relative entry: out of the key,
+     a semitone. It answered △ and ✕ and not the d-pad, which nudges the note
+     already under the cursor — the same move, made on a note already written.
+     Driven here through the real pad rather than inspected, and read off the
+     column, so which pair of the d-pad the view puts the nudge on is asked
+     rather than assumed. */
+  console.log("\n== the chromatic escape reaches the nudge ==");
+  const PCS = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+  const noteAt = async i => {
+    const m = /([A-G])(♯|-)(\d)/.exec(await stepText(i));
+    return m ? m[1] + (m[2] === "♯" ? "#" : "") + m[3] : null;
+  };
+  const MIDI = n => { const m = /^([A-G]#?)(\d)$/.exec(n);
+    return (parseInt(m[2], 10) + 1) * 12 + PCS.indexOf(m[1]); };
+  const metaLine = () => b.eval("document.getElementById('metatext').textContent");
+  await clearVoice();
+  await b.key("Home", { key:"Home", vk:36 });
+  await b.tap(GP.TR);                               /* a note to nudge */
+  await b.key("Home", { key:"Home", vk:36 });
+  const inRoll = await on("roll");
+  const UP = inRoll ? GP.DU : GP.DR, DOWN = inRoll ? GP.DD : GP.DL;
+  const hatchBefore = await noteAt(0);
+  ok("there is a note under the cursor to nudge", hatchBefore !== null, await stepText(0));
+  await b.tap(GP.L1, GP.R1, UP);
+  const hatchAfter = await noteAt(0);
+  ok("both bumpers held, the d-pad nudges by a semitone",
+     hatchBefore && hatchAfter && MIDI(hatchAfter) === MIDI(hatchBefore) + 1, [hatchBefore, hatchAfter]);
+  ok("and the nudge did not advance the cursor", (await at()) === 0, await at());
+  ok("nor did the bumpers double as the octave", / octave 4 /.test(await metaLine()), await metaLine());
+  await b.tap(GP.L1, GP.R1, DOWN);
+  ok("and the other way is a semitone back", (await noteAt(0)) === hatchBefore,
+     [hatchBefore, await noteAt(0)]);
+  await b.tap(UP);
+  const hatchBare = await noteAt(0);
+  ok("bare, the same d-pad is a step of the key, as it always was",
+     hatchBare && MIDI(hatchBare) - MIDI(hatchBefore) >= 1 && MIDI(hatchBare) - MIDI(hatchBefore) <= 2,
+     [hatchBefore, hatchBare]);
+  ok("and the escape hatch raised no runtime error", errors.length === 0, errors);
+
   await b.key("F4", { key:"F4", vk:115 });          /* back to absolute */
   ok("no runtime errors from any of the eighth-note work", errors.length === 0, errors);
 

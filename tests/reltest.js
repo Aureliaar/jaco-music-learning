@@ -613,6 +613,85 @@ hold(GP.DR);
 eq("in absolute entry d-pad right still moves the cursor", T.cursor, 1);
 eq("and leaves the note alone", T.doc.steps[0], "C4");
 
+/* ---- the escape hatch reaches the nudge as well ----
+   Both bumpers together mean one thing in relative entry — out of the key, a
+   semitone — and it used to be heard only by △ and ✕. The nudge is the same
+   logical move made on a note already written, so it answers the same hand,
+   whichever pair of the d-pad the view has put it on. */
+console.log("\n== the chromatic escape, on the d-pad ==");
+reset(); page({0:"C4"}); T.cursor = 0; T.setRelative(true);
+hold(GP.L1, GP.R1, GP.DR);
+eq("both bumpers make the nudge chromatic", T.doc.steps[0], "C#4");
+eq("and it still does not advance", T.cursor, 0);
+eq("the bumpers were spent: the octave did not move", T.baseOctave, 4);
+hold(GP.L1, GP.R1, GP.DL);
+eq("and back down a semitone the same way", T.doc.steps[0], "C4");
+reset(); page({0:"G4"}); T.cursor = 0; T.setRelative(true);
+hold(GP.L1, GP.R1, GP.DR);
+eq("a semitone above G4 is G#4, not the key's A4", T.doc.steps[0], "G#4");
+/* one bumper alone is not the hatch — the nudge stays a step of the key */
+reset(); page({0:"C4"}); T.cursor = 0; T.setRelative(true);
+hold(GP.L1, GP.DR);
+eq("L1 alone leaves the nudge in the key", T.doc.steps[0], "D4");
+reset(); page({0:"C4"}); T.cursor = 0; T.setRelative(true);
+hold(GP.R1, GP.DR);
+eq("and so does R1 alone", T.doc.steps[0], "D4");
+reset(); page({0:"C4"}); T.cursor = 0; T.setRelative(true);
+hold(GP.DR);
+eq("and a bare d-pad is the step it always was", T.doc.steps[0], "D4");
+/* the roll trades the pairs, so there the hatch is on ↑ and ↓ */
+reset(); page({0:"C4"}); T.cursor = 0; T.setRelative(true); useRoll();
+hold(GP.L1, GP.R1, GP.DU);
+eq("in the roll the hatch is on d-pad up", T.doc.steps[0], "C#4");
+hold(GP.L1, GP.R1, GP.DD);
+eq("and on d-pad down", T.doc.steps[0], "C4");
+hold(GP.DU);
+eq("bare, the roll's up is still a step of the key", T.doc.steps[0], "D4");
+/* the left stick is the same move behind the same pair */
+reset(); page({0:"C4"}); T.cursor = 0; T.setRelative(true); useRoll();
+frame([GP.L1, GP.R1], [0,-1,0,0]); frame([]);
+eq("the left stick takes the hatch too", T.doc.steps[0], "C#4");
+useColumn();
+/* an out-of-key note nudged chromatically moves by semitone, never by snap */
+reset(); page({0:"C#4"}); T.cursor = 0; T.setRelative(true);
+hold(GP.L1, GP.R1, GP.DR);
+eq("a chromatic nudge from C#4 is D4", T.doc.steps[0], "D4");
+reset(); page({0:"C#4"}); T.cursor = 0; T.setRelative(true);
+hold(GP.DR);
+eq("while the bare nudge snaps into the key", T.doc.steps[0], "D4");
+reset(); page({0:"D#4"}); T.cursor = 0; T.setRelative(true);
+hold(GP.L1, GP.R1, GP.DR);
+eq("a chromatic nudge from D#4 is E4", T.doc.steps[0], "E4");
+reset(); page({0:"D#4"}); T.cursor = 0; T.setRelative(true);
+hold(GP.L1, GP.R1, GP.DL);
+eq("and down from D#4 is D4, not the key's D4 by snap", T.doc.steps[0], "D4");
+/* the clamp and the empty step are unchanged by the hatch */
+reset(); page({0:"C6"}); T.cursor = 0; T.setRelative(true);
+hold(GP.L1, GP.R1, GP.DR);
+eq("a chromatic nudge clamps at the ceiling too", T.doc.steps[0], "C6");
+reset(); page({0:"C2"}); T.cursor = 0; T.setRelative(true);
+hold(GP.L1, GP.R1, GP.DL);
+eq("and at the floor", T.doc.steps[0], "C2");
+reset(); T.cursor = 0; T.setRelative(true);
+hold(GP.L1, GP.R1, GP.DR);
+ok("the hatch on an empty step still says there is nothing to nudge",
+   /nothing to nudge/.test(ids.footer.textContent), ids.footer.textContent);
+eq("and the octave is still not spent on it", T.baseOctave, 4);
+/* the hatch belongs to relative entry: in absolute the bumpers are the octave */
+reset(); page({0:"C4"}); T.cursor = 0; useRoll();
+hold(GP.L1, GP.R1, GP.DU);
+eq("in absolute entry the nudge stays in the key", T.doc.steps[0], "D4");
+eq("and the bumpers were the octave, down and up", T.baseOctave, 4);
+useColumn();
+/* it writes into the hand you are in, as every edit does */
+reset(); page({0:"C4"}); T.setDoc(Object.assign({}, T.doc, { bass: (function(){
+  const s = blank(); s[0] = "C3"; return s; })() }));
+T.cursor = 0; T.setRelative(true); T.setVoice(1);
+hold(GP.L1, GP.R1, GP.DR);
+eq("a chromatic nudge lands in the bass when the bass is in hand", T.doc.bass[0], "C#3");
+eq("and the lead is untouched", T.doc.steps[0], "C4");
+T.setVoice(0);
+
 console.log("\n== the range is clamped ==");
 reset(); page({15:"C6"}); T.setRelative(true);
 hold(GP.TR);

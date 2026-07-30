@@ -840,7 +840,7 @@
           <dt>right stick</dt><dd>the cursor by fours, beat to beat</dd>
           <dt>in relative entry</dt><dd>&#9651; (Y) up one step of the key, &#10005; (A) down one, &#9675; (B) the same note again, &#9633; (X) a rest; each writes and goes on two steps, an eighth</dd>
           <dt>&hellip; hold L1 or R1</dt><dd>the move leaps: L1 (LB) a third, R1 (RB) a fifth, both together a semitone, out of the key; tapped alone they are still the octave</dd>
-          <dt>&hellip; d&#8209;pad &#8592;&#8594;</dt><dd>nudge the note under the cursor a step of the key, without advancing (in the roll this lives on &#8593;&#8595;, in either method)</dd>
+          <dt>&hellip; d&#8209;pad &#8592;&#8594;</dt><dd>nudge the note under the cursor a step of the key, without advancing (in the roll this lives on &#8593;&#8595;, in either method). L1 and R1 held together take the nudge out of the key too, a semitone at a time, exactly as they take &#9651; and &#10005;</dd>
           <dt>here, d&#8209;pad &#8592;&#8594;</dt><dd>the tonic; &#9651; or &#10005; (Y, A) make the key major or minor</dd>
           <dt>here, d&#8209;pad &#8593;&#8595;</dt><dd>the tempo, up and down by four (60&ndash;180); hold L1 or R1 for one</dd>
           <dt>in the quest log</dt><dd>d&#8209;pad up, down choose a quest; &#10005; (A) opens its page, or returns to free play if you are in it already; &#9675; (B) marks it complete; R3 closes</dd>
@@ -1848,11 +1848,17 @@
     if (a === null){ writeNote(nameOfMidi(tonicMidi()), "the tonic"); return; }
     writeNote(nameOfMidi(a), "again");
   }
-  /* the note under the cursor, moved a scale step, staying where it is */
-  function nudge(n){
+  /* the note under the cursor, moved a scale step, staying where it is.
+     `chromatic` is the escape hatch relStep already had, asked for the same
+     way (both bumpers) and meaning the same thing: n semitones, out of the
+     key. A stray is as often a note already written that wants to lean a
+     half-step as it is a note about to be written, and correcting one should
+     not cost the constraint the whole page is under. */
+  function nudge(n, chromatic){
     var v = vsteps(voice)[cursor];
     if (!v){ say("step " + (cursor + 1) + " is empty — nothing to nudge"); return; }
-    var m = clampMidi(moveDegrees(clampMidi(midiOf(v)), n));
+    var from = clampMidi(midiOf(v));
+    var m = clampMidi(chromatic ? from + n : moveDegrees(from, n));
     var name = nameOfMidi(m);
     setStep(cursor, name);
     showGuide(m);                    /* the note moved: the line moves with it */
@@ -2655,10 +2661,10 @@
         }, function(){
           /* a 200 that is not a quest log at all — a host answering every
              path with the page itself. Not a server: a static copy. */
-          goStatic(fresh);
+          goStatic();
         });
-      }, function(){ goStatic(fresh); });        /* no /api on this host */
-    } catch (e){ goStatic(fresh); }
+      }, function(){ goStatic(); });             /* no /api on this host */
+    } catch (e){ goStatic(); }
   }
 
   function exportQuests(){
@@ -3023,6 +3029,10 @@
 
   /* a bumper held as a leap modifier is not also an octave shift */
   var lbUsed = false, rbUsed = false;
+  /* and whether each is held *as* a modifier, read once a frame in relative
+     entry and then read by everything the modifier reaches — the face buttons
+     and the d-pad alike, so that neither can be told a different story */
+  var lbDown = false, rbDown = false;
   var padIndex = null;
   var gpPrev = [];                     /* previous frame's button state: edge detection */
   var navHeld = { up: false, down: false, left: false, right: false, back: false, fwd: false };
@@ -3051,6 +3061,25 @@
       navNext[key] += HOLD_PERIOD;
       if (navNext[key] < now) navNext[key] = now + HOLD_PERIOD;
     }
+  }
+
+  /* ---- the nudge, as the pad asks for it ----
+     Moving the note under the cursor is one move with several ways in: the
+     d-pad's ←→ in the column, its ↑↓ in the roll, and the left stick behind
+     both. They all come through here, so the bumpers say on the d-pad what
+     they say on △ and ✕ — both of them held takes the move out of the key, a
+     semitone at a time — instead of the hatch answering only the face
+     buttons. Holding them spends them, exactly as a leap does, so letting go
+     afterwards is a modifier released and not a tap of the octave.
+     Absolute entry is untouched: there the bumpers *are* the octave, edge by
+     edge, and nothing on the pad is a modifier. */
+  function padNudge(n){
+    if (relative && lbDown && rbDown){
+      lbUsed = true; rbUsed = true;
+      nudge(n, true);
+      return;
+    }
+    nudge(n);
   }
 
   function gpPick(){
@@ -3155,9 +3184,17 @@
       if (gpEdge(cur, GP_R1)) rbUsed = false;
       lGone = !cur[GP_L1] && !!gpPrev[GP_L1];
       rGone = !cur[GP_R1] && !!gpPrev[GP_R1];
+      /* A bumper counts as held if it is down now or was down on the frame
+         before: rolling off the bumper as the thumb lands is one movement,
+         and the poll must not read the two halves of it as a move that lost
+         its modifier and a bare tap of the octave. Read here, once, so that
+         the face buttons and the d-pad both read the same hand. */
+      lbDown = !!cur[GP_L1] || lGone;
+      rbDown = !!cur[GP_R1] || rGone;
     } else {
       if (gpEdge(cur, GP_L1)) shiftOctave(-1);
       if (gpEdge(cur, GP_R1)) shiftOctave(1);
+      lbDown = rbDown = false;
     }
 
     var bar = (cur[GP_L2] ? 1 : 0) + (cur[GP_R2] ? 2 : 0);   /* 0 none, 1 L2, 2 R2, 3 both */
@@ -3175,17 +3212,14 @@
       /* relative entry: bare, the face buttons are motion rather than pitch.
          A bumper widens the move — L1 a third, R1 a fifth, both a semitone
          out of the key. ○ and □ ignore the bumpers.
-         A bumper counts as held if it is down now or was down on the frame
-         before: rolling off the bumper as the thumb lands is one movement,
-         and the poll must not read the two halves of it as a leap that lost
-         its modifier and a bare tap of the octave. */
-      var lDown = !!cur[GP_L1] || lGone, rDown = !!cur[GP_R1] || rGone;
-      var lead = (lDown ? 1 : 0) + (rDown ? 2 : 0);
+         Which bumpers are held was settled above, for the whole frame, so the
+         d-pad's nudge reads the same pair. */
+      var lead = (lbDown ? 1 : 0) + (rbDown ? 2 : 0);
       var wide = (lead === 1) ? 2 : (lead === 2) ? 4 : 1;    /* third, fifth, step */
       if (gpEdge(cur, GP_TRIANGLE) || gpEdge(cur, GP_CROSS)){
         var dir = gpEdge(cur, GP_TRIANGLE) ? 1 : -1;
-        if (lDown) lbUsed = true;
-        if (rDown) rbUsed = true;
+        if (lbDown) lbUsed = true;
+        if (rbDown) rbUsed = true;
         if (lead === 3) relStep(dir, true);                  /* a semitone out of key */
         else relStep(dir * wide, false);
       }
@@ -3194,19 +3228,21 @@
       /* up and down are time, as everywhere; left and right nudge the note
          under the cursor a scale step without advancing. In the roll the
          page is drawn — time runs right, height is pitch — so the pairs
-         trade places, and the left stick follows the d-pad on both axes. */
+         trade places, and the left stick follows the d-pad on both axes.
+         Whichever pair it lands on, the nudge goes through padNudge, so both
+         bumpers held take it out of the key here as they do on △ and ✕. */
       ax = (gp.axes && gp.axes.length > 0) ? gp.axes[0] : 0;
       ay = (gp.axes && gp.axes.length > 1) ? gp.axes[1] : 0;
       if (viz === "roll"){
         gpNav(cur[GP_DL] || ax <= -STICK_DEAD, "left",  -1, now);
         gpNav(cur[GP_DR] || ax >=  STICK_DEAD, "right",  1, now);
-        gpNav(cur[GP_DU] || ay <= -STICK_DEAD, "up",    1, now, nudge);
-        gpNav(cur[GP_DD] || ay >=  STICK_DEAD, "down", -1, now, nudge);
+        gpNav(cur[GP_DU] || ay <= -STICK_DEAD, "up",    1, now, padNudge);
+        gpNav(cur[GP_DD] || ay >=  STICK_DEAD, "down", -1, now, padNudge);
       } else {
         gpNav(cur[GP_DU] || ay <= -STICK_DEAD, "up",   -1, now);
         gpNav(cur[GP_DD] || ay >=  STICK_DEAD, "down",  1, now);
-        gpNav(cur[GP_DL], "left",  -1, now, nudge);
-        gpNav(cur[GP_DR], "right",  1, now, nudge);
+        gpNav(cur[GP_DL], "left",  -1, now, padNudge);
+        gpNav(cur[GP_DR], "right",  1, now, padNudge);
       }
       rx = (gp.axes && gp.axes.length > 2) ? gp.axes[2] : 0;
       ry = (gp.axes && gp.axes.length > 3) ? gp.axes[3] : 0;
@@ -3229,8 +3265,8 @@
       if (viz === "roll"){
         gpNav(cur[GP_DL] || ax <= -STICK_DEAD, "left",  -1, now);
         gpNav(cur[GP_DR] || ax >=  STICK_DEAD, "right",  1, now);
-        gpNav(cur[GP_DU] || ay <= -STICK_DEAD, "up",    1, now, nudge);
-        gpNav(cur[GP_DD] || ay >=  STICK_DEAD, "down", -1, now, nudge);
+        gpNav(cur[GP_DU] || ay <= -STICK_DEAD, "up",    1, now, padNudge);
+        gpNav(cur[GP_DD] || ay >=  STICK_DEAD, "down", -1, now, padNudge);
       } else {
         gpNav(cur[GP_DU] || ay <= -STICK_DEAD, "up",   -1, now);
         gpNav(cur[GP_DD] || ay >=  STICK_DEAD, "down",  1, now);
