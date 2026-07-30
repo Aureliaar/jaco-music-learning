@@ -398,9 +398,15 @@ function freePort(start){
       else await b.key("PageDown", { key:"PageDown", vk:34 });
     }
   }
+  /* clearing advances two steps now, as writing does, so sixteen periods
+     would only ever visit the even steps. One arrow back after each keeps
+     the sweep walking one step at a time, as it did before the change. */
   async function clearVoice(){
     await b.key("Home", { key:"Home", vk:36 });
-    for (let i = 0; i < 16; i++) await b.key("Period", { key:".", vk:190 });
+    for (let i = 0; i < 16; i++){
+      await b.key("Period", { key:".", vk:190 });
+      await b.key("ArrowUp", { key:"ArrowUp", vk:38 });
+    }
   }
   if (!(await on("roll"))) await b.key("F2", { key:"F2", vk:113 });
   await toLead();
@@ -408,17 +414,20 @@ function freePort(start){
   await b.key("Tab", { key:"Tab", vk:9 });
   await clearVoice();
   await b.key("Tab", { key:"Tab", vk:9 });          /* back in the lead */
-  /* the lead: C4 E4 G4 on the first three steps */
+  /* the lead: C4 E4 G4, written straight ahead — and entry lays eighths, so
+     they land on steps 1, 3 and 5 rather than on the first three steps */
   await setOctave(4);
   await b.key("Home", { key:"Home", vk:36 });
   await b.key("KeyZ", { key:"z", vk:90 });
   await b.key("KeyC", { key:"c", vk:67 });
   await b.key("KeyB", { key:"b", vk:66 });
-  /* the bass: C2 on step 1, nothing on step 2, A2 on step 3 */
+  /* the bass: C2 on step 1, nothing on step 3, A2 on step 5 — under the lead's
+     first and last, so that exactly two steps have both voices on them */
   await b.key("Tab", { key:"Tab", vk:9 });
   await setOctave(2);
   await b.key("Home", { key:"Home", vk:36 });
   await b.key("KeyZ", { key:"z", vk:90 });
+  await b.key("ArrowDown", { key:"ArrowDown", vk:40 });
   await b.key("ArrowDown", { key:"ArrowDown", vk:40 });
   await b.key("KeyN", { key:"n", vk:78 });
   await wait(150);
@@ -469,7 +478,7 @@ function freePort(start){
   /* G4 over A2 is a minor seventh and an octave: a minor fourteenth */
   ok("and G4 over A2 as a compound fourteenth", iv[1] && iv[1][1] === "m14", iv);
   ok("the step with only a lead on it says nothing",
-     iv.every(x => x[0] !== 1), iv);
+     iv.every(x => x[0] !== 2), iv);
   ok("both labels are really laid out", iv.every(x => x[2] > 8 && x[3] > 6), iv);
 
   /* ---- and the label belongs to its pair, visibly ----
@@ -523,8 +532,9 @@ function freePort(start){
   })()`);
   ok("the guide is a line of the drawing's own",
      guide[0] && /^rollguide/.test(guide[1]), guide);
-  /* the hands are in the bass, on step 4; G2 there raises the guide and
-     leaves the drawing's window exactly where it was (C2 is already lower) */
+  /* the hands are in the bass, two steps past the A2 — on step 7; G2 there
+     raises the guide and leaves the drawing's window exactly where it was
+     (C2 is already lower) */
   await b.key("KeyB", { key:"b", vk:66 });
   await wait(400);
   const up = await b.eval(`(function(){
@@ -533,7 +543,8 @@ function freePort(start){
     var r = g.getBoundingClientRect(), nr = n.getBoundingClientRect();
     var f = document.getElementById('rollfield').getBoundingClientRect();
     var bs = document.querySelectorAll('#rollfield .bar');
-    var q = bs[7].getBoundingClientRect();           /* the bass bar just written */
+    /* the bars are built lead, bass, lead, bass … so step 7's bass is 2*6+1 */
+    var q = bs[13].getBoundingClientRect();          /* the bass bar just written */
     return { on: /\\bon\\b/.test(g.className), name: n.textContent,
              op: Number(getComputedStyle(g).opacity),
              /* it is a line, across the whole drawing, at that note's height */
@@ -553,7 +564,9 @@ function freePort(start){
   /* and it lets go of itself: the class comes off after the hold, and the
      stylesheet's transition takes the line out over about a second. Raised
      again here so the clock starts at a known moment. */
-  await b.key("ArrowUp", { key:"ArrowUp", vk:38 });   /* back onto the same step */
+  /* back onto the same step: entry left the cursor two on, so two arrows back */
+  await b.key("ArrowUp", { key:"ArrowUp", vk:38 });
+  await b.key("ArrowUp", { key:"ArrowUp", vk:38 });
   await b.key("KeyB", { key:"b", vk:66 });
   await wait(300);
   const held = await b.eval(
@@ -572,6 +585,7 @@ function freePort(start){
     "Number(getComputedStyle(document.querySelector('#rollfield .rollguide')).opacity)");
   ok("a second after that it has gone entirely", gone < 0.02, gone);
   /* leave the page exactly as the checks above found it: five notes */
+  await b.key("ArrowUp", { key:"ArrowUp", vk:38 });
   await b.key("ArrowUp", { key:"ArrowUp", vk:38 });
   await b.key("Period", { key:".", vk:190 });
   await wait(150);
@@ -637,6 +651,91 @@ function freePort(start){
   ok("and says plainly that nothing here judges", /Nothing here judges/.test(kp));
   await b.key("F1", { key:"F1", vk:112 });
   ok("no runtime errors from any of the naming work", errors.length === 0, errors);
+
+  /* ---- entry lays eighths, in a real browser ----
+     A step is a sixteenth; writing a note or a rest now leaves the cursor two
+     steps on, so writing straight ahead lands on 1, 3, 5, 7. Moving the cursor
+     by hand is untouched — one step — and that is how a sixteenth is placed.
+     Driven here rather than inspected: every path that writes goes through the
+     real keyboard and the real pad. */
+  console.log("\n== entry lays eighths ==");
+  const at = () => b.eval(
+    "(function(){var r=document.querySelectorAll('#column .row');" +
+    "for(var i=0;i<r.length;i++) if(/\\bcursor\\b/.test(r[i].className)) return i;" +
+    "return -1;})()");
+  const stepText = i =>
+    b.eval("document.querySelectorAll('#column .row')[" + i + "].textContent");
+  await toLead();
+  await clearVoice();
+  await b.key("Tab", { key:"Tab", vk:9 });
+  await clearVoice();
+  await b.key("Tab", { key:"Tab", vk:9 });          /* back in the lead */
+  await setOctave(4);
+
+  await b.key("Home", { key:"Home", vk:36 });
+  await b.key("KeyZ", { key:"z", vk:90 });
+  ok("a note from the keyboard leaves the cursor two steps on", (await at()) === 2, await at());
+  ok("and the note is on step 1", /C-4/.test(await stepText(0)), await stepText(0));
+  await b.key("KeyC", { key:"c", vk:67 });
+  ok("the next one lands on step 3, not step 2", /E-4/.test(await stepText(2)), await stepText(2));
+  ok("with step 2 left empty", !/[A-G]-\d/.test(await stepText(1)), await stepText(1));
+  ok("and the cursor is on step 5", (await at()) === 4, await at());
+
+  /* the guide still says which pitch that was */
+  ok("writing still raises the pitch guide",
+     /\bon\b/.test(await b.eval("document.querySelector('#rollfield .rollguide').className")));
+
+  /* the arrows are untouched: one step each, either way */
+  await b.key("ArrowDown", { key:"ArrowDown", vk:40 });
+  ok("an arrow still moves one step", (await at()) === 5, await at());
+  await b.key("ArrowUp", { key:"ArrowUp", vk:38 });
+  ok("and back one", (await at()) === 4, await at());
+
+  /* which is how a sixteenth is placed: back one, and write */
+  await b.key("Home", { key:"Home", vk:36 });
+  await b.key("ArrowDown", { key:"ArrowDown", vk:40 });
+  await b.key("KeyX", { key:"x", vk:88 });
+  ok("a step back puts a sixteenth between the eighths",
+     /D-4/.test(await stepText(1)), await stepText(1));
+  ok("and entry goes on by two from there too", (await at()) === 3, await at());
+
+  /* it wraps around the page, as the arrows do — and the loop fences neither */
+  await b.key("End", { key:"End", vk:35 });
+  await b.key("KeyZ", { key:"z", vk:90 });
+  ok("entry wraps past step 16", (await at()) === 1, await at());
+  await b.key("KeyL", { key:"l", vk:76 });
+  ok("the loop is eight", /loop 8/.test(await b.eval(
+     "document.getElementById('metatext').textContent")));
+  await b.key("End", { key:"End", vk:35 });
+  await b.key("KeyZ", { key:"z", vk:90 });
+  ok("and wraps the same way under a short loop", (await at()) === 1, await at());
+  await b.key("Home", { key:"Home", vk:36 });
+  for (let i = 0; i < 7; i++) await b.key("ArrowDown", { key:"ArrowDown", vk:40 });
+  await b.key("KeyZ", { key:"z", vk:90 });
+  ok("a short loop does not fence the advance either", (await at()) === 9, await at());
+  await b.key("KeyL", { key:"l", vk:76 });
+  await b.key("KeyL", { key:"l", vk:76 });          /* back to the whole page */
+
+  /* the rest, and both pad methods, on a page cleared for the purpose */
+  await clearVoice();
+  await b.key("Home", { key:"Home", vk:36 });
+  await b.key("Period", { key:".", vk:190 });
+  ok("clearing a step advances two as well", (await at()) === 2, await at());
+  await b.key("Home", { key:"Home", vk:36 });
+  await b.tap(GP.L2, GP.DL);
+  ok("crossbar entry on the pad advances two", (await at()) === 2, await at());
+  ok("and wrote the absolute pitch it names", /C-4/.test(await stepText(0)), await stepText(0));
+  await b.key("F4", { key:"F4", vk:115 });          /* relative (contour) entry */
+  ok("the pad is in relative entry", /relative/.test(await b.eval(
+     "document.getElementById('metatext').textContent")));
+  await b.tap(GP.TR);
+  ok("a relative note advances two", (await at()) === 4, await at());
+  ok("and it wrote a step of the key above the anchor",
+     /D-4/.test(await stepText(2)), await stepText(2));
+  await b.tap(GP.SQ);
+  ok("a rest on the pad advances two, as a note does", (await at()) === 6, await at());
+  await b.key("F4", { key:"F4", vk:115 });          /* back to absolute */
+  ok("no runtime errors from any of the eighth-note work", errors.length === 0, errors);
 
   await b.shot(__dirname + "/boot-seeded.png");
   clearInterval(drain);

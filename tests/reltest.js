@@ -244,25 +244,45 @@ console.log("\n== plain (absolute) note entry ==");
 reset();
 key("KeyZ");
 eq("writes C4 at step 1", T.doc.steps[0], "C4");
-eq("advances by one", T.cursor, 1);
-key("KeyM"); eq("writes B4", T.doc.steps[1], "B4");
-key("KeyQ"); eq("Q row is an octave up", T.doc.steps[2], "C5");
-key("Enter"); eq("enter is inert", T.cursor, 3);
-key("Tab");   eq("tab is inert", T.cursor, 3);
+/* the default is the eighth: entry leaves the cursor two steps on, so a run
+   of notes lands on 1, 3, 5, 7 … and a sixteenth costs one deliberate step
+   back with an arrow. Re-pointed from the old one-step advance. */
+eq("advances by two — the eighth", T.cursor, 2);
+key("KeyM"); eq("writes B4 two steps on", T.doc.steps[2], "B4");
+eq("and nothing was written between them", T.doc.steps[1], null);
+key("KeyQ"); eq("Q row is an octave up", T.doc.steps[4], "C5");
+eq("three notes lay themselves on 1, 3, 5", T.cursor, 6);
+/* the sixteenth, placed the deliberate way: back one, write there */
+T.cursor = 2; key("ArrowUp"); key("KeyX");
+eq("a step back puts a sixteenth between the eighths", T.doc.steps[1], "D4");
+eq("and entry goes on by two from there as well", T.cursor, 3);
+T.cursor = 6;
+key("Enter"); eq("enter is inert", T.cursor, 6);
+key("Tab");   eq("tab is inert", T.cursor, 6);
+key("Tab");   /* back in the lead */
 T.cursor = 15; key("KeyZ");
-eq("entry wraps at 16", T.cursor, 0);
+eq("entry wraps past 16", T.cursor, 1);
+T.cursor = 14; key("KeyZ");
+eq("and lands on step 1 from step 15", T.cursor, 0);
+/* the loop length fences neither the cursor nor the advance, as it never has */
+reset(); T.doc.loop = 8; T.cursor = 7; key("KeyZ");
+eq("a short loop does not fence the advance", T.cursor, 9);
+T.cursor = 15; key("KeyZ");
+eq("and it still wraps around the whole page", T.cursor, 1);
+reset();
 eq("NOTE_KEYS unchanged", T.NOTE_KEYS, {KeyZ:0,KeyS:1,KeyX:2,KeyD:3,KeyC:4,KeyV:5,KeyG:6,KeyB:7,KeyH:8,
   KeyN:9,KeyJ:10,KeyM:11,Comma:12,KeyQ:12,Digit2:13,KeyW:14,Digit3:15,KeyE:16,KeyR:17,Digit5:18,
   KeyT:19,Digit6:20,KeyY:21,Digit7:22,KeyU:23,KeyI:24});
 
 console.log("\n== clear, cursor, octave, loop ==");
 reset();
-key("KeyZ"); key("KeyZ"); key("KeyZ");
+page({0:"C4", 1:"C4", 2:"C4", 3:"C4", 4:"C4"});
 T.cursor = 0;
 key("Period"); eq("period clears", T.doc.steps[0], null);
-eq("clear advances", T.cursor, 1);
-key("Delete"); eq("delete clears", T.doc.steps[1], null);
-key("Backspace"); ok("backspace clears", T.doc.steps[2] === null);
+eq("clear advances by two, as a note does", T.cursor, 2);
+key("Delete"); eq("delete clears", T.doc.steps[2], null);
+key("Backspace"); ok("backspace clears", T.doc.steps[4] === null);
+eq("and the steps between are left alone", [T.doc.steps[1], T.doc.steps[3]], ["C4","C4"]);
 reset();
 key("ArrowDown"); eq("down moves one", T.cursor, 1);
 key("ArrowUp"); key("ArrowUp"); eq("up wraps one at a time", T.cursor, 15);
@@ -446,8 +466,11 @@ function rel(setup, buttons, opts){
   T.cursor = setup.cursor === undefined ? 0 : setup.cursor;
   if (setup.octave) T.baseOctave = setup.octave;
   T.setRelative(true);
+  /* where it was written, not where the cursor ended up: the advance is two
+     steps now and this helper is about the pitch, not the walk */
+  const at = T.cursor;
   hold(...buttons);
-  return T.doc.steps[T.cursor === 0 ? 15 : T.cursor - 1];
+  return T.doc.steps[at];
 }
 const A = { steps:{15:"C4"}, cursor:0 };            /* the anchor is C4, behind step 1 */
 eq("△ writes one scale step up", rel(A, [GP.TR]), "D4");
@@ -475,12 +498,12 @@ reset(); page({0:"C4", 1:"E4"}); T.cursor = 1; T.setRelative(true);
 sounded.length = 0;
 hold(GP.SQ);
 eq("□ writes a rest", T.doc.steps[1], null);
-eq("and advances", T.cursor, 2);
+eq("and advances by two, as everything that writes does", T.cursor, 3);
 eq("a rest sounds nothing", sounded.length, 0);
 reset(); page({15:"C4"}); T.setRelative(true);
 sounded.length = 0;
 hold(GP.TR);
-eq("a relative note advances", T.cursor, 1);
+eq("a relative note advances by two", T.cursor, 2);
 eq("and is auditioned", sounded.length, 1);
 ok("at the pitch it wrote", Math.abs(sounded[0].freq - 293.6647679174076) < 1e-6, sounded);
 ok("the footer names the note and the step", /D-4 at step 1/.test(ids.footer.textContent),
@@ -546,7 +569,9 @@ reset(); T.setRelative(true);
 hold(GP.TR);                       /* C4, the tonic */
 hold(GP.L1, GP.R1, GP.TR);         /* C#4 */
 hold(GP.TR);                       /* snaps up to D4 */
-eq("a chromatic detour rejoins the key", T.doc.steps.slice(0,3), ["C4","C#4","D4"]);
+/* on 1, 3 and 5 now: three writes, each two steps on */
+eq("a chromatic detour rejoins the key",
+   [T.doc.steps[0], T.doc.steps[2], T.doc.steps[4]], ["C4","C#4","D4"]);
 
 console.log("\n== nudge: change the note, stay put ==");
 reset(); page({0:"C4", 1:"E4"}); T.cursor = 1; T.setRelative(true);
@@ -607,7 +632,10 @@ for (const mode of [false, true]){
      (mode ? "relative" : "absolute") + " entry", bad === 0, bad);
 }
 reset(); hold(GP.L2, GP.DL); eq("L2 slot 1 = C4", T.doc.steps[0], "C4");
-eq("crossbar entry advances", T.cursor, 1);
+eq("crossbar entry advances by two", T.cursor, 2);
+hold(GP.L2, GP.DL);
+eq("so the crossbar lays eighths too", T.doc.steps[2], "C4");
+eq("and nothing between them", T.doc.steps[1], null);
 reset(); hold(GP.R2, GP.X);  eq("R2 slot 8 = D#5", T.doc.steps[0], "D#5");
 reset(); hold(GP.L2, GP.R2, GP.DL); eq("L2+R2 slot 1 = E5", T.doc.steps[0], "E5");
 reset(); T.setRelative(true);
@@ -641,7 +669,7 @@ console.log("\n== the bare face buttons in absolute entry are unchanged ==");
 reset();
 page({3:"C4"}); T.cursor = 3;
 press(GP.SQ); eq("bare square clears the step", T.doc.steps[3], null);
-eq("clear advanced", T.cursor, 4);
+eq("clear advanced by two", T.cursor, 5);
 press(GP.B); eq("bare circle goes home", T.cursor, 0);
 reset();
 press(GP.X); press(GP.TR);
@@ -846,10 +874,10 @@ eq("a note goes into the lead", T.doc.steps[0], "C4");
 eq("and not into the bass", T.doc.bass[0], null);
 key("Tab");
 eq("tab changes hands", T.voice, 1);
-eq("and leaves the cursor where it was", T.cursor, 1);
+eq("and leaves the cursor where it was", T.cursor, 2);
 key("KeyZ");
-eq("now the note goes into the bass", T.doc.bass[1], "C4");
-eq("and the lead is untouched", T.doc.steps[1], null);
+eq("now the note goes into the bass", T.doc.bass[2], "C4");
+eq("and the lead is untouched", T.doc.steps[2], null);
 key("Tab");
 eq("tab comes back", T.voice, 0);
 eq("the two voices are round, not a stack", T.VOICES, 2);
@@ -1184,14 +1212,16 @@ closePages();
 
 console.log("\n== the round trip: two workspaces, both intact ==");
 qreset();
-key("KeyZ"); key("KeyX");                       /* free play: C4 D4 */
-eq("free play holds what was written", T.doc.steps.slice(0,2), ["C4","D4"]);
+key("KeyZ"); key("KeyX");                       /* free play: C4 on 1, D4 on 3 */
+/* entry lays eighths, so a pair of notes is steps 1 and 3, not 1 and 2 */
+const two = () => [T.doc.steps[0], T.doc.steps[2]];
+eq("free play holds what was written", two(), ["C4","D4"]);
 key("F3"); key("Enter"); key("F3");             /* into quest A */
 eq("the quest's page starts empty", T.doc.steps.filter(Boolean).length, 0);
 eq("and it is the active workspace", T.qActive, Q[0].id);
 key("KeyV"); key("KeyG"); key("KeyL");          /* A: F4 F#4, loop 8 */
 key("F1"); key("ArrowUp"); key("F1");           /* A: G major seeded -> G minor */
-eq("A holds its own notes", T.doc.steps.slice(0,2), ["F4","F#4"]);
+eq("A holds its own notes", two(), ["F4","F#4"]);
 eq("its own loop", T.doc.loop, 8);
 eq("and its own key", T.doc.key, "G minor");
 key("F3"); key("ArrowDown"); key("Enter"); key("F3");   /* into quest B */
@@ -1200,12 +1230,12 @@ eq("B is not carrying A's loop", T.doc.loop, 16);
 eq("nor A's key — it has its own seed", T.doc.key, "A minor");
 key("KeyB");                                    /* B: G4 */
 key("F3"); key("ArrowUp"); key("Enter"); key("F3");     /* back to A */
-eq("A survives the round trip", T.doc.steps.slice(0,2), ["F4","F#4"]);
+eq("A survives the round trip", two(), ["F4","F#4"]);
 eq("with its loop", T.doc.loop, 8);
 eq("and its key", T.doc.key, "G minor");
 key("F3"); key("Enter"); key("F3");             /* A again: back to free play */
 eq("choosing the active quest again returns to free play", T.qActive, null);
-eq("and free play is exactly as it was left", T.doc.steps.slice(0,2), ["C4","D4"]);
+eq("and free play is exactly as it was left", two(), ["C4","D4"]);
 eq("with its own loop", T.doc.loop, 16);
 key("F3"); key("ArrowDown"); key("Enter"); key("F3");   /* into B */
 eq("the other quest is intact too", T.doc.steps[0], "G4");
@@ -1273,16 +1303,17 @@ console.log("\n== the contour preview ==");
 qreset();
 eq("sixteen dabs, one per step", T.qdabs.length, 16);
 key("F3"); key("Enter"); key("F3");             /* into quest A */
-key("KeyZ"); key("Period"); key("KeyN");        /* C4 · A4 */
+key("KeyZ"); key("Period"); key("KeyN");        /* C4 on 1, a rest on 3, A4 on 5 */
 key("F3");
 eq("a written step draws a dab", T.qdabs[0].style.display, "block");
 eq("an empty step draws none", T.qdabs[1].style.display, "none");
-eq("and the third is drawn", T.qdabs[2].style.display, "block");
+eq("the cleared step draws none either", T.qdabs[2].style.display, "none");
+eq("and the note after it is drawn", T.qdabs[4].style.display, "block");
 ok("dabs are coloured by pitch class", /^hsl\(/.test(T.qdabs[0].style.backgroundColor),
    T.qdabs[0].style.backgroundColor);
-ok("pitch is height", T.qdabs[0].style.top !== T.qdabs[2].style.top,
-   [T.qdabs[0].style.top, T.qdabs[2].style.top]);
-ok("time runs right", parseFloat(T.qdabs[2].style.left) > parseFloat(T.qdabs[0].style.left));
+ok("pitch is height", T.qdabs[0].style.top !== T.qdabs[4].style.top,
+   [T.qdabs[0].style.top, T.qdabs[4].style.top]);
+ok("time runs right", parseFloat(T.qdabs[4].style.left) > parseFloat(T.qdabs[0].style.left));
 key("ArrowDown");
 eq("an untouched workspace draws nothing", T.qdabs[0].style.display, "none");
 key("ArrowUp");
@@ -1502,7 +1533,10 @@ async function syncLive(){
   eq("as a PUT to the endpoint", [calls[0].method, calls[0].url], ["PUT", "api/quest-log"]);
   const sent = JSON.parse(calls[0].body);
   eq("carrying the whole v2 state", [sent.folio, sent.version], ["quest-log", 2]);
-  eq("with the notes just entered", sent.free.steps.slice(0,4), ["C4","D4","E4","F4"]);
+  /* five notes entered as eighths: steps 1, 3, 5, 7, 9 */
+  eq("with the notes just entered",
+     [sent.free.steps[0], sent.free.steps[2], sent.free.steps[4], sent.free.steps[6]],
+     ["C4","D4","E4","F4"]);
   eq("and the footer is content", T.syncState, "ok");
 
   /* the server goes away mid-session */
@@ -1513,8 +1547,8 @@ async function syncLive(){
   eq("a dead server is one failed push", calls.length, 1);
   eq("recorded as a failure", T.syncState, "failed");
   ok("and the work is still in localStorage",
-     JSON.parse(store[T.QUEST_KEY]).free.steps[5] === "F#4",
-     JSON.parse(store[T.QUEST_KEY]).free.steps.slice(0,7));
+     JSON.parse(store[T.QUEST_KEY]).free.steps[10] === "F#4",
+     JSON.parse(store[T.QUEST_KEY]).free.steps.slice(0,13));
   key("F3");
   ok("which the footer admits, quietly",
      / · sync failed — working locally$/.test(ids.footer.textContent), ids.footer.textContent);
@@ -1528,7 +1562,8 @@ async function syncLive(){
   eq("the next change retries", calls.length, 1);
   eq("and it recovers", T.syncState, "ok");
   eq("with both notes in the push",
-     JSON.parse(calls[0].body).free.steps.slice(5,7), ["F#4","G#4"]);
+     [JSON.parse(calls[0].body).free.steps[10],
+      JSON.parse(calls[0].body).free.steps[12]], ["F#4","G#4"]);
 
   /* boot: the server is the authority when it has a log */
   qreset();
@@ -2290,11 +2325,11 @@ eq("seeded E minor", T.doc.key, "E minor");
 press(GP.TR);
 eq("an empty page begins on the seeded tonic", T.doc.steps[0], "E4");
 press(GP.TR);
-eq("and a step up is a step of E minor", T.doc.steps[1], "F#4");
+eq("and a step up is a step of E minor", T.doc.steps[2], "F#4");
 press(GP.X);
-eq("and back down", T.doc.steps[2], "E4");
+eq("and back down", T.doc.steps[4], "E4");
 press(GP.X);
-eq("the sixth below the tonic is D, natural minor", T.doc.steps[3], "D4");
+eq("the sixth below the tonic is D, natural minor", T.doc.steps[6], "D4");
 eq("the anchor helper agrees", T.tonicMidi(), 64);
 T.setRelative(false);
 closePages();

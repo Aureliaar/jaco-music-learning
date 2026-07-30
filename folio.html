@@ -547,8 +547,8 @@
           <dt>row starting at Z</dt><dd>lower octave, white keys left to right; the row above holds its sharps</dd>
           <dt>row starting at Q</dt><dd>the same shape, one octave higher; its sharps sit on the number row</dd>
           <dt>last key of each row</dt><dd>the octave above (C)</dd>
-          <dt>period, delete</dt><dd>clear the step</dd>
-          <dt>the arrows</dt><dd>all four move the cursor (wraps): up or left is back, down or right is forward</dd>
+          <dt>period, delete</dt><dd>clear the step, and on two steps as a note does</dd>
+          <dt>the arrows</dt><dd>all four move the cursor by one step (wraps): up or left is back, down or right is forward. This is how a sixteenth is placed &mdash; step back one, and write</dd>
           <dt>home, end</dt><dd>step 1, step 16</dd>
           <dt>page up, page down</dt><dd>base octave up, down (C2&ndash;C6)</dd>
           <dt>space</dt><dd>play or stop; playback loops</dd>
@@ -567,7 +567,7 @@
           <dt>here, the two keys left of backspace</dt><dd>the tempo, down and up by four (60&ndash;180); with shift, by one</dd>
           <dt>in the quest log</dt><dd>the arrows choose a quest; enter opens its page and works there; enter on the quest you are already in returns to free play; C marks it complete; F3 or escape closes</dd>
         </dl>
-        <p>Notes are entered by position, not by letter, so the layout is the same on any keyboard. Entering a note advances the cursor.</p>
+        <p>Notes are entered by position, not by letter, so the layout is the same on any keyboard. Entering a note advances the cursor two steps, and so does clearing one: a step is a sixteenth, sixteen of them are a bar, and eighths are what most of this is thought in &mdash; so writing straight ahead lays notes on 1, 3, 5, 7 and counts nothing. A sixteenth is one deliberate movement away: step back with an arrow and write there. Nothing is snapped to a grid; it is two steps on from wherever the cursor is, and it wraps around the page as the arrows do.</p>
         <p>The page holds two voices &mdash; a lead and a bass &mdash; and they play together, from the one clock. They are written one at a time: the strip above the page names both and marks the one in hand, the column gives each a place of its own beside the step number, and in the roll they are drawn in the same field, the voice you are not in a shade back. Tab changes hands. Everything else &mdash; the key, the tempo, the loop, the whole page &mdash; the two share; only the notes and the timbre are their own. The bass is rounder and darker, so a bass written up in the melody's octave still sounds like the bass. Solo (O) and mute (P) act on the voice you are in; solo, if any voice has it, is what decides, and a change is heard on the next step without a restart. A page written before there were two voices opens exactly as it always did, with a silent bass under it.</p>
         <p>The drawing names what it draws, in its margin rather than on top of itself. Every C in view is ruled across the roll and named once, at the side of its line &mdash; C2, C3, C4 &mdash; with the octave numbered the international way, so that C4 is middle C and the page runs from C2 to C6. Place a note, or move one, and a line of its own is drawn at that note's pitch, parallel to those rules and named beside them; it holds for a moment and then fades, so the pitch is said when you ask for it and the drawing is left alone the rest of the time. The column has always named its notes in the same alphabet, a dash standing in where there is no sharp, so that the two columns line up. Where both voices sound on the same step the roll also writes the interval between them, on a hairline tie drawn from the one bar to the other, so that the name belongs to that pair of notes and to nothing else however far apart the voices are. Below the octave the short names are the usual ones &mdash; P1, m2, M2, m3, M3, P4, TT, P5, m6, M6, m7, M7, P8 &mdash; and wider than an octave the compound name is used: the simple number plus seven for every octave crossed, so a minor third and an octave is m10, a fifth and an octave is P12, two octaves is P15. The tritone keeps its name and takes the compound number with it: TT, then TT11, then TT18. Only the distance is named, never the direction, so it reads the same whichever voice is on top. Nothing here judges: no interval is coloured, ranked, or marked as wanting anything. The page says what the two notes are; what they are worth is for the ear. K puts the whole lot away and brings it back.</p>
         <p>The key and the tempo both belong to the page you are on, and so to the workspace it lives in: each quest keeps its own, free play keeps its own, and changing one changes nothing anywhere else. Either may be changed while the loop runs; the change is heard at the next step, without a restart. A quest's page arrives already tuned &mdash; its own key and its own tempo, chosen to suit its constraint &mdash; so there is nothing to decide before writing; change them here whenever you like, and the change stays with that quest. Free play always begins in C major at 112.</p>
@@ -585,7 +585,7 @@
           <dt>the eight slots</dt><dd>read left, up, right, down: d&#8209;pad &#8592;&#8593;&#8594;&#8595;, then &#9633;&#9651;&#9675;&#10005; (X, Y, B, A)</dd>
           <dt>L3 (left stick click)</dt><dd>the loop length: the whole page &rarr; 8 &rarr; 4 &rarr; whole again</dd>
           <dt>R3 (right stick click)</dt><dd>the roll: the page drawn or written</dd>
-          <dt>&#9633; (X), bare</dt><dd>clear the step</dd>
+          <dt>&#9633; (X), bare</dt><dd>clear the step, and on two steps as a note does</dd>
           <dt>&#9675; (B), bare</dt><dd>back to step 1</dd>
           <dt>&#9651; (Y), bare</dt><dd>the other voice &mdash; in absolute entry, where it is free. In relative entry &#9651; is a move, so the voice lives on the settings crossbar's &#8592; and &#8594;; the crossbar has it in either method</dd>
           <dt>L1, R1 (LB, RB)</dt><dd>base octave down, up</dd>
@@ -594,10 +594,10 @@
           <dt>&hellip; its eight slots</dt><dd>&#8593; &#8595; the workspace, walked in the left margin &middot; &#8592; &#8594; the voice, round the ring &middot; &#9633; solo &middot; &#9651; mute &middot; &#9675; close &middot; &#10005; the entry method</dd>
           <dt>&hellip; &#8593; and &#8595; there</dt><dd>the highlight moves down the workspaces in the left margin and you are already in the one it is on &mdash; nothing to confirm, and no list opened first. Hold to walk. Free play is the first line, the drills the last</dd>
           <dt>&hellip; what is not there</dt><dd>the key page (F1, and R3 off it), the quest log (F3), the view (R3, F2), and the names on the drawing (K). None of them has a slot: all eight are spoken for</dd>
-          <dt>d&#8209;pad, bare</dt><dd>any direction moves the cursor; hold to repeat. In the roll the drawing decides: &#8592;&#8594; are time, &#8593;&#8595; nudge the note under the cursor a step of the key</dd>
+          <dt>d&#8209;pad, bare</dt><dd>any direction moves the cursor one step; hold to repeat. One step back, then a note, is how a sixteenth is placed. In the roll the drawing decides: &#8592;&#8594; are time, &#8593;&#8595; nudge the note under the cursor a step of the key</dd>
           <dt>left stick</dt><dd>the same, up and down only; in the roll, both axes</dd>
           <dt>right stick</dt><dd>the cursor by fours, beat to beat</dd>
-          <dt>in relative entry</dt><dd>&#9651; (Y) up one step of the key, &#10005; (A) down one, &#9675; (B) the same note again, &#9633; (X) a rest; each writes and advances</dd>
+          <dt>in relative entry</dt><dd>&#9651; (Y) up one step of the key, &#10005; (A) down one, &#9675; (B) the same note again, &#9633; (X) a rest; each writes and goes on two steps, an eighth</dd>
           <dt>&hellip; hold L1 or R1</dt><dd>the move leaps: L1 (LB) a third, R1 (RB) a fifth, both together a semitone, out of the key; tapped alone they are still the octave</dd>
           <dt>&hellip; d&#8209;pad &#8592;&#8594;</dt><dd>nudge the note under the cursor a step of the key, without advancing (in the roll this lives on &#8593;&#8595;, in either method)</dd>
           <dt>here, d&#8209;pad &#8592;&#8594;</dt><dd>the tonic; &#9651; or &#10005; (Y, A) make the key major or minor</dd>
@@ -605,7 +605,7 @@
           <dt>in the quest log</dt><dd>d&#8209;pad up, down choose a quest; &#10005; (A) opens its page, or returns to free play if you are in it already; &#9675; (B) marks it complete; R3 closes</dd>
           <dt>on the key page</dt><dd>R3 closes it, as it closes the quest log</dd>
         </dl>
-        <p>The cross hotbar, borrowed: a trigger raises the eight slots, letting go gives the d&#8209;pad back to navigation. Twenty&#8209;four semitones, every pitch of two octaves, counted up from the octave in the header; entry advances and sounds the note as on the keyboard. A DualSense and an Xbox pad report the same positions. A browser notices a pad only after you press one of its buttons: press start if nothing answers &mdash; the settings crossbar coming up is the pad saying hello. Sound may wait for one keyboard touch.</p>
+        <p>The cross hotbar, borrowed: a trigger raises the eight slots, letting go gives the d&#8209;pad back to navigation. Twenty&#8209;four semitones, every pitch of two octaves, counted up from the octave in the header; entry goes on two steps &mdash; an eighth, as on the keyboard &mdash; and sounds the note. A DualSense and an Xbox pad report the same positions. A browser notices a pad only after you press one of its buttons: press start if nothing answers &mdash; the settings crossbar coming up is the pad saying hello. Sound may wait for one keyboard touch.</p>
         <p>Bare, the face buttons act alone as in the game &mdash; &#9633; clears and &#9675; returns to the top; raise a trigger and all four are notes again.</p>
         <p>Relative entry changes only the bare face buttons, and only what they mean while you write: you give the shape &mdash; up, down, again, rest &mdash; and the page keeps ordinary notes, as always. A move is one step of the key shown in the header, counted from the last note that sounds before the cursor; rests are stepped over, and the search wraps around the loop. An empty page begins on the tonic. A note that lies outside the key moves first to the nearest note of the key in the direction you asked, and that counts as the step. The crossbar is untouched: hold a trigger in either method and the eight slots are absolute pitches again. Set the key on this page.</p>
       </div>
@@ -1498,7 +1498,18 @@
   requestAnimationFrame(frame);
 
   /* ================= editing ================= */
-  function advance(){ cursor = (cursor + 1) % STEPS; renderCursor(); }
+  /* ---- what "next" means after writing ----
+     A step is a sixteenth, so a bar is the sixteen of the page. Almost
+     everything written here is thought in eighths, so that is what entry
+     assumes: writing a note (or a rest) leaves the cursor two steps on, and
+     a run of entries lays notes on 1, 3, 5, 7 … without anyone counting.
+     A sixteenth is still there and costs one deliberate movement — step back
+     with an arrow (or the d-pad, or the stick) and write. Nothing is snapped
+     and nothing is aligned to a grid: it is two from wherever the cursor is,
+     and it wraps around the page exactly as the arrows do. Moving the cursor
+     by hand is untouched, and still one step at a time. */
+  var ADVANCE = 2;
+  function advance(){ cursor = (cursor + ADVANCE) % STEPS; renderCursor(); }
   /* every edit lands in the voice the hands are in, and nowhere else */
   function setStep(i, v){ vsteps(voice)[i] = v; renderNotes(); save(); }
 

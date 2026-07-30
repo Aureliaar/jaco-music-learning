@@ -213,7 +213,7 @@ stage();
 frames(3, [GP.X]);                    /* \u2715 edges bare: one step down */
 eq("\u2715 alone wrote a bare step down", wrote(), "B3");
 frames(3, [GP.X, GP.L1]);             /* L1 arrives late — no new edge on \u2715 */
-eq("a bumper arriving after \u2715 writes nothing more", T.doc.steps[1], null);
+eq("a bumper arriving after \u2715 writes nothing more", T.doc.steps[2], null);
 frames(2, [GP.X]);                    /* L1 released while \u2715 still down */
 eq("and the unused bumper is still the octave, downward", oct(), 3);
 stage();
@@ -237,7 +237,8 @@ stage(); frame([GP.TR, GP.X]); frames(3, []);
 eq("\u25b3 and \u2715 on one frame: \u25b3 wins, a step up", wrote(), "D4");
 stage(); frames(3, [GP.L1]); frame([GP.L1, GP.TR, GP.X]); frames(3, []);
 eq("with L1 held, \u25b3 still wins: a third up", wrote(), "E4");
-eq("and only one note was written", T.doc.cursor === undefined ? T.cursor : T.cursor, 1);
+/* entry goes on by two — the eighth — so one note leaves the cursor on 3 */
+eq("and only one note was written", T.doc.cursor === undefined ? T.cursor : T.cursor, 2);
 stage(); frames(3, [GP.R1]); frame([GP.R1, GP.TR, GP.X]); frames(3, []);
 eq("with R1 held, \u25b3 wins: a fifth up", wrote(), "G4");
 /* and the far more common case: \u2715 alone with a bumper is never read as \u25b3 */
@@ -277,7 +278,9 @@ frame([GP.L1, GP.X]); frames(2, [GP.L1]);
 frame([GP.L1, GP.X]); frames(2, [GP.L1]);
 frame([GP.L1, GP.X]); frames(2, [GP.L1]);
 frames(3, []);
-eq("three thirds down under one held L1", T.doc.steps.slice(0,3), ["A3","F3","D3"]);
+/* three writes, each two steps on: 1, 3, 5 */
+eq("three thirds down under one held L1",
+   [T.doc.steps[0], T.doc.steps[2], T.doc.steps[4]], ["A3","F3","D3"]);
 eq("and the release still does not shift the octave", oct(), 4);
 
 console.log("\n== the ugly one: the bumper let go on the very frame \u2715 edges ==");
