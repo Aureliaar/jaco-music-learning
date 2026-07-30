@@ -1738,16 +1738,36 @@ async function syncLive(){
   eq("a static copy never writes home", calls.length, 0);
   ok("but it does save locally", (store[T.QUEST_KEY] || "").length > 0);
 
-  /* a browser with something of its own is never overwritten by the seed */
+  /* ---- a returning visitor: the published work is what they get ----
+     These two checks used to assert the opposite — that a browser with
+     something of its own was never seeded over — which was an older design
+     the source has since deliberately replaced (see the comment above
+     goStatic and the paragraph on the key page). The shared copy is a
+     showcase: the point of it is that whoever opens it hears what was
+     published rather than whatever their browser kept from last time. So the
+     seed is read on every visit and replaces the local cache. A visitor may
+     still play with the page for the rest of the session; a reload returns
+     to the published work. syncBoot weighs no freshness and takes no
+     argument. */
   qreset();
   T.staticMode = false; T.syncState = "idle";
   page({0:"D4"}); T.save();
+  ok("the visitor has work of their own in the local cache",
+     /"D4"/.test(store[T.QUEST_KEY] || ""), store[T.QUEST_KEY]);
   calls.length = 0;
-  T.syncBoot(false);
+  T.syncBoot();
   await settle();
   ok("a returning visitor still lands in static mode", T.staticMode === true);
-  eq("but no seed is read over their work", calls.map(c => c.url), ["api/quest-log"]);
-  eq("and their page is still there", T.doc.steps[0], "D4");
+  eq("and the seed is read again on this visit too", calls.map(c => c.url),
+     ["api/quest-log", "quests/quest-log.json"]);
+  eq("the published work replaces what their browser kept", T.qActive, "summit");
+  eq("its page is what is on screen", T.doc.steps[2], "E5");
+  eq("and the published free play came with it", T.wsFree.steps[0], "G4");
+  ok("so their own edit is not on the page any more",
+     T.doc.steps[0] !== "D4" && T.wsFree.steps[0] !== "D4",
+     [T.doc.steps[0], T.wsFree.steps[0]]);
+  ok("the copy still never writes home", T.syncOn === false);
+  eq("and it booted cleanly — the sync is not in a failed state", T.syncState, "idle");
 
   /* a host that answers every path with the page itself */
   qreset();
