@@ -25,7 +25,10 @@ function mkEl(tag){
     insertBefore(c, ref){ const i = ref ? el.children.indexOf(ref) : -1;
       if (i >= 0) el.children.splice(i, 0, c); else el.children.push(c); return c; },
     removeChild(c){ const i=el.children.indexOf(c); if(i>=0) el.children.splice(i,1); },
-    addEventListener(){}, click(){}, setAttribute(){}
+    addEventListener(){}, click(){},
+    setAttribute(k, v){ el._attrs = el._attrs || {}; el._attrs[k] = String(v); },
+    getAttribute(k){ return (el._attrs && k in el._attrs) ? el._attrs[k] : null; },
+    querySelectorAll(){ return []; }
   };
   return el;
 }
@@ -34,7 +37,8 @@ const ids = {};
  "roll","rollfield","rollbase",
  "qfree","qfreesigil","qdname","qdtext","qdteach","qdstate","qpreview",
  "railquests","railtitle","railtext","railteach","railstate",
- "settings","xbarpad","xbarface","voices","vname0","vname1","vmark0","vmark1"].forEach(i=>ids[i]=mkEl("div"));
+ "settings","xbarpad","xbarface","voices","vname0","vname1","vmark0","vmark1",
+ "scenery"].forEach(i=>ids[i]=mkEl("div"));
 let keyHandler = null;
 const document = {
   getElementById: i => (i in ids ? ids[i] : null),

@@ -37,6 +37,23 @@
     justify-content:center;
     -webkit-font-smoothing:antialiased;
   }
+  /* A still landscape may sit behind the folio.  Paper remains the default;
+     both scenic choices are deliberately veiled here as a second, code-level
+     guard against glare and busy detail. */
+  body[data-scenery="forest"]{
+    background-image:
+      linear-gradient(rgba(18,31,27,0.30),rgba(18,31,27,0.42)),
+      url("folio-forest.png");
+    background-size:cover;
+    background-position:center;
+  }
+  body[data-scenery="sea"]{
+    background-image:
+      linear-gradient(rgba(30,42,55,0.24),rgba(30,42,55,0.35)),
+      url("folio-sea.png");
+    background-size:cover;
+    background-position:center;
+  }
   /* No animation anywhere. This block is belt-and-braces. */
   *,*::before,*::after{animation:none !important;}
   @media (prefers-reduced-motion:reduce){
@@ -48,6 +65,31 @@
     display:flex;
     flex-direction:column;
     align-items:center;
+    position:relative;
+    z-index:1;
+    isolation:isolate;
+  }
+  /* ---- the sheet ----
+     On scenery the folio lies on the scene as a physical page: folio-paper.png
+     is the ground colour with a deckled boundary torn by noise (a mottled
+     cloud for the wander of the tear, a fibrous sheet for the fray itself,
+     baked offline — see the paper trail in the commit). The image is only
+     referenced inside the scenery selector, so plain paper never fetches it. */
+  main::before{
+    content:"";
+    position:absolute;
+    inset:-3rem -3.6rem;
+    z-index:-1;
+    background:none;
+    opacity:0;
+    pointer-events:none;
+  }
+  body:not([data-scenery="paper"]) main::before{
+    opacity:1;
+    background-image:url("folio-paper.png");
+    background-size:100% 100%;
+    /* the shadow follows the torn contour, not a rectangle */
+    filter:drop-shadow(0 0.4rem 1.4rem rgba(12,17,15,0.38));
   }
 
   /* ---- header ---- */
@@ -506,6 +548,112 @@
      than squeezing the page */
   @media (max-width:80rem){ .rail{display:none;} }
 
+  /* On scenery the margins do not get paper of their own: one sheet on the
+     scene is a folio, three sheets are a pinboard. The marginalia instead
+     live in the scene itself — the ink turns pale, and a soft darkening
+     breath behind the words (a scrim, not a panel: borderless, elliptical,
+     gone at its own edges) buys the contrast back from the photograph. */
+  body:not([data-scenery="paper"]) .rail{
+    --ink:#EDE5D2;
+    --faded:rgba(236,229,212,0.66);
+    --rule:rgba(236,229,212,0.30);
+    --gilt:#D9BA6E;
+    --wash:rgba(236,229,212,0.16);
+    top:50%;
+    bottom:auto;
+    width:16.5rem;
+    max-height:calc(100vh - 2rem);
+    box-sizing:border-box;
+    transform:translateY(-50%);
+    padding:1.35rem 1.3rem;
+    overflow:visible;
+    isolation:isolate;
+    background:transparent;
+  }
+  body:not([data-scenery="paper"]) .rail::before{
+    content:"";
+    position:absolute;
+    inset:-3rem -3.2rem;
+    z-index:-1;
+    background:radial-gradient(ellipse closest-side at center,
+      rgba(13,18,16,0.42) 0%,
+      rgba(13,18,16,0.36) 40%,
+      rgba(13,18,16,0.24) 64%,
+      rgba(13,18,16,0.12) 82%,
+      rgba(13,18,16,0.04) 93%,
+      rgba(13,18,16,0) 100%);
+    pointer-events:none;
+  }
+  body:not([data-scenery="paper"]) .rail.left{left:0.6rem;}
+  body:not([data-scenery="paper"]) .rail.right{right:0.6rem;}
+
+  /* Scenery is outside the pad crossbar: all eight of its slots keep their
+     musical meanings.  This small, still control answers pointer users;
+     Shift+B gives the keyboard the same three-way cycle. */
+  .scenery{
+    position:fixed;
+    top:0.9rem;
+    right:1rem;
+    z-index:4;
+    display:flex;
+    align-items:center;
+    gap:0.15rem;
+    margin:0;
+    padding:0.28rem 0.34rem;
+    border:0;
+    background:transparent;
+    color:var(--faded);
+    font:inherit;
+    font-size:0.72rem;
+  }
+  /* on scenery the control takes the margins' treatment: pale ink over a
+     small darkening breath of its own, never a panel */
+  body:not([data-scenery="paper"]) .scenery{
+    --ink:#EDE5D2;
+    --faded:rgba(236,229,212,0.62);
+    --gilt:#D9BA6E;
+  }
+  body:not([data-scenery="paper"]) .scenery::before{
+    content:"";
+    position:absolute;
+    inset:-1.3rem -1.7rem;
+    z-index:-1;
+    background:radial-gradient(ellipse closest-side at center,
+      rgba(13,18,16,0.40) 0%,
+      rgba(13,18,16,0.33) 44%,
+      rgba(13,18,16,0.20) 68%,
+      rgba(13,18,16,0.09) 85%,
+      rgba(13,18,16,0) 100%);
+    pointer-events:none;
+  }
+  .scenery span{
+    padding:0 0.36rem 0 0.28rem;
+    font-variant:small-caps;
+    letter-spacing:0.12em;
+  }
+  .scenery button{
+    appearance:none;
+    border:0;
+    border-radius:999px;
+    background:transparent;
+    color:var(--faded);
+    padding:0.24rem 0.48rem 0.3rem;
+    font:inherit;
+    cursor:pointer;
+  }
+  .scenery button[aria-pressed="true"]{
+    background:transparent;
+    color:var(--ink);
+  }
+  .scenery button:focus-visible{outline:1px solid var(--gilt);outline-offset:2px;}
+  @media (max-width:44rem){
+    /* the deckle bites about 2rem in at its deepest: the sheet may narrow on
+       a small screen, but never so far that the tear reaches the words */
+    main::before{inset:-2.4rem -1.2rem;}
+    .scenery{top:0.45rem;right:0.45rem;}
+    .scenery span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}
+  }
+
   /* ---- footer ---- */
   footer{
     width:100%;
@@ -518,7 +666,7 @@
   .hidden-input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;left:-9999px;}
 </style>
 </head>
-<body>
+<body data-scenery="paper">
 <main>
   <header>
     <h1>Folio</h1>
@@ -562,6 +710,7 @@
           <dt>F1</dt><dd>close this page of the key</dd>
           <dt>F3</dt><dd>open or close the quest log</dd>
           <dt>F4</dt><dd>the pad's entry method: relative (contour) or absolute</dd>
+          <dt>shift + B</dt><dd>the quiet background: paper &rarr; forest &rarr; sea</dd>
           <dt>escape</dt><dd>closes whichever page is up, the pad's settings crossbar included</dd>
           <dt>the arrows, here</dt><dd>the key of the piece: left, right move the tonic; up, down make it major or minor</dd>
           <dt>here, the two keys left of backspace</dt><dd>the tempo, down and up by four (60&ndash;180); with shift, by one</dd>
@@ -661,6 +810,12 @@
   <div class="rteach" id="railteach"></div>
   <div class="rstate" id="railstate"></div>
 </aside>
+<div class="scenery" id="scenery" role="group" aria-label="background scenery">
+  <span aria-hidden="true">scenery</span>
+  <button type="button" data-scene="paper" aria-pressed="true">paper</button>
+  <button type="button" data-scene="forest" aria-pressed="false">forest</button>
+  <button type="button" data-scene="sea" aria-pressed="false">sea</button>
+</div>
 <input type="file" id="picker" class="hidden-input" accept=".json,.folio,application/json" tabindex="-1">
 
 <script>
@@ -672,6 +827,7 @@
   var NAMES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
   var STORE_KEY = "folio.v1";
   var LEGACY_KEY = "folio.v0";
+  var SCENERY_KEY = "folio.scenery.v1";
   /* files written by the short-lived rhythm-mark experiment carry "x" entries;
      they are read and dropped, never written */
   var LEGACY_MARK = "x";
@@ -888,7 +1044,31 @@
   var railtext  = document.getElementById("railtext");
   var railteach = document.getElementById("railteach");
   var railstate = document.getElementById("railstate");
+  var sceneryEl = document.getElementById("scenery");
+  var sceneryButtons = sceneryEl.querySelectorAll("button[data-scene]");
   var picker = document.getElementById("picker");
+
+  /* The landscape is a preference, not part of a musical document: changing
+     workspace, importing a folio, or sharing a quest never changes it. */
+  var SCENERIES = ["paper", "forest", "sea"];
+  function setScenery(scene, quiet){
+    if (SCENERIES.indexOf(scene) < 0) scene = "paper";
+    document.body.setAttribute("data-scenery", scene);
+    for (var si = 0; si < sceneryButtons.length; si++)
+      sceneryButtons[si].setAttribute("aria-pressed",
+        sceneryButtons[si].getAttribute("data-scene") === scene ? "true" : "false");
+    try { localStorage.setItem(SCENERY_KEY, scene); } catch (e){}
+    if (!quiet) say("scenery · " + scene);
+  }
+  function cycleScenery(){
+    var here = document.body.getAttribute("data-scenery") || "paper";
+    setScenery(SCENERIES[(SCENERIES.indexOf(here) + 1) % SCENERIES.length]);
+  }
+  for (var si = 0; si < sceneryButtons.length; si++){
+    sceneryButtons[si].addEventListener("click", function(){
+      setScenery(this.getAttribute("data-scene"));
+    });
+  }
 
   var rows = [];
   for (var i = 0; i < STEPS; i++){
@@ -2592,6 +2772,9 @@
     if (code === "F3"){ e.preventDefault(); toggleQuests(); return; }
     /* the pad's entry method, from either hand */
     if (code === "F4"){ e.preventDefault(); toggleRelative(); return; }
+    if (e.shiftKey && code === "KeyB"){
+      e.preventDefault(); cycleScenery(); return;
+    }
 
     /* tab is the other voice — the one key that changes which line the hands
        are in. It is swallowed either way, so focus never wanders off the page,
@@ -2989,6 +3172,9 @@
   try { if (localStorage.getItem(VIZ_KEY) === "column") viz = "column"; } catch (e){}
   try { if (localStorage.getItem(ENTRY_KEY) === "relative") relative = true; } catch (e){}
   try { if (localStorage.getItem(NAMES_KEY) === "off") showNames = false; } catch (e){}
+  var savedScenery = "paper";
+  try { savedScenery = localStorage.getItem(SCENERY_KEY) || "paper"; } catch (e){}
+  setScenery(savedScenery, true);
   applyViz();
   applyNames();
   renderAll();

@@ -6,6 +6,9 @@
      folio.html              -> dist/index.html
      auditor.html            -> dist/auditor.html            (the blind lineup)
      quests/quest-log.json   -> dist/quests/quest-log.json   (the seed)
+     folio-forest.png        -> dist/folio-forest.png        (quiet scenery)
+     folio-sea.png           -> dist/folio-sea.png           (quiet scenery)
+     folio-paper.png         -> dist/folio-paper.png         (the torn sheet)
 
    Everything else — CURRICULUM.md, QUESTS.md, BUDGET.md, SPEC-LESSON-0.md,
    server.mjs — stays here. Run it with plain Node, no dependencies:
@@ -22,6 +25,9 @@ const DIST = path.join(ROOT, "dist");
 const FILES = [
   ["folio.html", "index.html"],
   ["auditor.html", "auditor.html"],
+  ["folio-forest.png", "folio-forest.png"],
+  ["folio-sea.png", "folio-sea.png"],
+  ["folio-paper.png", "folio-paper.png"],
   ["quests/quest-log.json", "quests/quest-log.json"]
 ];
 

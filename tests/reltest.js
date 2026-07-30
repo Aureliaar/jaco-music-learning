@@ -13,6 +13,7 @@ const src = html.slice(html.indexOf("<script>") + 8, html.lastIndexOf("</script>
 /* ---------- fake dom ---------- */
 function mkEl(tag){
   const set = new Set();
+  const attrs = {};
   const el = {
     tagName: tag, children: [], style: {}, textContent: "", value: "", files: null,
     get className(){ return [...set].join(" "); },
@@ -26,7 +27,12 @@ function mkEl(tag){
     insertBefore(c, ref){ const i = ref ? el.children.indexOf(ref) : -1;
       if (i >= 0) el.children.splice(i, 0, c); else el.children.push(c); return c; },
     removeChild(c){ const i=el.children.indexOf(c); if(i>=0) el.children.splice(i,1); },
-    addEventListener(){}, click(){}, setAttribute(){}
+    addEventListener(){}, click(){},
+    setAttribute(k, v){ attrs[k] = String(v); },
+    getAttribute(k){ return (k in attrs) ? attrs[k] : null; },
+    /* enough of a selector engine for the app: it only ever asks an element
+       for descendants, and the fake tree is flat, so children suffice */
+    querySelectorAll(){ return []; }
   };
   return el;
 }
@@ -35,7 +41,8 @@ const ids = {};
  "roll","rollfield","rollbase",
  "qfree","qfreesigil","qdname","qdtext","qdteach","qdstate","qpreview",
  "railquests","railtitle","railtext","railteach","railstate",
- "settings","xbarpad","xbarface","voices","vname0","vname1","vmark0","vmark1"].forEach(i=>ids[i]=mkEl("div"));
+ "settings","xbarpad","xbarface","voices","vname0","vname1","vmark0","vmark1",
+ "scenery"].forEach(i=>ids[i]=mkEl("div"));
 let keyHandler = null;
 const document = {
   getElementById: i => (i in ids ? ids[i] : null),
@@ -174,6 +181,8 @@ const hook = `
       wsDoc = {}; wsFree = null; doc = workspaceDoc(null);
       renderAll(); renderQuests(); renderMeta(); },
     exportJSON: function(){ return JSON.stringify(doc); },
+    setScenery: _g("setScenery"), cycleScenery: _g("cycleScenery"),
+    SCENERY_KEY: _g("SCENERY_KEY"), SCENERIES: _g("SCENERIES"),
     STORE_KEY: STORE_KEY, LEGACY_KEY: LEGACY_KEY, NOTE_KEYS: NOTE_KEYS };
   window.__probe = function(n){ try { return eval(n); } catch(e){ return "__undefined__"; } };
 `;
@@ -2693,6 +2702,26 @@ ok("the user's own melodies are still in the file",
 ok("and the app reads that file back whole", T.applyState(diskLog));
 ok("with the drill in the list", T.drillById("drill-itch") !== null);
 qreset();
+
+/* ================= scenery: the quiet background ================= */
+console.log("\n== scenery ==");
+ok("the scenery ring is paper, forest, sea", JSON.stringify(T.SCENERIES) === '["paper","forest","sea"]', T.SCENERIES);
+eq("paper is the default", document.body.getAttribute("data-scenery"), "paper");
+key("KeyB", { shiftKey:true });
+eq("shift+B walks to the forest", document.body.getAttribute("data-scenery"), "forest");
+eq("and the preference is kept under its own key", store[T.SCENERY_KEY], "forest");
+key("KeyB", { shiftKey:true });
+eq("then to the sea", document.body.getAttribute("data-scenery"), "sea");
+key("KeyB", { shiftKey:true });
+eq("and home to paper — a ring", document.body.getAttribute("data-scenery"), "paper");
+key("KeyB");
+eq("bare B is still a note, not the background", document.body.getAttribute("data-scenery"), "paper");
+eq("(the G it has always been)", T.doc.steps[T.cursor - 2], "G4");
+T.setScenery("attic");
+eq("an unknown scene falls back to paper", document.body.getAttribute("data-scenery"), "paper");
+ok("the scenery is a preference, not part of the page",
+   T.exportJSON().indexOf("scenery") < 0 && JSON.stringify(T.stateToJSON()).indexOf("scenery") < 0);
+T.setScenery("paper");
 
 console.log("\n== the server itself ==");
 const srv = fs.readFileSync(REPO + "/server.mjs", "utf8");

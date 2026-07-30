@@ -26,7 +26,8 @@ function freePort(start){
   });
 }
 
-const MIME = { ".html":"text/html; charset=utf-8", ".json":"application/json; charset=utf-8" };
+const MIME = { ".html":"text/html; charset=utf-8", ".json":"application/json; charset=utf-8",
+               ".png":"image/png" };
 const seen = [];
 
 (async function(){
@@ -40,7 +41,7 @@ const seen = [];
      instrument, the blind lineup page, and the seed — and nothing else */
   ok("dist holds the pages and the seed and nothing else",
      JSON.stringify(listed) === JSON.stringify(
-       ["auditor.html","index.html","quests/quest-log.json"]), listed);
+       ["auditor.html","folio-forest.png","folio-paper.png","folio-sea.png","index.html","quests/quest-log.json"]), listed);
   for (const secret of ["BUDGET.md","CURRICULUM.md","QUESTS.md","SPEC-LESSON-0.md","server.mjs"])
     ok("the deploy leaves " + secret + " at home", !listed.includes(secret));
 
@@ -88,6 +89,55 @@ const seen = [];
   ok("and then for the committed log",
      seen.some(s => s === "GET /quests/quest-log.json"), seen);
 
+  console.log("\n== quiet scenery ==");
+  ok("paper is the calm default",
+     (await b.eval("document.body.getAttribute('data-scenery')")) === "paper");
+  await b.key("KeyB", { key:"B", vk:66, shift:true });
+  await wait(250);
+  ok("shift+B reaches the forest",
+     (await b.eval("document.body.getAttribute('data-scenery')")) === "forest");
+  ok("the forest image is requested only when chosen",
+     seen.some(s => s === "GET /folio-forest.png"), seen);
+  ok("and the torn sheet arrives with it",
+     seen.some(s => s === "GET /folio-paper.png"), seen);
+  ok("the scenery preference is kept apart from the folio",
+     (await b.eval("localStorage.getItem('folio.scenery.v1')")) === "forest");
+  const railPanels = await b.eval(`(function(){
+    return Array.from(document.querySelectorAll('.rail')).map(function(el){
+      var r=el.getBoundingClientRect(),s=getComputedStyle(el),p=getComputedStyle(el,'::before');
+      return {top:r.top,bottom:r.bottom,viewport:innerHeight,left:r.left,right:r.right,
+              height:r.height,client:el.clientHeight,scroll:el.scrollHeight,
+              background:s.backgroundColor,image:s.backgroundImage,shadow:s.boxShadow,overflow:s.overflow,
+              fade:p.backgroundImage,
+              mainFade:getComputedStyle(document.querySelector('main'),'::before').backgroundImage};
+    });
+  })()`);
+  ok("the edge copy sits bounded in the scene, on no panel of its own",
+     railPanels.every(r => r.top > 0 && r.bottom < r.viewport && r.image === "none"), railPanels);
+  ok("the rails breathe a borderless darkening scrim, and the folio is the torn sheet",
+     railPanels.every(r => r.background === "rgba(0, 0, 0, 0)" && r.shadow === "none" &&
+       /^radial-gradient/.test(r.fade) && r.fade.indexOf("closest-side") >= 0 &&
+       r.mainFade.indexOf("folio-paper.png") >= 0), railPanels);
+  ok("neither rail fade clips its copy",
+     railPanels.every(r => r.overflow === "visible"), railPanels);
+  const sceneryStyle = await b.eval(`(function(){
+    var el=document.getElementById('scenery'),s=getComputedStyle(el);
+    return {border:s.borderTopWidth,box:s.backgroundImage,
+            scrim:getComputedStyle(el,'::before').backgroundImage,
+            selected:getComputedStyle(el.querySelector('[aria-pressed=true]')).backgroundColor};
+  })()`);
+  ok("the scenery control has no hard panel edge either",
+     sceneryStyle.border === "0px" && sceneryStyle.box === "none" &&
+     /^radial-gradient/.test(sceneryStyle.scrim) &&
+     sceneryStyle.scrim.indexOf("closest-side") >= 0 &&
+     sceneryStyle.selected === "rgba(0, 0, 0, 0)", sceneryStyle);
+  await b.eval("document.querySelector('button[data-scene=sea]').click()");
+  await wait(250);
+  ok("the pointer control reaches the sea",
+     (await b.eval("document.body.getAttribute('data-scenery')")) === "sea");
+  ok("and says which choice is pressed",
+     (await b.eval("document.querySelector('button[data-scene=sea]').getAttribute('aria-pressed')")) === "true");
+
   const disk = JSON.parse(fs.readFileSync(REPO + "/quests/quest-log.json", "utf8"));
   const inPage = await b.eval("JSON.parse(localStorage.getItem('folio.quests.v2'))");
   ok("the committed quests are what the page holds",
@@ -132,6 +182,8 @@ const seen = [];
      [JSON.parse(after).free.steps.slice(0,2), JSON.parse(own).free.steps.slice(0,2)]);
   ok("and the seed was not fetched a second time",
      seen.filter(s => s === "GET /quests/quest-log.json").length === 1, seen);
+  ok("his scenery is still the sea",
+     (await b.eval("document.body.getAttribute('data-scenery')")) === "sea");
 
   clearInterval(drain);
   b.close();

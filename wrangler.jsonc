@@ -3,10 +3,11 @@
 //   node scripts/build.mjs      # produce ./dist (the page + the quest log)
 //   npx wrangler deploy         # put ./dist on https://folio.<subdomain>.workers.dev
 //
-// Only ./dist is deployed, and ./dist holds exactly three things: folio.html
-// as index.html, auditor.html (the blind lineup, served at /auditor.html), and
-// quests/quest-log.json. The curriculum, the études and the ledger stay in the
-// repository and are never published.
+// Only ./dist is deployed, and ./dist holds exactly the pages and their
+// stills: folio.html as index.html, auditor.html (the blind lineup, served at
+// /auditor.html), the two scenery photographs and the torn paper sheet, and
+// quests/quest-log.json. The curriculum, the études and the ledger stay in
+// the repository and are never published.
 //
 // `not_found_handling` is deliberately left at its default: an unknown path
 // must 404, because that 404 is how the page recognises a static host and

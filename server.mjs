@@ -1,8 +1,9 @@
 /* Folio — the local server.
 
    A tiny, dependency-free Node server so that the quest log can live in a
-   real file that agents, collaborators and backups can see. It serves
-   `folio.html` and exactly one resource: the quest log.
+   real file that agents, collaborators and backups can see. It serves the
+   root folio, its quiet scenery images and torn paper sheet, and the
+   quest log.
 
    Run it:   folio.cmd            (or)   node server.mjs
    Then go:  http://localhost:4173
