@@ -31,6 +31,15 @@ const FILES = [
   ["quests/quest-log.json", "quests/quest-log.json"]
 ];
 
+/* The local log is an actively edited workspace file. Its `done` flags are
+   allowed to reflect the open composing session, while the shared copy is a
+   showcase of the completions recorded in QUESTS.md. Apply those marks only
+   to dist so an open local tab cannot clobber the published archive. */
+const COMPLETED_QUESTS = [
+  "ladder", "whitespace", "summit", "stones", "ouroboros",
+  "callanswer", "stray", "shadow", "ostinato", "drone", "oilwater"
+];
+
 await fs.rm(DIST, { recursive: true, force: true });
 await fs.mkdir(DIST, { recursive: true });
 
@@ -47,4 +56,12 @@ for (const [from, to] of FILES){
   await fs.copyFile(src, dst);
   console.log("  " + from + " -> dist/" + to);
 }
+
+const sharedLogPath = path.join(DIST, "quests", "quest-log.json");
+const sharedLog = JSON.parse(await fs.readFile(sharedLogPath, "utf8"));
+for (const id of COMPLETED_QUESTS){
+  if (sharedLog.quests?.[id]) sharedLog.quests[id].done = true;
+}
+await fs.writeFile(sharedLogPath, JSON.stringify(sharedLog, null, 2) + "\n", "utf8");
+console.log("  marked " + COMPLETED_QUESTS.length + " completed quests in the shared snapshot");
 console.log("dist/ is ready");

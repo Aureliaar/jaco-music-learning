@@ -193,11 +193,15 @@ const seen = [];
      (await b.eval("document.querySelector('button[data-scene=sea]').getAttribute('aria-pressed')")) === "true");
 
   const disk = JSON.parse(fs.readFileSync(REPO + "/quests/quest-log.json", "utf8"));
+  const sharedDisk = JSON.parse(fs.readFileSync(DIST + "/quests/quest-log.json", "utf8"));
   const inPage = await b.eval("JSON.parse(localStorage.getItem('folio.quests.v2'))");
   ok("the committed quests are what the page holds",
      JSON.stringify(Object.keys(inPage.quests || {}).sort()) ===
-     JSON.stringify(Object.keys(disk.quests || {}).sort()),
-     [Object.keys(inPage.quests||{}), Object.keys(disk.quests||{})]);
+     JSON.stringify(Object.keys(sharedDisk.quests || {}).sort()),
+     [Object.keys(inPage.quests||{}), Object.keys(sharedDisk.quests||{})]);
+  ok("the shared snapshot marks all eleven documented completions",
+     Object.values(inPage.quests || {}).filter(q => q.done).length === 11,
+     Object.entries(inPage.quests || {}).filter(([,q]) => q.done).map(([id]) => id));
   const firstQuest = Object.keys(disk.quests || {})[0];
   if (firstQuest){
     const a = JSON.stringify((disk.quests[firstQuest].pattern || disk.quests[firstQuest].motif || {}).steps);
@@ -227,15 +231,19 @@ const seen = [];
   ok("still no runtime errors", errors.length === 0, errors);
 
   console.log("\n== he comes back tomorrow ==");
-  const own = await b.eval("localStorage.getItem('folio.quests.v2')");
+  await b.eval(`(function(){
+    var stale=JSON.parse(localStorage.getItem('folio.quests.v2'));
+    stale.free.title='visitor-only stale copy';
+    localStorage.setItem('folio.quests.v2',JSON.stringify(stale));
+  })()`);
   await b.goto(BASE + "/");
   await wait(1200);
   const after = await b.eval("localStorage.getItem('folio.quests.v2')");
-  ok("his own work is what he finds, not the seed again",
-     JSON.parse(after).free.steps[0] === JSON.parse(own).free.steps[0],
-     [JSON.parse(after).free.steps.slice(0,2), JSON.parse(own).free.steps.slice(0,2)]);
-  ok("and the seed was not fetched a second time",
-     seen.filter(s => s === "GET /quests/quest-log.json").length === 1, seen);
+  ok("the published showcase replaces his stale local copy",
+     JSON.parse(after).free.title === sharedDisk.free.title,
+     [JSON.parse(after).free.title, sharedDisk.free.title]);
+  ok("and the seed was fetched again",
+     seen.filter(s => s === "GET /quests/quest-log.json").length === 2, seen);
   ok("his scenery is still the sea",
      (await b.eval("document.body.getAttribute('data-scenery')")) === "sea");
 

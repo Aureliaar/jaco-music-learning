@@ -2595,11 +2595,12 @@
      case keeps writing as it always did.
 
      On a static host the folio becomes read-only towards the outside: it
-     never PUTs. It does read `quests/quest-log.json` once — the committed
-     copy that travels with the page — and only if this browser has nothing
-     of its own yet. So the pieces are there to hear on a first visit, and
-     from then on the visitor's own work lives in their own localStorage and
-     is never sent anywhere. The footer says so quietly. */
+     never PUTs. It reads `quests/quest-log.json` on every visit — the
+     committed showcase snapshot that travels with the page — and replaces
+     any older local cache with that shared copy. A visitor may still play
+     with the page for the rest of the session, but a reload returns to the
+     published work instead of hiding it behind stale localStorage. The
+     footer says so quietly. */
   function jsonish(r){
     var t = "";
     try { t = (r.headers && r.headers.get && r.headers.get("content-type")) || ""; }
@@ -2620,14 +2621,14 @@
       }, function(){});
     } catch (e){}
   }
-  function goStatic(fresh){
+  function goStatic(){
     staticMode = true;
     syncOn = false;                  /* nothing is ever pushed from here */
     syncState = "idle";
     syncTouch();
-    if (fresh) seedBoot();           /* only when this browser is empty */
+    seedBoot();                      /* the published snapshot always wins */
   }
-  function syncBoot(fresh){
+  function syncBoot(){
     syncOn = httpOrigin();
     if (!syncOn) return;
     if (typeof fetch !== "function"){ syncOn = false; return; }
@@ -2637,7 +2638,7 @@
         if (r.status === 404){
           /* server.mjs says so in JSON; a static host says it in HTML or text */
           if (jsonish(r)){ syncState = "ok"; pollStart(); }   /* no log yet: ours becomes it */
-          else goStatic(fresh);
+          else goStatic();
           return;
         }
         if (!r.ok){ syncState = "failed"; syncTouch(); return; }
@@ -3288,7 +3289,7 @@
   applyNames();
   renderAll();
   renderQuests();
-  syncBoot(!restored);               /* fresh browser? then a seed is allowed */
+  syncBoot();                         /* a static host always restores its showcase */
   if (!storageOK) say("autosave unavailable — export to keep your work");
   else if (restored)
     say("restored ‸ cursor row" + (activeQuest() ? " · ⚔ " + activeQuest().short : "") +
