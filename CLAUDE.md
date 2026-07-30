@@ -43,10 +43,11 @@ board + rules), `BUDGET.md` (HUD budget ledger) before proposing anything.
    no reload. To edit anything ELSE on disk: tell Luca to reload the tab
    FIRST (server wins on boot). To REMOVE a drill: edit file, then tab
    reload (client re-donates known defs otherwise).
-2. **Feature work is metered** by the HUD budget (BUDGET.md): Luca
-   reports the statusline $ delta per feature; quests/lessons grant funds.
-   Bug fixes and never-worked features are FREE (warranty). Music
-   feedback, theory, drills: free. Never build features unprompted.
+2. **Feature work is quest-metered** (BUDGET.md, revised 2026-07-31 —
+   the $ ledger is retired): 2 completed quests = 1 small feature; bigger
+   features cost proportionally more, judged honestly; a lesson pass
+   grants 1 feature of any size. Bug fixes, warranty, music feedback,
+   theory, drills: free. Never build features unprompted.
 3. **Keyboard = physical position only** (`KeyboardEvent.code`) — IT
    layout. Gamepad: FFXIV crossbar (triggers) for absolute, contour mode
    (face buttons, bumper leaps) for relative. Range C2–C6, MIDI 36–84.

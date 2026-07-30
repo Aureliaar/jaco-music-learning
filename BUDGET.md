@@ -1,10 +1,45 @@
-# HUD Budget Ledger
+# HUD Budget Ledger — RETIRED 2026-07-31
+
+**The $ ledger is closed.** Tracking statusline deltas became a headache
+that competed with composing. New economy, adopted 2026-07-31:
+
+- **2 completed quests = 1 small feature.** A bigger feature costs
+  proportionally more quests, judged honestly at request time. The
+  temptation to smuggle big asks through small framing is part of the
+  design — feel the pull, don't cheat it.
+- Still FREE, as always: bug fixes and warranty (anything that never
+  worked or shipped broken/mis-designed), music feedback, theory, drills,
+  transcription help, infra chores.
+- Lesson passes no longer grant $; a lesson pass grants **1 feature of
+  any size** (the lesson's own tool build remains part of the curriculum,
+  not billed against anything).
+- Quest completion still means: constraint met + survived the ten-loop
+  test. Honor system, as ever.
+
+Transition settlement (final, Luca's ruling 2026-07-31): the old $31
+balance + all unscored agent-delta leftovers collapse into exactly one
+funded feature and the books close. Bookings:
+- ⚔ ostinato → the scenery feature (1:1 transition pricing)
+- ⚔ the shadow → eighth-note auto-advance (1:1 transition pricing)
+- old balance + unscored stuff → key-aware home lines in the roll
+**Standing balance: 0. Transition fully settled.** Quest completions
+from here on add at the 2-per-feature rate.
+
+Post-transition ledger (quests earned → features spent):
+| Date | Entry | Balance after |
+|------|-------|---------------|
+| 2026-07-31 | ⚔ oil and water closed (constraint verified: 9 coincident pairs, zero P1/P8/P15) | 1 quest credit |
+| 2026-07-31 | ⚔ the drone closed (contour-density version, 10+ loops; one pitch verified) | 2 quest credits = 1 small feature funded |
+
+The closed ledger below stands as history.
+
+---
 
 Append-only. One line per tool-work session. $ = API-equivalent cost from
 the statusline (delta from session start to session end), honor-system,
 rounded up to $0.50.
 
-**Balance: $11.00** (bootstrap $50 − $67 spent + $28 quest rewards: 7 of 8 L1 quests complete; Apprentice's Hand deferred to L3)
+**Balance at retirement: $31.00** (bootstrap $50 − $67 spent + $28 quest rewards + $20 L1 grant; Apprentice's Hand deferred to L3)
 
 Lesson 0 was ruled **free** (2026-07-27): the bootstrap was always meant to
 be gratis, and subagent usage isn't visible in the statusline anyway.
@@ -33,3 +68,4 @@ agent work is metered by the orchestrating session's statusline delta.
 | 2026-07-29 | reward | +4.00 | 14.00 | Quest complete: ⚔ Ouroboros (D minor, chromatic crawl at the seam) |
 | 2026-07-29 | reward | +4.00 | 18.00 | Quest complete: ⚔ The Ladder (all 7 of G major, hidden) |
 | 2026-07-29 | HUD | 7.00 | 11.00 | Auditor page: blind lineup listening, IT translation, deploy |
+| 2026-07-29 | grant | +20.00 | 31.00 | **Lesson 1 PASSED** — family verdict via the auditor lineup (grudging but real) |
