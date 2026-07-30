@@ -109,7 +109,10 @@ const seen = [];
               height:r.height,client:el.clientHeight,scroll:el.scrollHeight,
               background:s.backgroundColor,image:s.backgroundImage,shadow:s.boxShadow,overflow:s.overflow,
               fade:p.backgroundImage,
-              mainFade:getComputedStyle(document.querySelector('main'),'::before').backgroundImage};
+              /* the sheet moved off <main> and onto the working field alone:
+                 the title and the footer stand in the scene now */
+              mainFade:getComputedStyle(document.querySelector('.field'),'::before').backgroundImage,
+              onMain:getComputedStyle(document.querySelector('main'),'::before').backgroundImage};
     });
   })()`);
   ok("the edge copy sits bounded in the scene, on no panel of its own",
@@ -120,6 +123,57 @@ const seen = [];
        r.mainFade.indexOf("folio-paper.png") >= 0), railPanels);
   ok("neither rail fade clips its copy",
      railPanels.every(r => r.overflow === "visible"), railPanels);
+  ok("and <main> as a whole is no longer the sheet",
+     railPanels.every(r => r.onMain.indexOf("folio-paper.png") < 0), railPanels);
+
+  /* the title and the footer took the margins' treatment: off the sheet, in
+     the scene, pale ink over the same borderless breath */
+  const ends = await b.eval(`(function(){
+    var out = {};
+    ['header','footer'].forEach(function(sel){
+      var el = document.querySelector(sel), s = getComputedStyle(el),
+          p = getComputedStyle(el, '::before'),
+          f = document.querySelector('.field').getBoundingClientRect(),
+          r = el.getBoundingClientRect();
+      out[sel] = { background:s.backgroundColor, image:s.backgroundImage,
+                   border:s.borderTopWidth, shadow:s.boxShadow,
+                   scrim:p.backgroundImage,
+                   /* clear of the working field, which is what the sheet covers */
+                   clear: sel === 'header' ? r.bottom <= f.top : r.top >= f.bottom,
+                   ink:getComputedStyle(el.querySelector('h1,#footer') || el).color };
+    });
+    out.divider = getComputedStyle(document.querySelector('.divider')).display;
+    out.wash = getComputedStyle(document.querySelector('.field')).getPropertyValue('--wash').trim();
+    return out;
+  })()`);
+  ok("the title and the footer stand in the scene, on no sheet and no panel",
+     ['header','footer'].every(k => ends[k].background === "rgba(0, 0, 0, 0)" &&
+       ends[k].image === "none" && ends[k].shadow === "none" &&
+       ends[k].border === "0px" && ends[k].clear), ends);
+  ok("each breathes the same borderless darkening the margins do",
+     ['header','footer'].every(k => /^radial-gradient/.test(ends[k].scrim) &&
+       ends[k].scrim.indexOf("closest-side") >= 0 &&
+       /rgba\(13, 18, 16, 0\)/.test(ends[k].scrim)), ends);
+  ok("the rules that fenced them off are the torn edges now",
+     ends.divider === "none", ends.divider);
+  ok("the wash steps down with the darker sheet",
+     ends.wash.toUpperCase() === "#D9C9A8", ends.wash);
+  /* the ground is baked into the sheet, not written in CSS: read it back out
+     of the image the deploy actually carries (scripts/bake-paper.mjs) */
+  const ground = await b.eval(`(async function(){
+    const img = new Image(); img.src = "/folio-paper.png"; await img.decode();
+    const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
+    const g = c.getContext('2d', { willReadFrequently:true }); g.drawImage(img, 0, 0);
+    const d = g.getImageData(Math.round(img.width*0.3), Math.round(img.height*0.3),
+                             Math.round(img.width*0.4), Math.round(img.height*0.4)).data;
+    let s = [0,0,0], a = 0;
+    for (let i = 0; i < d.length; i += 4){ s[0]+=d[i]; s[1]+=d[i+1]; s[2]+=d[i+2]; a+=d[i+3]; }
+    const n = d.length / 4;
+    return { rgb:s.map(v => Math.round(v/n)), alpha:Math.round(a/n), w:img.width, h:img.height };
+  })()`);
+  ok("the sheet is whole inside and its ground a dab under the plain page's",
+     ground.alpha === 255 && ground.w === 1280 && ground.h === 1280 &&
+     ground.rgb.every((v, i) => Math.abs(v - [227,215,192][i]) <= 3), ground);
   const sceneryStyle = await b.eval(`(function(){
     var el=document.getElementById('scenery'),s=getComputedStyle(el);
     return {border:s.borderTopWidth,box:s.backgroundImage,

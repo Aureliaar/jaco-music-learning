@@ -69,22 +69,42 @@
     z-index:1;
     isolation:isolate;
   }
+  /* the working field: everything that is written in or read off the page.
+     On paper it is nothing at all — a transparent wrapper that changes no
+     spacing. On scenery it is what the torn sheet covers, the title and the
+     footer having stepped off it into the scene. */
+  .field{
+    width:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    position:relative;
+    isolation:isolate;
+    /* above the title's and the footer's breath, which are free to run under
+       the sheet's edge: the paper covers what it overlaps */
+    z-index:1;
+  }
   /* ---- the sheet ----
      On scenery the folio lies on the scene as a physical page: folio-paper.png
      is the ground colour with a deckled boundary torn by noise (a mottled
      cloud for the wander of the tear, a fibrous sheet for the fray itself,
-     baked offline — see the paper trail in the commit). The image is only
-     referenced inside the scenery selector, so plain paper never fetches it. */
-  main::before{
+     baked by scripts/bake-paper.mjs). The image is only referenced inside the
+     scenery selector, so plain paper never fetches it. */
+  .field::before{
     content:"";
     position:absolute;
-    inset:-3rem -3.6rem;
+    inset:-2.6rem -3.6rem;
     z-index:-1;
     background:none;
     opacity:0;
     pointer-events:none;
   }
-  body:not([data-scenery="paper"]) main::before{
+  /* the baked sheet's ground is one dab below the plain page's #EAE0CC, so
+     the flat wash that marks the playhead row (and the chosen quest, and the
+     head of a crossbar) steps down with it — the same distance under the
+     paper it lies on, or it stops being visible at all */
+  body:not([data-scenery="paper"]) .field{--wash:#D9C9A8;}
+  body:not([data-scenery="paper"]) .field::before{
     opacity:1;
     background-image:url("folio-paper.png");
     background-size:100% 100%;
@@ -587,6 +607,52 @@
   body:not([data-scenery="paper"]) .rail.left{left:0.6rem;}
   body:not([data-scenery="paper"]) .rail.right{right:0.6rem;}
 
+  /* The title and the footer take the marginalia's treatment rather than the
+     page's: on scenery they step off the sheet and stand in the scene, pale
+     ink over the same soft borderless breath, so that the torn sheet covers
+     exactly what is worked in and nothing else.
+
+     The scrim is the rails' gradient on a much wider, flatter ellipse — this
+     copy is a broad short band rather than a tall narrow one, so the dense
+     middle is wide and the fade has a long run before it meets the scenery.
+     It is denser than the rails': the rails sit halfway down, where both
+     scenes are dark anyway, while the title stands against the sea's bright
+     sky — the one place a pale ink can be lost. The ellipse is centred on the
+     copy rather than fitted to it, so that the last line of the meta is still
+     well inside the dense middle and not out on the fade. Where the breath
+     runs under the sheet, the sheet simply covers it. */
+  body:not([data-scenery="paper"]) header,
+  body:not([data-scenery="paper"]) footer{
+    --ink:#F4EEE1;
+    --faded:rgba(242,236,223,0.86);
+    --rule:rgba(242,236,223,0.30);
+    --gilt:#DCC077;
+    color:var(--faded);
+    position:relative;
+    isolation:isolate;
+  }
+  body:not([data-scenery="paper"]) header::before,
+  body:not([data-scenery="paper"]) footer::before{
+    content:"";
+    position:absolute;
+    inset:-3.6rem -6rem;
+    z-index:-1;
+    pointer-events:none;
+    background:radial-gradient(ellipse closest-side at center,
+      rgba(13,18,16,0.58) 0%,
+      rgba(13,18,16,0.56) 34%,
+      rgba(13,18,16,0.50) 55%,
+      rgba(13,18,16,0.37) 70%,
+      rgba(13,18,16,0.21) 82%,
+      rgba(13,18,16,0.08) 92%,
+      rgba(13,18,16,0) 100%);
+  }
+  body:not([data-scenery="paper"]) header{margin-bottom:3.2rem;}
+  body:not([data-scenery="paper"]) footer{margin-top:3.2rem;}
+  /* the two rules that fenced the title and the footer off from the work:
+     the sheet's own torn edges are that fence now */
+  body:not([data-scenery="paper"]) .divider{display:none;}
+
   /* Scenery is outside the pad crossbar: all eight of its slots keep their
      musical meanings.  This small, still control answers pointer users;
      Shift+B gives the keyboard the same three-way cycle. */
@@ -649,7 +715,13 @@
   @media (max-width:44rem){
     /* the deckle bites about 2rem in at its deepest: the sheet may narrow on
        a small screen, but never so far that the tear reaches the words */
-    main::before{inset:-2.4rem -1.2rem;}
+    .field::before{inset:-2.2rem -1.2rem;}
+    /* the breath must end inside the window, or its floor reads as a band
+       along the edge of the screen */
+    body:not([data-scenery="paper"]) header::before,
+    body:not([data-scenery="paper"]) footer::before{inset:-2.8rem -2.6rem;}
+    body:not([data-scenery="paper"]) header{margin-bottom:2.6rem;}
+    body:not([data-scenery="paper"]) footer{margin-top:2.6rem;}
     .scenery{top:0.45rem;right:0.45rem;}
     .scenery span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}
   }
@@ -675,6 +747,7 @@
   </header>
   <div class="divider"></div>
 
+  <div class="field" id="field">
   <div class="voices" id="voices" aria-label="the voices">
     <div><span class="vname" id="vname0">lead</span><span class="vmark" id="vmark0"></span></div>
     <div><span class="vname" id="vname1">bass</span><span class="vmark" id="vmark1"></span></div>
@@ -793,6 +866,7 @@
     </div>
     <p>Constraint &eacute;tudes, taken in any order and abandoned guiltlessly. Every quest is a workspace holding its own page &mdash; choosing one puts you in it, choosing it again returns to free play, and nothing is ever bound, loaded or lost: each page saves itself where it lives. &#10087; complete &middot; &#8226; something written &middot; &#9876; where you are. Served from folio.cmd, the whole log keeps itself in quests/quest&#8209;log.json; otherwise Ctrl&#8239;+&#8239;S writes it out once, to be kept at that same place.</p>
   </section>
+  </div>
 
   <div class="divider"></div>
   <footer id="footer">&#8248; cursor row &middot; F1 for the key</footer>
