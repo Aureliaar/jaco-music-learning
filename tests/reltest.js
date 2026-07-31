@@ -69,16 +69,30 @@ const requestAnimationFrame = () => 0;
 /* ---------- fake web audio ---------- */
 const sounded = [];
 let nowT = 0;
-function param(){ return { setValueAtTime(){}, linearRampToValueAtTime(){}, cancelScheduledValues(){}, value:1 }; }
+const gains = [];
+function param(){
+  const p = { calls: [], value: 1,
+    setValueAtTime(v, t){ p.calls.push(["set", v, t]); },
+    linearRampToValueAtTime(v, t){ p.calls.push(["ramp", v, t]); },
+    cancelScheduledValues(){ p.calls.push(["cancel"]); } };
+  return p;
+}
 class FakeCtx {
   constructor(){ this.state = "running"; }
   get currentTime(){ return nowT; }
   resume(){}
-  createGain(){ return { gain: param(), connect(){}, disconnect(){} }; }
+  createGain(){ const g = { gain: param(), connect(){}, disconnect(){} };
+    gains.push(g); return g; }
   createBiquadFilter(){ return { type:"", frequency:param(), Q:param(), connect(){}, disconnect(){} }; }
   createOscillator(){
     const o = { type:"", frequency:{ setValueAtTime:(f,at)=>{ o._f=f; o._at=at; } },
-      connect(){}, disconnect(){}, start(){ sounded.push({freq:o._f, at:o._at}); }, stop(){}, onended:null };
+      connect(){}, disconnect(){},
+      start(){ o._rec = { freq:o._f, at:o._at,
+                          gain: (gains[gains.length-1] || {}).gain };
+               sounded.push(o._rec); },
+      /* the app stops an oscillator a hair after its release ends, so the
+         length it was actually asked to ring for is readable from here */
+      stop(t){ if (o._rec) o._rec.off = t; }, onended:null };
     return o;
   }
   get destination(){ return {}; }
@@ -180,7 +194,8 @@ const hook = `
     resetQuests: function(){ qState = {}; qActive = null; qsel = 0;
       wsDoc = {}; wsFree = null; doc = workspaceDoc(null);
       renderAll(); renderQuests(); renderMeta(); },
-    exportJSON: function(){ return JSON.stringify(doc); },
+    exportJSON: function(){ return JSON.stringify(docOut(doc)); },
+    docJSON: function(){ return JSON.stringify(doc); },
     setScenery: _g("setScenery"), cycleScenery: _g("cycleScenery"),
     SCENERY_KEY: _g("SCENERY_KEY"), SCENERIES: _g("SCENERIES"),
     /* the tabs, the favourites and the order they impose */
@@ -201,6 +216,17 @@ const hook = `
     questBgUrl: _g("questBgUrl"), QUEST_BG_DIR: _g("QUEST_BG_DIR"),
     get scenePref(){ return _g("scenePref"); },
     get bgKnown(){ return _g("bgKnown"); },
+    /* ---- Lesson 3: the held note ---- */
+    spanOf: _g("spanOf"), spanSteps: _g("spanSteps"), sounding: _g("sounding"),
+    ringEnds: _g("ringEnds"), roomAt: _g("roomAt"), writtenLen: _g("writtenLen"),
+    vhold: _g("vhold"), docHold: _g("docHold"), docOut: _g("docOut"),
+    headAt: _g("headAt"), setLen: _g("setLen"), stretch: _g("stretch"),
+    readHolds: _g("readHolds"), allPlain: _g("allPlain"),
+    VOICE_HOLD: _g("VOICE_HOLD"), TAIL: _g("TAIL"),
+    growStart: _g("growStart"), growTick: _g("growTick"), growStop: _g("growStop"),
+    get grow(){ return _g("grow"); },
+    GROW_DELAY: _g("GROW_DELAY"), growStep: _g("growStep"),
+    get seamBars(){ return _g("seamBars"); },
     STORE_KEY: STORE_KEY, LEGACY_KEY: LEGACY_KEY, NOTE_KEYS: NOTE_KEYS };
   window.__probe = function(n){ try { return eval(n); } catch(e){ return "__undefined__"; } };
 `;
@@ -727,22 +753,27 @@ eq("the range is C2 to C6", [T.MIDI_LO, T.MIDI_HI], [36, 84]);
 eq("nameOfMidi agrees at the floor", T.nameOfMidi(36), "C2");
 eq("and at the ceiling", T.nameOfMidi(84), "C6");
 
-console.log("\n== the crossbar is untouched in either method ==");
+console.log("\n== the crossbar, whole, in absolute entry ==");
 const SLOTS = [14, 12, 15, 13, 2, 3, 1, 0];          /* ←↑→↓ then □△○✕ */
 const NAMES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
 function expected(off){ const t = 4*12 + off; const o = Math.floor(t/12); return NAMES[t-o*12] + o; }
-for (const mode of [false, true]){
+/* ---- re-pointed at Lesson 3 ----
+   The crossbar is absolute entry's, whole and untouched: all twenty-four
+   slots, exactly where they were. In contour entry the triggers are spent on
+   the two edges of the note instead, because contour entry writes with the
+   face buttons and does not need them; absolute entry is the method that has
+   nothing else to write with. */
+{
   let bad = 0;
   [[[GP.L2],0],[[GP.R2],8],[[GP.L2,GP.R2],16]].forEach(([trig, base])=>{
     for (let i = 0; i < 8; i++){
-      reset(); T.setRelative(mode);
+      reset(); T.setRelative(false);
       hold(...trig, SLOTS[i]);
       const want = expected(base + i);
-      if (T.doc.steps[0] !== want){ bad++; console.log("      slot mismatch", mode, trig, i, T.doc.steps[0], want); }
+      if (T.doc.steps[0] !== want){ bad++; console.log("      slot mismatch", trig, i, T.doc.steps[0], want); }
     }
   });
-  ok("all 24 crossbar slots are absolute pitches in " +
-     (mode ? "relative" : "absolute") + " entry", bad === 0, bad);
+  ok("all 24 crossbar slots are absolute pitches", bad === 0, bad);
 }
 reset(); hold(GP.L2, GP.DL); eq("L2 slot 1 = C4", T.doc.steps[0], "C4");
 eq("crossbar entry advances by two", T.cursor, 2);
@@ -753,10 +784,11 @@ reset(); hold(GP.R2, GP.X);  eq("R2 slot 8 = D#5", T.doc.steps[0], "D#5");
 reset(); hold(GP.L2, GP.R2, GP.DL); eq("L2+R2 slot 1 = E5", T.doc.steps[0], "E5");
 reset(); T.setRelative(true);
 hold(GP.L2, GP.TR);
-eq("a trigger makes △ a pitch again, not a move", T.doc.steps[0], "F4");
+eq("in contour entry a trigger writes no pitch at all - it is a modifier",
+   T.doc.steps[0], null);
 reset(); T.setRelative(true);
 hold(GP.L2, GP.B);
-eq("and ○ a pitch, not a repeat", T.doc.steps[0], "F#4");
+eq("nor on any other face button", T.doc.steps[0], null);
 ok("the crossbar table is unchanged", /GP_SLOTS = \[14, 12, 15, 13, 2, 3, 1, 0\]/.test(html));
 
 console.log("\n== the bumpers in each method ==");
@@ -2198,8 +2230,6 @@ ok("it names the leaps", /a third/.test(keyPage) && /a fifth/.test(keyPage));
 ok("it names the chromatic escape", /a semitone, out of the key/.test(keyPage));
 ok("it documents nudge", /nudge the note under the cursor/.test(keyPage));
 ok("it documents setting the key of the piece", /the key of the piece/.test(keyPage));
-ok("it says the crossbar survives relative entry",
-   /crossbar is untouched/.test(keyPage));
 ok("it explains the anchor", /the last note that sounds before the cursor/.test(keyPage));
 ok("it explains the snap", /nearest note of the key in the direction/.test(keyPage));
 for (const g of ["&#9651; (Y)", "&#10005; (A)", "&#9675; (B)", "&#9633; (X)",
@@ -3226,6 +3256,335 @@ ok("still no pure white or black", !/#fff\b|#ffffff|#000\b|#000000/i.test(html))
 ok("and still no repeating pattern anywhere",
    !/repeating-linear-gradient|background-repeat:repeat/.test(html));
 qreset(); closePages();
+
+
+/* ================= Lesson 3: the held note =================
+   What is pinned here is the model and the input semantics — how long a note
+   is written to be, how long it is actually heard for, what happens at the
+   seam, what each binding does to the page, and what survives a trip through
+   a file in both directions. How any of it is drawn is verified in a real
+   browser with real screenshots instead. */
+console.log("\n== the length beside the note ==");
+reset();
+const fresh3 = T.validate({ version:1, title:"t", tempo:112, loop:16, key:"C major",
+                            steps: blank() });
+eq("a fresh page holds a length for every step", fresh3.hold.length, 16);
+ok("and every one of them is the plain sixteenth", fresh3.hold.every(n => n === 1));
+eq("the second voice has its own", fresh3.basshold.length, 16);
+ok("a page that arrived without them grows them on first touch",
+   T.vhold(0).length === 16 && T.vhold(1).length === 16);
+eq("the two fields are named beside the two voices", T.VOICE_HOLD, ["hold","basshold"]);
+
+page({ 0:"C4" });
+eq("a note written is one step long", T.writtenLen(T.doc, 0, 0), 1);
+eq("and sounds for one step", T.spanOf(T.doc, 0, 0), 1);
+eq("an empty step is no note at all", T.spanOf(T.doc, 0, 1), 0);
+T.setLen(0, 0, 4, true);
+eq("made four steps long, it is written as four", T.writtenLen(T.doc, 0, 0), 4);
+eq("and sounds for four", T.spanOf(T.doc, 0, 0), 4);
+eq("over its own step and the three after it", T.spanSteps(T.doc, 0, 0), [0,1,2,3]);
+eq("which is where the ear finds it", T.sounding(T.doc, 0).slice(0, 6),
+   [0,0,0,0,-1,-1]);
+
+console.log("\n== a line is one line ==");
+page({ 0:"C4" });
+T.setLen(0, 0, 8, true);
+eq("a hold is made eight steps long", T.writtenLen(T.doc, 0, 0), 8);
+/* and then a note is written into the middle of it */
+T.cursor = 2; key("KeyC");
+eq("the note lands", T.doc.steps[2], "E4");
+eq("the hold is still written as eight", T.writtenLen(T.doc, 0, 0), 8);
+eq("but is heard only as far as the next note of its own voice",
+   T.spanOf(T.doc, 0, 0), 2);
+T.cursor = 2; key("Period");
+eq("take that note away again and the hold rings its full length once more",
+   T.spanOf(T.doc, 0, 0), 8);
+eq("nothing was rewritten behind it", T.writtenLen(T.doc, 0, 0), 8);
+/* asking for more than there is room for is simply capped */
+page({ 0:"C4", 2:"E4" });
+T.setLen(0, 0, 8, true);
+eq("a length asked for over a neighbour stops at the neighbour",
+   T.writtenLen(T.doc, 0, 0), 2);
+
+console.log("\n== ringing across the seam ==");
+page({ 14:"G4" });
+T.setLen(0, 14, 4, true);
+eq("a note held past the last step comes round with the loop",
+   T.spanSteps(T.doc, 0, 14), [14,15,0,1]);
+page({ 0:"C4", 14:"G4" });
+T.setLen(0, 14, 4, true);
+eq("unless the head of the page is taken", T.spanOf(T.doc, 0, 14), 2);
+page({ 6:"A4" }, { loop:8 });
+T.setLen(0, 6, 4, true);
+eq("the seam is the loop's, not the page's", T.spanSteps(T.doc, 0, 6), [6,7,0,1]);
+page({ 12:"A4" }, { loop:8 });
+T.setLen(0, 12, 8, true);
+eq("a note written past the loop never wraps - it stops at the page's end",
+   T.spanSteps(T.doc, 0, 12), [12,13,14,15]);
+page({ 0:"C4" });
+T.setLen(0, 0, 16, true);
+eq("one note alone may fill the whole loop", T.spanOf(T.doc, 0, 0), 16);
+page({ 0:"C4" }, { loop:4 });
+T.setLen(0, 0, 16, true);
+eq("and no more than the loop it is in", T.spanOf(T.doc, 0, 0), 4);
+
+console.log("\n== the two keys left of backspace ==");
+reset();
+key("KeyZ");                          /* C4 at step 1, cursor on 3 */
+T.cursor = 0;
+key("Equal");
+eq("+ makes the note under the cursor longer", T.writtenLen(T.doc, 0, 0), 2);
+key("Equal"); key("Equal");
+eq("and again, a step at a time", T.writtenLen(T.doc, 0, 0), 4);
+eq("without moving the cursor", T.cursor, 0);
+key("Minus");
+eq("- makes it shorter", T.writtenLen(T.doc, 0, 0), 3);
+key("Minus"); key("Minus"); key("Minus");
+eq("and never shorter than the step it begins on", T.writtenLen(T.doc, 0, 0), 1);
+key("Equal", { shiftKey:true });
+eq("shift and + take it as far as it will go", T.writtenLen(T.doc, 0, 0), 16);
+key("Minus", { shiftKey:true });
+eq("shift and - put it back to a plain sixteenth", T.writtenLen(T.doc, 0, 0), 1);
+
+page({ 0:"C4", 8:"E4" });
+T.cursor = 0; key("Equal", { shiftKey:true });
+eq("as far as it will go is as far as the next note", T.writtenLen(T.doc, 0, 0), 8);
+T.cursor = 4; key("Minus");
+eq("the length is edited from any step the note is sounding on",
+   T.writtenLen(T.doc, 0, 0), 7);
+T.cursor = 12; key("Equal");
+eq("an empty step has nothing to hold", T.writtenLen(T.doc, 0, 12), 0);
+ok("and says so", /nothing to hold/.test(ids.footer.textContent), ids.footer.textContent);
+page({ 0:"C4" }); T.setVoice(1); T.cursor = 0;
+key("Equal");
+eq("the length belongs to the voice in hand", T.writtenLen(T.doc, 0, 0), 1);
+T.setVoice(0);
+
+reset();
+const tempo0 = T.doc.tempo;
+key("F1"); key("Equal"); key("F1");
+eq("the same pair is still the tempo on the key page", T.doc.tempo, tempo0 + T.TEMPO_STEP);
+eq("and held nothing", T.vhold(0).filter(n => n !== 1).length, 0);
+
+console.log("\n== keeping the key down ==");
+reset();
+key("KeyZ");
+eq("the note goes in as the sixteenth it always was", T.writtenLen(T.doc, 0, 0), 1);
+eq("and the cursor is two steps on", T.cursor, 2);
+ok("with the key still down, that note is the one growing", T.grow && T.grow.i === 0);
+padNow += 100; T.growTick();
+eq("a tap is shorter than the wait, so nothing grew", T.writtenLen(T.doc, 0, 0), 1);
+padNow += T.GROW_DELAY; T.growTick();
+eq("held past the wait, it grows a step", T.writtenLen(T.doc, 0, 0), 2);
+eq("and the cursor has not had to move for it", T.cursor, 2);
+padNow += T.growStep(); T.growTick();
+eq("and another", T.writtenLen(T.doc, 0, 0), 3);
+eq("the cursor rides just past the end of what is being written", T.cursor, 3);
+key("ArrowRight");
+ok("any other key ends the growing", !T.grow);
+padNow += 1000; T.growTick();
+eq("so the note stops where it was let go", T.writtenLen(T.doc, 0, 0), 3);
+
+reset();
+page({ 4:"E4" }); T.cursor = 0;
+key("KeyZ");
+for (let i = 0; i < 12; i++){ padNow += 400; T.growTick(); }
+eq("a note grown by hand still cannot swallow the next one",
+   T.writtenLen(T.doc, 0, 0), 4);
+T.growStop();
+reset();
+key("KeyZ"); key("F3");                /* a page comes up over the top */
+padNow += 1000; T.growTick();
+eq("a page coming up ends it too", T.writtenLen(T.doc, 0, 0), 1);
+ok("and forgets it", !T.grow);
+key("F3");
+
+console.log("\n== the same gesture on the pad ==");
+reset();
+frame([GP.L2, GP.DL]);                 /* the crossbar's first slot: C */
+eq("a crossbar slot writes its note", T.doc.steps[0], "C4");
+ok("and it is the note under the thumb", T.grow && T.grow.btn === GP.DL);
+padNow += 400; T.growTick();
+eq("held, the slot goes on ringing it", T.writtenLen(T.doc, 0, 0), 2);
+frame([GP.L2]);                        /* the slot comes up */
+ok("letting the slot go stops it", !T.grow);
+padNow += 1000; T.growTick();
+eq("and the note stays as long as it was made", T.writtenLen(T.doc, 0, 0), 2);
+
+reset(); T.setRelative(true);
+frame([GP.TR]);
+ok("in contour entry the shape button holds the note too",
+   T.grow && T.grow.btn === GP.TR);
+padNow += 400; T.growTick();
+eq("and grows it", T.writtenLen(T.doc, 0, 0), 2);
+frame([]);
+reset(); T.setRelative(true);
+frame([GP.B]);
+ok("and so does the one that says the same note again", T.grow && T.grow.btn === GP.B);
+frame([]); T.setRelative(false);
+
+console.log("\n== the note's two edges, on the triggers ==");
+reset(); T.setRelative(true);
+page({ 4:"E4" }); T.cursor = 4;
+hold(GP.R2, GP.DR);
+eq("R2 and right moves the note's end later - it rings on", T.writtenLen(T.doc, 0, 4), 2);
+eq("and the note is still where it was", T.doc.steps[4], "E4");
+hold(GP.R2, GP.DL);
+eq("R2 and left brings the end back in", T.writtenLen(T.doc, 0, 4), 1);
+hold(GP.R2, GP.DL);
+eq("never past the step it begins on", T.writtenLen(T.doc, 0, 4), 1);
+hold(GP.L2, GP.DL);
+eq("L2 and left moves the note's start earlier", T.doc.steps[3], "E4");
+eq("leaving nothing behind it", T.doc.steps[4], null);
+eq("and its far end where it was, so it is longer", T.writtenLen(T.doc, 0, 3), 2);
+eq("the cursor stays on the note", T.cursor, 4);
+hold(GP.L2, GP.DR);
+eq("L2 and right moves the start back in", T.doc.steps[4], "E4");
+eq("shortening it again", T.writtenLen(T.doc, 0, 4), 1);
+hold(GP.L2, GP.DR);
+eq("and never past its own end", T.doc.steps[4], "E4");
+page({ 3:"C4", 4:"E4" }); T.cursor = 4;
+hold(GP.L2, GP.DL);
+eq("a start cannot move onto another note", T.doc.steps[4], "E4");
+eq("which is left alone as well", T.doc.steps[3], "C4");
+page({ 4:"E4" }); T.cursor = 8;
+hold(GP.R2, GP.DR);
+eq("an empty step has no edges to move", T.writtenLen(T.doc, 0, 4), 1);
+ok("and says so", /no note to move/.test(ids.footer.textContent), ids.footer.textContent);
+page({ 4:"E4" }); T.cursor = 4;
+hold(GP.L2, GP.R2, GP.DR);
+eq("both triggers at once move nothing", T.doc.steps[4], "E4");
+eq("and hold nothing", T.writtenLen(T.doc, 0, 4), 1);
+T.setRelative(false);
+reset();
+page({ 4:"E4" }); T.cursor = 4;
+hold(GP.R2, GP.DR);
+eq("in absolute entry the triggers are the crossbar, writing a pitch",
+   T.doc.steps[4], "A#4");
+
+console.log("\n== what a held note sounds like ==");
+reset();
+page({ 0:"C4" });
+T.setLen(0, 0, 4, true);
+sounded.length = 0; nowT = 0; T.schedFrom(0);
+T.scheduler();
+eq("the note is scheduled once", sounded.length, 1);
+const dur1 = T.stepDur();
+ok("for as long as it is written to last",
+   Math.abs((sounded[0].off - sounded[0].at) - (4 * dur1 - T.TAIL + 0.01)) < 1e-9,
+   { off: sounded[0].off, at: sounded[0].at, want: 4 * dur1 - T.TAIL + 0.01 });
+for (let i = 1; i <= 4; i++){ nowT = i * dur1; T.scheduler(); }
+eq("and the steps it covers strike nothing of their own", sounded.length, 1);
+const env = sounded[0].gain.calls;
+eq("its envelope begins in silence", [env[0][0], env[0][1]], ["set", 0]);
+eq("and is ramped back to silence at its end", [env[env.length-1][0], env[env.length-1][1]],
+   ["ramp", 0]);
+ok("over the longer release a held note gets",
+   Math.abs(env[env.length-1][2] - env[env.length-2][2] - T.TONE[0].hold) < 1e-9, env);
+ok("which is longer than a struck note's", T.TONE[0].hold > T.TONE[0].release);
+ok("and the bass has one of its own", T.TONE[1].hold > T.TONE[1].release);
+
+page({ 0:"C4" });
+sounded.length = 0; nowT = 0; T.schedFrom(0); T.scheduler();
+const env1 = sounded[0].gain.calls;
+ok("a plain sixteenth keeps the release it always had",
+   Math.abs(env1[env1.length-1][2] - env1[env1.length-2][2] - T.TONE[0].release) < 1e-9,
+   env1);
+
+page({ 14:"G4" });
+T.setLen(0, 14, 4, true);
+sounded.length = 0; nowT = 0; T.schedFrom(14);
+T.scheduler();
+eq("a note at the seam is scheduled once", sounded.length, 1);
+ok("and rings on through the wrap rather than being struck again",
+   Math.abs((sounded[0].off - sounded[0].at) - (4 * dur1 - T.TAIL + 0.01)) < 1e-9,
+   sounded[0]);
+for (let i = 1; i <= 4; i++){ nowT = i * dur1; T.scheduler(); }
+eq("the loop coming round strikes nothing", sounded.length, 1);
+
+duet({ 0:"C4" }, { 0:"C3" });
+T.setLen(0, 0, 4, true);
+sounded.length = 0; nowT = 0; T.schedFrom(0); T.scheduler();
+eq("both voices sound from the one clock as they always did", sounded.length, 2);
+ok("and each is as long as it is written",
+   Math.abs((sounded[0].off - sounded[0].at) - (4 * dur1 - T.TAIL + 0.01)) < 1e-9 &&
+   Math.abs((sounded[1].off - sounded[1].at) - (1 * dur1 - T.TAIL + 0.01)) < 1e-9,
+   sounded.map(x => x.off - x.at));
+
+console.log("\n== a page that predates all of it ==");
+const oldpage = { version:1, title:"before", tempo:112, loop:16, key:"C major",
+                  steps: steps({ 0:"C4", 2:"E4" }) };
+const v3 = T.validate(oldpage);
+ok("an old page still reads", !!v3 && v3.steps[0] === "C4");
+ok("with a length for every step", v3.hold.length === 16 && v3.hold.every(n => n === 1));
+ok("and a silent bass with lengths of its own",
+   v3.basshold.length === 16 && v3.basshold.every(n => n === 1));
+eq("every note in it is one step long", T.spanOf(v3, 0, 0), 1);
+const junk3 = T.validate(Object.assign({}, oldpage, { hold: "nonsense" }));
+ok("junk where the lengths go costs the page nothing", junk3.steps[0] === "C4");
+ok("and means the plain sixteenth", junk3.hold.every(n => n === 1));
+const wild = T.validate(Object.assign({}, oldpage,
+  { hold: [99, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] }));
+eq("a length longer than the page is brought back to it", wild.hold[0], 16);
+eq("a length on a step with no note is nothing at all", wild.hold[1], 1);
+ok("the notes are exactly what they were",
+   JSON.stringify(wild.steps) === JSON.stringify(v3.steps));
+{
+  const sixteen = new Array(16).fill("C4");
+  const rh = T.readHolds([99, 0, -4, null, "4", 2.6, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                         sixteen);
+  eq("a length of nought is one", rh[1], 1);
+  eq("and a negative one is one", rh[2], 1);
+  eq("a missing one is one", rh[3], 1);
+  eq("a length that is not a number is one", rh[4], 1);
+  eq("and one that is not whole is rounded", rh[5], 3);
+}
+
+console.log("\n== what leaves the app, and what comes back ==");
+reset();
+page({ 0:"C4", 4:"E4" });
+eq("a page with nothing held is written as it always was",
+   Object.keys(JSON.parse(T.exportJSON())).sort().join(),
+   ["bass","key","loop","mute","solo","steps","tempo","title","version"].join());
+ok("even though it carries lengths while it is open", T.vhold(0).length === 16);
+T.setLen(0, 0, 4, true);
+const outHeld = JSON.parse(T.exportJSON());
+ok("a page with something held says so", Array.isArray(outHeld.hold));
+eq("in the field beside the notes", outHeld.hold[0], 4);
+ok("and says nothing about the voice that holds nothing", outHeld.basshold === undefined);
+const back3 = T.validate(outHeld);
+eq("read back, the hold is the hold that was written", T.spanOf(back3, 0, 0), 4);
+ok("and the notes came through unharmed",
+   JSON.stringify(back3.steps) === JSON.stringify(T.doc.steps));
+/* an older build reads this file: it knows nothing of the field, drops it on
+   its own way out, and what it writes is still a folio - the notes intact and
+   every one of them a sixteenth again */
+const older = JSON.parse(T.exportJSON());
+delete older.hold; delete older.basshold;
+const degraded = T.validate(older);
+ok("an older build's copy is still a page", !!degraded);
+ok("with every note where it was",
+   JSON.stringify(degraded.steps) === JSON.stringify(back3.steps));
+eq("and every note a sixteenth again", T.spanOf(degraded, 0, 0), 1);
+
+console.log("\n== the lengths ride out with the quest log ==");
+T.resetQuests(); T.resetDrills();
+page({ 0:"C4" });
+T.setLen(0, 0, 6, true);
+const log3 = T.stateToJSON();
+eq("free play's page carries them", log3.free.hold[0], 6);
+T.applyState(JSON.parse(JSON.stringify(log3)));
+eq("and they survive the round trip", T.writtenLen(T.doc, 0, 0), 6);
+T.resetQuests();
+page({ 0:"C4", 4:"E4" });
+const plainLog = T.stateToJSON();
+ok("a log in which nothing is held mentions no lengths at all",
+   plainLog.free.hold === undefined && plainLog.free.basshold === undefined,
+   Object.keys(plainLog.free));
+ok("and the pattern in it is the pattern it always was",
+   Object.keys(plainLog.free).sort().join() ===
+   ["bass","key","loop","mute","solo","steps","tempo","title","version"].join());
+T.resetQuests();
 
 console.log("\n== the server itself ==");
 const srv = fs.readFileSync(REPO + "/server.mjs", "utf8");

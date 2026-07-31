@@ -320,20 +320,24 @@ frames(3, []);
 eq("a whole frame after the release, \u2715 is a bare step down", wrote(), "B3");
 eq("and the bumper was the octave, as a tap should be", oct(), 5);
 
-/* ================= 6. the crossbar is not the leap ================= */
-console.log("\n== the triggers are the crossbar, in relative entry too ==");
+/* ================= 6. the triggers are not the leap =================
+   Re-pointed at Lesson 3: in contour entry the two triggers are no longer a
+   crossbar but the two ends of the note under the cursor, so a face button
+   held under one writes nothing at all. (The crossbar is absolute entry's,
+   whole; reltest walks all twenty-four of its slots there.) What still has to
+   be true here is that a trigger does not disturb the bumpers underneath it. */
+console.log("\n== the triggers, in relative entry ==");
 stage(); frames(3, [GP.L2]); frame([GP.L2, GP.X]); frames(3, []);
-eq("L2 + \u2715 is slot 8, an absolute pitch", wrote(), "G4");
-stage(); frames(3, [GP.R2]); frame([GP.R2, GP.X]); frames(3, []);
-eq("R2 + \u2715 is slot 8 of the second bar", wrote(), "D#5");
+eq("a face button under a trigger writes nothing", wrote(), null);
 stage(); frames(3, [GP.L2, GP.R2]); frame([GP.L2, GP.R2, GP.X]); frames(3, []);
-eq("both triggers + \u2715 is slot 8 of the third", wrote(), "B5");
-/* a bumper held under a trigger is not a leap and must not be lost */
+eq("nor under both of them", wrote(), null);
+/* a bumper held under a trigger is not a leap, so it is still the octave */
 stage();
 frames(2, [GP.L1]); frames(2, [GP.L1, GP.L2]);
 frame([GP.L1, GP.L2, GP.X]); frames(2, [GP.L1, GP.L2]);
 frames(2, [GP.L1]); frames(2, []);
-eq("a bumper under a trigger writes the crossbar pitch", wrote(), "G4");
+eq("a bumper under a trigger is spent on nothing, so it is the octave",
+   oct(), 3);
 
 /* ================= 7. direction, in another key and out of it ============== */
 console.log("\n== the signs, key by key ==");
