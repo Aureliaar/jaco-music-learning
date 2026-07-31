@@ -70,7 +70,7 @@ test. (Historical rubric: hum test, sentence test, ten-loop test.)
 
 ---
 
-## Lesson 2 — Two voices: bass and counterpoint — IN PROGRESS
+## Lesson 2 — Two voices: bass and counterpoint — PASSED 2026-07-31
 
 **Toolset:** a second monophonic track (own waveform, bass-shaped). Still no
 velocity, no chords-as-object, no swing, no held notes.
@@ -97,6 +97,16 @@ independently interesting.
 **Quest board:** see `QUESTS.md` (shadow, ostinato, torch, drone, three
 hockets, oil and water; latecomer failed by design, chord-that-isnt
 removed — both rulings recorded there).
+
+**Pass record (2026-07-31):** deliverable = *L2 Candidate I* (C major,
+112 — contrappunto wedge opening, bare-tritone implied G7, stray D♯,
+bass with its own V–i cadence; grid audits: motion ✓, implied harmony ✓,
+zero perfect intervals). Week-later test waived by honest player ruling
+(material a day old; the calendar is not the point). Keystone ruling:
+⚔ ostinato is the keystone track of L2; Candidate II and the shadow are
+#2/#3. The stated learning: letting go of "every line must be good
+alone" — skill is hearing whether a part does the job the whole needs,
+even where that runs counter to the letter of the passing grade.
 
 ---
 

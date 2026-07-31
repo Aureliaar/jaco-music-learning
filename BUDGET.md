@@ -16,7 +16,7 @@ that competed with composing. New economy, adopted 2026-07-31:
 - Quest completion still means: constraint met + survived the ten-loop
   test. Honor system, as ever.
 
-Transition settlement (final, Luca's ruling 2026-07-31): the old $31
+Transition settlement (final, player ruling 2026-07-31): the old $31
 balance + all unscored agent-delta leftovers collapse into exactly one
 funded feature and the books close. Bookings:
 - ⚔ ostinato → the scenery feature (1:1 transition pricing)
@@ -30,6 +30,10 @@ Post-transition ledger (quests earned → features spent):
 |------|-------|---------------|
 | 2026-07-31 | ⚔ oil and water closed (constraint verified: 9 coincident pairs, zero P1/P8/P15) | 1 quest credit |
 | 2026-07-31 | ⚔ the drone closed (contour-density version, 10+ loops; one pitch verified) | 2 quest credits = 1 small feature funded |
+| 2026-07-31 | ⚔ hocket: the hiccup closed (strict alternation verified from grid; seam-rest ruling recorded in QUESTS.md) | 3 quest credits = 1 small feature funded, +1 banked |
+| 2026-07-31 | ⚔ hocket: the snap closed (A minor; octave-transfer weld at the climb; register gap 15 semitones after lead raised; 2 rests exactly) | 4 quest credits = 2 small features funded |
+| 2026-07-31 | **Lesson 2 PASSED** — deliverable *L2 Candidate I* (audits in CURRICULUM.md); pass grants 1 feature of any size | 2 small features + 1 any-size feature banked |
+| 2026-07-31 | ⚔ hocket: the handoff closed (G major; 3-3-3-3 grain, 4 rests under the amended letter — ruling in QUESTS.md; ten-loop passed) | 5 quest credits = 2 small features + 1 credit banked, + the any-size |
 
 The closed ledger below stands as history.
 

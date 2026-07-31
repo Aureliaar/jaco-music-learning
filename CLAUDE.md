@@ -57,26 +57,67 @@ board + rules), `BUDGET.md` (HUD budget ledger) before proposing anything.
    motion. Do not over-apply.
 5. **Agent workflow that works:** one Opus agent per feature, prompt
    includes: read folio.html first as source of truth, migraine rules,
-   e.code rule, extend the newest test harness and keep ALL checks green,
-   commit with Co-Authored-By, never commit BUDGET.md/QUESTS.md/
-   quest-log.json unless told. Agents verify in real headless Chrome, not
-   by inspection (a layout bug shipped when one didn't).
-6. Windows console is cp932 — Python on quest-log.json needs
+   e.code rule, the testing policy below, commit with Co-Authored-By,
+   never commit BUDGET.md/QUESTS.md/quest-log.json unless told. Agents
+   verify in real headless Chrome, not by inspection (a layout bug
+   shipped when one didn't).
+6. **Testing policy (2026-07-31, replaces "extend and keep all green"):**
+   there is a **complexity budget: total test LOC ≤ app LOC** (folio.html
+   + server.mjs), target ~0.5:1 after housekeeping. Agents RUN the fast
+   harnesses (green-or-stop for failures they caused; pre-existing
+   failures reported verbatim, never fixed, never papered over), WRITE
+   new checks only for what must outlive rewrites — data formats
+   (save/load, quest-log schema, sync/PUT) and input semantics (bindings
+   → model changes); never layout/styling/copy. UI verification =
+   real-Chrome screenshots opened and DESCRIBED (the only method that
+   has caught layout bugs here). DELETE checks a change obsoletes.
+   Reports must quote the literal "N passed, M failed" harness tail
+   lines, never totals from memory. Rhythm: feature stages, then a
+   periodic **housekeeping two-step** (refactor + test shrink) whenever
+   the budget is breached or a lesson passes. Known debt: 7 reltest
+   failures pin live quest-log contents — slated for deletion. Future
+   idea, parked, skepticism on record (self-use tool, not a 10k-user
+   app): 2-agent TDD split — one writes tests, one writes code, minimal
+   cross-reading.
+7. Windows console is cp932 — Python on quest-log.json needs
    `encoding='utf-8'` both directions.
 
-## Where the project stands (2026-07-31)
+## Where the project stands (2026-07-31, evening)
 
-L1 passed. L2 (two voices) in progress: tool built; quests closed —
-shadow, ostinato, oil and water, drone, hocket hiccup + snap; latecomer
-failed (design ruling in QUESTS.md), chord-that-isnt removed. Open:
-torch, hocket handoff, 7 Part II reprises. Economy: quest barter (see
-rule 2); balance in BUDGET.md. **Evaluation is now self-administered**
-(family-verdict system scrapped 2026-07-31 — never plan around outside
-evaluators). Curriculum restructured 2026-07-31: L3 = duration/holds
-(phases 3.1 one voice, 3.2 two voices — the pare-down rule), L4 =
-harmony/chords, groove/samples/arrangement/endgame shifted to L5–L8.
-L2 gate: self-tests in CURRICULUM.md L2. Quest authoring rules:
-QUEST-COPY.md.
+L1 and L2 PASSED (L2 2026-07-31; deliverable *L2 Candidate I*, pass
+record in CURRICULUM.md; keystone ruling: ostinato). Open L2 side
+content: torch, hocket handoff, Part II reprises (audit in QUESTS.md —
+only Call and Answer II currently meets its constraint, credit pending
+ten-loop). Deliverable candidates + Ostinato Variant motif shelved as
+drill-channel workspaces in the quest log. Economy: quest barter (see
+rule 2); balance 2 small features + 1 any-size (L2 grant) — BUDGET.md.
+**Evaluation is self-administered** (family-verdict system scrapped
+2026-07-31 — never plan around outside evaluators). L3 = duration/holds
+(3.1 one voice, 3.2 two voices — pare-down rule), L4 = harmony/chords,
+groove/samples/arrangement/endgame L5–L8. Quest authoring rules:
+QUEST-COPY.md. L3 quest board: to be authored at unlock.
+
+**In flight:** the pre-L3 UX pass runs in worktree `E:\experiments\daw-l3`
+(branch `l3-buildout`): stage 1 quest-board UX landed (f5a27be, demo on
+:4179 from `E:\experiments\daw-l3-demo`), stage 2 gamepad/input running.
+L3 holds runs in parallel in `E:\experiments\daw-l3-holds` (branch
+`l3-holds`, based on f5a27be). Per-stage player approval gates each next
+stage. Queued, in order: (a) stage-1 warranty batch — bg crossfade not
+flash; tabs need a real tab affordance; gamepad drives the EXISTING left
+rail, not a bespoke log UI ("less is more"), fix Start-mode gamepad
+dead-air; verify built-in quest text; surface done state; (b) housekeeping
+two-step after all in-flight agents land — refactor + test shrink to the
+budget (extract a tier-1 data-integrity harness ~150-200 checks, weed
+reltest of quest-log-content pins, move bootcheck/drilltest off the live
+quest-log onto temp copies) AND split folio.html (~60k tokens
+post-merge) into ~5 plain <script src> subsystem files + CSS — no ES
+modules (file:// CORS), no build step; ORDER MATTERS: reconcile
+l3-buildout+l3-holds monolith-to-monolith FIRST, split second.
+**Player authorization 2026-08-01: reconciliation → housekeeping →
+merge to main run WITHOUT per-step player checks** once the warranty
+batch lands (harness gates still apply; live tab reloads on player's
+own time); (c) stage 3 voice management (player gate).
+Merge to main only after review; pricing judged at merge.
 
 Backlog — pre-L3 UX pass (player's list, 2026-07-31; scope/pricing judged
 at build time, some items warranty):

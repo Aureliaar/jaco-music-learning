@@ -22,7 +22,11 @@ Rules of play:
   — the constraint is the puzzle, the music is the win condition.
 - Save each completed quest as `quests/<quest-name>.folio.json`. The pile
   becomes your motif library — later lessons will loot it.
-- Family sign-off never required for quests. These are practice swings.
+- No outside sign-off ever required for quests. These are practice swings.
+- **The constraint rule (player ruling, 2026-07-31):** quests are *constraints*,
+  not *goals* — simple, prescriptive "do X / don't do X", checkable from
+  the grid. Never "make the listener feel Y"; the feeling is the win
+  condition of the music, not the wording of the quest.
 - **The noodle rule:** playing aimlessly *inside* a quest's constraint counts
   as playing the quest — the constraint is the intention, no deliverable
   pressure. The only discipline: when something snags your ear, save it
@@ -112,11 +116,38 @@ holding). The melody alone must create motion, tension, and release
 against the fixed point.
 *Teaches: oblique motion; how much harmony one stubborn note can imply.*
 
-### ⚔ Hocket
-The two voices never sound on the same step, and together they leave at
-most two silent steps. One line, torn between two throats — a listener
-should be able to hum the composite.
-*Teaches: rhythmic interlock; the groove that lives in the handoff.*
+### ⚔ Hocket: the Hiccup
+- the voices never share a step
+- at most two silent steps
+- no voice twice in a row
+- both voices inside one octave
+
+*Teaches: note-level interlock — each line is nothing alone; the
+composite is the melody. The solo test, inverted.*
+
+### ⚔ Hocket: the Handoff
+- the voices never share a step
+- at most four silent steps, no two adjacent
+- handoffs every two or three notes
+- never one, never four
+
+*(Letter amended 2026-07-31, player prerogative: was "at most two
+silent steps" — the shared hocket density rule, right for the hiccup's
+continuous composite, wrong for this cage's spirit. The handoff grain
+needs breath; hoquetus means hiccup, and the gaps were always the
+device. Non-adjacency added so the breath stays a pulse, not a pause —
+keeps the quest a hocket rather than drifting into torch's antiphony.)*
+
+*Teaches: the groove that lives in the handoff — funk grain.*
+
+### ⚔ Hocket: the Snap
+- the voices never share a step
+- at most two silent steps
+- lead an octave above bass, always
+- any grain
+
+*Teaches: how far one line stretches across a gap before it snaps into
+two voices — fusion's breaking distance, heard from the far side.*
 
 ### ⚔ Oil and Water
 No perfect unisons or octaves between the voices on any coincident step
@@ -124,7 +155,7 @@ No perfect unisons or octaves between the voices on any coincident step
 *Teaches: independence by prohibition — octaves fuse two voices into one
 fat one; ban the fusion and independence is the only option left.*
 
-### ⚔ The Latecomer
+### ⚔ The Latecomer — ✗ FAILED 2026-07-31 (first quest failure)
 At least two suspensions: on a step where one voice moves, the other
 re-strikes its OLD note so it now clashes — then steps down to make
 peace on the next sounding step. You built one by accident at the top of
@@ -132,21 +163,31 @@ callanswer (F4 over E3 → E over E). Now do it on purpose, twice.
 *Teaches: the suspension — counterpoint's oldest tension device: arrive
 late, apologize by step.*
 
-### ⚔ The Chord That Isn't
-Pick two chords. Make the family hear the change at the halfway seam —
-using only two monophonic voices, never more than two notes sounding.
-Verify by asking someone what changed at step 9; "the chord" in any
-wording passes.
-*Teaches: implied harmony — the rubric's implied-harmony test, as a
-puzzle.*
+**Failure ruling (player call):** the quest never became playable — it
+demanded a device that couldn't be derived by noodling (excessive
+complexity, unexplained priors, unclear naming: prep/re-strike/resolve
+choreography across two voices). Attempts kept landing on adjacent
+devices (oblique motion, struck dissonance) that sounded fine, which the
+quest then ruled wrong — a drill that punishes the ear for liking things
+is a badly built drill. Recorded as a design failure, not a skill
+failure. The suspension itself returns in a later lesson with better
+scaffolding (likely needs held notes to be honest, same as Apprentice's
+Hand).
+
+### ~~⚔ The Chord That Isn't~~ — removed 2026-07-31 (player ruling)
+*Quests must be **constraints**, not **goals** — simple, prescriptive
+"do X / don't do X", checkable from the grid. This one was "did you know
+you can make that happen? make it happen!" — fun with an in-person
+instructor, unscoreable here. Its lesson (implied harmony) is absorbed
+ambiently through the interval chips and feedback instead.*
 
 ---
 
 ## Part II reprises — the L1 board, now with a bass
 
 *Each completed L1 quest returns with a second-voice requirement. Same
-rules, same +$4, separate quests (the L1 credit stands). The L1
-constraint still holds where restated.*
+rules, standard quest credit, separate quests (the L1 credit stands).
+The L1 constraint still holds where restated.*
 
 ### ⚔ The Summit II
 Each voice has exactly one highest note — and they must NOT fall on the
@@ -205,3 +246,36 @@ mediant drone — two steps above home — with a density contour; the
 relentless variant filed as a section motif for when form exists;
 closed 2026-07-31). First two spent at transition (scenery /
 eighth-advance); oil and water + the drone banked. Go.
+
+Completed (L2, cont.): ⚔ hocket: the hiccup (C major at 84, strict
+alternation, one rest; the re-struck-pitch hiccup at steps 11–14 found
+by ear; closed 2026-07-31. Ruling recorded: a rest breaks a "twice in
+a row" run — seam case decided in the player's favor per QUEST-COPY.md).
+⚔ hocket: the snap (A minor at 84 — falling statement, then a bass climb
+handed to the lead by octave transfer on the shared degree; closed
+2026-07-31. The quest that taught octave equivalence as a felt thing.)
+
+Failed (L2): ✗ the latecomer (2026-07-31 — first failure on the board;
+design failure, see ruling above; suspension deferred to a later lesson).
+
+Completed (L2, the hocket family closes): ⚔ hocket: the handoff
+(G major at 108 — four three-note cells, question curling and answer
+falling, seam landing stepwise D→E; closed 2026-07-31 under the amended
+letter, ten-loop passed. The hockets go 3-for-3.)
+
+**Lesson 2 PASSED 2026-07-31.** Deliverable: *L2 Candidate I* (C major —
+pass record in CURRICULUM.md). Keystone ruling: ⚔ ostinato is L2's
+keystone track; Candidate II and ⚔ the shadow are #2/#3. Candidates and
+the Ostinato Variant motif live as drill-channel workspaces in the log
+(`l2-candidate-1`, `l2-candidate-2`, `ostinato-variant`).
+
+Reprise audit (2026-07-31, grids checked by assistant — the reprises
+were played as "add a bass to the L1 line", which most II constraints
+don't permit): ⚔ Call and Answer II meets its constraint (bass unsettles
+under the question, lands home under the answer — credit pending the
+player's ten-loop call). Not yet met: Summit II (bass peak ×4), Three
+Stones II (4 bass pitches, 2 shared), White Space II (7/8 rests, one
+mutual-silence step), Keep the Stray II (structurally inverted — the L1
+stray lead must be rewritten diatonic), Ouroboros II (seam interval is a
+stable octave). Ladder II unplayed (no bass). All remain open;
+re-attempts free. Still open from the main board: ⚔ pass the torch.
