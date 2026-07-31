@@ -37,7 +37,7 @@ function mkEl(tag){
   return el;
 }
 const ids = {};
-["column","footer","metatext","keyref","picker","quests","qlist",
+["column","footer","metatext","keyref","picker","quests","qlist","qtabs","hints",
  "roll","rollfield","rollbase",
  "qfree","qfreesigil","qdname","qdtext","qdteach","qdstate","qpreview",
  "railquests","railtitle","railtext","railteach","railstate",
@@ -183,6 +183,24 @@ const hook = `
     exportJSON: function(){ return JSON.stringify(doc); },
     setScenery: _g("setScenery"), cycleScenery: _g("cycleScenery"),
     SCENERY_KEY: _g("SCENERY_KEY"), SCENERIES: _g("SCENERIES"),
+    /* the tabs, the favourites and the order they impose */
+    tabList: _g("tabList"), tabLabel: _g("tabLabel"), setTab: _g("setTab"),
+    moveTab: _g("moveTab"), currentTab: _g("currentTab"),
+    view: _g("view"), viewOf: _g("viewOf"), questGroup: _g("questGroup"),
+    toggleFavourite: _g("toggleFavourite"), moveInOrder: _g("moveInOrder"),
+    favOf: _g("favOf"), orderOf: _g("orderOf"), TAB_KEY: _g("TAB_KEY"),
+    LESSON_OF: _g("LESSON_OF"), newestLesson: _g("newestLesson"),
+    railSections: _g("railSections"), railSequence: _g("railSequence"),
+    get activeTab(){ return _g("activeTab"); },
+    get qtabsEl(){ return qtabs; },
+    /* the standing hint under the footer */
+    get hintsEl(){ return _g("hintsEl"); },
+    hintsNow: _g("hintsNow"), renderHints: _g("renderHints"),
+    /* the workspace's own scenery */
+    applyScenery: _g("applyScenery"), sceneNow: _g("sceneNow"),
+    questBgUrl: _g("questBgUrl"), QUEST_BG_DIR: _g("QUEST_BG_DIR"),
+    get scenePref(){ return _g("scenePref"); },
+    get bgKnown(){ return _g("bgKnown"); },
     STORE_KEY: STORE_KEY, LEGACY_KEY: LEGACY_KEY, NOTE_KEYS: NOTE_KEYS };
   window.__probe = function(n){ try { return eval(n); } catch(e){ return "__undefined__"; } };
 `;
@@ -1268,8 +1286,12 @@ key("ArrowDown"); eq("down moves one", T.qsel, 1);
 key("ArrowUp"); key("ArrowUp"); eq("up wraps to the last", T.qsel, 7);
 key("ArrowDown"); eq("down wraps to the first", T.qsel, 0);
 eq("the caret marks the selection", T.qrows[0].caret.textContent, "‸");
-key("ArrowRight"); eq("right moves the selection too", T.qsel, 1);
-key("ArrowLeft");  eq("left moves it back", T.qsel, 0);
+/* left and right are the lessons now, not a second way to walk the list:
+   with only the eight built-ins there is one tab, so they are a no-op that
+   leaves the caret exactly where it was */
+key("ArrowRight"); eq("right is the lesson, not the selection", T.qsel, 0);
+key("ArrowLeft");  eq("and so is left", T.qsel, 0);
+eq("with one lesson on the board there is one tab", T.tabList().length, 1);
 press(GP.DD); eq("d-pad down moves the selection", T.qsel, 1);
 press(GP.DU); eq("d-pad up moves the selection", T.qsel, 0);
 key("KeyZ"); key("KeyQ");
@@ -1834,14 +1856,18 @@ eq("after the eight built-ins", T.ALL[8].id, "drill-itch");
 ok("and it is marked as a drill", T.ALL[8].drill === true);
 eq("the rows follow it", T.qrowsNow.length, 9);
 eq("named plainly on its row", T.qrowsNow[8].el.children[2].textContent, "the itch drill");
-eq("one hairline separates them", hairs(T.qlistEl, "qhair"), 1);
-eq("labelled", T.qlistEl.children.find(c=>c.className==="qhair").children[0].textContent, "drills");
+/* the divider that used to separate the drills from the quests inside one
+   long list is a tab of its own now; the list itself is one lesson deep and
+   draws no hairline until something is kept to hand */
+eq("the drills take a tab of their own", T.tabList().map(T.tabLabel), ["L1","drills"]);
+eq("and the list draws no divider inside a tab", hairs(T.qlistEl, "qhair"), 0);
 eq("the left rail grows too", T.rrowsNow.length, 10);
 eq("with the same divider, once", hairs(T.railEl, "rhair"), 1);
+eq("labelled", T.railEl.children.find(c=>c.className==="rhair").children[0].textContent, "drills");
 eq("and the drill's name in the margin", T.rrowsNow[9].name.textContent, "the itch drill");
 eq("a second drill lands after the first", (T.applyState(logWith([ITCH, SECOND])), T.ALL.length), 10);
-eq("still one divider", hairs(T.qlistEl, "qhair"), 1);
-eq("and still one in the margin", hairs(T.railEl, "rhair"), 1);
+eq("still the two tabs", T.tabList().length, 2);
+eq("and still one divider in the margin", hairs(T.railEl, "rhair"), 1);
 
 console.log("\n== a drill is a workspace like any other ==");
 qreset();
@@ -2874,7 +2900,7 @@ ok("with the whole table in it",
 ok("and the bindings table", /the two keys left of backspace/.test(spec));
 
 console.log("\n== drills, documented ==");
-ok("the key page has a line about drills", /under a hairline, sit the drills/.test(keyPage));
+ok("the key page has a line about drills", /under their own tab, sit the drills/.test(keyPage));
 ok("it says they arrive without a reload", /without a reload/.test(keyPage));
 ok("the divider has a style of its own", /\.qhair\{/.test(html) && /\.rhair\{/.test(html));
 ok("the poll interval is written down", /POLL_MS = 10000/.test(html));
@@ -2905,7 +2931,8 @@ qreset();
 
 /* ================= scenery: the quiet background ================= */
 console.log("\n== scenery ==");
-ok("the scenery ring is paper, forest, sea", JSON.stringify(T.SCENERIES) === '["paper","forest","sea"]', T.SCENERIES);
+ok("the scenery ring is paper, forest, sea, quest",
+   JSON.stringify(T.SCENERIES) === '["paper","forest","sea","quest"]', T.SCENERIES);
 eq("paper is the default", document.body.getAttribute("data-scenery"), "paper");
 key("KeyB", { shiftKey:true });
 eq("shift+B walks to the forest", document.body.getAttribute("data-scenery"), "forest");
@@ -2913,7 +2940,13 @@ eq("and the preference is kept under its own key", store[T.SCENERY_KEY], "forest
 key("KeyB", { shiftKey:true });
 eq("then to the sea", document.body.getAttribute("data-scenery"), "sea");
 key("KeyB", { shiftKey:true });
+/* the fourth is the workspace's own picture: the preference is quest, and in
+   free play — which has no picture and never will — the body stays on paper */
+eq("then to the workspace's own", store[T.SCENERY_KEY], "quest");
+eq("which in free play is still paper", document.body.getAttribute("data-scenery"), "paper");
+key("KeyB", { shiftKey:true });
 eq("and home to paper — a ring", document.body.getAttribute("data-scenery"), "paper");
+eq("the preference came home too", store[T.SCENERY_KEY], "paper");
 key("KeyB");
 eq("bare B is still a note, not the background", document.body.getAttribute("data-scenery"), "paper");
 eq("(the G it has always been)", T.doc.steps[T.cursor - 2], "G4");
@@ -2922,6 +2955,277 @@ eq("an unknown scene falls back to paper", document.body.getAttribute("data-scen
 ok("the scenery is a preference, not part of the page",
    T.exportJSON().indexOf("scenery") < 0 && JSON.stringify(T.stateToJSON()).indexOf("scenery") < 0);
 T.setScenery("paper");
+
+/* ================= the board, read one lesson at a time =================
+   Tabs, favourites, the player's own order, and the standing hint under the
+   footer. Everything here is keyboard-first and everything persistent is an
+   optional field on a log that reads exactly as it always did without it. */
+const L2A = { id:"l2-shadow-x", name:"⚔ a lesson two quest", lesson:2,
+  summary:"declared, so it needs no table", teaches:"nothing",
+  pattern:{ version:1, title:"two", tempo:100, loop:16, key:"A minor", steps: blank() } };
+const L3A = { id:"l3-hold", name:"⚔ a lesson three quest", lesson:3,
+  summary:"a lesson that does not exist in this file yet", teaches:"nothing",
+  pattern:{ version:1, title:"three", tempo:100, loop:16, key:"A minor", steps: blank() } };
+const KNOWN2 = { id:"shadow", name:"⚔ the shadow",
+  summary:"the board delivered before there was a field for it", teaches:"nothing",
+  pattern:{ version:1, title:"shadow", tempo:100, loop:16, key:"B minor", steps: blank() } };
+const SWORDLESS = { id:"drill-pull", name:"the pull drill",
+  summary:"an étude, not a quest", teaches:"nothing", pattern:null };
+function tabLabels(){ return T.tabList().map(T.tabLabel); }
+function questIndex(id){ return T.ALL.findIndex(q => q.id === id); }
+
+console.log("\n== the quest board is read one lesson at a time ==");
+qreset();
+eq("the eight alone are one tab", tabLabels(), ["L1"]);
+eq("and the tab holds all eight", T.viewOf(1).length, 8);
+eq("a built-in is Lesson 1 by being built in", T.questGroup(T.ALL[0]), 1);
+
+T.applyState(logWith([ITCH]));
+eq("a drill with no sword is an étude", T.questGroup(T.ALL[questIndex("drill-itch")]), 0);
+eq("and takes the last tab", tabLabels(), ["L1","drills"]);
+
+T.applyState(logWith([L2A]));
+eq("a drill that declares its lesson gets that tab", tabLabels(), ["L1","L2"]);
+eq("and is grouped by it", T.questGroup(T.ALL[questIndex("l2-shadow-x")]), 2);
+
+T.applyState(logWith([KNOWN2]));
+eq("the Lesson 2 board is placed without a declaration", tabLabels(), ["L1","L2"]);
+eq("by the table in the file", T.LESSON_OF.shadow, 2);
+
+T.applyState(logWith([L2A, SWORDLESS]));
+eq("sword and no sword sort apart", tabLabels(), ["L1","L2","drills"]);
+eq("the étude is in the last tab", T.viewOf(0).map(i => T.ALL[i].id), ["drill-pull"]);
+
+/* the point of the whole exercise: Lesson 3 needs no surgery here */
+T.applyState(logWith([L2A, L3A]));
+eq("a Lesson 3 quest brings a Lesson 3 tab with it", tabLabels(), ["L1","L2","L3"]);
+eq("in order, lessons first and the drills last",
+   (T.applyState(logWith([L3A, SWORDLESS, L2A])), tabLabels()), ["L1","L2","L3","drills"]);
+eq("an unlabelled sword joins the newest lesson known",
+   T.questGroup({ id:"nobody", name:"⚔ a quest from the future", drill:true }), 3);
+eq("and the newest lesson is read off the board", T.newestLesson(), 3);
+
+console.log("\n== the tabs, from the keyboard ==");
+qreset(); T.applyState(logWith([L2A, SWORDLESS]));
+T.setTab(1, true);
+key("F3");
+eq("the strip draws one tab per lesson", T.qtabsEl.children.length, 3);
+eq("the one in hand is marked", T.qtabsEl.children[0].className, "qtab on");
+eq("and the others are not", T.qtabsEl.children[1].className, "qtab");
+eq("each tab says how many are in it",
+   T.qtabsEl.children.map(c => c.children[1].textContent), [" 8", " 1", " 1"]);
+key("ArrowRight");
+eq("right turns to the next lesson", T.activeTab, 2);
+eq("and the caret lands on its first quest", T.ALL[T.qsel].id, "l2-shadow-x");
+eq("the list shows that lesson and nothing else",
+   T.qlistEl.children.map(c => c.children[2].textContent), ["a lesson two quest"]);
+key("ArrowRight");
+eq("right again is the drills", T.activeTab, 0);
+key("ArrowRight");
+eq("and right once more wraps home", T.activeTab, 1);
+key("ArrowLeft");
+eq("left wraps the other way", T.activeTab, 0);
+eq("the tab is a preference kept under its own key", store[T.TAB_KEY], "0");
+ok("and never part of the log",
+   JSON.stringify(T.stateToJSON()).indexOf("qtab") < 0 &&
+   JSON.stringify(T.stateToJSON()).indexOf("activeTab") < 0);
+T.setTab(1, true);
+eq("the caret wraps inside its own tab", (key("ArrowUp"), T.ALL[T.qsel].id), T.ALL[7].id);
+eq("and never walks out of it", T.questGroup(T.ALL[T.qsel]), 1);
+key("ArrowDown");
+eq("down wraps back to the head", T.qsel, 0);
+/* the bumpers do on the pad what left and right do on the board */
+press(GP.R1);
+eq("R1 turns the lesson", T.activeTab, 2);
+press(GP.L1);
+eq("and L1 turns it back", T.activeTab, 1);
+key("F3");
+
+console.log("\n== choosing from the margin brings the lesson forward ==");
+qreset(); T.applyState(logWith([L2A]));
+T.setTab(1, true);
+T.switchWorkspace("l2-shadow-x");
+eq("the caret followed the workspace", T.ALL[T.qsel].id, "l2-shadow-x");
+eq("and its lesson came forward with it", T.activeTab, 2);
+
+console.log("\n== a quest kept to hand ==");
+qreset(); key("F3");
+eq("nothing is kept to hand to begin with", T.qsel, 0);
+ok("and the row carries no mark", !T.qrowsNow[0].fav.textContent);
+key("KeyF");
+ok("F keeps it to hand", T.favOf(Q[0].id));
+eq("the row says so", T.qrowsNow[0].fav.textContent, "✦");
+ok("and the page says so", /kept to hand/.test(ids.qdstate.textContent), ids.qdstate.textContent);
+key("KeyF");
+ok("F again lets it go", !T.favOf(Q[0].id));
+eq("and the mark goes with it", T.qrowsNow[0].fav.textContent, "");
+/* a favourite is pinned to the head of its own tab */
+T.qsel = 5; T.renderQuests(); key("KeyF");
+eq("a favourite goes to the head of its lesson", T.view()[0], 5);
+eq("with the rest behind it in the order they were", T.view().slice(1), [0,1,2,3,4,6,7]);
+eq("the list draws a hairline where the run changes", hairs(T.qlistEl, "qhair"), 1);
+eq("labelled with the lesson it goes back to",
+   T.qlistEl.children.find(c => c.className === "qhair").children[0].textContent, "L1");
+/* and to the head of the margin, whatever lesson it came from */
+eq("the margin puts the favourites first", T.railSections()[0].label, "favourites");
+eq("with that quest in them", T.railSections()[0].idx, [5]);
+eq("the pad walks the margin in the same order", T.railOrder()[1], Q[5].id);
+eq("and a divider names the run below", hairs(T.railEl, "rhair"), 1);
+/* it rides out with the log, and only where it was made */
+const favJSON = T.stateToJSON();
+eq("the mark rides out with the quest", favJSON.quests[Q[5].id].fav, true);
+ok("and nowhere it was not made",
+   Object.keys(favJSON.quests).every(id => id === Q[5].id || favJSON.quests[id].fav === undefined),
+   favJSON.quests);
+ok("a log applied back keeps it", (T.applyState(favJSON), T.favOf(Q[5].id)));
+/* □ is the same thing on the pad */
+T.qsel = 2; T.renderQuests();
+ok("the pad's quest is not kept to hand yet", !T.favOf(Q[2].id));
+press(GP.SQ);
+ok("□ keeps the chosen quest to hand", T.favOf(Q[2].id));
+press(GP.SQ);
+ok("and □ again lets it go", !T.favOf(Q[2].id));
+/* △ held turns the d-pad from a step into a move */
+T.qsel = 1; T.renderQuests();
+const beforeCarry = T.view().slice();
+frame([GP.TR, GP.DU]); frame([]);
+ok("△ held, d-pad up carries the quest with the caret",
+   JSON.stringify(T.view()) !== JSON.stringify(beforeCarry), [beforeCarry, T.view()]);
+eq("and the caret is still on it", T.qsel, 1);
+key("F3");
+
+console.log("\n== moving a quest, and it staying put ==");
+qreset(); key("F3");
+eq("the board starts in the order it was written", T.view(), [0,1,2,3,4,5,6,7]);
+T.qsel = 0; T.renderQuests();
+key("ArrowDown", { shiftKey:true });
+eq("shift and down move the quest, not the caret", T.view(), [1,0,2,3,4,5,6,7]);
+eq("and the caret went with it", T.qsel, 0);
+key("ArrowUp", { shiftKey:true });
+eq("shift and up bring it back", T.view(), [0,1,2,3,4,5,6,7]);
+key("ArrowUp", { shiftKey:true });
+eq("at the head it refuses rather than wrapping", T.view(), [0,1,2,3,4,5,6,7]);
+ok("and says so", /already at the head/.test(ids.footer.textContent), ids.footer.textContent);
+T.qsel = 7; T.renderQuests();
+key("ArrowDown", { shiftKey:true });
+ok("at the foot too", /already at the foot/.test(ids.footer.textContent), ids.footer.textContent);
+/* the hairline is not crossed by being nudged */
+T.qsel = 3; T.renderQuests(); key("KeyF");
+eq("a favourite heads the list", T.view()[0], 3);
+key("ArrowUp", { shiftKey:true });
+eq("and cannot be nudged above itself", T.view()[0], 3);
+T.qsel = 0; T.renderQuests();
+key("ArrowUp", { shiftKey:true });
+eq("nor can the first of the rest climb over the favourites", T.view(), [3,0,1,2,4,5,6,7]);
+ok("the quest is still where it was, under the hairline", T.view()[1] === 0);
+/* the order rides out and back */
+T.qsel = 5; T.renderQuests();
+key("ArrowUp", { shiftKey:true });
+const ordJSON = T.stateToJSON();
+const moved = T.view().slice();
+ok("an order is written for the run that was moved",
+   Object.keys(ordJSON.quests).some(id => typeof ordJSON.quests[id].order === "number"));
+T.applyState(ordJSON);
+eq("and the board comes back arranged", T.view(), moved);
+key("F3");
+
+console.log("\n== a log that knows neither mark ==");
+qreset();
+ok("an untouched board applies", T.applyState(logWith([])));
+const plainJSON = T.stateToJSON();
+ok("and writes neither field anywhere",
+   JSON.stringify(plainJSON).indexOf('"fav"') < 0 &&
+   JSON.stringify(plainJSON).indexOf('"order"') < 0, plainJSON);
+ok("a quest with neither mark and no page is still not written",
+   Object.keys(plainJSON.quests || {}).length === 0, plainJSON.quests);
+T.applyState({ folio:"quest-log", version:2, active:null, quests:{
+  ladder:{ done:true, pattern:null } } });
+ok("an older log reads clean", T.qState.ladder.done === true);
+ok("with nothing kept to hand", !T.favOf("ladder"));
+eq("and no order imposed", T.qState.ladder.order, null);
+/* the lesson a drill declares survives the round trip */
+T.applyState(logWith([L3A]));
+const lessonJSON = T.stateToJSON();
+eq("a declared lesson rides out with the definition", lessonJSON.drills[0].lesson, 3);
+ok("and a definition that declares none writes none",
+   (T.applyState(logWith([ITCH])), T.stateToJSON().drills[0].lesson === undefined));
+
+console.log("\n== the standing hint under the footer ==");
+qreset(); closePages();
+ok("there is a hint strip", !!T.hintsEl);
+ok("and it is never empty", T.hintsEl.children.length > 0);
+function hintText(){ return T.hintsNow().map(h => h[0] + " " + h[1]).join(" · "); }
+ok("on the page it names what writes a note", /notes/.test(hintText()), hintText());
+ok("and the way out to the key", /F1 the key/.test(hintText()), hintText());
+T.setRelative(true);
+ok("in relative entry it names the shapes instead",
+   /up, down, again, rest/.test(hintText()) && !/z…m/.test(hintText()), hintText());
+T.setRelative(false);
+key("F3");
+ok("in the quest log it names the lesson keys", /← → lesson/.test(hintText()), hintText());
+ok("and the two marks", /F keep to hand/.test(hintText()) && /move it/.test(hintText()), hintText());
+key("F3"); key("F1");
+ok("on the key page it names the key and the tempo",
+   /the tonic/.test(hintText()) && /tempo/.test(hintText()), hintText());
+key("F1");
+T.toggleSettings();
+ok("on the crossbar it names the crossbar", /workspace/.test(hintText()), hintText());
+T.closeSettings();
+ok("nothing in it is a letter a keyboard prints rather than a place",
+   !/[A-Z]{4,}/.test(hintText()), hintText());
+ok("it holds its height so nothing on the page moves",
+   /\.hints\{[\s\S]*?min-height:/.test(html));
+ok("and it is quieter than the footer above it",
+   /\.hints\{[\s\S]*?opacity:0\.78/.test(html));
+ok("the footer and the hint take one scrim between them",
+   /\.foot\{/.test(html) && /body:not\(\[data-scenery="paper"\]\) \.foot::before/.test(html));
+
+console.log("\n== the workspace's own scenery ==");
+qreset();
+eq("the picture is named after the quest",
+   T.questBgUrl("shadow"), "quest-backgrounds/shadow.png");
+ok("an id with anything odd in it is escaped",
+   T.questBgUrl("a b").indexOf(" ") < 0, T.questBgUrl("a b"));
+T.setScenery("quest", true);
+eq("free play has no picture and stays on paper",
+   document.body.getAttribute("data-scenery"), "paper");
+T.switchWorkspace("stray");
+eq("nor does a workspace whose picture cannot be had",
+   document.body.getAttribute("data-scenery"), "paper");
+/* the answer, once it is known, is what the body wears */
+T.bgKnown["stray"] = true; T.applyScenery();
+eq("and one whose picture is there wears it",
+   document.body.getAttribute("data-scenery"), "quest");
+T.switchWorkspace(null);
+eq("stepping back to free play puts the paper back",
+   document.body.getAttribute("data-scenery"), "paper");
+T.setScenery("paper", true);
+ok("the scene is still a preference and never part of the log",
+   JSON.stringify(T.stateToJSON()).indexOf("quest-backgrounds") < 0);
+ok("the rule reads the picture off the body, naming nothing",
+   /body\[data-scenery="quest"\]\{[\s\S]*?var\(--questbg\)/.test(html));
+ok("and veils it, as the other two scenes are veiled",
+   /body\[data-scenery="quest"\]\{[\s\S]*?linear-gradient\(rgba/.test(html));
+ok("the margins and the title take their scrim there too — the selector is by absence",
+   /body:not\(\[data-scenery="paper"\]\) \.rail\{/.test(html));
+ok("the server lends exactly one folder and no more",
+   /STATIC_DIRS = \["quest-backgrounds"\]/.test(fs.readFileSync(REPO + "/server.mjs","utf8")));
+ok("and still resolves what it serves back to that folder",
+   /path\.dirname\(path\.resolve\(file\)\) !== path\.resolve\(dir\)/
+     .test(fs.readFileSync(REPO + "/server.mjs","utf8")));
+ok("the deploy takes the stills with it",
+   /quest-backgrounds/.test(fs.readFileSync(REPO + "/scripts/build.mjs","utf8")));
+
+console.log("\n== the new furniture keeps the house rules ==");
+ok("the tabs are words under a hairline, not boxes",
+   /\.qtabs\{/.test(html) && !/\.qtab\{[^}]*border:1px solid var\(--rule\)/.test(html));
+ok("the one in hand is marked as the voice in hand is",
+   /\.qtab\.on\{color:var\(--ink\);border-bottom-color:var\(--gilt\);\}/.test(html));
+ok("still nothing that blinks", !/@keyframes/.test(html));
+ok("still no pure white or black", !/#fff\b|#ffffff|#000\b|#000000/i.test(html));
+ok("and still no repeating pattern anywhere",
+   !/repeating-linear-gradient|background-repeat:repeat/.test(html));
+qreset(); closePages();
 
 console.log("\n== the server itself ==");
 const srv = fs.readFileSync(REPO + "/server.mjs", "utf8");

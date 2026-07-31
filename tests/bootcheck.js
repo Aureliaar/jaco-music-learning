@@ -14,6 +14,7 @@ function ok(name, cond, extra){
   if (cond){ pass++; console.log("  ok   " + name); }
   else { fail++; console.log("  FAIL " + name + (extra !== undefined ? "  -> " + JSON.stringify(extra).slice(0,500) : "")); }
 }
+function eq2(name, a, b){ ok(name, JSON.stringify(a) === JSON.stringify(b), { got:a, want:b }); }
 const wait = ms => new Promise(r => setTimeout(r, ms));
 
 function freePort(start){
@@ -86,12 +87,22 @@ function freePort(start){
      /arrives already tuned/.test(await b.eval("document.getElementById('keyref').textContent")));
   await b.key("F1", { key:"F1", vk:112 });
 
-  /* a fresh quest workspace arrives seeded — 'stray' has no page in the log */
-  await b.key("F3", { key:"F3", vk:114 });
-  await wait(120);
-  const idx = await b.eval(
+  /* a fresh quest workspace arrives seeded — 'stray' has no page in the log.
+     The board is read one lesson at a time now, so walk the tabs to it. */
+  const rowIndex = name => b.eval(
     "(function(){var r=document.querySelectorAll('#qlist .quest');for(var i=0;i<r.length;i++)" +
-    "if(/stray/i.test(r[i].textContent))return i;return -1;})()");
+    "if(/" + name + "/i.test(r[i].textContent))return i;return -1;})()");
+  /* the boot GET may still be in flight, and applying the server's state puts
+     the caret (and so the tab) back where the work is: settle first, then walk */
+  await wait(600);
+  await b.key("F3", { key:"F3", vk:114 });
+  await wait(200);
+  let idx = await rowIndex("stray");
+  for (let t = 0; t < 12 && idx < 0; t++){
+    await b.key("ArrowRight", { key:"ArrowRight", vk:39 });
+    await wait(150);
+    idx = await rowIndex("stray");
+  }
   ok("the stray quest is on the list", idx >= 0, idx);
   for (let i = 0; i < idx; i++) await b.key("ArrowDown", { key:"ArrowDown", vk:40 });
   await b.key("Enter", { key:"Enter", vk:13 });
@@ -852,6 +863,210 @@ function freePort(start){
   ok("no runtime errors from any of the eighth-note work", errors.length === 0, errors);
 
   await b.shot(__dirname + "/boot-seeded.png");
+
+  /* ================= the board, the hint, and the workspace's scenery ====
+     All of this is layout, so none of it is checked by reading the source:
+     it is measured in the browser that draws it, and photographed. */
+  console.log("\n== the board, read one lesson at a time ==");
+  const KEY = { F3:{ key:"F3", vk:114 }, F1:{ key:"F1", vk:112 },
+                RIGHT:{ key:"ArrowRight", vk:39 }, LEFT:{ key:"ArrowLeft", vk:37 },
+                DOWN:{ key:"ArrowDown", vk:40 }, UP:{ key:"ArrowUp", vk:38 } };
+  const rowNames = () => b.eval(
+    "[].map.call(document.querySelectorAll('#qlist .quest .qname'), function(e){return e.textContent;})");
+  const tabNames = () => b.eval(
+    "[].map.call(document.querySelectorAll('#qtabs .qtab'), function(e){return e.textContent;})");
+  const railNames = () => b.eval(
+    "[].map.call(document.querySelectorAll('#railquests .rline .rn'), function(e){return e.textContent;})");
+  const boxOf = sel => b.eval(
+    "(function(){var r=document.querySelector('" + sel + "').getBoundingClientRect();" +
+    "return {w:Math.round(r.width),h:Math.round(r.height),t:Math.round(r.top)};})()");
+  const hairText = sel => b.eval("(document.querySelector('" + sel + "')||{}).textContent||''");
+
+  await b.key("F3", KEY.F3); await wait(150);
+  const tabs = await tabNames();
+  ok("the log has a tab per lesson on the board", tabs.length >= 2, tabs);
+  ok("the first is Lesson 1", /^L1/.test(tabs[0]), tabs);
+  ok("the drills are the last", /drills/.test(tabs[tabs.length - 1]), tabs);
+  ok("each tab says how many are in it", tabs.every(t => /\d/.test(t)), tabs);
+  ok("exactly one tab is in hand",
+     (await b.eval("document.querySelectorAll('#qtabs .qtab.on').length")) === 1);
+  const l1rows = await rowNames();
+  ok("the list shows that tab and no more", l1rows.length >= 1 && l1rows.length <= 12, l1rows.length);
+  await b.key("ArrowRight", KEY.RIGHT); await wait(120);
+  const l2rows = await rowNames();
+  ok("turning the tab changes the list",
+     JSON.stringify(l1rows) !== JSON.stringify(l2rows), [l1rows[0], l2rows[0]]);
+  ok("and the caret is on a quest that is actually on the page",
+     (await b.eval("document.querySelectorAll('#qlist .quest.sel').length")) === 1);
+  ok("nothing outside the tab is left in the list",
+     (await b.eval("document.querySelectorAll('#qlist .quest').length")) === l2rows.length);
+  await b.key("ArrowLeft", KEY.LEFT); await wait(120);
+  ok("and back again", JSON.stringify(await rowNames()) === JSON.stringify(l1rows));
+  await b.shot(__dirname + "/boot-tabs.png");
+
+  console.log("\n== kept to hand, and moved by hand ==");
+  await b.key("ArrowDown", KEY.DOWN); await b.key("ArrowDown", KEY.DOWN);
+  await wait(100);
+  const chosen = await b.eval("document.querySelector('#qlist .quest.sel .qname').textContent");
+  await b.key("KeyF", { key:"f", vk:70 }); await wait(150);
+  ok("F marks it on its row",
+     (await b.eval("document.querySelector('#qlist .quest.sel .qfav').textContent")) === "\u2726");
+  eq2("and takes it to the head of the lesson", (await rowNames())[0], chosen);
+  ok("with a labelled hairline under it", /L1/.test(await hairText("#qlist .qhair")),
+     await hairText("#qlist .qhair"));
+  const rail = await railNames();
+  ok("the margin puts it straight under free play",
+     rail[1].toLowerCase() === chosen.toLowerCase(), [rail[1], chosen]);
+  ok("marked there as it is on its row",
+     (await b.eval(
+       "document.querySelectorAll('#railquests .rline')[1].querySelector('.rf').textContent"))
+     === "\u2726");
+  ok("and the lesson it left is named under it",
+     /L1/.test(await hairText("#railquests .rhair")), await hairText("#railquests .rhair"));
+  await b.shot(__dirname + "/boot-favourite.png");
+  await b.key("KeyF", { key:"f", vk:70 }); await wait(150);
+  ok("F again lets it go",
+     (await b.eval("document.querySelector('#qlist .quest.sel .qfav').textContent")) === "");
+
+  const wasOrder = await rowNames();
+  await b.key("ArrowUp", KEY.UP); await wait(80);
+  await b.key("ArrowUp", KEY.UP); await wait(80);
+  await b.key("ArrowDown", Object.assign({ shift:true }, KEY.DOWN)); await wait(150);
+  const nowOrder = await rowNames();
+  ok("shift and down move the quest itself",
+     nowOrder[0] === wasOrder[1] && nowOrder[1] === wasOrder[0], [wasOrder.slice(0,2), nowOrder.slice(0,2)]);
+  ok("and the caret went with it",
+     (await b.eval("document.querySelector('#qlist .quest.sel .qname').textContent")) === wasOrder[0]);
+  await b.key("ArrowUp", Object.assign({ shift:true }, KEY.UP)); await wait(150);
+  ok("shift and up put it back",
+     JSON.stringify(await rowNames()) === JSON.stringify(wasOrder), await rowNames());
+  await b.key("F3", KEY.F3); await wait(120);
+
+  console.log("\n== the standing hint, and nothing moving because of it ==");
+  const hint = () => b.eval("document.getElementById('hints').textContent");
+  const pageHint = await hint();
+  ok("the hint is under the footer and not empty", pageHint.length > 10, pageHint);
+  ok("it names what writes a note", /notes|up, down, again/.test(pageHint), pageHint);
+  const hb = await boxOf("#hints");
+  ok("it has a height of its own", hb.h > 6, hb);
+  ok("and does not run off the measure", hb.w <= (await b.eval("window.innerWidth")), hb);
+  const mainA = await boxOf("main");
+  await b.key("F3", KEY.F3); await wait(150);
+  const questHint = await hint();
+  ok("in the quest log it names the lesson keys", /lesson/.test(questHint), questHint);
+  ok("and the two marks", /keep to hand/.test(questHint) && /move it/.test(questHint), questHint);
+  const mainB = await boxOf("main");
+  await b.key("F3", KEY.F3); await b.key("F1", KEY.F1); await wait(150);
+  const keyHint = await hint();
+  ok("on the key page it names the key and the tempo",
+     /tonic/.test(keyHint) && /tempo/.test(keyHint), keyHint);
+  const mainC = await boxOf("main");
+  await b.key("F1", KEY.F1); await wait(150);
+  /* the pages have always been of different lengths — the key page is a wall
+     of prose and always was — so what is checked is that the hint costs the
+     same on all of them: it is the same strip, at the same height, wherever
+     it is, and it is the last thing on the page in each case */
+  const hintOn = async () => {
+    const r = await boxOf("#hints");
+    return r.h;
+  };
+  const hA = await hintOn();
+  await b.key("F3", KEY.F3); await wait(150);
+  const hB = await hintOn();
+  await b.key("F3", KEY.F3); await b.key("F1", KEY.F1); await wait(150);
+  const hC = await hintOn();
+  await b.key("F1", KEY.F1); await wait(150);
+  ok("the hint is the same height on every page", hA === hB && hB === hC, [hA, hB, hC]);
+  ok("and it is not what pushed the pattern page off the screen",
+     mainA.h <= (await b.eval("window.innerHeight")),
+     [mainA.h, await b.eval("window.innerHeight")]);
+  /* the tabs were the point: the log used to be a column of every quest there
+     is — 1427px of it in a 905px window — and no tab of it may overflow now */
+  await b.key("F3", KEY.F3); await wait(150);
+  const tabHeights = [];
+  for (let t = 0; t < 4; t++){
+    tabHeights.push((await boxOf("main")).h);
+    await b.key("ArrowRight", KEY.RIGHT); await wait(160);
+  }
+  await b.key("F3", KEY.F3); await wait(120);
+  const winFit = await b.eval("window.innerHeight");
+  ok("every tab of the log fits the window",
+     tabHeights.every(h => h <= winFit), [tabHeights, winFit]);
+  ok("however long a lesson gets, the list itself is bounded",
+     /#qlist\{[\s\S]*?max-height/.test(fs.readFileSync(REPO + "/folio.html", "utf8")));
+  const bodyH = mainC.h;                       /* the key page, the tallest */
+  const winH = await b.eval("window.innerHeight");
+  ok("the page still never offers a scrollbar",
+     (await b.eval("getComputedStyle(document.body).overflow")) === "hidden",
+     [bodyH, winH]);
+  ok("nothing scrolls sideways either",
+     (await b.eval("document.documentElement.scrollWidth")) <=
+     (await b.eval("window.innerWidth")) + 2);
+  await b.shot(__dirname + "/boot-hints.png");
+
+  console.log("\n== the workspace wears its own scene ==");
+  await b.key("F3", KEY.F3); await wait(150);
+  let found = await rowIndex("shadow");
+  for (let t = 0; t < 6 && found < 0; t++){
+    await b.key("ArrowRight", KEY.RIGHT); await wait(80);
+    found = await rowIndex("shadow");
+  }
+  ok("the shadow is on the board", found >= 0, found);
+  const selNow = await b.eval(
+    "(function(){var r=document.querySelectorAll('#qlist .quest');" +
+    "for(var i=0;i<r.length;i++) if(r[i].classList.contains('sel')) return i; return 0;})()");
+  for (let i = selNow; i < found; i++){ await b.key("ArrowDown", KEY.DOWN); await wait(40); }
+  for (let i = selNow; i > found; i--){ await b.key("ArrowUp", KEY.UP); await wait(40); }
+  await b.key("Enter", { key:"Enter", vk:13 });
+  await b.key("F3", KEY.F3); await wait(200);
+  ok("and it is the workspace in hand",
+     /shadow/i.test(await b.eval("document.getElementById('metatext').textContent")),
+     await b.eval("document.getElementById('metatext').textContent"));
+  const scene = () => b.eval("document.body.getAttribute('data-scenery')");
+  eq2("the page starts on paper", await scene(), "paper");
+  for (let i = 0; i < 3; i++){ await b.key("KeyB", { key:"B", vk:66, shift:true }); await wait(150); }
+  for (let i = 0; i < 40 && (await scene()) !== "quest"; i++) await wait(150);
+  eq2("three turns of shift+B lands on the workspace's own", await scene(), "quest");
+  const bg = await b.eval("getComputedStyle(document.body).backgroundImage");
+  ok("and the picture behind the sheet is that workspace's",
+     bg.indexOf("quest-backgrounds/shadow.png") >= 0, bg.slice(0, 220));
+  ok("veiled, as the other scenes are", /linear-gradient/.test(bg), bg.slice(0, 120));
+  ok("the torn sheet is under the work",
+     (await b.eval("getComputedStyle(document.querySelector('.field'),'::before').backgroundImage"))
+       .indexOf("folio-paper.png") >= 0);
+  ok("the title keeps its darkening breath over the picture",
+     /^radial-gradient/.test(await b.eval(
+       "getComputedStyle(document.querySelector('header'),'::before').backgroundImage")));
+  ok("and so do the footer and the hint under it",
+     /^radial-gradient/.test(await b.eval(
+       "getComputedStyle(document.querySelector('.foot'),'::before').backgroundImage")));
+  ok("the margins too",
+     /^radial-gradient/.test(await b.eval(
+       "getComputedStyle(document.getElementById('raill'),'::before').backgroundImage")));
+  ok("the hint is pale ink over the scene, not the page's brown",
+     (await b.eval("getComputedStyle(document.getElementById('hints')).color"))
+       !== "rgb(169, 156, 130)",
+     await b.eval("getComputedStyle(document.getElementById('hints')).color"));
+  await b.shot(__dirname + "/boot-quest-scenery.png");
+  await b.key("F3", KEY.F3); await wait(200);
+  await b.shot(__dirname + "/boot-quest-scenery-log.png");
+  await b.key("F3", KEY.F3); await wait(100);
+
+  const mainScene = await boxOf("main");
+  await b.eval("document.querySelectorAll('#railquests .rline')[0].click()");
+  await wait(300);
+  eq2("free play falls back to paper", await scene(), "paper");
+  const mainFree = await boxOf("main");
+  /* the scene costs the page what forest and sea have always cost it — the
+     title and the footer step off the sheet — and nothing more: the measure
+     is the same, and the page is still centred */
+  ok("and the fall costs the measure nothing",
+     mainScene.w === mainFree.w, [mainScene, mainFree]);
+  ok("the page is still centred either way",
+     Math.abs((mainScene.t * 2 + mainScene.h) - (mainFree.t * 2 + mainFree.h)) <= 4,
+     [mainScene, mainFree]);
+  await b.key("KeyB", { key:"B", vk:66, shift:true }); await wait(150);
+  ok("still no runtime error from any of it", errors.length === 0, errors);
   clearInterval(drain);
   b.close();
   srv.kill();

@@ -33,7 +33,7 @@ function mkEl(tag){
   return el;
 }
 const ids = {};
-["column","footer","metatext","keyref","picker","quests","qlist",
+["column","footer","metatext","keyref","picker","quests","qlist","qtabs","hints",
  "roll","rollfield","rollbase",
  "qfree","qfreesigil","qdname","qdtext","qdteach","qdstate","qpreview",
  "railquests","railtitle","railtext","railteach","railstate",

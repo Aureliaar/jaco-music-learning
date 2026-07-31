@@ -54,6 +54,21 @@
     background-size:cover;
     background-position:center;
   }
+  /* The third scene is not one picture but whichever picture belongs to the
+     workspace you are in: quest-backgrounds/<id>.png, named after the quest.
+     The url arrives on the body as a custom property, so the rule itself
+     never has to know any of the names; a workspace with no picture of its
+     own never reaches this selector at all — the body stays on paper, which
+     is the graceful fall. The veil is a shade deeper than the two standing
+     scenes: these are illustrations rather than photographs and carry more
+     incident, and the sheet has to stay the brightest thing on the screen. */
+  body[data-scenery="quest"]{
+    background-image:
+      linear-gradient(rgba(20,26,24,0.34),rgba(20,26,24,0.48)),
+      var(--questbg);
+    background-size:cover;
+    background-position:center;
+  }
   /* No animation anywhere. This block is belt-and-braces. */
   *,*::before,*::after{animation:none !important;}
   @media (prefers-reduced-motion:reduce){
@@ -467,9 +482,58 @@
     font-size:1.05rem;
     color:var(--ink);
   }
+  /* ---- the tabs ----
+     The board outgrew a single list at Lesson 2 and will outgrow it again, so
+     the log is read one lesson at a time. The strip is a row of words under a
+     hairline, not a row of boxes: nothing here is a tab-shaped container and
+     nothing here is a grid. The one in hand is in ink over a gilt underline —
+     the same mark the voice strip uses for the line in hand, because it means
+     the same thing. A lesson that does not exist yet has no tab; the moment a
+     quest belonging to it is in the log, its tab is simply there. */
+  .qtabs{
+    display:flex;
+    align-items:baseline;
+    flex-wrap:wrap;
+    gap:1.1em;
+    margin:0.7rem 0 0.2rem;
+    padding:0 0.5em 0.45rem;
+    border-bottom:1px solid var(--rule);
+    font-variant:small-caps;
+    letter-spacing:0.14em;
+    font-size:0.84rem;
+    color:var(--faded);
+  }
+  .qtab{
+    display:block;
+    padding:0 0.15em 0.2rem;
+    border-bottom:1px solid transparent;
+    cursor:pointer;
+  }
+  .qtab.on{color:var(--ink);border-bottom-color:var(--gilt);}
+  .qtab .qtn{color:var(--faded);font-variant:normal;letter-spacing:0.02em;font-size:0.86em;}
+  /* the count on the tab in hand is not louder than the tab */
+  .qtab.on .qtn{color:var(--faded);}
+  /* The list is bounded. A lesson may arrive with twenty quests in it and the
+     page must not grow off the bottom of the screen to hold them: the tab
+     shows what fits and the caret brings the rest into view as it walks.
+     The bar is the ruling colour on nothing, so it is furniture rather than
+     a feature, and it is only there when there is more list than room. */
+  #qlist{
+    max-height:17rem;
+    overflow-y:auto;
+    scrollbar-width:thin;
+    scrollbar-color:rgba(201,188,160,0.9) transparent;
+  }
+  /* nothing in this tab yet: a line of plain marginalia, never an empty box */
+  .qempty{
+    padding:0.9em 0.5em;
+    color:var(--faded);
+    font-style:italic;
+  }
   .quest{
     display:grid;
-    grid-template-columns:1.2em 1.2em 1fr 1.4em;
+    /* caret, sword, name, the state of the work, and whether it is to hand */
+    grid-template-columns:1.2em 1.2em 1fr 1.4em 1.2em;
     column-gap:0.4em;
     align-items:baseline;
     padding:0.42em 0.5em;
@@ -484,11 +548,15 @@
   .qstat{text-align:center;line-height:1;}
   .qstat.done{color:var(--gilt);}
   .qstat.bound{color:var(--faded);}
+  /* the favourite: the page's own gilt, and a mark rather than a button.
+     It is the last thing on the row, so the three sigils that describe the
+     work — complete, written-in, where you are — keep the places they had. */
+  .qfav{text-align:center;line-height:1;color:var(--gilt);opacity:0.85;cursor:pointer;}
   /* the free-play workspace: named above the list, never navigated to
      directly — the active quest, chosen again, comes back here */
   .qfree{
     display:grid;
-    grid-template-columns:1.2em 1.2em 1fr 1.4em;
+    grid-template-columns:1.2em 1.2em 1fr 1.4em 1.2em;
     column-gap:0.4em;
     align-items:baseline;
     padding:0.42em 0.5em;
@@ -578,6 +646,7 @@
      and it never blinks — a wash, not a cursor. */
   .rline.nav{background-color:var(--wash);border-radius:0.3rem;}
   .rline .rg{color:var(--gilt);width:1em;text-align:center;flex:none;}
+  .rline .rf{color:var(--gilt);opacity:0.8;flex:none;font-size:0.9em;}
   .rail .rtext{color:var(--ink);margin-top:0.2rem;line-height:1.62;white-space:pre-line;}
   /* headers mirror on the right rail; running text stays readable left-to-left */
   .rail.right .rtext{text-align:left;}
@@ -641,7 +710,7 @@
      well inside the dense middle and not out on the fade. Where the breath
      runs under the sheet, the sheet simply covers it. */
   body:not([data-scenery="paper"]) header,
-  body:not([data-scenery="paper"]) footer{
+  body:not([data-scenery="paper"]) .foot{
     --ink:#F4EEE1;
     --faded:rgba(242,236,223,0.86);
     --rule:rgba(242,236,223,0.30);
@@ -651,7 +720,7 @@
     isolation:isolate;
   }
   body:not([data-scenery="paper"]) header::before,
-  body:not([data-scenery="paper"]) footer::before{
+  body:not([data-scenery="paper"]) .foot::before{
     content:"";
     position:absolute;
     inset:-3.6rem -6rem;
@@ -667,7 +736,7 @@
       rgba(13,18,16,0) 100%);
   }
   body:not([data-scenery="paper"]) header{margin-bottom:3.2rem;}
-  body:not([data-scenery="paper"]) footer{margin-top:3.2rem;}
+  body:not([data-scenery="paper"]) .foot{margin-top:3.2rem;}
   /* the two rules that fenced the title and the footer off from the work:
      the sheet's own torn edges are that fence now */
   body:not([data-scenery="paper"]) .divider{display:none;}
@@ -738,9 +807,9 @@
     /* the breath must end inside the window, or its floor reads as a band
        along the edge of the screen */
     body:not([data-scenery="paper"]) header::before,
-    body:not([data-scenery="paper"]) footer::before{inset:-2.8rem -2.6rem;}
+    body:not([data-scenery="paper"]) .foot::before{inset:-2.8rem -2.6rem;}
     body:not([data-scenery="paper"]) header{margin-bottom:2.6rem;}
-    body:not([data-scenery="paper"]) footer{margin-top:2.6rem;}
+    body:not([data-scenery="paper"]) .foot{margin-top:2.6rem;}
     .scenery{top:0.45rem;right:0.45rem;}
     .scenery span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}
   }
@@ -754,6 +823,33 @@
     letter-spacing:0.05em;
     min-height:1.4em;
   }
+  /* ---- the standing hint ----
+     F1 is a destination, and one does not walk to a destination to remember
+     which key steps back. So the keys that matter *here* are written under
+     the footer, always, in one line: what the hands can do on the page or the
+     panel in front of them, and nothing else. It holds its height whether it
+     has three hints or six, so nothing on the page ever moves because of it,
+     and it is a shade quieter than the footer above it — marginalia under
+     marginalia. It never announces, never changes size, and never blinks. */
+  .hints{
+    width:100%;
+    text-align:center;
+    margin-top:0.3rem;
+    color:var(--faded);
+    opacity:0.78;
+    font-size:0.76rem;
+    letter-spacing:0.05em;
+    line-height:1.35;
+    min-height:1.35em;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .hints b{font-weight:400;color:var(--ink);opacity:0.82;}
+  /* the footer and the hint under it are one piece of marginalia, and take
+     the scene's darkening breath together rather than one each */
+  .foot{width:100%;position:relative;isolation:isolate;}
+  @media (max-width:44rem){ .hints{white-space:normal;} }
   .hidden-input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;left:-9999px;}
 </style>
 </head>
@@ -802,18 +898,22 @@
           <dt>F1</dt><dd>close this page of the key</dd>
           <dt>F3</dt><dd>open or close the quest log</dd>
           <dt>F4</dt><dd>the pad's entry method: relative (contour) or absolute</dd>
-          <dt>shift + B</dt><dd>the quiet background: paper &rarr; forest &rarr; sea</dd>
+          <dt>shift + B</dt><dd>the quiet background: paper &rarr; forest &rarr; sea &rarr; quest. The last is not one picture but whichever belongs to the workspace you are in; a workspace with no picture of its own stays on paper</dd>
           <dt>escape</dt><dd>closes whichever page is up, the pad's settings crossbar included</dd>
           <dt>the arrows, here</dt><dd>the key of the piece: left, right move the tonic; up, down make it major or minor</dd>
           <dt>here, the two keys left of backspace</dt><dd>the tempo, down and up by four (60&ndash;180); with shift, by one</dd>
-          <dt>in the quest log</dt><dd>the arrows choose a quest; enter opens its page and works there; enter on the quest you are already in returns to free play; C marks it complete; F3 or escape closes</dd>
+          <dt>in the quest log</dt><dd>up and down choose a quest, left and right change lesson &mdash; the board is read one lesson at a time, and the drills are the last tab. Enter opens the chosen quest's page and works there; enter on the quest you are already in returns to free play; C marks it complete; F3 or escape closes</dd>
+          <dt>&hellip; F, there</dt><dd>keep this quest to hand: it goes to the head of its lesson, and to the head of the left margin whatever lesson it came from. F again lets it go</dd>
+          <dt>&hellip; shift + up, down</dt><dd>move the chosen quest up or down the list, and it stays where you put it. A quest moves among its own &mdash; the ones kept to hand, or the rest &mdash; and never crosses the hairline by being nudged</dd>
         </dl>
         <p>Notes are entered by position, not by letter, so the layout is the same on any keyboard. Entering a note advances the cursor two steps, and so does clearing one: a step is a sixteenth, sixteen of them are a bar, and eighths are what most of this is thought in &mdash; so writing straight ahead lays notes on 1, 3, 5, 7 and counts nothing. A sixteenth is one deliberate movement away: step back with an arrow and write there. Nothing is snapped to a grid; it is two steps on from wherever the cursor is, and it wraps around the page as the arrows do.</p>
         <p>The page holds two voices &mdash; a lead and a bass &mdash; and they play together, from the one clock. They are written one at a time: the strip above the page names both and marks the one in hand, the column gives each a place of its own beside the step number, and in the roll they are drawn in the same field, the voice you are not in a shade back. Tab changes hands. Everything else &mdash; the key, the tempo, the loop, the whole page &mdash; the two share; only the notes and the timbre are their own. The bass is rounder and darker, so a bass written up in the melody's octave still sounds like the bass. Solo (O) and mute (P) act on the voice you are in; solo, if any voice has it, is what decides, and a change is heard on the next step without a restart. A page written before there were two voices opens exactly as it always did, with a silent bass under it.</p>
         <p>The drawing names what it draws, in its margin rather than on top of itself. The home note of the page &mdash; the tonic of its key &mdash; is ruled across the roll at every octave in view and named once, at the side of its line, with the word home under the name: in C major those rules are the Cs, in G major the Gs, in A minor the As, and they move the moment the key does. Home is therefore a line you can see, and how far a note sits from it is how far it is from home. The octave is numbered the international way, so that C4 is middle C and the page runs from C2 to C6. Place a note, or move one, and a line of its own is drawn at that note's pitch, parallel to those rules and named beside them; it holds for a moment and then fades, so the pitch is said when you ask for it and the drawing is left alone the rest of the time. The column has always named its notes in the same alphabet, a dash standing in where there is no sharp, so that the two columns line up. Where both voices sound on the same step the roll also writes the interval between them, on a hairline tie drawn from the one bar to the other, so that the name belongs to that pair of notes and to nothing else however far apart the voices are. Below the octave the short names are the usual ones &mdash; P1, m2, M2, m3, M3, P4, TT, P5, m6, M6, m7, M7, P8 &mdash; and wider than an octave the compound name is used: the simple number plus seven for every octave crossed, so a minor third and an octave is m10, a fifth and an octave is P12, two octaves is P15. The tritone keeps its name and takes the compound number with it: TT, then TT11, then TT18. Only the distance is named, never the direction, so it reads the same whichever voice is on top. Nothing here judges: no interval is coloured, ranked, or marked as wanting anything. The page says what the two notes are; what they are worth is for the ear. K puts the whole lot away and brings it back.</p>
         <p>The key and the tempo both belong to the page you are on, and so to the workspace it lives in: each quest keeps its own, free play keeps its own, and changing one changes nothing anywhere else. Either may be changed while the loop runs; the change is heard at the next step, without a restart. A quest's page arrives already tuned &mdash; its own key and its own tempo, chosen to suit its constraint &mdash; so there is nothing to decide before writing; change them here whenever you like, and the change stays with that quest. Free play always begins in C major at 112.</p>
         <p>Every quest is a workspace: a whole page of its own &mdash; steps, title, tempo, loop and key &mdash; and one more page, free play, belongs to no quest. The page in front of you saves itself into the workspace you are in, on every change, as it always did; choosing another quest simply puts a different page in front of you. Nothing is bound, nothing is loaded, nothing is copied, and so nothing can be written over. The margins of this page carry the same thing quietly while you work: on the left every workspace and where you are, on the right the constraint you are under. A narrow window drops both rather than squeeze the column.</p>
-        <p>Below the eight, under a hairline, sit the drills: short &eacute;tudes written into the quest log from outside, each with its own page already on it. They are workspaces like any other &mdash; enter one, write, mark it complete &mdash; and when the folio is served, a drill added to the log while this page is open simply appears in the list, quietly, without a reload and without disturbing a line of what you have written.</p>
+        <p>Below the eight, under their own tab, sit the drills: short &eacute;tudes written into the quest log from outside, each with its own page already on it. They are workspaces like any other &mdash; enter one, write, mark it complete &mdash; and when the folio is served, a drill added to the log while this page is open simply appears in the list, quietly, without a reload and without disturbing a line of what you have written.</p>
+        <p>The board is read one lesson at a time. The strip above the list has a tab for every lesson that actually has quests in it and one for the drills, and a lesson that does not exist yet has no tab: the moment its quests are in the log, its tab is simply there. Nothing has to be told which lesson a quest belongs to &mdash; the eight standing quests are Lesson 1, a delivered quest may say which lesson it is for, and one that says nothing joins the newest lesson on the board. A quest kept to hand (F) is pinned to the head of its lesson and to the head of the left margin, where it is in view while you write; shift with up or down moves a quest and it stays where it is put. Both marks travel with the quest log, and a log written before either existed opens exactly as it always did.</p>
+        <p>The background can also be the workspace's own: shift&#8239;+&#8239;B once past the sea, and the scene behind the sheet becomes the picture that belongs to the quest you are in. There is one for most of the board and none for free play, and a workspace without one simply stays on paper &mdash; nothing waits for a picture and nothing moves when one arrives.</p>
         <p>Opened from a file, the folio keeps everything in the browser alone. Started with folio.cmd and opened at http://localhost:4173, it also keeps the whole quest log in a real file &mdash; quests/quest&#8209;log.json &mdash; written a couple of seconds after every change, and read back when it opens. The footer says &middot;&#8239;synced while the quest log is open. If the server goes away the work carries on in the browser and the footer says so; the next change tries again.</p>
         <p>A copy of the folio can also be put on an ordinary web host and sent to somebody. There is no server behind that copy, so it never sends anything anywhere: it reads the quest log that travelled with it once, on a browser that has nothing of its own yet, and after that everything the reader writes is theirs and stays in their browser. The footer says &middot;&#8239;read&#8209;only copy while the quest log is open.</p>
       </div>
@@ -843,7 +943,7 @@
           <dt>&hellip; d&#8209;pad &#8592;&#8594;</dt><dd>nudge the note under the cursor a step of the key, without advancing (in the roll this lives on &#8593;&#8595;, in either method). L1 and R1 held together take the nudge out of the key too, a semitone at a time, exactly as they take &#9651; and &#10005;</dd>
           <dt>here, d&#8209;pad &#8592;&#8594;</dt><dd>the tonic; &#9651; or &#10005; (Y, A) make the key major or minor</dd>
           <dt>here, d&#8209;pad &#8593;&#8595;</dt><dd>the tempo, up and down by four (60&ndash;180); hold L1 or R1 for one</dd>
-          <dt>in the quest log</dt><dd>d&#8209;pad up, down choose a quest; &#10005; (A) opens its page, or returns to free play if you are in it already; &#9675; (B) marks it complete; R3 closes</dd>
+          <dt>in the quest log</dt><dd>d&#8209;pad up, down choose a quest; L1 and R1 change lesson; &#10005; (A) opens its page, or returns to free play if you are in it already; &#9675; (B) marks it complete; &#9633; (X) keeps it to hand; &#9651; (Y) held, up and down carry the quest with the caret instead of leaving it; R3 closes</dd>
           <dt>on the key page</dt><dd>R3 closes it, as it closes the quest log</dd>
         </dl>
         <p>The cross hotbar, borrowed: a trigger raises the eight slots, letting go gives the d&#8209;pad back to navigation. Twenty&#8209;four semitones, every pitch of two octaves, counted up from the octave in the header; entry goes on two steps &mdash; an eighth, as on the keyboard &mdash; and sounds the note. A DualSense and an Xbox pad report the same positions. A browser notices a pad only after you press one of its buttons: press start if nothing answers &mdash; the settings crossbar coming up is the pad saying hello. Sound may wait for one keyboard touch.</p>
@@ -873,8 +973,9 @@
     <h2>The quest log</h2>
     <div class="qfree" id="qfree">
       <span class="qcaret"></span><span class="qsigil" id="qfreesigil"></span>
-      <div>free play &mdash; no constraint</div><span class="qstat"></span>
+      <div>free play &mdash; no constraint</div><span class="qstat"></span><span class="qfav"></span>
     </div>
+    <div class="qtabs" id="qtabs" role="tablist" aria-label="the lessons"></div>
     <div id="qlist"></div>
     <div class="qdetail" id="qdetail">
       <div class="qdname" id="qdname"></div>
@@ -883,12 +984,15 @@
       <div class="qpreview" id="qpreview"></div>
       <div class="qdstate" id="qdstate"></div>
     </div>
-    <p>Constraint &eacute;tudes, taken in any order and abandoned guiltlessly. Every quest is a workspace holding its own page &mdash; choosing one puts you in it, choosing it again returns to free play, and nothing is ever bound, loaded or lost: each page saves itself where it lives. &#10087; complete &middot; &#8226; something written &middot; &#9876; where you are. Served from folio.cmd, the whole log keeps itself in quests/quest&#8209;log.json; otherwise Ctrl&#8239;+&#8239;S writes it out once, to be kept at that same place.</p>
+    <p>Constraint &eacute;tudes, in any order, abandoned guiltlessly. Each is a workspace holding its own page, and nothing is ever bound, loaded or lost. &#10087; complete &middot; &#8226; something written &middot; &#9876; where you are &middot; &#10022; kept to hand.</p>
   </section>
   </div>
 
   <div class="divider"></div>
-  <footer id="footer">&#8248; cursor row &middot; F1 for the key</footer>
+  <div class="foot">
+    <footer id="footer">&#8248; cursor row &middot; F1 for the key</footer>
+    <div class="hints" id="hints" aria-label="the keys that matter here"></div>
+  </div>
 </main>
 
 <aside class="rail left" id="raill" aria-label="workspaces">
@@ -908,6 +1012,7 @@
   <button type="button" data-scene="paper" aria-pressed="true">paper</button>
   <button type="button" data-scene="forest" aria-pressed="false">forest</button>
   <button type="button" data-scene="sea" aria-pressed="false">sea</button>
+  <button type="button" data-scene="quest" aria-pressed="false">quest</button>
 </div>
 <input type="file" id="picker" class="hidden-input" accept=".json,.folio,application/json" tabindex="-1">
 
@@ -1125,6 +1230,8 @@
   var vnames = [document.getElementById("vname0"), document.getElementById("vname1")];
   var vmarks = [document.getElementById("vmark0"), document.getElementById("vmark1")];
   var qlist  = document.getElementById("qlist");
+  var qtabs  = document.getElementById("qtabs");
+  var hintsEl = document.getElementById("hints");
   var qfree  = document.getElementById("qfree");
   var qfreesigil = document.getElementById("qfreesigil");
   var qdname = document.getElementById("qdname");
@@ -1143,19 +1250,77 @@
 
   /* The landscape is a preference, not part of a musical document: changing
      workspace, importing a folio, or sharing a quest never changes it. */
-  var SCENERIES = ["paper", "forest", "sea"];
+  var SCENERIES = ["paper", "forest", "sea", "quest"];
+  /* ---- the fourth scene: the workspace's own picture ----
+     `quest` is not a photograph but a rule — whichever illustration belongs
+     to the workspace you are in, at quest-backgrounds/<id>.png. Nothing here
+     holds a list of names: an id either has a file or it has not, and the
+     only way to find out on a static host as well as a served one is to ask
+     for the picture. So each id is probed once, the answer is remembered for
+     the session, and until it comes back (or if it never does) the body is on
+     plain paper — which is the graceful fall in every direction: free play,
+     a quest with no picture of its own, an offline reload, a folio opened
+     from a file. Nothing waits on the network and nothing changes size when
+     the answer arrives; the ground under the sheet simply becomes a scene. */
+  var QUEST_BG_DIR = "quest-backgrounds/";
+  var scenePref = "paper";
+  var bgKnown = {};                  /* id -> true | false | null (asked) */
+
+  function questBgUrl(id){ return QUEST_BG_DIR + encodeURIComponent(id) + ".png"; }
+  function probeBg(id){
+    if (!id) return;
+    if (Object.prototype.hasOwnProperty.call(bgKnown, id)) return;
+    if (typeof Image !== "function"){ bgKnown[id] = false; return; }
+    bgKnown[id] = null;
+    var im = new Image();
+    im.onload  = function(){ bgKnown[id] = true;  applyScenery(); scenerySettled(); };
+    im.onerror = function(){ bgKnown[id] = false; applyScenery(); scenerySettled(); };
+    im.src = questBgUrl(id);
+  }
+  /* what the body is actually wearing, which is the preference except where
+     the preference has nothing to show */
+  function sceneNow(){
+    if (scenePref !== "quest") return scenePref;
+    if (qActive && bgKnown[qActive] === true) return "quest";
+    probeBg(qActive);
+    return "paper";
+  }
+  function applyScenery(){
+    var eff = sceneNow(), s = document.body.style;
+    if (eff === "quest" && s && s.setProperty)
+      s.setProperty("--questbg", 'url("' + questBgUrl(qActive) + '")');
+    document.body.setAttribute("data-scenery", eff);
+  }
+  /* what the scenery control is saying, which for the fourth scene depends on
+     an answer that may still be coming back over the wire */
+  function sceneryLine(){
+    if (scenePref !== "quest") return "scenery · " + scenePref;
+    if (document.body.getAttribute("data-scenery") === "quest")
+      return "scenery · quest · " + workspaceName();
+    if (!qActive) return "scenery · quest · paper, until you are in one";
+    if (bgKnown[qActive] === false)
+      return "scenery · quest · nothing to show here — paper";
+    return "scenery · quest";
+  }
+  /* the answer arrived after the line was written: write it again, and only
+     if the line is still the one the control put there */
+  function scenerySettled(){
+    if (scenePref !== "quest") return;
+    if (String(lastSaid).indexOf("scenery · quest") !== 0) return;
+    say(sceneryLine());
+  }
   function setScenery(scene, quiet){
     if (SCENERIES.indexOf(scene) < 0) scene = "paper";
-    document.body.setAttribute("data-scenery", scene);
+    scenePref = scene;
+    applyScenery();
     for (var si = 0; si < sceneryButtons.length; si++)
       sceneryButtons[si].setAttribute("aria-pressed",
         sceneryButtons[si].getAttribute("data-scene") === scene ? "true" : "false");
     try { localStorage.setItem(SCENERY_KEY, scene); } catch (e){}
-    if (!quiet) say("scenery · " + scene);
+    if (!quiet) say(sceneryLine());
   }
   function cycleScenery(){
-    var here = document.body.getAttribute("data-scenery") || "paper";
-    setScenery(SCENERIES[(SCENERIES.indexOf(here) + 1) % SCENERIES.length]);
+    setScenery(SCENERIES[(SCENERIES.indexOf(scenePref) + 1) % SCENERIES.length]);
   }
   for (var si = 0; si < sceneryButtons.length; si++){
     sceneryButtons[si].addEventListener("click", function(){
@@ -1501,9 +1666,53 @@
     }
     rollLoop();
   }
+  /* ================= the standing hint =================
+     The key page is a destination, and nobody walks to a destination to
+     remember which key steps back a sixteenth. So the keys that matter where
+     the hands actually are stay under the footer, always — a handful at most,
+     the same handful for the same situation, changing only when the situation
+     does. It holds its height whatever it says, so the page never moves
+     because of it; it is quieter than the footer above it; and it announces
+     nothing. Everything in it is named by position, as everything in this app
+     is: the letters are places on the board, not what a keyboard prints. */
+  function hintsNow(){
+    if (settingsEl.classList.contains("on"))
+      return [["↑ ↓","workspace"],["← →","voice"],["□","solo"],["△","mute"],
+              ["✕","entry method"],["start","close"]];
+    if (questsEl.classList.contains("on"))
+      return [["↑ ↓","quest"],["← →","lesson"],["enter","work here"],
+              ["F","keep to hand"],["shift + ↑ ↓","move it"],["C","complete"],["F3","close"]];
+    if (keyref.classList.contains("on"))
+      return [["← →","the tonic"],["↑ ↓","major, minor"],["− +","tempo"],["F1","close"]];
+    var out = [["← →","step"],["period","clear"],["space","play"],["tab","voice"],
+               ["L","loop"],["F2", viz === "roll" ? "the column" : "the roll"],
+               ["F3","quests"],["F1","the key"]];
+    /* what writes a note depends on the method the pad is in, and that is the
+       one thing on this page a hand can forget without a way to check */
+    out.unshift(relative ? ["△ ✕ ○ □", "up, down, again, rest"]
+                         : ["z…m, q…i", "notes"]);
+    return out;
+  }
+  function renderHints(){
+    if (!hintsEl) return;
+    var h = hintsNow(), i, k, v, s;
+    while (hintsEl.firstChild) hintsEl.removeChild(hintsEl.firstChild);
+    for (i = 0; i < h.length; i++){
+      if (i){
+        s = document.createElement("span");
+        s.textContent = " · ";
+        hintsEl.appendChild(s);
+      }
+      k = document.createElement("b"); k.textContent = h[i][0];
+      v = document.createElement("span"); v.textContent = " " + h[i][1];
+      hintsEl.appendChild(k); hintsEl.appendChild(v);
+    }
+  }
+
   var lastSaid = "‸ cursor row";
   function say(msg){
     lastSaid = msg;
+    renderHints();
     footer.textContent = msg + (
       keyref.classList.contains("on")     ? " · F1 to close" :
       questsEl.classList.contains("on")   ? " · F3 to close" + syncNote() :
@@ -2209,15 +2418,24 @@
       name: (typeof o.name === "string" && o.name.trim()) ? o.name.trim().slice(0, 60) : id,
       summary: drillText(o.summary),
       teaches: drillText(o.teaches),
+      /* optional: which lesson's tab this belongs on. 0 — absent, or out of
+         range — means "work it out", which is what every definition written
+         before there were tabs says by saying nothing. */
+      lesson: (typeof o.lesson === "number" && isFinite(o.lesson) &&
+               o.lesson >= 1 && o.lesson <= 9) ? Math.round(o.lesson) : 0,
       pattern: o.pattern ? safeValidate(o.pattern) : null
     };
   }
   function ghostDrill(id){
-    return { id:id, name:id, summary:"", teaches:"", pattern:null, ghost:true };
+    return { id:id, name:id, summary:"", teaches:"", lesson:0, pattern:null, ghost:true };
   }
   /* a definition, read as the quest log reads a quest */
   function drillQuest(d){
-    return { id:d.id, name:d.name, short:d.name, text:d.summary, teaches:d.teaches, drill:true };
+    /* the sword means one thing — the workspace you are in — so the flavour
+       sword a delivered quest carries in its name is not repeated in its
+       short name either, or the meta line and the margin read ⚔ ⚔ */
+    return { id:d.id, name:d.name, short:plainName(d), text:d.summary,
+             teaches:d.teaches, drill:true };
   }
   function rebuildList(){
     var i;
@@ -2249,7 +2467,7 @@
   var wsDoc = {};              /* id -> page, made the first time a quest is entered */
 
   function questSlot(id){
-    if (!qState[id]) qState[id] = { done:false };
+    if (!qState[id]) qState[id] = { done:false, fav:false, order:null };
     return qState[id];
   }
   function questById(id){
@@ -2281,6 +2499,11 @@
   function switchWorkspace(id){
     stash();
     qActive = id || null;
+    /* the caret follows the workspace, by whichever road it was reached —
+       the log, the margin, the pad's rail — so that opening the log always
+       shows you where you actually are, in the lesson you are actually in */
+    if (qActive)
+      for (var wi = 0; wi < ALL.length; wi++) if (ALL[wi].id === qActive){ qsel = wi; break; }
     doc = workspaceDoc(qActive);
     cursor = 0;
     if (playing) stop();
@@ -2315,9 +2538,35 @@
      selection to keep — the line the highlight is on *is* the workspace you
      are in, so a step up or down is a switch, and the switch is the whole
      interaction. Nothing is confirmed and no page is opened on the way. */
+  /* ---- how the margin is arranged ----
+     The favourites first, across the whole board — the margin is the one
+     surface in view while you are actually writing, so a quest kept to hand
+     belongs at the top of it whatever lesson it came from — and then a run
+     per lesson, the drills last. The pad walks exactly this order, so what
+     the thumb does and what the eye reads are the same list. */
+  function railSections(){
+    var t = tabList(), out = [], favs = [], rest, v, i, j;
+    for (i = 0; i < t.length; i++){
+      v = viewOf(t[i]);
+      for (j = 0; j < v.length; j++) if (favOf(ALL[v[j]].id)) favs.push(v[j]);
+    }
+    if (favs.length) out.push({ label:"favourites", idx:favs });
+    for (i = 0; i < t.length; i++){
+      v = viewOf(t[i]); rest = [];
+      for (j = 0; j < v.length; j++) if (!favOf(ALL[v[j]].id)) rest.push(v[j]);
+      if (rest.length) out.push({ label: tabLabel(t[i]), idx: rest });
+    }
+    return out;
+  }
+  function railSequence(){
+    var s = railSections(), out = [], i, j;
+    for (i = 0; i < s.length; i++)
+      for (j = 0; j < s[i].idx.length; j++) out.push(s[i].idx[j]);
+    return out;
+  }
   function railOrder(){
-    var out = [null], i;
-    for (i = 0; i < ALL.length; i++) out.push(ALL[i].id);
+    var seq = railSequence(), out = [null], i;
+    for (i = 0; i < seq.length; i++) out.push(ALL[seq[i]].id);
     return out;
   }
   function workspaceName(){
@@ -2350,8 +2599,13 @@
     var i, id, s, d;
     for (i = 0; i < ALL.length; i++){
       id = ALL[i].id; s = qState[id]; d = wsDoc[id];
-      if (!d && !(s && s.done)) continue;
+      var fav = !!(s && s.fav), ord = (s && typeof s.order === "number") ? s.order : null;
+      if (!d && !(s && s.done) && !fav && ord === null) continue;
       out.quests[id] = { done: !!(s && s.done), pattern: d || null };
+      /* the two marks are written only where they were made, so a log from a
+         board nobody has arranged is byte for byte the log it always was */
+      if (fav) out.quests[id].fav = true;
+      if (ord !== null) out.quests[id].order = ord;
     }
     /* every drill definition this session knows travels back out with the
        state, so that a PUT can never be the thing that loses one; ghosts are
@@ -2360,7 +2614,9 @@
     for (i = 0; i < DRILLS.length; i++){
       d = DRILLS[i];
       if (d.ghost) continue;
-      ds.push({ id:d.id, name:d.name, summary:d.summary, teaches:d.teaches, pattern:d.pattern });
+      var def = { id:d.id, name:d.name, summary:d.summary, teaches:d.teaches, pattern:d.pattern };
+      if (d.lesson) def.lesson = d.lesson;      /* only where it was declared */
+      ds.push(def);
     }
     if (ds.length) out.drills = ds;
     return out;
@@ -2395,6 +2651,11 @@
            so that it still has a line, a page and a name (its id) */
         if (!questById(id)){ DRILLS.push(ghostDrill(id)); rebuildList(); }
         questSlot(id).done = !!q.done;
+        /* both optional, and both simply absent in a log written before they
+           existed — an unarranged board reads as the natural order */
+        questSlot(id).fav = !!q.fav;
+        questSlot(id).order = (typeof q.order === "number" && isFinite(q.order))
+                                ? Math.round(q.order) : null;
         /* a workspace page is an ordinary pattern, read by the same validator
            as a file; version 1's "motif" is the same thing under its old name */
         p = q.pattern || q.motif;
@@ -2403,6 +2664,10 @@
       }
     }
     qActive = (typeof o.active === "string" && questById(o.active)) ? o.active : null;
+    /* the caret starts where the work is, as it goes where the work goes */
+    qsel = 0;
+    if (qActive)
+      for (i = 0; i < ALL.length; i++) if (ALL[i].id === qActive){ qsel = i; break; }
     doc = workspaceDoc(qActive);
     droppedMarks = false;      /* the pattern autosave owns that message */
     return true;
@@ -2685,11 +2950,163 @@
     return true;
   }
 
+  /* ================= the board, read one lesson at a time =================
+     Eight quests fitted on one page. Lesson 2 brought eight more and a
+     handful of drills, Lesson 3 will bring its own, and a list that only
+     grows stops being a board and becomes a scroll. So the log is read a
+     lesson at a time: a strip of tabs above the list, one per lesson that
+     actually has something in it, and the drills — the short études — at the
+     end under their own.
+
+     Nothing here is configured. A quest's lesson is worked out from what the
+     log already contains, in this order:
+
+       the eight built-ins are Lesson 1, always;
+       a drill definition may simply *say* its lesson (an optional `lesson`
+         number on the definition, ignored by anything that does not know it);
+       a table below names the Lesson 2 board, which was delivered before
+         there was a field to put it in;
+       anything else carrying the sword belongs to the newest lesson known,
+         so a board delivered ahead of this file still lands together;
+       and anything with no sword at all is a drill.
+
+     Lesson 3 therefore needs no surgery: deliver its quests with `lesson: 3`
+     and the tab is there. */
+  var TAB_KEY = "folio.qtab";           /* a preference, not part of the log */
+  var LESSON_OF = { shadow:2, ostinato:2, torch:2, "torch-notes":2,
+                    drone:2, "drone-contour":2, "drone-relentless":2,
+                    hocket:2, chordisnt:2, oilwater:2, latecomer:2 };
+  var DRILL_TAB = 0;                    /* the group the études sit in */
+  var activeTab = 1;
+
+  function lessonField(o){
+    var n = o && o.lesson;
+    return (typeof n === "number" && isFinite(n) && n >= 1 && n <= 9) ? Math.round(n) : 0;
+  }
+  function newestLesson(){
+    var hi = 1, i, d, n;
+    for (i = 0; i < DRILLS.length; i++){
+      d = DRILLS[i];
+      n = lessonField(d) ||
+          (Object.prototype.hasOwnProperty.call(LESSON_OF, d.id) ? LESSON_OF[d.id] : 0);
+      if (n > hi) hi = n;
+    }
+    return hi;
+  }
+  function questGroup(q){
+    if (!q) return DRILL_TAB;
+    if (!q.drill) return 1;
+    var d = drillById(q.id), n = d ? lessonField(d) : 0;
+    if (n) return n;
+    if (Object.prototype.hasOwnProperty.call(LESSON_OF, q.id)) return LESSON_OF[q.id];
+    if ((q.name || "").indexOf("⚔") >= 0) return newestLesson();
+    return DRILL_TAB;
+  }
+  /* every group that has something in it, lessons in order and the drills last */
+  function tabList(){
+    var seen = {}, out = [], i, g;
+    for (i = 0; i < ALL.length; i++){
+      g = questGroup(ALL[i]);
+      if (!seen[g]){ seen[g] = true; out.push(g); }
+    }
+    out.sort(function(a, b){ return (a || 99) - (b || 99); });
+    if (!out.length) out.push(1);
+    return out;
+  }
+  function tabLabel(g){ return g ? "L" + g : "drills"; }
+  function currentTab(){
+    var t = tabList();
+    if (t.indexOf(activeTab) < 0) activeTab = t[0];
+    return activeTab;
+  }
+
+  /* ---- favourites, and the player's own order ----
+     Both are marks on a quest and neither is a copy of anything: a favourite
+     is pinned to the top of its tab (and to the top of the left margin, which
+     is in view the whole time you are writing), and an order is remembered
+     only for the quests that have actually been moved — everything else keeps
+     the order it was delivered in. Both ride out with the log as optional
+     fields on the quest's entry, so a reader that knows nothing about either
+     reads the log exactly as it always did. */
+  function favOf(id){ return !!questSlot(id).fav; }
+  function orderOf(id, idx){
+    var o = questSlot(id).order;
+    return (typeof o === "number" && isFinite(o)) ? o : idx;
+  }
+  /* the indices of ALL that belong to a group, in the order they are read */
+  function viewOf(g){
+    var out = [], i;
+    for (i = 0; i < ALL.length; i++) if (questGroup(ALL[i]) === g) out.push(i);
+    out.sort(function(a, b){
+      var fa = favOf(ALL[a].id) ? 0 : 1, fb = favOf(ALL[b].id) ? 0 : 1;
+      if (fa !== fb) return fa - fb;
+      var oa = orderOf(ALL[a].id, a), ob = orderOf(ALL[b].id, b);
+      if (oa !== ob) return oa - ob;
+      return a - b;
+    });
+    return out;
+  }
+  function view(){ return viewOf(currentTab()); }
+
+  function setTab(g, quiet){
+    var t = tabList();
+    if (t.indexOf(g) < 0) g = t[0];
+    activeTab = g;
+    try { localStorage.setItem(TAB_KEY, String(g)); } catch (e){}
+    var v = view();
+    if (v.length && v.indexOf(qsel) < 0) qsel = v[0];
+    renderQuests();
+    if (!quiet)
+      say(tabLabel(g) + " · " + (v.length ? v.length + (v.length === 1 ? " quest" : " quests")
+                                          : "nothing here yet"));
+  }
+  function moveTab(d){
+    var t = tabList(), at = t.indexOf(currentTab());
+    if (at < 0) at = 0;
+    setTab(t[((at + d) % t.length + t.length) % t.length]);
+  }
+  function toggleFavourite(){
+    var q = selQuest();
+    if (!q) return;
+    var s = questSlot(q.id);
+    s.fav = !s.fav;
+    save(); renderQuests();
+    say(q.short + (s.fav ? " · ✦ kept to hand" : " · no longer to hand"));
+  }
+  /* ---- moving a quest ----
+     A quest moves among its own kind: within the favourites at the head of
+     the tab, or within the rest below them. It never crosses the hairline by
+     being nudged — that is what F is for. The run it moves in is renumbered
+     whole, so the arrangement is explicit from that moment on and a drill
+     arriving later cannot shuffle what was put in order by hand. */
+  function moveInOrder(d){
+    var v = view(), q = selQuest(), mine = [], i, at, to, moved;
+    if (!q) return;
+    for (i = 0; i < v.length; i++)
+      if (favOf(ALL[v[i]].id) === favOf(q.id)) mine.push(v[i]);
+    at = mine.indexOf(qsel);
+    if (at < 0) return;
+    to = at + d;
+    if (to < 0 || to >= mine.length){
+      say(q.short + " · already at the " + (d < 0 ? "head" : "foot"));
+      return;
+    }
+    moved = mine.slice();
+    moved.splice(at, 1);
+    moved.splice(to, 0, qsel);
+    for (i = 0; i < moved.length; i++) questSlot(ALL[moved[i]].id).order = i;
+    save(); renderQuests();
+    say(q.short + " · moved " + (d < 0 ? "up" : "down"));
+  }
+
   /* ---- the quest page ---- */
-  /* the list is rebuilt whenever it changes shape, which is only when a drill
-     arrives or a whole state is applied; the eight built-ins come first, then
-     a quiet labelled hairline, then the drills in the order they arrived */
+  /* the rows are built once per shape of the list and kept alongside ALL, so
+     that a row can always be found by the quest it belongs to; which of them
+     are on the page, and in what order, is the tab's business and is settled
+     again on every render */
   var qrows = [];
+  var qtabrows = [];
+  var qempty = null;
   function hairline(cls, label){
     var el = document.createElement("div");
     el.className = cls;
@@ -2702,21 +3119,76 @@
     while (qlist.firstChild) qlist.removeChild(qlist.firstChild);
     qrows.length = 0;
     for (var qi = 0; qi < ALL.length; qi++){
-      if (ALL[qi].drill && (qi === 0 || !ALL[qi - 1].drill))
-        qlist.appendChild(hairline("qhair", "drills"));
       var qrow = document.createElement("div");
       qrow.className = "quest";
       var qc = document.createElement("span"); qc.className = "qcaret";
       var qg = document.createElement("span"); qg.className = "qsigil";
       var qn = document.createElement("div"); qn.className = "qname"; qn.textContent = plainName(ALL[qi]);
       var qt = document.createElement("span"); qt.className = "qstat";
-      qrow.appendChild(qc); qrow.appendChild(qg); qrow.appendChild(qn); qrow.appendChild(qt);
+      var qf = document.createElement("span"); qf.className = "qfav";
+      qrow.appendChild(qc); qrow.appendChild(qg); qrow.appendChild(qn);
+      qrow.appendChild(qt); qrow.appendChild(qf);
       qrow.addEventListener("click", (function(id){
         return function(){ clickWorkspace(id); };
       })(ALL[qi].id));
-      qlist.appendChild(qrow);
-      qrows.push({ el: qrow, caret: qc, sigil: qg, stat: qt });
+      /* the mark answers the mouse where it is: choosing the quest first, so
+         that what is kept to hand is always what the caret is on */
+      qf.addEventListener("click", (function(id){
+        return function(ev){
+          if (ev && ev.stopPropagation) ev.stopPropagation();
+          for (var k = 0; k < ALL.length; k++) if (ALL[k].id === id){ qsel = k; break; }
+          toggleFavourite();
+        };
+      })(ALL[qi].id));
+      qrows.push({ el: qrow, caret: qc, sigil: qg, stat: qt, fav: qf });
     }
+    qempty = document.createElement("div");
+    qempty.className = "qempty";
+    qempty.textContent = "nothing in this lesson yet";
+    layoutQuestRows();
+  }
+  /* which rows are on the page, in which order, and where the hairline falls.
+     A divider that divides nothing is not drawn: the label goes before every
+     run except the first, so a tab with no favourites in it is a plain list
+     exactly as it always was. */
+  function layoutQuestRows(){
+    var v = view(), i, idx, run = -1, here;
+    while (qlist.firstChild) qlist.removeChild(qlist.firstChild);
+    for (i = 0; i < v.length; i++){
+      idx = v[i];
+      here = favOf(ALL[idx].id) ? 1 : 0;
+      if (here !== run){
+        if (run >= 0)
+          qlist.appendChild(hairline("qhair", here ? "favourites" : tabLabel(currentTab())));
+        run = here;
+      }
+      qlist.appendChild(qrows[idx].el);
+    }
+    if (!v.length && qempty) qlist.appendChild(qempty);
+    /* the caret is never below the fold of its own list */
+    var sel = qrows[qsel] && qrows[qsel].el;
+    if (sel && sel.scrollIntoView) sel.scrollIntoView({ block:"nearest", inline:"nearest" });
+  }
+  function renderTabs(){
+    var t = tabList(), cur = currentTab(), i;
+    while (qtabs.firstChild) qtabs.removeChild(qtabs.firstChild);
+    qtabrows.length = 0;
+    for (i = 0; i < t.length; i++) qtabs.appendChild(mkTab(t[i], cur));
+  }
+  function mkTab(g, cur){
+    var el = document.createElement("div");
+    el.className = "qtab" + (g === cur ? " on" : "");
+    el.setAttribute("role", "tab");
+    el.setAttribute("aria-selected", g === cur ? "true" : "false");
+    var lab = document.createElement("span");
+    lab.textContent = tabLabel(g);
+    var n = document.createElement("span");
+    n.className = "qtn";
+    n.textContent = " " + viewOf(g).length;
+    el.appendChild(lab); el.appendChild(n);
+    el.addEventListener("click", function(){ setTab(g); });
+    qtabrows.push(el);
+    return el;
   }
   buildQuestRows();
   qfree.addEventListener("click", function(){ clickWorkspace(null); });
@@ -2782,6 +3254,10 @@
     return questHasContent(id) ? "•" : "";
   }
   function renderQuests(){
+    /* the caret is never off the page: choosing a workspace from the margin,
+       or with the pad, brings that quest's lesson forward with it */
+    if (ALL[qsel] && questGroup(ALL[qsel]) !== currentTab())
+      activeTab = questGroup(ALL[qsel]);
     for (var i = 0; i < ALL.length && i < qrows.length; i++){
       var q = ALL[i], s = questSlot(q.id), r = qrows[i];
       r.el.classList.toggle("sel", i === qsel);
@@ -2790,11 +3266,17 @@
       if (s.done){ r.stat.textContent = "❧"; r.stat.className = "qstat done"; }
       else if (questHasContent(q.id)){ r.stat.textContent = "•"; r.stat.className = "qstat bound"; }
       else { r.stat.textContent = ""; r.stat.className = "qstat"; }
+      if (r.fav) r.fav.textContent = s.fav ? "✦" : "";
     }
+    renderTabs();
+    layoutQuestRows();
     qfree.classList.toggle("act", !qActive);
     qfreesigil.textContent = qActive ? "" : "⚔";
     renderQuestDetail();
     renderRails();
+    /* the ground under the sheet, where the ground is the workspace's own:
+       every route into another workspace comes through here */
+    applyScenery();
   }
   function renderQuestDetail(){
     var q = selQuest(), s, bits = [];
@@ -2806,12 +3288,18 @@
     bits.push(q.id === qActive ? "⚔ you are working here"
                                : "enter to work here — its page is kept apart");
     if (s.done) bits.push("❧ complete");
+    if (s.fav) bits.push("✦ kept to hand");
     if (!questHasContent(q.id)) bits.push("nothing written yet");
     qdstate.textContent = bits.join(" · ");
     renderContour(q.id);
   }
+  /* the caret walks the tab it is in, and wraps inside it: the list on the
+     page is the list the arrows walk, which is the whole point of the tabs */
   function moveQuest(d){
-    qsel = (qsel + d + ALL.length) % ALL.length;
+    var v = view(), at;
+    if (!v.length) return;
+    at = v.indexOf(qsel);
+    qsel = (at < 0) ? v[0] : v[((at + d) % v.length + v.length) % v.length];
     renderQuests();
     say(selQuest().short);
   }
@@ -2829,22 +3317,41 @@
       el.className = "rline";
       var g = document.createElement("span"); g.className = "rg";
       var n = document.createElement("span"); n.className = "rn"; n.textContent = name;
-      el.appendChild(g); el.appendChild(n);
-      railquests.appendChild(el);
-      return { el: el, glyph: g, name: n };
+      /* the run at the head of the margin has no hairline above it — there is
+         nothing above to divide it from — so its lines say for themselves
+         what they are */
+      var f = document.createElement("span"); f.className = "rf";
+      el.appendChild(g); el.appendChild(n); el.appendChild(f);
+      return { el: el, glyph: g, name: n, fav: f };
     }
     while (railquests.firstChild) railquests.removeChild(railquests.firstChild);
     rrows.length = 0;
     rrows.push(line("free play"));
     rrows[0].el.addEventListener("click", function(){ clickWorkspace(null); });
     for (var i = 0; i < ALL.length; i++){
-      if (ALL[i].drill && (i === 0 || !ALL[i - 1].drill))
-        railquests.appendChild(hairline("rhair", "drills"));
       var rr = line(ALL[i].short);
       rr.el.addEventListener("click", (function(id){
         return function(){ clickWorkspace(id); };
       })(ALL[i].id));
       rrows.push(rr);
+    }
+    railShape = "";
+    layoutRailRows();
+  }
+  /* the margin is redrawn only when its arrangement actually changes — it is
+     touched on every autosave, which is on every note */
+  var railShape = "";
+  function layoutRailRows(){
+    var s = railSections(), sig = "", i, j;
+    for (i = 0; i < s.length; i++) sig += s[i].label + ":" + s[i].idx.join(",") + ";";
+    if (sig === railShape) return;
+    railShape = sig;
+    while (railquests.firstChild) railquests.removeChild(railquests.firstChild);
+    railquests.appendChild(rrows[0].el);
+    for (i = 0; i < s.length; i++){
+      if (i) railquests.appendChild(hairline("rhair", s[i].label));
+      for (j = 0; j < s[i].idx.length; j++)
+        railquests.appendChild(rrows[s[i].idx[j] + 1].el);
     }
   }
   buildRailRows();
@@ -2852,6 +3359,7 @@
     /* while start is up the d-pad is walking this list, so the line it is on
        is washed as well as marked — the pad's own highlight, and calm */
     var nav = settingsEl.classList.contains("on");
+    layoutRailRows();
     rrows[0].el.classList.toggle("act", !qActive);
     rrows[0].el.classList.toggle("nav", nav && !qActive);
     rrows[0].glyph.textContent = qActive ? "" : "⚔";
@@ -2860,6 +3368,7 @@
       r.el.classList.toggle("act", id === qActive);
       r.el.classList.toggle("nav", nav && id === qActive);
       r.glyph.textContent = questGlyph(id);
+      if (r.fav) r.fav.textContent = favOf(id) ? "✦" : "";
     }
     var q = activeQuest();
     railtitle.textContent = q ? plainName(q) : "Free play";
@@ -2917,12 +3426,21 @@
       e.preventDefault();
       switch (code){
         case "Escape":    toggleQuests();  return;
-        case "ArrowUp": case "ArrowLeft":   moveQuest(-1);   return;
-        case "ArrowDown": case "ArrowRight": moveQuest(1);   return;
+        /* the list runs down the page and the lessons run across the top of
+           it, so the arrows do the same: up and down walk the tab you are in,
+           left and right change tabs. Held with shift the vertical pair is
+           not a step but a move — the caret carries the quest with it. */
+        case "ArrowUp":    if (e.shiftKey) moveInOrder(-1); else moveQuest(-1); return;
+        case "ArrowDown":  if (e.shiftKey) moveInOrder(1);  else moveQuest(1);  return;
+        case "ArrowLeft":  moveTab(-1); return;
+        case "ArrowRight": moveTab(1);  return;
         /* enter is the whole interaction: it puts you in that quest's page,
            or back in free play if you are in it already */
         case "Enter": case "NumpadEnter": chooseWorkspace(); return;
         case "KeyC":      toggleComplete();return;
+        /* F keeps a quest to hand: at the head of its tab, and at the head of
+           the left margin, which is in view the whole time you are writing */
+        case "KeyF":      toggleFavourite(); return;
       }
       return;
     }
@@ -3161,10 +3679,17 @@
          there is nothing left to bind or to load. */
       if (gpEdge(cur, GP_CROSS))    chooseWorkspace();
       if (gpEdge(cur, GP_CIRCLE))   toggleComplete();
+      if (gpEdge(cur, GP_SQUARE))   toggleFavourite();
       if (gpEdge(cur, GP_R3))       toggleQuests();
+      /* the bumpers turn the page, as they turn a tab everywhere else */
+      if (gpEdge(cur, GP_L1))       moveTab(-1);
+      if (gpEdge(cur, GP_R1))       moveTab(1);
       var qy = (gp.axes && gp.axes.length > 1) ? gp.axes[1] : 0;
-      gpNav(cur[GP_DU] || qy <= -STICK_DEAD, "up",   -1, now, moveQuest);
-      gpNav(cur[GP_DD] || qy >=  STICK_DEAD, "down",  1, now, moveQuest);
+      /* △ held, the caret carries the quest instead of leaving it: the same
+         thing shift does to the arrows, and no mode either way */
+      var carry = cur[GP_TRIANGLE] ? moveInOrder : moveQuest;
+      gpNav(cur[GP_DU] || qy <= -STICK_DEAD, "up",   -1, now, carry);
+      gpNav(cur[GP_DD] || qy >=  STICK_DEAD, "down",  1, now, carry);
       gpPrev = cur;
       return;
     }
@@ -3317,6 +3842,16 @@
     return restored || have;
   }
   var restored = bootState();
+  /* the tab the log opens on: the one it was left on, or — the first time —
+     the lesson the workspace in hand belongs to, and failing that the newest
+     lesson on the board, which is where the work is */
+  var savedTab = null;
+  try { savedTab = localStorage.getItem(TAB_KEY); } catch (e){}
+  if (savedTab !== null && savedTab !== "" && !isNaN(parseInt(savedTab, 10)))
+    activeTab = parseInt(savedTab, 10);
+  else
+    activeTab = activeQuest() ? questGroup(activeQuest()) : newestLesson();
+  currentTab();                        /* and fall to the first if it is gone */
   try { if (localStorage.getItem(VIZ_KEY) === "column") viz = "column"; } catch (e){}
   try { if (localStorage.getItem(ENTRY_KEY) === "relative") relative = true; } catch (e){}
   try { if (localStorage.getItem(NAMES_KEY) === "off") showNames = false; } catch (e){}

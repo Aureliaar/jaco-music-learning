@@ -37,11 +37,19 @@ const seen = [];
   (function walk(d, p){ for (const e of fs.readdirSync(d, { withFileTypes:true }))
     e.isDirectory() ? walk(path.join(d, e.name), p + e.name + "/") : listed.push(p + e.name); })(DIST, "");
   listed.sort();
-  /* the auditor page joined the deploy after this harness was written: the
-     instrument, the blind lineup page, and the seed — and nothing else */
+  /* the auditor page joined the deploy after this harness was written, and
+     the per-workspace stills after that: the instrument, the blind lineup
+     page, the seed, and the pictures — and nothing else */
+  const stills = listed.filter(n => n.indexOf("quest-backgrounds/") === 0);
+  const rest = listed.filter(n => n.indexOf("quest-backgrounds/") !== 0);
   ok("dist holds the pages and the seed and nothing else",
-     JSON.stringify(listed) === JSON.stringify(
-       ["auditor.html","folio-forest.png","folio-paper.png","folio-sea.png","index.html","quests/quest-log.json"]), listed);
+     JSON.stringify(rest) === JSON.stringify(
+       ["auditor.html","folio-forest.png","folio-paper.png","folio-sea.png","index.html","quests/quest-log.json"]), rest);
+  ok("and the workspaces' own stills travel with them",
+     stills.length === fs.readdirSync(REPO + "/quest-backgrounds").filter(n => n.endsWith(".png")).length &&
+     stills.length > 0, stills.length);
+  ok("each still is named after a workspace and nothing else",
+     stills.every(n => /^quest-backgrounds\/[A-Za-z0-9._-]+\.png$/.test(n)), stills.slice(0, 3));
   for (const secret of ["BUDGET.md","CURRICULUM.md","QUESTS.md","SPEC-LESSON-0.md","server.mjs"])
     ok("the deploy leaves " + secret + " at home", !listed.includes(secret));
 
@@ -130,7 +138,9 @@ const seen = [];
      the scene, pale ink over the same borderless breath */
   const ends = await b.eval(`(function(){
     var out = {};
-    ['header','footer'].forEach(function(sel){
+    /* the footer and the standing hint under it are one piece of marginalia
+       now, and take one scrim between them: .foot is what wears it */
+    ['header','.foot'].forEach(function(sel){
       var el = document.querySelector(sel), s = getComputedStyle(el),
           p = getComputedStyle(el, '::before'),
           f = document.querySelector('.field').getBoundingClientRect(),
@@ -147,11 +157,11 @@ const seen = [];
     return out;
   })()`);
   ok("the title and the footer stand in the scene, on no sheet and no panel",
-     ['header','footer'].every(k => ends[k].background === "rgba(0, 0, 0, 0)" &&
+     ['header','.foot'].every(k => ends[k].background === "rgba(0, 0, 0, 0)" &&
        ends[k].image === "none" && ends[k].shadow === "none" &&
        ends[k].border === "0px" && ends[k].clear), ends);
   ok("each breathes the same borderless darkening the margins do",
-     ['header','footer'].every(k => /^radial-gradient/.test(ends[k].scrim) &&
+     ['header','.foot'].every(k => /^radial-gradient/.test(ends[k].scrim) &&
        ends[k].scrim.indexOf("closest-side") >= 0 &&
        /rgba\(13, 18, 16, 0\)/.test(ends[k].scrim)), ends);
   ok("the rules that fenced them off are the torn edges now",

@@ -30,9 +30,10 @@ const HOST = LAN ? "0.0.0.0" : "127.0.0.1";
 const INDEX = "folio.html";
 const MAX_BODY = 4 * 1024 * 1024;         /* a quest log is kilobytes; this is generous */
 
-/* Only these are served, and only from the repo root. Everything else — the
-   markdown, the git directory, anything in a subdirectory — is not web
-   content and is not offered as such. */
+/* Only these are served, and only from the repo root or from one named
+   folder below it. Everything else — the markdown, the git directory, any
+   other subdirectory — is not web content and is not offered as such. */
+const STATIC_DIRS = ["quest-backgrounds"];
 const MIME = {
   ".html": "text/html; charset=utf-8",
   ".js":   "text/javascript; charset=utf-8",
@@ -153,20 +154,37 @@ async function serveStatic(req, res, pathname){
   catch { send(req, res, 400, "bad path"); return; }
 
   if (name === "/") name = "/" + INDEX;
-  /* nothing clever is allowed: no traversal, no NUL, no subdirectories */
+  /* nothing clever is allowed: no traversal, no NUL, no backslashes */
   if (name.indexOf("..") >= 0 || name.indexOf("\0") >= 0 || name.indexOf("\\") >= 0){
     send(req, res, 403, "no"); return;
   }
   const base = name.slice(1);
-  if (!base || base.indexOf("/") >= 0){ send(req, res, 404, "not found"); return; }
+  if (!base){ send(req, res, 404, "not found"); return; }
 
-  const ext  = path.extname(base).toLowerCase();
+  /* The one exception to "the root and nothing else": the per-workspace
+     scenery lives in a folder of its own, because twenty-two stills loose in
+     the root would bury everything around them. Exactly one directory is
+     named, exactly one level deep, and the resolved file is still checked
+     against that directory afterwards — the rest of the disk is as
+     unreachable as it always was. */
+  let dir = ROOT, leaf = base;
+  const cut = base.indexOf("/");
+  if (cut >= 0){
+    const head = base.slice(0, cut);
+    leaf = base.slice(cut + 1);
+    if (!STATIC_DIRS.includes(head) || !leaf || leaf.indexOf("/") >= 0){
+      send(req, res, 404, "not found"); return;
+    }
+    dir = path.join(ROOT, head);
+  }
+
+  const ext  = path.extname(leaf).toLowerCase();
   const type = MIME[ext];
   if (!type){ send(req, res, 404, "not found"); return; }
 
-  const file = path.join(ROOT, base);
-  /* belt and braces: the resolved file must still sit directly in the root */
-  if (path.dirname(path.resolve(file)) !== path.resolve(ROOT)){
+  const file = path.join(dir, leaf);
+  /* belt and braces: the resolved file must still sit directly in that one */
+  if (path.dirname(path.resolve(file)) !== path.resolve(dir)){
     send(req, res, 403, "no"); return;
   }
   let buf;

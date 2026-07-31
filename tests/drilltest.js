@@ -99,21 +99,34 @@ const SEAM = { id:"drill-seam", name:"the seam drill",
   const railText = () => b.eval("document.getElementById('railquests').textContent");
   const listText = () => b.eval("document.getElementById('qlist').textContent");
 
+  const tabText = () => b.eval("document.getElementById('qtabs').textContent");
+  const RIGHT = { key:"ArrowRight", vk:39 };
   await b.key("F3", { key:"F3", vk:114 });
   await wait(200);
-  ok("the delivered drill is in the quest list", /the itch drill/.test(await listText()));
-  ok("under a labelled hairline",
-     /drills/.test(await b.eval(
-       "(document.querySelector('#qlist .qhair')||{}).textContent||''")));
-  ok("exactly one divider",
-     (await b.eval("document.querySelectorAll('#qlist .qhair').length")) === 1);
+  /* the board is read one lesson at a time now: the eight are the first tab
+     and the delivered drill is the last one */
+  ok("the log opens on the lesson", /L1/.test(await tabText()), await tabText());
+  ok("with a tab for the drills beside it", /drills/.test(await tabText()), await tabText());
+  ok("the eight built-ins are the lesson's tab",
+     (await b.eval("document.querySelectorAll('#qlist .quest').length")) === 8);
+  ok("and no divider is drawn inside a tab",
+     (await b.eval("document.querySelectorAll('#qlist .qhair').length")) === 0);
+  await b.key("ArrowRight", RIGHT);
+  await wait(120);
+  ok("the delivered drill is in the drills tab", /the itch drill/.test(await listText()));
+  ok("alone", (await b.eval("document.querySelectorAll('#qlist .quest').length")) === 1);
   ok("and in the left rail", /the itch drill/.test(await railText()));
-  ok("the eight built-ins are still above it",
-     (await b.eval("document.querySelectorAll('#qlist .quest').length")) === 9);
+  ok("the margin keeps the labelled divider between the two runs",
+     /drills/.test(await b.eval(
+       "(document.querySelector('#railquests .rhair')||{}).textContent||''")));
+  await b.key("ArrowLeft", { key:"ArrowLeft", vk:37 });
+  await wait(150);
   await b.key("F3", { key:"F3", vk:114 });
+  await wait(200);                        /* the log is a page: let it close */
 
   /* the user does some work, which is autosaved through a PUT */
   await b.key("ArrowDown", { key:"ArrowDown", vk:40 });
+  await wait(60);
   await b.key("KeyX", { key:"x", vk:88 });     /* D4 into free play, step 2 */
   await wait(2600);
   const afterWork = readLog();
@@ -138,13 +151,12 @@ const SEAM = { id:"drill-seam", name:"the seam drill",
   if (!seen) console.log("SERVER LOG: " + srvlog.replace(/\n/g, " | ") +
     "  FILE NOW: " + JSON.stringify((readLog().drills || []).map(d => d.id)));
   ok("it appears in the rail with no reload", seen);
-  ok("and in the quest list", /the seam drill/.test(await listText()));
   ok("announced quietly in the footer",
      /a drill arrived: the seam drill/.test(
        await b.eval("document.getElementById('footer').textContent")),
      await b.eval("document.getElementById('footer').textContent"));
-  ok("still only one divider",
-     (await b.eval("document.querySelectorAll('#qlist .qhair').length")) === 1);
+  ok("still one divider in the margin",
+     (await b.eval("document.querySelectorAll('#railquests .rhair').length")) === 1);
   ok("the work already on the page is untouched",
      /D-4/.test(await b.eval("document.querySelectorAll('#column .row')[1].textContent")),
      await b.eval("document.querySelectorAll('#column .row')[1].textContent"));
@@ -152,10 +164,13 @@ const SEAM = { id:"drill-seam", name:"the seam drill",
   /* enter it: the seed is what the page arrives holding */
   await b.key("F3", { key:"F3", vk:114 });
   await wait(200);
+  await b.key("ArrowRight", RIGHT);            /* over to the drills */
+  await wait(120);
+  ok("and in the drills tab beside the first", /the seam drill/.test(await listText()));
   const idx = await b.eval(
     "(function(){var r=document.querySelectorAll('#qlist .quest');for(var i=0;i<r.length;i++)" +
     "if(/the seam drill/.test(r[i].textContent))return i;return -1;})()");
-  ok("it is selectable", idx === 9, idx);
+  ok("it is selectable", idx === 1, idx);
   for (let i = 0; i < idx; i++) await b.key("ArrowDown", { key:"ArrowDown", vk:40 });
   ok("the detail shows its constraint",
      /end on the fifth/.test(await b.eval("document.getElementById('qdtext').textContent")));
