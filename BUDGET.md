@@ -34,6 +34,7 @@ Post-transition ledger (quests earned → features spent):
 | 2026-07-31 | ⚔ hocket: the snap closed (A minor; octave-transfer weld at the climb; register gap 15 semitones after lead raised; 2 rests exactly) | 4 quest credits = 2 small features funded |
 | 2026-07-31 | **Lesson 2 PASSED** — deliverable *L2 Candidate I* (audits in CURRICULUM.md); pass grants 1 feature of any size | 2 small features + 1 any-size feature banked |
 | 2026-07-31 | ⚔ hocket: the handoff closed (G major; 3-3-3-3 grain, 4 rests under the amended letter — ruling in QUESTS.md; ten-loop passed) | 5 quest credits = 2 small features + 1 credit banked, + the any-size |
+| 2026-08-01 | **Pre-L3 UX pass merged (decfaf3)** — items 1,2,3,4,5,6,7,9 as ONE feature of size, priced against the L2 any-size grant. Warranty (free): crossfade fix, meta-line diet, solo/mute indicator, Start-mode dead-air, F1 scroll, done marks. L3 holds toolset + housekeeping: curriculum/infra, free. | 2 small features + 1 credit banked |
 
 The closed ledger below stands as history.
 
