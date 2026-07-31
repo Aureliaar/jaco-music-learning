@@ -208,21 +208,21 @@ The unit is **one step of the key**, not a semitone. That requires a key.
   The tonic wraps through the twelve pitch classes. Setting the key
   autosaves; it changes no note already on the page.
 
-### Switching methods
+### There is no method to switch (revised 2026-07-31)
 
-| | keyboard | gamepad |
-|---|---|---|
-| relative or absolute entry | `F4` | **hold select** for ½ s |
+There were two pad entry methods and a switch between them. Both the second
+method and the switch are **deleted**, in the UX pass before Lesson 3:
 
-Select still walks the pages (key → quest log → closed) on a **tap**; the page
-cycle simply fires on release now, so a held select can mean something else.
-The method persists in `localStorage` under `folio.entry` — a preference, not
-part of the document — and shows on the meta line as a quiet `· relative`
-when it is on (absolute is the default and says nothing).
+- the **absolute crossbar** — hold L2 / R2 / both, and the eight slots became
+  twenty-four rising semitones, the FFXIV cross hotbar borrowed whole — is
+  gone entirely. It went unused: naming a pitch is what the keyboard is for.
+- `F4`, the ✕ slot on the settings crossbar, the `folio.entry` preference and
+  the `· relative` word on the meta line are all gone with it.
 
-Keyboard note entry is **absolute in both methods** and completely unchanged;
-there is no keyboard mirror of the relative moves. Relative entry is a pad
-feature.
+Contour entry is simply what the pad does. Keyboard note entry is absolute and
+completely unchanged; there is no keyboard mirror of the contour moves, and
+every pitch the crossbar could reach is still on the two keyboard rows, by
+position.
 
 ### The mapping (bare face buttons, relative entry)
 
@@ -244,27 +244,39 @@ Modifiers — the bumpers, not the triggers:
 | R1 (RB) | a leap of a fifth — 4 steps of the key |
 | L1 + R1 | a **semitone**, ignoring the key — the out-of-key escape hatch |
 
-○ and □ ignore the bumpers. **The crossbar is untouched**: hold L2/R2/both in
-either method and the eight slots are the same twenty-four absolute
-semitones, with the d-pad given over to them as always. That is the whole
-reason the leaps live on the bumpers.
+○ and □ ignore the modifiers.
 
-L1/R1 are the base octave elsewhere. In relative entry they act **on release,
-and only if they were not used as a modifier while down** — so a tap still
-shifts the octave and a hold-and-△ does not. In absolute entry they are
-unchanged (they fire on press).
+**The shoulders were re-sorted in the same pass (2026-07-31)**, by the hand
+rather than by the history, once the crossbar freed the triggers:
+
+| | is | because |
+|---|---|---|
+| L2 / R2 (LT, RT) | the **modifiers**, held | a trigger is made to be leaned on |
+| L1 / R1 (LB, RB) | the **voice**, tapped | a bumper is made to be tapped, and changing hands is the most frequent movement on the page |
+
+Neither pair does two jobs, so nothing has to arbitrate between a tap and a
+hold any more. The old rule — bumper acts *on release, and only if it was not
+used as a modifier while down* — is deleted along with `lbUsed`/`rbUsed`; it
+was the one place on the pad where the same button could surprise you.
+
+A trigger counts as held if it is down now **or was down on the previous
+frame**, so rolling off it as the thumb lands is still one leap.
+
+The **base octave** left the bumpers with them. On the pad it is now the
+settings crossbar's ← and → (the pair the voice vacated); on the keyboard it
+is page up / page down, as always.
 
 Nudge — change a note without advancing:
 
-| | relative entry |
+| | |
 |---|---|
 | d-pad ← / → | the note under the cursor, down / up one step of the key |
 
 Up and down (d-pad, left stick) remain time, the right stick still strides by
 fours, and an empty step says so rather than writing anything.
 
-While the roll is open the pairs trade places to match the drawing, in
-either entry method: ← / → (d-pad and left stick alike) walk the cursor,
+While the roll is open the pairs trade places to match the drawing:
+← / → (d-pad and left stick alike) walk the cursor,
 ↑ / ↓ nudge the note under it up / down a step of the key. See "The roll".
 
 ### The anchor rule
@@ -378,8 +390,8 @@ because the bind key was never pressed. Explicit bind and load are therefore
 5. Nothing is ever copied between workspaces, so nothing can be overwritten:
    each workspace is its own document.
 
-Switching resets the cursor to step 1 and stops playback. The base octave and
-the entry method are preferences and do not belong to a workspace.
+Switching resets the cursor to step 1 and stops playback. The base octave is a
+preference and does not belong to a workspace.
 
 ### Bindings
 
@@ -395,8 +407,8 @@ the entry method are preferences and do not belong to a workspace.
 
 △ (Y) and □ (X) do nothing on the quest page — there is nothing left to bind
 or to load. All bindings are by `KeyboardEvent.code`, per the
-layout-independence rule; while the log is open, note keys and the gamepad
-crossbar are swallowed and cannot reach the pattern.
+layout-independence rule; while the log is open, note keys and the pad's
+contour buttons are swallowed and cannot reach the pattern.
 
 ### Seeded quest keys and tempos (added 2026-07-28)
 

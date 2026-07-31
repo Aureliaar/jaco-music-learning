@@ -402,58 +402,111 @@
   .keyref p{margin:0.9rem 0 0;color:var(--faded);font-size:0.88rem;line-height:1.6;}
   @media (max-width:44rem){ .keyref .cols{grid-template-columns:1fr;} }
 
-  /* ---- the settings crossbar (a page, like the other two) ----
+  /* ---- the settings crossbar (raised over the page, never instead of it) ----
      Start raises it, as start raises the system menu in the game, and while
-     it is up the eight crossbar slots are items rather than notes. Drawn the
-     way the hand holds them: two clusters, each a diamond — the d-pad on the
-     left, the face buttons on the right. Diamonds, deliberately, so that
-     nothing here is a grid. */
+     it is up the eight crossbar slots are items rather than notes. It does
+     not take the folio away: the page stays exactly where it was, drawn and
+     readable, and the crossbar is laid over the head of the screen — where
+     the title stands — on a soft borderless breath. Turning a setting and
+     watching what it does to the music are the same movement, so the music
+     has to stay in view while it is done.
+
+     Drawn the way the hand holds them: two clusters, each a diamond — the
+     d-pad on the left, the face buttons on the right. Diamonds, deliberately,
+     so that nothing here is a grid. */
   .settings{
     display:none;
-    width:100%;
-    max-width:44rem;
-    min-height:38.6rem;
+    position:fixed;
+    top:0.9rem;
+    left:50%;
+    transform:translateX(-50%);
+    z-index:6;
+    width:min(35rem,96vw);
     color:var(--ink);
-    font-size:0.92rem;
-    line-height:1.5;
+    font-size:0.84rem;
+    line-height:1.35;
+    pointer-events:none;             /* only the eight slots answer the mouse */
   }
   .settings.on{display:block;}
-  .settings h2{
-    margin:0 0 0.7rem;
-    font-weight:400;
-    font-variant:small-caps;
-    letter-spacing:0.14em;
-    font-size:1.05rem;
-    color:var(--ink);
+  /* what the crossbar stands on: the page's own ground, gathered under the
+     words and gone at its own edges. A breath, not a panel — no border, no
+     rule, and nothing rectangular about it. */
+  .settings::before{
+    content:"";
+    position:absolute;
+    inset:-1.3rem -2.8rem;
+    z-index:-1;
+    pointer-events:none;
+    background:radial-gradient(ellipse closest-side at center,
+      rgba(234,224,204,0.97) 0%,
+      rgba(234,224,204,0.94) 46%,
+      rgba(234,224,204,0.78) 68%,
+      rgba(234,224,204,0.42) 84%,
+      rgba(234,224,204,0.14) 94%,
+      rgba(234,224,204,0) 100%);
   }
+  /* on scenery it takes the marginalia's treatment instead: pale ink over the
+     same darkening breath the rails and the title already stand on */
+  body:not([data-scenery="paper"]) .settings{
+    --ink:#EDE5D2;
+    --faded:rgba(236,229,212,0.68);
+    --rule:rgba(236,229,212,0.30);
+    --gilt:#D9BA6E;
+    --wash:rgba(236,229,212,0.16);
+  }
+  body:not([data-scenery="paper"]) .settings::before{
+    background:radial-gradient(ellipse closest-side at center,
+      rgba(13,18,16,0.60) 0%,
+      rgba(13,18,16,0.56) 44%,
+      rgba(13,18,16,0.44) 64%,
+      rgba(13,18,16,0.26) 80%,
+      rgba(13,18,16,0.10) 92%,
+      rgba(13,18,16,0) 100%);
+  }
+  /* the title gives way while the crossbar stands over it, and comes back
+     when it goes: one slow settling of the ink, nothing that blinks, and the
+     folio underneath is not touched at all. It goes all the way out rather
+     than merely dim — a half-faded meta line showing through the slots is two
+     lines of small type in one place, which reads as a fault rather than as
+     depth. Nothing moves: the header keeps its box, and everything it was
+     saying is either on the crossbar itself or on the voice strip below. */
+  header{transition:opacity 0.3s ease-out;}
+  body[data-settings] header{opacity:0;}
   .xbars{
     display:flex;
     justify-content:center;
     align-items:center;
-    gap:2.4rem;
+    gap:1.4rem;
     flex-wrap:wrap;
-    margin:2.2rem 0 0;
+    margin:0;
   }
   .xbar{
     position:relative;
-    width:20rem;
-    height:16rem;
+    width:16.4rem;
+    height:7.6rem;
   }
   .xslot{
     position:absolute;
-    width:8.6rem;
-    margin-left:-4.3rem;
+    width:7.6rem;
+    margin-left:-3.8rem;
     text-align:center;
-    padding:0.35rem 0.3rem;
+    padding:0.2rem 0.25rem;
     border-radius:0.5rem;
     cursor:pointer;
+    pointer-events:auto;
   }
   /* the slots the mode is chiefly for — the workspace, up and down — marked
      as the playhead row is: a flat wash, no glow */
   .xslot.head{background-color:var(--wash);}
-  .xslot .xg{display:block;color:var(--gilt);font-size:1.15em;line-height:1.3;}
-  .xslot .xl{display:block;letter-spacing:0.04em;}
-  .xslot .xv{display:block;color:var(--faded);font-size:0.86em;}
+  /* the glyph sits on the line with the name rather than over it: two lines
+     to a slot instead of three, which is what lets the whole crossbar stand
+     in the head of the page without reaching the folio */
+  .xslot .xg{color:var(--gilt);font-size:1.05em;margin-right:0.35em;}
+  .xslot .xl{letter-spacing:0.04em;}
+  .xslot .xv{
+    display:block;color:var(--faded);font-size:0.86em;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
   .xslot.none .xl{color:var(--faded);}
   .xslot.none .xg{opacity:0.45;}
   .xbar .xhub{
@@ -461,7 +514,11 @@
     width:2.6rem;height:1px;margin:0 0 0 -1.3rem;
     background:var(--rule);opacity:0.6;
   }
-  .settings p{margin:1.4rem 0 0;color:var(--faded);font-size:0.88rem;line-height:1.6;}
+  @media (max-width:44rem){
+    .xbars{gap:0.6rem;}
+    .xbar{width:14.2rem;}
+    .xslot{width:6.8rem;margin-left:-3.4rem;}
+  }
 
   /* ---- quest log (also a page: replaces the column, no overlay) ---- */
   .quests{
@@ -840,16 +897,23 @@
     font-size:0.76rem;
     letter-spacing:0.05em;
     line-height:1.35;
-    min-height:1.35em;
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
+    /* two lines' worth, always, whether it needs them or not. It used to be
+       one line that ran off the end into an ellipsis, and what fell off the
+       end was F1 — the way to the page that explains everything else, which
+       is precisely the hint one cannot afford to lose. Reserving the second
+       line costs a little height once and means the strip never has to choose
+       what to drop, and still never moves anything: the box is the same
+       height whether it holds three hints or eleven. */
+    min-height:2.7em;
   }
   .hints b{font-weight:400;color:var(--ink);opacity:0.82;}
+  .hints .hint{white-space:nowrap;}
   /* the footer and the hint under it are one piece of marginalia, and take
      the scene's darkening breath together rather than one each */
   .foot{width:100%;position:relative;isolation:isolate;}
-  @media (max-width:44rem){ .hints{white-space:normal;} }
+  /* a narrow window may need a third line; it is allowed to have one rather
+     than to hide the end of the sentence */
+  @media (max-width:44rem){ .hints{min-height:4.05em;} }
   .hidden-input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;left:-9999px;}
 </style>
 </head>
@@ -889,7 +953,7 @@
           <dt>page up, page down</dt><dd>base octave up, down (C2&ndash;C6)</dd>
           <dt>space</dt><dd>play or stop; playback loops</dd>
           <dt>L</dt><dd>loop length: the whole page &rarr; 8 &rarr; 4 &rarr; whole again</dd>
-          <dt>tab</dt><dd>the other voice &mdash; the lead, the bass, and round again. Everything you type goes into the one named above the page</dd>
+          <dt>tab</dt><dd>the other voice &mdash; the lead, the bass, and round again. With shift, round the other way, so whichever line you want is one press away however many there come to be. Everything you type goes into the one named above the page. The pad has the same ring on its two bumpers, L1 and R1</dd>
           <dt>the two keys past the end of the upper row</dt><dd>O solos the voice you are in, P mutes it; either again undoes it</dd>
           <dt>ctrl + S</dt><dd>export the page you are on as a .folio.json &mdash; or, with the quest log open, every workspace at once as quest&#8209;log.json</dd>
           <dt>ctrl + O</dt><dd>import either (or drop a file on the page); a quest log opens as a quest log wherever it lands</dd>
@@ -897,7 +961,6 @@
           <dt>K</dt><dd>the names on the drawing, away and back: the home rules' names in the margin, the guide's, and the interval between the voices. They are on to begin with, and nothing on the page changes either way</dd>
           <dt>F1</dt><dd>close this page of the key</dd>
           <dt>F3</dt><dd>open or close the quest log</dd>
-          <dt>F4</dt><dd>the pad's entry method: relative (contour) or absolute</dd>
           <dt>shift + B</dt><dd>the quiet background: paper &rarr; forest &rarr; sea &rarr; quest. The last is not one picture but whichever belongs to the workspace you are in; a workspace with no picture of its own stays on paper</dd>
           <dt>escape</dt><dd>closes whichever page is up, the pad's settings crossbar included</dd>
           <dt>the arrows, here</dt><dd>the key of the piece: left, right move the tonic; up, down make it major or minor</dd>
@@ -920,53 +983,41 @@
       <div>
         <h2>The gamepad</h2>
         <dl>
-          <dt>hold L2 (LT)</dt><dd>the crossbar: eight rising semitones, C to G</dd>
-          <dt>hold R2 (RT)</dt><dd>the next eight, G&#9839; to D&#9839;</dd>
-          <dt>hold L2 + R2</dt><dd>the last eight, E to B, an octave up</dd>
-          <dt>the eight slots</dt><dd>read left, up, right, down: d&#8209;pad &#8592;&#8593;&#8594;&#8595;, then &#9633;&#9651;&#9675;&#10005; (X, Y, B, A)</dd>
+          <dt>&#9651; (Y)</dt><dd>up one step of the key, written at the cursor and on two steps &mdash; an eighth, as on the keyboard</dd>
+          <dt>&#10005; (A)</dt><dd>down one step of the key, the same way</dd>
+          <dt>&#9675; (B)</dt><dd>the same note again, exactly</dd>
+          <dt>&#9633; (X)</dt><dd>a rest: the step is cleared, and on two as a note does</dd>
+          <dt>&hellip; hold L2 (LT) or R2 (RT)</dt><dd>the move leaps: L2 a third, R2 a fifth, both together a semitone, out of the key. The triggers are the modifiers and nothing else &mdash; held, never tapped, and they write nothing on their own</dd>
+          <dt>L1 (LB), R1 (RB)</dt><dd>the voice, round the ring the strip above the page names: L1 the one before, R1 the one after. A tap, from anywhere on the page, with no mode to raise first &mdash; the same ring tab walks, and either neighbour is one press away however many voices there come to be</dd>
           <dt>L3 (left stick click)</dt><dd>the loop length: the whole page &rarr; 8 &rarr; 4 &rarr; whole again</dd>
           <dt>R3 (right stick click)</dt><dd>the roll: the page drawn or written</dd>
-          <dt>&#9633; (X), bare</dt><dd>clear the step, and on two steps as a note does</dd>
-          <dt>&#9675; (B), bare</dt><dd>back to step 1</dd>
-          <dt>&#9651; (Y), bare</dt><dd>the other voice &mdash; in absolute entry, where it is free. In relative entry &#9651; is a move, so the voice lives on the settings crossbar's &#8592; and &#8594;; the crossbar has it in either method</dd>
-          <dt>L1, R1 (LB, RB)</dt><dd>base octave down, up</dd>
           <dt>select (create)</dt><dd>play or stop &mdash; from any page, and while any page is up</dd>
-          <dt>start (options)</dt><dd>the settings crossbar: the eight slots become items, not notes. Start again, &#9675;, or escape puts it down</dd>
-          <dt>&hellip; its eight slots</dt><dd>&#8593; &#8595; the workspace, walked in the left margin &middot; &#8592; &#8594; the voice, round the ring &middot; &#9633; solo &middot; &#9651; mute &middot; &#9675; close &middot; &#10005; the entry method</dd>
+          <dt>start (options)</dt><dd>the settings crossbar: eight slots of items, read left, up, right, down &mdash; d&#8209;pad &#8592;&#8593;&#8594;&#8595;, then &#9633;&#9651;&#9675;&#10005; (X, Y, B, A). The folio does not go anywhere while it is up: the crossbar stands over the head of the page, not in place of it, so the music you are adjusting stays in view. Start again, &#9675;, or escape puts it down</dd>
+          <dt>&hellip; its eight slots</dt><dd>&#8593; &#8595; the workspace, walked in the left margin &middot; &#8592; &#8594; the base octave (C2&ndash;C6) &middot; &#9633; solo &middot; &#9651; mute &middot; &#9675; close &middot; &#10005; the background. The voice is not here: it is L1 and R1, on the page, where a tap is cheaper than a menu</dd>
           <dt>&hellip; &#8593; and &#8595; there</dt><dd>the highlight moves down the workspaces in the left margin and you are already in the one it is on &mdash; nothing to confirm, and no list opened first. Hold to walk. Free play is the first line, the drills the last</dd>
           <dt>&hellip; what is not there</dt><dd>the key page (F1, and R3 off it), the quest log (F3), the view (R3, F2), and the names on the drawing (K). None of them has a slot: all eight are spoken for</dd>
-          <dt>d&#8209;pad, bare</dt><dd>any direction moves the cursor one step; hold to repeat. One step back, then a note, is how a sixteenth is placed. In the roll the drawing decides: &#8592;&#8594; are time, &#8593;&#8595; nudge the note under the cursor a step of the key</dd>
-          <dt>left stick</dt><dd>the same, up and down only; in the roll, both axes</dd>
+          <dt>d&#8209;pad, bare</dt><dd>&#8593;&#8595; move the cursor one step; hold to repeat. One step back, then a note, is how a sixteenth is placed. &#8592;&#8594; nudge the note under the cursor a step of the key, without advancing. In the roll the drawing decides and the pairs trade places: &#8592;&#8594; are time, &#8593;&#8595; are the nudge</dd>
+          <dt>&hellip; L2 and R2 together</dt><dd>take the nudge out of the key too, a semitone at a time, exactly as they take &#9651; and &#10005;</dd>
+          <dt>left stick</dt><dd>the same as the d&#8209;pad, up and down only; in the roll, both axes</dd>
           <dt>right stick</dt><dd>the cursor by fours, beat to beat</dd>
-          <dt>in relative entry</dt><dd>&#9651; (Y) up one step of the key, &#10005; (A) down one, &#9675; (B) the same note again, &#9633; (X) a rest; each writes and goes on two steps, an eighth</dd>
-          <dt>&hellip; hold L1 or R1</dt><dd>the move leaps: L1 (LB) a third, R1 (RB) a fifth, both together a semitone, out of the key; tapped alone they are still the octave</dd>
-          <dt>&hellip; d&#8209;pad &#8592;&#8594;</dt><dd>nudge the note under the cursor a step of the key, without advancing (in the roll this lives on &#8593;&#8595;, in either method). L1 and R1 held together take the nudge out of the key too, a semitone at a time, exactly as they take &#9651; and &#10005;</dd>
           <dt>here, d&#8209;pad &#8592;&#8594;</dt><dd>the tonic; &#9651; or &#10005; (Y, A) make the key major or minor</dd>
-          <dt>here, d&#8209;pad &#8593;&#8595;</dt><dd>the tempo, up and down by four (60&ndash;180); hold L1 or R1 for one</dd>
+          <dt>here, d&#8209;pad &#8593;&#8595;</dt><dd>the tempo, up and down by four (60&ndash;180); hold a trigger for one</dd>
           <dt>in the quest log</dt><dd>d&#8209;pad up, down choose a quest; L1 and R1 change lesson; &#10005; (A) opens its page, or returns to free play if you are in it already; &#9675; (B) marks it complete; &#9633; (X) keeps it to hand; &#9651; (Y) held, up and down carry the quest with the caret instead of leaving it; R3 closes</dd>
           <dt>on the key page</dt><dd>R3 closes it, as it closes the quest log</dd>
         </dl>
-        <p>The cross hotbar, borrowed: a trigger raises the eight slots, letting go gives the d&#8209;pad back to navigation. Twenty&#8209;four semitones, every pitch of two octaves, counted up from the octave in the header; entry goes on two steps &mdash; an eighth, as on the keyboard &mdash; and sounds the note. A DualSense and an Xbox pad report the same positions. A browser notices a pad only after you press one of its buttons: press start if nothing answers &mdash; the settings crossbar coming up is the pad saying hello. Sound may wait for one keyboard touch.</p>
-        <p>Bare, the face buttons act alone as in the game &mdash; &#9633; clears and &#9675; returns to the top; raise a trigger and all four are notes again.</p>
-        <p>Relative entry changes only the bare face buttons, and only what they mean while you write: you give the shape &mdash; up, down, again, rest &mdash; and the page keeps ordinary notes, as always. A move is one step of the key shown in the header, counted from the last note that sounds before the cursor; rests are stepped over, and the search wraps around the loop. An empty page begins on the tonic. A note that lies outside the key moves first to the nearest note of the key in the direction you asked, and that counts as the step. The crossbar is untouched: hold a trigger in either method and the eight slots are absolute pitches again. Set the key on this page.</p>
+        <p>The pad writes shapes, not pitches: you give the move &mdash; up, down, again, rest &mdash; and the page keeps ordinary notes, as always. A move is one step of the key shown in the header, counted from the last note that sounds before the cursor; rests are stepped over, and the search wraps around the loop. An empty page begins on the tonic. A note that lies outside the key moves first to the nearest note of the key in the direction you asked, and that counts as the step. Set the key on this page.</p>
+        <p>There was a second way once: hold a trigger and the eight slots became eight rising semitones, twenty&#8209;four of them across three trigger states &mdash; the cross hotbar borrowed whole. It is gone. Naming a pitch is what the keyboard is for, and it was never what the pad was reached for; nothing has to be switched between before writing, and every pitch the crossbar could reach is still on the two rows of the keyboard, by position.</p>
+        <p>The four shoulders were sorted by the hand rather than by the history when it went. A trigger is made to be leaned on, so the triggers are the modifiers: held, they widen a move, and they do nothing else. A bumper is made to be tapped, so the bumpers are the voice: L1 back a line, R1 on a line, no mode raised first. Neither pair does two jobs, so nothing has to work out whether a press was a tap or a hold &mdash; which is what the bumpers used to have to do, and the one place on the pad where the same button could surprise you. The base octave, which the bumpers used to carry, is on the settings crossbar's &#8592; and &#8594;, and on page up and page down.</p>
+        <p>A DualSense and an Xbox pad report the same positions. A browser notices a pad only after you press one of its buttons: press start if nothing answers &mdash; the settings crossbar coming up is the pad saying hello. Sound may wait for one keyboard touch.</p>
       </div>
     </div>
   </section>
 
   <section class="settings" id="settings" aria-label="settings crossbar">
-    <h2>Settings</h2>
     <div class="xbars">
       <div class="xbar" id="xbarpad" aria-label="the d-pad cluster"><div class="xhub"></div></div>
       <div class="xbar" id="xbarface" aria-label="the face cluster"><div class="xhub"></div></div>
     </div>
-    <p>Start raised this; start puts it down again, and so does &#9675;. While it
-      is up the eight slots are items instead of notes &mdash; the d&#8209;pad on the left,
-      the face buttons on the right, each read left, up, right, down.
-      &#8593; and &#8595; walk the workspaces in the left margin: the highlight moves
-      and you are already in that workspace, so there is nothing to confirm and
-      no list to open first. &#8592; and &#8594; go round the voices. The view
-      &mdash; the roll or the column &mdash; is not here: it is R3, and F2, where
-      it has always been, and neither is the key: that is F1.</p>
   </section>
 
   <section class="quests" id="quests" aria-label="quest log">
@@ -1561,10 +1612,12 @@
   }
 
   /* the pages (key, quest log) are exclusive; whichever is open, both views
-     of the pattern stand down */
+     of the pattern stand down. The settings crossbar is not one of them: it
+     is raised *over* the page rather than in place of it, so the folio, the
+     voice strip and everything else stay exactly where they were while the
+     thumb turns a setting. */
   function applyViz(){
-    var page = keyref.classList.contains("on") || questsEl.classList.contains("on") ||
-               settingsEl.classList.contains("on");
+    var page = keyref.classList.contains("on") || questsEl.classList.contains("on");
     column.style.display = (!page && viz === "column") ? "flex" : "none";
     roll.classList.toggle("on", !page && viz === "roll");
     voicesEl.classList.toggle("off", page);   /* the strip belongs to the page */
@@ -1622,8 +1675,7 @@
       vmarks[v].className = "vmark" + (st === "solo" ? " solo" : "");
     }
     voicesEl.classList.toggle("off",
-      keyref.classList.contains("on") || questsEl.classList.contains("on") ||
-      settingsEl.classList.contains("on"));
+      keyref.classList.contains("on") || questsEl.classList.contains("on"));
   }
   function renderCursor(){
     for (var i = 0; i < STEPS; i++){
@@ -1657,7 +1709,6 @@
                        " · " + doc.key +
                        (doc.loop < STEPS ? " · loop " + doc.loop : "") +
                        " · " + voiceName(voice) + (st ? " (" + st + ")" : "") +
-                       (relative ? " · relative" : "") +
                        (obj ? " · ⚔ " + obj.short : "");
   }
   function renderLoop(){
@@ -1677,21 +1728,24 @@
      is: the letters are places on the board, not what a keyboard prints. */
   function hintsNow(){
     if (settingsEl.classList.contains("on"))
-      return [["↑ ↓","workspace"],["← →","voice"],["□","solo"],["△","mute"],
-              ["✕","entry method"],["start","close"]];
+      return [["↑ ↓","workspace"],["← →","base octave"],["□","solo"],["△","mute"],
+              ["✕","the background"],["start","close"]];
     if (questsEl.classList.contains("on"))
       return [["↑ ↓","quest"],["← →","lesson"],["enter","work here"],
               ["F","keep to hand"],["shift + ↑ ↓","move it"],["C","complete"],["F3","close"]];
     if (keyref.classList.contains("on"))
       return [["← →","the tonic"],["↑ ↓","major, minor"],["− +","tempo"],["F1","close"]];
-    var out = [["← →","step"],["period","clear"],["space","play"],["tab","voice"],
-               ["L","loop"],["F2", viz === "roll" ? "the column" : "the roll"],
-               ["F3","quests"],["F1","the key"]];
-    /* what writes a note depends on the method the pad is in, and that is the
-       one thing on this page a hand can forget without a way to check */
-    out.unshift(relative ? ["△ ✕ ○ □", "up, down, again, rest"]
-                         : ["z…m, q…i", "notes"]);
-    return out;
+    /* both hands are named, because there is only one story to tell now: the
+       keyboard names pitches by position, the pad names moves. The shoulders
+       are named too — the four buttons nothing on the page ever said out
+       loud, which is exactly how they came to be a puzzle rather than a
+       control: the bumpers change hands, the triggers widen a move. */
+    return [["z…m q…i","notes"],["△ ✕ ○ □","the shape"],
+            ["L2 R2","third, fifth"],
+            ["← →","step"],["period","clear"],["space","play"],
+            ["tab · L1 R1","voice"],["L","loop"],
+            ["F2", viz === "roll" ? "the column" : "the roll"],
+            ["F3","quests"],["F1","the key"]];
   }
   function renderHints(){
     if (!hintsEl) return;
@@ -1703,9 +1757,15 @@
         s.textContent = " · ";
         hintsEl.appendChild(s);
       }
+      /* a key and what it does are one thing and wrap as one: the strip runs
+         to a second line now, and "F2" ending a line with "the column"
+         beginning the next is two hints where there is one */
+      s = document.createElement("span");
+      s.className = "hint";
       k = document.createElement("b"); k.textContent = h[i][0];
       v = document.createElement("span"); v.textContent = " " + h[i][1];
-      hintsEl.appendChild(k); hintsEl.appendChild(v);
+      s.appendChild(k); s.appendChild(v);
+      hintsEl.appendChild(s);
     }
   }
 
@@ -2023,16 +2083,23 @@
   }
 
   /* ================= relative (contour) entry =================
-     An input method, not a data model: the page still holds absolute note
-     strings. Relative entry asks for a direction and writes whatever pitch
-     that direction lands on, counted in scale steps of the current key.
+     The pad's one and only way of writing. An input method, not a data
+     model: the page still holds absolute note strings. Relative entry asks
+     for a direction and writes whatever pitch that direction lands on,
+     counted in scale steps of the current key.
+
+     There was a second method once — a crossbar of twenty-four absolute
+     semitones raised by holding a trigger, borrowed whole from the game's
+     cross hotbar. It went, in the pass before Lesson 3, because it was never
+     used: naming pitches is what the keyboard is for, and the pad is for
+     shapes. Nothing chooses between methods any more, so there is no method
+     to choose, no F4, no preference to store, and the two triggers it lived
+     on are free — they change hands now.
 
      The anchor is the previous sounding note, scanned backwards from the
      cursor. Rests do not break the chain, and the scan wraps — around the
      loop while the cursor is inside it, around the whole page otherwise.
      A page with nothing on it anchors on the tonic in the base octave. */
-  var relative = false;
-  var ENTRY_KEY = "folio.entry";      /* a preference, not part of the document */
 
   function anchorMidi(){
     var span = (cursor < doc.loop) ? doc.loop : STEPS, s = vsteps(voice);
@@ -2075,15 +2142,6 @@
     say(display(name) + " at step " + (cursor + 1));
   }
 
-  function setRelative(on){
-    relative = !!on;
-    try { localStorage.setItem(ENTRY_KEY, relative ? "relative" : "absolute"); } catch (e){}
-    renderMeta();
-    say(relative ? "relative entry · △ up, ✕ down, ○ again, □ rest"
-                 : "absolute entry · the crossbar");
-  }
-  function toggleRelative(){ setRelative(!relative); }
-
   /* ---- choosing a voice, and taking one away ----
      One voice is written into at a time; both always play. Choosing is not a
      mode and costs nothing — the cursor stays where it is, the loop keeps
@@ -2101,11 +2159,22 @@
     var st = voiceState(voice);
     say("the " + voiceName(voice) + (st ? " · " + st : ""));
   }
-  /* the voices are a ring, walked in the order they are named above the page.
+  /* ---- the ring the hands walk ----
+     The voices are a ring, walked in the order they are named above the page.
      Two of them for now; a lesson that adds a third adds it to that list and
-     nothing here changes. */
+     nothing here changes — which is why changing hands is a ring walked both
+     ways rather than a switch flipped between two things. With three voices
+     either neighbour is still one press away, whichever way round you go.
+
+     It is reached from three places, deliberately, because it is the most
+     frequent movement on the page: tab and shift+tab on the keyboard, L1 and
+     R1 on the pad — a tap, on the page, with no mode to raise first — and
+     the strip above the page for a mouse. It is deliberately *not* in the
+     settings crossbar any more: a movement made every few notes does not
+     belong behind a menu. */
   function cycleVoice(d){ setVoice(voice + d); }
   function nextVoice(){ cycleVoice(1); }
+  function prevVoice(){ cycleVoice(-1); }
   function toggleSolo(v){
     v = (v === undefined) ? voice : v;
     setFlag("solo", v, !flag("solo", v));
@@ -2178,7 +2247,7 @@
   function toggleKeyref(){
     var on = !keyref.classList.contains("on");
     keyref.classList.toggle("on", on);
-    if (on){ questsEl.classList.remove("on"); settingsEl.classList.remove("on"); }
+    if (on){ questsEl.classList.remove("on"); settingsEl.classList.remove("on"); markSettings(false); }
     applyViz();
     renderRails();                   /* the pad's wash goes with the mode */
     say(on ? "the key, by position" : "‸ cursor row");
@@ -2186,7 +2255,7 @@
   function toggleQuests(){
     var on = !questsEl.classList.contains("on");
     questsEl.classList.toggle("on", on);
-    if (on){ keyref.classList.remove("on"); settingsEl.classList.remove("on"); }
+    if (on){ keyref.classList.remove("on"); settingsEl.classList.remove("on"); markSettings(false); }
     applyViz();
     renderRails();
     if (on) renderQuests();
@@ -2202,23 +2271,34 @@
      What the mode is chiefly for is the left margin: ↑ and ↓ walk the
      workspaces there, and walking is arriving — the highlight moves and you
      are already in that workspace. There is no list to open first and nothing
-     to confirm, so no slot opens a page of any kind. ← and → go round the
-     voices, in the order the strip above the page names them, which is the
-     order more of them will join.
+     to confirm, so no slot opens a page of any kind.
+
+     ← and → were the voice, and are the base octave. The voice moved out of
+     this menu and onto L1 and R1, where it is a tap rather than a mode to
+     raise first — which is what "easier" had to mean for the movement made
+     most often on the page. That left the base octave with nowhere on the
+     pad at all, the bumpers having stopped being the octave when they became
+     the voice, so it took the pair the voice vacated. It is a setting, and
+     this is where the settings are.
 
      The key page is not here at all: it is F1, and R3 off it. The quest log
      is not here either: it is F3, and the margin has already replaced what
-     one would have come here to do. */
+     one would have come here to do.
+
+     ✕ used to be the entry method, and there is no longer an entry method to
+     choose: the pad writes contours and nothing else. The freed slot went to
+     the one preference the pad could not reach at all — the scene behind the
+     sheet, which is Shift+B on the keyboard and was nowhere on the pad. */
   var SETTINGS = [
-    { glyph:"←", label:"the voice",
-      value:function(){ return voiceName(voice); },
-      run:function(){ cycleVoice(-1); renderSettings(); } },
+    { glyph:"←", label:"the base octave",
+      value:function(){ return String(baseOctave); },
+      run:function(){ shiftOctave(-1); renderSettings(); } },
     { glyph:"↑", label:"the workspace",
       value:function(){ return workspaceName(); },
       run:function(){ railStep(-1); }, head:true },
-    { glyph:"→", label:"the voice",
-      value:function(){ return voiceName(voice); },
-      run:function(){ cycleVoice(1); renderSettings(); } },
+    { glyph:"→", label:"the base octave",
+      value:function(){ return String(baseOctave); },
+      run:function(){ shiftOctave(1); renderSettings(); } },
     { glyph:"↓", label:"the workspace",
       value:function(){ return workspaceName(); },
       run:function(){ railStep(1); }, head:true },
@@ -2231,12 +2311,15 @@
     { glyph:"○", label:"close",
       value:function(){ return "back to the page"; },
       run:function(){ closeSettings(); } },
-    { glyph:"✕", label:"entry method",
-      value:function(){ return relative ? "relative" : "absolute"; },
-      run:function(){ toggleRelative(); renderSettings(); } }
+    { glyph:"✕", label:"the background",
+      value:function(){ return scenePref; },
+      run:function(){ cycleScenery(); renderSettings(); } }
   ];
-  /* the diamond each cluster is drawn as: left, up, right, down */
-  var XPOS = [["26%","50%"],["50%","16%"],["74%","50%"],["50%","84%"]];
+  /* the diamond each cluster is drawn as: left, up, right, down. The points
+     sit further out than the sides do, because the sides are wide and the
+     points are not: a diamond of four boxes only reads as a diamond while no
+     two of them touch. */
+  var XPOS = [["26%","50%"],["50%","12%"],["74%","50%"],["50%","88%"]];
   var xslots = [];
   function buildSettings(){
     var i, host, p, el, g, l, v;
@@ -2288,9 +2371,16 @@
     return keyref.classList.contains("on") || questsEl.classList.contains("on") ||
            settingsEl.classList.contains("on");
   }
+  /* the body carries the mode so that the title can step back behind the
+     crossbar standing over it; the folio itself is never touched */
+  function markSettings(on){
+    if (on) document.body.setAttribute("data-settings", "on");
+    else document.body.removeAttribute("data-settings");
+  }
   function closeSettings(){
     if (!settingsEl.classList.contains("on")) return;
     settingsEl.classList.remove("on");
+    markSettings(false);
     applyViz();
     renderRails();                   /* the margin stops being the pad's */
     say("‸ cursor row");
@@ -2298,11 +2388,13 @@
   function toggleSettings(){
     var on = !settingsEl.classList.contains("on");
     settingsEl.classList.toggle("on", on);
+    markSettings(on);
     if (on){ keyref.classList.remove("on"); questsEl.classList.remove("on"); }
     applyViz();
     if (on) renderSettings();
     renderRails();
-    say(on ? "settings · ↑↓ the workspace, ←→ the voice" : "‸ cursor row");
+    say(on ? "settings · ↑↓ the workspace, ←→ the base octave · the page stays in view"
+           : "‸ cursor row");
   }
 
   /* ================= quests as workspaces =================
@@ -3397,19 +3489,19 @@
 
     if (code === "F1"){ e.preventDefault(); toggleKeyref(); return; }
     if (code === "F3"){ e.preventDefault(); toggleQuests(); return; }
-    /* the pad's entry method, from either hand */
-    if (code === "F4"){ e.preventDefault(); toggleRelative(); return; }
     if (e.shiftKey && code === "KeyB"){
       e.preventDefault(); cycleScenery(); return;
     }
 
     /* tab is the other voice — the one key that changes which line the hands
-       are in. It is swallowed either way, so focus never wanders off the page,
-       and it is inert while a page (the key, the quest log, the crossbar) is
-       up, exactly as note entry is. */
+       are in, and with shift the one before instead of the one after, so the
+       ring is walked both ways and a third voice is still one press from
+       either of its neighbours. It is swallowed either way, so focus never
+       wanders off the page, and it is inert while a page (the key, the quest
+       log, the crossbar) is up, exactly as note entry is. */
     if (code === "Tab"){
       e.preventDefault();
-      if (!anyPage()) nextVoice();
+      if (!anyPage()){ if (e.shiftKey) prevVoice(); else nextVoice(); }
       return;
     }
 
@@ -3522,18 +3614,22 @@
        8 select   9 start    10 L3       11 R3
       12 d-up    13 d-down   14 d-left   15 d-right
 
-     Note entry follows the FFXIV cross hotbar. Holding a trigger raises a
-     crossbar of eight slots — the d-pad cluster then the face cluster, each
-     read left, up, right, down — and the eight slots are eight rising
-     semitones. Three trigger states give three crossbars:
+     The pad writes contours: the bare face buttons are the move — up, down,
+     again, rest — and everything else is navigation. It named absolute
+     pitches once, on a crossbar of twenty-four semitones raised by holding a
+     trigger; that went in the pass before Lesson 3, unused. The crossbar idea
+     survives where it earns its keep — start still raises the settings
+     crossbar, and its eight slots are still read left, up, right, down, the
+     d-pad cluster then the face cluster.
 
-       L2        slots 1-8 = semitones  0- 7 from the base octave
-       R2        slots 1-8 = semitones  8-15
-       L2 + R2   slots 1-8 = semitones 16-23
-
-     Twenty-four consecutive semitones, no duplicates, two full chromatic
-     octaves, and nothing is a mode: let go of the triggers and the d-pad is
-     navigation again, exactly as the crossbar lets go of the d-pad in game. */
+     What the triggers left behind was sorted by the hand rather than by the
+     history: the two triggers are the *modifiers*, held, because a trigger is
+     an analogue thing made to be leaned on, and the two bumpers are the
+     *voice*, tapped, because changing hands is a discrete movement made very
+     often. So L2 widens a move to a third and R2 to a fifth, both together
+     take it out of the key; L1 steps back a voice and R1 steps on. Neither
+     pair does two jobs any more, which is why none of this needs to arbitrate
+     between a tap and a hold the way the bumpers once did. */
   var GP_SLOTS = [14, 12, 15, 13, 2, 3, 1, 0];   /* ←↑→↓ then □△○✕ */
   var GP_CROSS = 0, GP_CIRCLE = 1, GP_SQUARE = 2, GP_TRIANGLE = 3;  /* face buttons */
   var GP_L1 = 4, GP_R1 = 5, GP_L2 = 6, GP_R2 = 7,
@@ -3545,12 +3641,10 @@
   var STICK_DEAD   = 0.5;              /* left stick must travel half way */
   var GP_THRESHOLD = 0.5;              /* how far a trigger must be pulled */
 
-  /* a bumper held as a leap modifier is not also an octave shift */
-  var lbUsed = false, rbUsed = false;
-  /* and whether each is held *as* a modifier, read once a frame in relative
-     entry and then read by everything the modifier reaches — the face buttons
-     and the d-pad alike, so that neither can be told a different story */
-  var lbDown = false, rbDown = false;
+  /* whether each trigger is held as a modifier, read once a frame and then
+     read by everything the modifier reaches — the face buttons and the d-pad
+     alike, so that neither can be told a different story */
+  var l2Down = false, r2Down = false;
   var padIndex = null;
   var gpPrev = [];                     /* previous frame's button state: edge detection */
   var navHeld = { up: false, down: false, left: false, right: false, back: false, fwd: false };
@@ -3584,19 +3678,12 @@
   /* ---- the nudge, as the pad asks for it ----
      Moving the note under the cursor is one move with several ways in: the
      d-pad's ←→ in the column, its ↑↓ in the roll, and the left stick behind
-     both. They all come through here, so the bumpers say on the d-pad what
+     both. They all come through here, so the triggers say on the d-pad what
      they say on △ and ✕ — both of them held takes the move out of the key, a
      semitone at a time — instead of the hatch answering only the face
-     buttons. Holding them spends them, exactly as a leap does, so letting go
-     afterwards is a modifier released and not a tap of the octave.
-     Absolute entry is untouched: there the bumpers *are* the octave, edge by
-     edge, and nothing on the pad is a modifier. */
+     buttons. */
   function padNudge(n){
-    if (relative && lbDown && rbDown){
-      lbUsed = true; rbUsed = true;
-      nudge(n, true);
-      return;
-    }
+    if (l2Down && r2Down){ nudge(n, true); return; }
     nudge(n);
   }
 
@@ -3665,7 +3752,8 @@
     if (keyref.classList.contains("on")){
       if (gpEdge(cur, GP_R3)){ toggleKeyref(); gpPrev = cur; return; }   /* the way out */
       if (gpEdge(cur, GP_TRIANGLE) || gpEdge(cur, GP_CROSS)) toggleKeyMode();
-      var fine = (cur[GP_L1] || cur[GP_R1]) ? TEMPO_FINE : TEMPO_STEP;
+      /* a trigger is the modifier everywhere it is one, here included */
+      var fine = (cur[GP_L2] || cur[GP_R2]) ? TEMPO_FINE : TEMPO_STEP;
       gpNav(cur[GP_DL], "left",  -1, now, shiftTonic);
       gpNav(cur[GP_DR], "right",  1, now, shiftTonic);
       gpNav(cur[GP_DU], "up",    fine, now, shiftTempo);
@@ -3698,117 +3786,63 @@
     if (gpEdge(cur, GP_L3)) cycleLoop();
     if (gpEdge(cur, GP_R3)) toggleViz();
 
-    /* L1 and R1 are the base octave — except in relative entry, where they
-       are also the leap modifiers. There a bumper acts on release, and only
-       if it was not used as a modifier while it was down: the release is
-       noted here and settled below, after the face buttons have had their
-       say, so that a leap made on this very frame still claims the bumper. */
-    var lGone = false, rGone = false;   /* let go this frame, verdict pending */
-    if (relative){
-      if (gpEdge(cur, GP_L1)) lbUsed = false;
-      if (gpEdge(cur, GP_R1)) rbUsed = false;
-      lGone = !cur[GP_L1] && !!gpPrev[GP_L1];
-      rGone = !cur[GP_R1] && !!gpPrev[GP_R1];
-      /* A bumper counts as held if it is down now or was down on the frame
-         before: rolling off the bumper as the thumb lands is one movement,
-         and the poll must not read the two halves of it as a move that lost
-         its modifier and a bare tap of the octave. Read here, once, so that
-         the face buttons and the d-pad both read the same hand. */
-      lbDown = !!cur[GP_L1] || lGone;
-      rbDown = !!cur[GP_R1] || rGone;
-    } else {
-      if (gpEdge(cur, GP_L1)) shiftOctave(-1);
-      if (gpEdge(cur, GP_R1)) shiftOctave(1);
-      lbDown = rbDown = false;
-    }
+    /* ---- the bumpers: the voice ----
+       L1 the line before, R1 the line after, round the ring the strip above
+       the page names. One tap, from anywhere on the page, into either
+       neighbour — which is still true of a third voice when one arrives. They
+       have no second job, so a tap is simply a tap: nothing here waits for a
+       release to find out what the hand meant. */
+    if (gpEdge(cur, GP_L1)) prevVoice();
+    if (gpEdge(cur, GP_R1)) nextVoice();
 
-    var bar = (cur[GP_L2] ? 1 : 0) + (cur[GP_R2] ? 2 : 0);   /* 0 none, 1 L2, 2 R2, 3 both */
+    /* ---- the triggers: the modifiers ----
+       Held, they widen the move: L2 a third, R2 a fifth, both together a
+       semitone, out of the key. They do nothing else at all.
+
+       A trigger counts as held if it is down now or was down on the frame
+       before: rolling off it as the thumb lands is one movement, and the poll
+       must not read the two halves of it as a move that lost its modifier.
+       Read here, once, so that the face buttons and the d-pad both read the
+       same hand. */
+    l2Down = !!cur[GP_L2] || !!gpPrev[GP_L2];
+    r2Down = !!cur[GP_R2] || !!gpPrev[GP_R2];
+
+    /* the face buttons are motion rather than pitch; ○ and □ ignore the
+       triggers */
     var ax, ay, rx, ry;
-    if (bar){
-      /* the crossbar, in either entry method: a trigger is raised, so the
-         eight slots are absolute pitches and the d-pad is not navigation
-         this frame. Relative entry never takes the crossbar away. */
-      var base = (bar === 1 ? 0 : bar === 2 ? 8 : 16);
-      for (i = 0; i < 8; i++){
-        if (gpEdge(cur, GP_SLOTS[i])) enterNote(base + i);
-      }
-      navReset();                       /* forget any half-finished hold */
-    } else if (relative){
-      /* relative entry: bare, the face buttons are motion rather than pitch.
-         A bumper widens the move — L1 a third, R1 a fifth, both a semitone
-         out of the key. ○ and □ ignore the bumpers.
-         Which bumpers are held was settled above, for the whole frame, so the
-         d-pad's nudge reads the same pair. */
-      var lead = (lbDown ? 1 : 0) + (rbDown ? 2 : 0);
-      var wide = (lead === 1) ? 2 : (lead === 2) ? 4 : 1;    /* third, fifth, step */
-      if (gpEdge(cur, GP_TRIANGLE) || gpEdge(cur, GP_CROSS)){
-        var dir = gpEdge(cur, GP_TRIANGLE) ? 1 : -1;
-        if (lbDown) lbUsed = true;
-        if (rbDown) rbUsed = true;
-        if (lead === 3) relStep(dir, true);                  /* a semitone out of key */
-        else relStep(dir * wide, false);
-      }
-      if (gpEdge(cur, GP_CIRCLE)) relRepeat();
-      if (gpEdge(cur, GP_SQUARE)) clearStep();               /* a rest, and on */
-      /* up and down are time, as everywhere; left and right nudge the note
-         under the cursor a scale step without advancing. In the roll the
-         page is drawn — time runs right, height is pitch — so the pairs
-         trade places, and the left stick follows the d-pad on both axes.
-         Whichever pair it lands on, the nudge goes through padNudge, so both
-         bumpers held take it out of the key here as they do on △ and ✕. */
-      ax = (gp.axes && gp.axes.length > 0) ? gp.axes[0] : 0;
-      ay = (gp.axes && gp.axes.length > 1) ? gp.axes[1] : 0;
-      if (viz === "roll"){
-        gpNav(cur[GP_DL] || ax <= -STICK_DEAD, "left",  -1, now);
-        gpNav(cur[GP_DR] || ax >=  STICK_DEAD, "right",  1, now);
-        gpNav(cur[GP_DU] || ay <= -STICK_DEAD, "up",    1, now, padNudge);
-        gpNav(cur[GP_DD] || ay >=  STICK_DEAD, "down", -1, now, padNudge);
-      } else {
-        gpNav(cur[GP_DU] || ay <= -STICK_DEAD, "up",   -1, now);
-        gpNav(cur[GP_DD] || ay >=  STICK_DEAD, "down",  1, now);
-        gpNav(cur[GP_DL], "left",  -1, now, padNudge);
-        gpNav(cur[GP_DR], "right",  1, now, padNudge);
-      }
-      rx = (gp.axes && gp.axes.length > 2) ? gp.axes[2] : 0;
-      ry = (gp.axes && gp.axes.length > 3) ? gp.axes[3] : 0;
-      gpNav(rx <= -STICK_DEAD || ry <= -STICK_DEAD, "back", -4, now);
-      gpNav(rx >=  STICK_DEAD || ry >=  STICK_DEAD, "fwd",   4, now);
-    } else {
-      /* no trigger: the bare face buttons act alone, FFXIV style —
-         □ clears the step, ○ returns to step 1, △ is the other voice.
-         (In relative entry △ is a move, so the voice lives on the settings
-         crossbar's ← and → instead; the crossbar has it in either method.) */
-      if (gpEdge(cur, GP_SQUARE)) clearStep();
-      else if (gpEdge(cur, GP_CIRCLE)) jump(0);
-      else if (gpEdge(cur, GP_TRIANGLE)) nextVoice();
-      /* both d-pad pairs walk the cursor, as both arrow pairs do — except
-         in the roll, where the drawing decides: left and right are time
-         (d-pad and left stick alike), up and down nudge the note under
-         the cursor a step of the key */
-      ax = (gp.axes && gp.axes.length > 0) ? gp.axes[0] : 0;
-      ay = (gp.axes && gp.axes.length > 1) ? gp.axes[1] : 0;  /* left stick Y, +1 = down */
-      if (viz === "roll"){
-        gpNav(cur[GP_DL] || ax <= -STICK_DEAD, "left",  -1, now);
-        gpNav(cur[GP_DR] || ax >=  STICK_DEAD, "right",  1, now);
-        gpNav(cur[GP_DU] || ay <= -STICK_DEAD, "up",    1, now, padNudge);
-        gpNav(cur[GP_DD] || ay >=  STICK_DEAD, "down", -1, now, padNudge);
-      } else {
-        gpNav(cur[GP_DU] || ay <= -STICK_DEAD, "up",   -1, now);
-        gpNav(cur[GP_DD] || ay >=  STICK_DEAD, "down",  1, now);
-        gpNav(cur[GP_DL], "left",  -1, now);
-        gpNav(cur[GP_DR], "right",  1, now);
-      }
-      /* the right stick strides by fours, beat to beat, either axis */
-      rx = (gp.axes && gp.axes.length > 2) ? gp.axes[2] : 0;
-      ry = (gp.axes && gp.axes.length > 3) ? gp.axes[3] : 0;
-      gpNav(rx <= -STICK_DEAD || ry <= -STICK_DEAD, "back", -4, now);
-      gpNav(rx >=  STICK_DEAD || ry >=  STICK_DEAD, "fwd",   4, now);
+    var lead = (l2Down ? 1 : 0) + (r2Down ? 2 : 0);
+    var wide = (lead === 1) ? 2 : (lead === 2) ? 4 : 1;      /* third, fifth, step */
+    if (gpEdge(cur, GP_TRIANGLE) || gpEdge(cur, GP_CROSS)){
+      var dir = gpEdge(cur, GP_TRIANGLE) ? 1 : -1;
+      if (lead === 3) relStep(dir, true);                    /* a semitone out of key */
+      else relStep(dir * wide, false);
     }
-
-    /* the bumper released above: it is the octave only if nothing this frame
-       or before it spent the bumper on a leap */
-    if (lGone && !lbUsed) shiftOctave(-1);
-    if (rGone && !rbUsed) shiftOctave(1);
+    if (gpEdge(cur, GP_CIRCLE)) relRepeat();
+    if (gpEdge(cur, GP_SQUARE)) clearStep();                 /* a rest, and on */
+    /* up and down are time, as everywhere; left and right nudge the note
+       under the cursor a scale step without advancing. In the roll the page
+       is drawn — time runs right, height is pitch — so the pairs trade
+       places, and the left stick follows the d-pad on both axes. Whichever
+       pair it lands on, the nudge goes through padNudge, so both bumpers held
+       take it out of the key here as they do on △ and ✕. */
+    ax = (gp.axes && gp.axes.length > 0) ? gp.axes[0] : 0;
+    ay = (gp.axes && gp.axes.length > 1) ? gp.axes[1] : 0;    /* left stick Y, +1 = down */
+    if (viz === "roll"){
+      gpNav(cur[GP_DL] || ax <= -STICK_DEAD, "left",  -1, now);
+      gpNav(cur[GP_DR] || ax >=  STICK_DEAD, "right",  1, now);
+      gpNav(cur[GP_DU] || ay <= -STICK_DEAD, "up",    1, now, padNudge);
+      gpNav(cur[GP_DD] || ay >=  STICK_DEAD, "down", -1, now, padNudge);
+    } else {
+      gpNav(cur[GP_DU] || ay <= -STICK_DEAD, "up",   -1, now);
+      gpNav(cur[GP_DD] || ay >=  STICK_DEAD, "down",  1, now);
+      gpNav(cur[GP_DL], "left",  -1, now, padNudge);
+      gpNav(cur[GP_DR], "right",  1, now, padNudge);
+    }
+    /* the right stick strides by fours, beat to beat, either axis */
+    rx = (gp.axes && gp.axes.length > 2) ? gp.axes[2] : 0;
+    ry = (gp.axes && gp.axes.length > 3) ? gp.axes[3] : 0;
+    gpNav(rx <= -STICK_DEAD || ry <= -STICK_DEAD, "back", -4, now);
+    gpNav(rx >=  STICK_DEAD || ry >=  STICK_DEAD, "fwd",   4, now);
 
     gpPrev = cur;
   }
@@ -3817,8 +3851,7 @@
     if (padIndex === null) padIndex = e.gamepad.index;
     gpPrev = [];
     navReset();
-    say(relative ? "gamepad ready · relative entry, △ up ✕ down"
-                 : "gamepad ready · hold L2 or R2 for the crossbar");
+    say("gamepad ready · △ up, ✕ down, ○ again, □ rest · L1 R1 the voice");
   });
   window.addEventListener("gamepaddisconnected", function(e){
     if (e.gamepad.index === padIndex){
@@ -3853,7 +3886,6 @@
     activeTab = activeQuest() ? questGroup(activeQuest()) : newestLesson();
   currentTab();                        /* and fall to the first if it is gone */
   try { if (localStorage.getItem(VIZ_KEY) === "column") viz = "column"; } catch (e){}
-  try { if (localStorage.getItem(ENTRY_KEY) === "relative") relative = true; } catch (e){}
   try { if (localStorage.getItem(NAMES_KEY) === "off") showNames = false; } catch (e){}
   var savedScenery = "paper";
   try { savedScenery = localStorage.getItem(SCENERY_KEY) || "paper"; } catch (e){}

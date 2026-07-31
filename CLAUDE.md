@@ -50,8 +50,14 @@ board + rules), `BUDGET.md` (HUD budget ledger) before proposing anything.
    grants 1 feature of any size. Bug fixes, warranty, music feedback,
    theory, drills: free. Never build features unprompted.
 3. **Keyboard = physical position only** (`KeyboardEvent.code`) — IT
-   layout. Gamepad: FFXIV crossbar (triggers) for absolute, contour mode
-   (face buttons, bumper leaps) for relative. Range C2–C6, MIDI 36–84.
+   layout. Gamepad (revised 2026-07-31): contour entry ONLY — the absolute
+   trigger crossbar is deleted. Face buttons are the move (△ up, ✕ down,
+   ○ again, □ rest); **triggers L2/R2 are the modifiers** (third, fifth,
+   both = semitone out of key); **bumpers L1/R1 are the voice**, tapped.
+   The base octave is no longer on the pad's shoulders: it is the settings
+   crossbar's ←→, and page up/down. Start still raises the settings
+   crossbar, which now overlays the folio instead of replacing it.
+   Range C2–C6, MIDI 36–84.
 4. **Migraine rules (revised):** only grid/stripe patterns and extreme
    contrast are forbidden. Texture/gradients fine. Nothing blinks; calm
    motion. Do not over-apply.
@@ -80,14 +86,16 @@ QUEST-COPY.md.
 
 Backlog — pre-L3 UX pass (player's list, 2026-07-31; scope/pricing judged
 at build time, some items warranty):
-1. Tabs for quests (flat list won't scale past L2's board).
-2. Reorder / favorite system for quests.
-3. DELETE absolute mode on gamepad entirely.
-4. Easier voice switch.
-5. Rework L2/R2 usage (player doesn't know what they do and is confused —
-   partly a discoverability failure, treat as warranty-adjacent).
-6. Key help more contextually visible.
-7. Don't hide the main folio during crossbar (Start) mode.
+1. ~~Tabs for quests~~ — done, stage 1.
+2. ~~Reorder / favorite system for quests~~ — done, stage 1.
+3. ~~DELETE absolute mode on gamepad entirely~~ — done, stage 2.
+4. ~~Easier voice switch~~ — done, stage 2: tab / shift+tab, and L1/R1.
+5. ~~Rework L2/R2 usage~~ — done, stage 2. They were the absolute crossbar
+   and nothing else; they are the leap modifiers now, and every shoulder is
+   named in the hint strip.
+6. ~~Key help more contextually visible~~ — done, stage 1 (hint strip).
+7. ~~Don't hide the main folio during crossbar (Start) mode~~ — done,
+   stage 2: the crossbar overlays the head of the page.
 8. Better voice management — UX to be defined, must anticipate 3 voices
    (L3.2/L4 horizon).
 9. Per-quest backgrounds — wire up the untracked `quest-backgrounds/`

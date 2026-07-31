@@ -144,8 +144,12 @@ function freePort(start){
 
   await b.tap(GP.START);
   ok("start raises the settings crossbar", await on("settings"));
-  ok("and the pattern stands down", !(await on("roll")) &&
-     (await b.eval("document.getElementById('column').style.display")) === "none");
+  /* item 7 of the pre-L3 pass: the crossbar is raised OVER the folio now,
+     not in place of it — the music stays in view while settings are turned */
+  ok("and the folio stays in view under it",
+     (await on("roll")) ||
+     (await b.eval("document.getElementById('column').style.display")) === "flex",
+     await b.eval("document.getElementById('column').style.display"));
   ok("the crossbar is drawn as eight slots",
      (await b.eval("document.querySelectorAll('#settings .xslot').length")) === 8);
   ok("the workspace heads the list",
@@ -205,24 +209,33 @@ function freePort(start){
   await b.tap(GP.DU);
   ok("and up walks back to where it started", (await where()) === here0, [here0, await where()]);
 
-  /* ← and → are the voice, a ring */
+  /* ← and → are the base octave now: the voice moved out of the menu and
+     onto L1 and R1, a tap on the page with no mode raised first */
   const meta1 = () => b.eval("document.getElementById('metatext').textContent");
   const v0 = await meta1();
   await b.tap(GP.DR);
-  ok("→ changes hands", (await meta1()) !== v0, [v0, await meta1()]);
-  await b.tap(GP.DR);
-  ok("→ again comes round the ring", (await meta1()) === v0, [v0, await meta1()]);
+  ok("→ raises the base octave", /octave 5/.test(await meta1()), await meta1());
   await b.tap(GP.DL);
-  ok("← walks it the other way", (await meta1()) !== v0);
-  await b.tap(GP.DL);
-  ok("and back", (await meta1()) === v0);
+  ok("← lowers it again", (await meta1()) === v0, [v0, await meta1()]);
+  ok("and the voice was untouched by either", / · lead/.test(await meta1()),
+     await meta1());
+  /* the voice, on the bumpers, from the page itself */
+  await b.tap(GP.START);
+  const vb = await meta1();
+  await b.tap(GP.R1);
+  ok("R1 changes hands on the page", (await meta1()) !== vb, [vb, await meta1()]);
+  await b.tap(GP.L1);
+  ok("and L1 walks the ring back", (await meta1()) === vb, [vb, await meta1()]);
+  await b.tap(GP.START);
 
-  const meth0 = await meta1();
+  const scene0 = await b.eval("document.body.getAttribute('data-scenery')");
   await b.tap(GP.X);
-  ok("✕ changes the entry method", /relative/.test(await meta1()), meth0);
+  ok("✕ walks the background", (await b.eval(
+     "document.body.getAttribute('data-scenery')")) !== scene0, scene0);
   ok("and the crossbar stays up for the next item", await on("settings"));
-  await b.tap(GP.X);
-  ok("and ✕ again puts it back", !/relative/.test(await meta1()), await meta1());
+  await b.tap(GP.X); await b.tap(GP.X); await b.tap(GP.X);
+  ok("and four presses is the whole ring", (await b.eval(
+     "document.body.getAttribute('data-scenery')")) === scene0, scene0);
   await b.tap(GP.B);
   ok("○ closes it", !(await on("settings")));
   ok("and the rail wash goes with it",
@@ -343,21 +356,23 @@ function freePort(start){
   ok("with no runtime error from the second voice", errors.length === 0, errors);
   await b.key("Space", { key:" ", vk:32 });
 
-  /* the pad: bare triangle changes hands in absolute entry */
+  /* the pad: the bumpers change hands, △ is a move and never the voice */
   await b.key("Tab", { key:"Tab", vk:9 });      /* back to the lead */
   await wait(60);
-  await b.tap(GP.TR);
-  ok("bare △ changes hands on the pad", / · bass/.test(await meta2()), await meta2());
-  await b.tap(GP.TR);
-  ok("and back", / · lead/.test(await meta2()), await meta2());
+  await b.tap(GP.R1);
+  ok("R1 changes hands on the pad", / · bass/.test(await meta2()), await meta2());
+  await b.tap(GP.L1);
+  ok("and L1 walks the ring back", / · lead/.test(await meta2()), await meta2());
   /* and the crossbar carries the voice, solo and mute */
   await b.tap(GP.START);
   const slots = await b.eval(
     "Array.prototype.map.call(document.querySelectorAll('#settings .xslot')," +
     "function(e){return e.textContent;})");
-  ok("the crossbar's → is the voice", /the voice/.test(slots[2]), slots[2]);
+  ok("the crossbar's → is the base octave", /the base octave/.test(slots[2]), slots[2]);
   ok("its ↓ is the workspace", /the workspace/.test(slots[3]), slots[3]);
-  ok("and ✕ is the entry method", /entry method/.test(slots[7]), slots[7]);
+  ok("and ✕ is the background", /the background/.test(slots[7]), slots[7]);
+  ok("and no slot of it is the voice any more",
+     slots.every(s => !/the voice/.test(s)), slots);
   ok("□ is solo", /solo/.test(slots[4]), slots[4]);
   ok("△ is mute", /mute/.test(slots[5]), slots[5]);
   await b.tap(GP.SQ);
@@ -806,18 +821,19 @@ function freePort(start){
   await b.key("Period", { key:".", vk:190 });
   ok("clearing a step advances two as well", (await at()) === 2, await at());
   await b.key("Home", { key:"Home", vk:36 });
+  /* the absolute crossbar is gone: a trigger with a d-pad slot names no pitch.
+     The d-pad still does its own bare work under it (time, or the nudge, as
+     the view decides) — what must never happen again is a pitch appearing. */
   await b.tap(GP.L2, GP.DL);
-  ok("crossbar entry on the pad advances two", (await at()) === 2, await at());
-  ok("and wrote the absolute pitch it names", /C-4/.test(await stepText(0)), await stepText(0));
-  await b.key("F4", { key:"F4", vk:115 });          /* relative (contour) entry */
-  ok("the pad is in relative entry", /relative/.test(await b.eval(
-     "document.getElementById('metatext').textContent")));
+  ok("a trigger and the old slot 1 write no pitch",
+     !/[A-G]/.test(await stepText(0)), await stepText(0));
+  await b.key("Home", { key:"Home", vk:36 });
+  await b.key("KeyZ", { key:"z", vk:90 });          /* an anchor to move from */
+  await b.key("Home", { key:"Home", vk:36 });
   await b.tap(GP.TR);
-  ok("a relative note advances two", (await at()) === 4, await at());
-  ok("and it wrote a step of the key above the anchor",
-     /D-4/.test(await stepText(2)), await stepText(2));
+  ok("a contour note advances two", (await at()) === 2, await at());
   await b.tap(GP.SQ);
-  ok("a rest on the pad advances two, as a note does", (await at()) === 6, await at());
+  ok("a rest on the pad advances two, as a note does", (await at()) === 4, await at());
 
   /* ---- the chromatic escape hatch, on a real pad ----
      L1 and R1 held together mean one thing in relative entry: out of the key,
@@ -843,13 +859,13 @@ function freePort(start){
   const UP = inRoll ? GP.DU : GP.DR, DOWN = inRoll ? GP.DD : GP.DL;
   const hatchBefore = await noteAt(0);
   ok("there is a note under the cursor to nudge", hatchBefore !== null, await stepText(0));
-  await b.tap(GP.L1, GP.R1, UP);
+  await b.tap(GP.L2, GP.R2, UP);
   const hatchAfter = await noteAt(0);
-  ok("both bumpers held, the d-pad nudges by a semitone",
+  ok("both triggers held, the d-pad nudges by a semitone",
      hatchBefore && hatchAfter && MIDI(hatchAfter) === MIDI(hatchBefore) + 1, [hatchBefore, hatchAfter]);
   ok("and the nudge did not advance the cursor", (await at()) === 0, await at());
-  ok("nor did the bumpers double as the octave", / octave 4 /.test(await metaLine()), await metaLine());
-  await b.tap(GP.L1, GP.R1, DOWN);
+  ok("nor did the triggers touch the octave or the voice", / octave 4 /.test(await metaLine()), await metaLine());
+  await b.tap(GP.L2, GP.R2, DOWN);
   ok("and the other way is a semitone back", (await noteAt(0)) === hatchBefore,
      [hatchBefore, await noteAt(0)]);
   await b.tap(UP);
@@ -859,7 +875,6 @@ function freePort(start){
      [hatchBefore, hatchBare]);
   ok("and the escape hatch raised no runtime error", errors.length === 0, errors);
 
-  await b.key("F4", { key:"F4", vk:115 });          /* back to absolute */
   ok("no runtime errors from any of the eighth-note work", errors.length === 0, errors);
 
   await b.shot(__dirname + "/boot-seeded.png");

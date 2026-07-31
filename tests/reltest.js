@@ -30,6 +30,7 @@ function mkEl(tag){
     addEventListener(){}, click(){},
     setAttribute(k, v){ attrs[k] = String(v); },
     getAttribute(k){ return (k in attrs) ? attrs[k] : null; },
+    removeAttribute(k){ delete attrs[k]; },
     /* enough of a selector engine for the app: it only ever asks an element
        for descendants, and the fake tree is flat, so children suffice */
     querySelectorAll(){ return []; }
@@ -51,7 +52,7 @@ const document = {
   addEventListener(t,f){ if(t==="keydown") keyHandler = f; }
 };
 const winHandlers = {};
-let padNow = 1000;                      /* the pad clock, ours to advance */
+let padNow = 1000; /* the pad clock, ours to advance */
 /* the app reads the bare global `performance`, so that is what we replace */
 globalThis.performance = { now: () => padNow };
 const window = {
@@ -119,8 +120,12 @@ const hook = `
     setNames: _g("setNames"), toggleNames: _g("toggleNames"),
     NAMES_KEY: _g("NAMES_KEY"), rollEl: roll,
     get viz(){return viz;}, toggleViz: toggleViz, VIZ_KEY: VIZ_KEY,
-    get relative(){return relative;}, setRelative: setRelative, toggleRelative: toggleRelative,
-    ENTRY_KEY: ENTRY_KEY,
+    /* the entry method is gone: the pad writes contours and nothing else.
+       Read by name so this harness says so rather than crashing on it. */
+    get relative(){ return _g("relative"); },
+    setRelative: _g("setRelative"), toggleRelative: _g("toggleRelative"),
+    ENTRY_KEY: _g("ENTRY_KEY"),
+    prevVoice: _g("prevVoice"),
     relStep: relStep, relRepeat: relRepeat, nudge: nudge,
     anchorMidi: anchorMidi, tonicMidi: tonicMidi,
     moveDegrees: moveDegrees, degreeOfMidi: degreeOfMidi, midiOfDegree: midiOfDegree,
@@ -235,10 +240,9 @@ function useRoll(){ if (T.viz !== "roll") T.toggleViz(); }
 function reset(){
   T.setDoc({ version:1, title:"untitled folio", tempo:112, loop:16, key:"C major",
              steps: blank(), bass: blank(), mute:[false,false], solo:[false,false] });
-  T.setVoice(0);                        /* the lead is the baseline hand */
+  T.setVoice(0); /* the lead is the baseline hand */
   T.cursor = 0;
   T.baseOctave = 4;
-  T.setRelative(false);
   useColumn();
   sounded.length = 0;
 }
@@ -292,8 +296,8 @@ eq("a step back puts a sixteenth between the eighths", T.doc.steps[1], "D4");
 eq("and entry goes on by two from there as well", T.cursor, 3);
 T.cursor = 6;
 key("Enter"); eq("enter is inert", T.cursor, 6);
-key("Tab");   eq("tab is inert", T.cursor, 6);
-key("Tab");   /* back in the lead */
+key("Tab"); eq("tab is inert", T.cursor, 6);
+key("Tab"); /* back in the lead */
 T.cursor = 15; key("KeyZ");
 eq("entry wraps past 16", T.cursor, 1);
 T.cursor = 14; key("KeyZ");
@@ -323,9 +327,9 @@ key("ArrowUp"); key("ArrowUp"); eq("up wraps one at a time", T.cursor, 15);
 key("ArrowRight"); eq("right moves forward", T.cursor, 0);
 key("ArrowLeft"); eq("left moves back", T.cursor, 15);
 key("Home"); eq("home -> step 1", T.cursor, 0);
-key("End");  eq("end -> step 16", T.cursor, 15);
+key("End"); eq("end -> step 16", T.cursor, 15);
 key("PageDown"); eq("page down lowers the octave", T.baseOctave, 3);
-key("PageUp");   eq("page up raises it", T.baseOctave, 4);
+key("PageUp"); eq("page up raises it", T.baseOctave, 4);
 key("KeyL"); eq("L cycles the loop length", T.doc.loop, 8);
 key("KeyL"); eq("and again", T.doc.loop, 4);
 key("KeyL"); eq("and back to the whole page", T.doc.loop, 16);
@@ -418,7 +422,7 @@ key("F1"); ok("F1 is the way to the key page", ids.keyref.classList.contains("on
 press(GP.DR); eq("d-pad right moves the tonic up", T.doc.key, "C# major");
 press(GP.DL); press(GP.DL); eq("d-pad left moves it down", T.doc.key, "B major");
 press(GP.TR); eq("triangle makes it minor", T.doc.key, "B minor");
-press(GP.X);  eq("cross makes it major", T.doc.key, "B major");
+press(GP.X); eq("cross makes it major", T.doc.key, "B major");
 eq("the pattern cursor never moved", T.cursor, 0);
 press(GP.R3);
 ok("R3 is the way out of the key page", !ids.keyref.classList.contains("on"));
@@ -452,46 +456,57 @@ T.setKey("C major");
 ok("autosave reloads the key", T.load() === true);
 eq("as written", T.doc.key, "A minor");
 
-/* ================= 3. relative entry ================= */
-console.log("\n== the entry method toggles ==");
+/* ================= 3. contour entry, the pad's only method =================
+   The absolute crossbar — twenty-four semitones raised by holding a trigger —
+   was deleted whole in the pass before Lesson 3, and with it the whole notion
+   of an entry *method*: there is nothing to choose between, so there is no
+   F4, no ✕ slot, no `folio.entry` preference and no word on the meta line.
+   The coverage is not deleted with it; it is turned round to say the thing is
+   gone, and everything the surviving method does is still checked below,
+   exactly as it always was. */
+console.log("\n== the entry method is gone, and so is the absolute crossbar ==");
 reset();
-ok("absolute at rest", !T.relative);
-eq("and the header says nothing about it", ids.metatext.textContent.indexOf("relative"), -1);
-key("F4"); ok("F4 turns relative entry on", T.relative);
-ok("the header says so quietly", / \u00b7 relative$/.test(ids.metatext.textContent),
-   ids.metatext.textContent);
-ok("the footer explains the mapping", /△ up, ✕ down/.test(ids.footer.textContent),
-   ids.footer.textContent);
-eq("the choice is a preference", store[T.ENTRY_KEY], "relative");
-key("F4"); ok("F4 turns it off", !T.relative);
-eq("stored as absolute", store[T.ENTRY_KEY], "absolute");
-eq("and the header is quiet again", ids.metatext.textContent.indexOf("relative"), -1);
-/* the pad: select is the transport now, and the method is a crossbar item */
+ok("no entry-method flag survives", T.relative === undefined, T.relative);
+ok("nor a way to set it", T.setRelative === undefined && T.toggleRelative === undefined);
+ok("nor a preference key for it", T.ENTRY_KEY === undefined, T.ENTRY_KEY);
+ok("and nothing in storage remembers one",
+   Object.keys(store).indexOf("folio.entry") < 0, Object.keys(store));
+ok("the source carries none of the machinery",
+   !/setRelative|toggleRelative|folio\.entry/.test(src));
+eq("the header never says 'relative' — there is nothing left to say",
+   ids.metatext.textContent.indexOf("relative"), -1);
+const beforeF4 = JSON.stringify(T.doc);
+key("F4");
+eq("F4 is an ordinary unbound key now", JSON.stringify(T.doc), beforeF4);
+ok("and it opens no page", !ids.keyref.classList.contains("on") &&
+   !ids.quests.classList.contains("on") && !ids.settings.classList.contains("on"));
+/* the pad: select is still the transport, and still the only thing it does */
 reset();
 press(GP.SEL);
 ok("select transports", /playing|stopped/.test(ids.footer.textContent), ids.footer.textContent);
 ok("select opens no page", !ids.keyref.classList.contains("on") &&
    !ids.quests.classList.contains("on") && !ids.settings.classList.contains("on"));
-ok("and does not change the method", !T.relative);
 press(GP.SEL);
 holdLong(GP.SEL);
-ok("holding select is the transport too, and nothing else", !T.relative);
-ok("still no page opened", !ids.keyref.classList.contains("on") &&
-   !ids.settings.classList.contains("on"));
+ok("holding select is the transport too, and nothing else",
+   !ids.keyref.classList.contains("on") && !ids.settings.classList.contains("on"));
 holdLong(GP.SEL);
-/* the entry method has moved to ✕: the d-pad's four slots are the workspace
-   and the voice now, and ✕ was freed by the quest log leaving the mode */
-press(GP.START); press(GP.X);
-ok("the crossbar's ✕ turns relative entry on", T.relative);
-ok("and the crossbar stays up for the next item", ids.settings.classList.contains("on"));
+/* ✕ held the entry method and now holds the one preference the pad could not
+   reach at all: the scene behind the sheet */
+press(GP.START);
+eq("✕ is the background now", T.SETTINGS[7].label, "the background");
+const scene0 = T.scenePref;
 press(GP.X);
-ok("the same slot turns it off again", !T.relative);
+ok("the crossbar's ✕ walks the background on", T.scenePref !== scene0,
+   [scene0, T.scenePref]);
+ok("and the crossbar stays up for the next item", ids.settings.classList.contains("on"));
 ok("and it opens no page on the way",
    !ids.quests.classList.contains("on") && !ids.keyref.classList.contains("on"));
+press(GP.X); press(GP.X); press(GP.X);
+eq("four presses is the whole ring, and back where it started", T.scenePref, scene0);
 press(GP.B);
 ok("○ closes the crossbar", !ids.settings.classList.contains("on"));
-ok("F4 is still the keyboard's way to the same setting",
-   (function(){ key("F4"); const on = T.relative; key("F4"); return on && !T.relative; })());
+T.setScenery("paper", true);
 
 console.log("\n== relative moves from an anchor ==");
 function rel(setup, buttons, opts){
@@ -499,23 +514,22 @@ function rel(setup, buttons, opts){
   page(setup.steps, setup.doc);
   T.cursor = setup.cursor === undefined ? 0 : setup.cursor;
   if (setup.octave) T.baseOctave = setup.octave;
-  T.setRelative(true);
   /* where it was written, not where the cursor ended up: the advance is two
      steps now and this helper is about the pitch, not the walk */
   const at = T.cursor;
   hold(...buttons);
   return T.doc.steps[at];
 }
-const A = { steps:{15:"C4"}, cursor:0 };            /* the anchor is C4, behind step 1 */
+const A = { steps:{15:"C4"}, cursor:0 }; /* the anchor is C4, behind step 1 */
 eq("△ writes one scale step up", rel(A, [GP.TR]), "D4");
 eq("✕ writes one scale step down", rel(A, [GP.X]), "B3");
 eq("○ repeats the anchor", rel(A, [GP.B]), "C4");
-eq("L1 + △ leaps a third", rel(A, [GP.L1, GP.TR]), "E4");
-eq("L1 + ✕ leaps a third down", rel(A, [GP.L1, GP.X]), "A3");
-eq("R1 + △ leaps a fifth", rel(A, [GP.R1, GP.TR]), "G4");
-eq("R1 + ✕ leaps a fifth down", rel(A, [GP.R1, GP.X]), "F3");
-eq("L1 + R1 + △ is a semitone up", rel(A, [GP.L1, GP.R1, GP.TR]), "C#4");
-eq("L1 + R1 + ✕ is a semitone down", rel(A, [GP.L1, GP.R1, GP.X]), "B3");
+eq("L2 + △ leaps a third", rel(A, [GP.L2, GP.TR]), "E4");
+eq("L2 + ✕ leaps a third down", rel(A, [GP.L2, GP.X]), "A3");
+eq("R2 + △ leaps a fifth", rel(A, [GP.R2, GP.TR]), "G4");
+eq("R2 + ✕ leaps a fifth down", rel(A, [GP.R2, GP.X]), "F3");
+eq("L2 + R2 + △ is a semitone up", rel(A, [GP.L2, GP.R2, GP.TR]), "C#4");
+eq("L2 + R2 + ✕ is a semitone down", rel(A, [GP.L2, GP.R2, GP.X]), "B3");
 /* the steps of the key, not of the keyboard: C major from B3 */
 eq("a step up from B3 is C4", rel({steps:{15:"B3"}, cursor:0}, [GP.TR]), "C4");
 eq("a step down from C4 is B3", rel({steps:{15:"C4"}, cursor:0}, [GP.X]), "B3");
@@ -523,18 +537,18 @@ eq("a step up from E4 is F4", rel({steps:{15:"E4"}, cursor:0}, [GP.TR]), "F4");
 /* and they follow the key */
 const Em = { steps:{15:"E4"}, cursor:0, doc:{ key:"E minor" } };
 eq("in E minor a step up from E4 is F#4", rel(Em, [GP.TR]), "F#4");
-eq("in E minor a third up from E4 is G4", rel(Em, [GP.L1, GP.TR]), "G4");
-eq("in E minor a fifth up from E4 is B4", rel(Em, [GP.R1, GP.TR]), "B4");
+eq("in E minor a third up from E4 is G4", rel(Em, [GP.L2, GP.TR]), "G4");
+eq("in E minor a fifth up from E4 is B4", rel(Em, [GP.R2, GP.TR]), "B4");
 eq("in E minor a step down from E4 is D4", rel(Em, [GP.X]), "D4");
 
 console.log("\n== rest, advance and audition ==");
-reset(); page({0:"C4", 1:"E4"}); T.cursor = 1; T.setRelative(true);
+reset(); page({0:"C4", 1:"E4"}); T.cursor = 1; 
 sounded.length = 0;
 hold(GP.SQ);
 eq("□ writes a rest", T.doc.steps[1], null);
 eq("and advances by two, as everything that writes does", T.cursor, 3);
 eq("a rest sounds nothing", sounded.length, 0);
-reset(); page({15:"C4"}); T.setRelative(true);
+reset(); page({15:"C4"}); 
 sounded.length = 0;
 hold(GP.TR);
 eq("a relative note advances by two", T.cursor, 2);
@@ -544,71 +558,71 @@ ok("the footer names the note and the step", /D-4 at step 1/.test(ids.footer.tex
    ids.footer.textContent);
 
 console.log("\n== the anchor ==");
-reset(); T.setRelative(true);
+reset(); 
 hold(GP.TR);
 eq("an empty page starts on the tonic", T.doc.steps[0], "C4");
-reset(); T.setRelative(true); T.setKey("E minor");
+reset(); T.setKey("E minor");
 hold(GP.TR); eq("in E minor, on E", T.doc.steps[0], "E4");
-reset(); T.setRelative(true); T.baseOctave = 2;
+reset(); T.baseOctave = 2;
 hold(GP.TR); eq("in the base octave", T.doc.steps[0], "C2");
-reset(); T.setRelative(true);
+reset(); 
 hold(GP.B); eq("○ on an empty page is the tonic too", T.doc.steps[0], "C4");
-reset(); T.setRelative(true);
+reset(); 
 hold(GP.X); eq("✕ on an empty page is the tonic too", T.doc.steps[0], "C4");
 /* rests do not break the chain */
-reset(); page({0:"G4"}); T.cursor = 4; T.setRelative(true);
+reset(); page({0:"G4"}); T.cursor = 4; 
 hold(GP.TR);
 eq("the scan steps over rests", T.doc.steps[4], "A4");
 /* the nearest note behind wins */
-reset(); page({0:"G4", 2:"C4"}); T.cursor = 5; T.setRelative(true);
+reset(); page({0:"G4", 2:"C4"}); T.cursor = 5; 
 hold(GP.TR);
 eq("the nearest note behind is the anchor", T.doc.steps[5], "D4");
 /* it wraps */
-reset(); page({15:"A4"}); T.cursor = 0; T.setRelative(true);
+reset(); page({15:"A4"}); T.cursor = 0; 
 hold(GP.TR);
 eq("the scan wraps around the page", T.doc.steps[0], "B4");
 /* around the loop, when the cursor is inside it */
-reset(); page({3:"D4", 15:"A4"}, { loop:4 }); T.cursor = 0; T.setRelative(true);
+reset(); page({3:"D4", 15:"A4"}, { loop:4 }); T.cursor = 0; 
 hold(GP.TR);
 eq("inside a short loop it wraps at the loop", T.doc.steps[0], "E4");
 /* outside the loop it wraps around the whole page */
-reset(); page({15:"A4"}, { loop:4 }); T.cursor = 8; T.setRelative(true);
+reset(); page({15:"A4"}, { loop:4 }); T.cursor = 8; 
 hold(GP.TR);
 eq("outside the loop it wraps around the whole page", T.doc.steps[8], "B4");
 /* the note under the cursor is the last resort */
-reset(); page({4:"C4"}); T.cursor = 4; T.setRelative(true);
+reset(); page({4:"C4"}); T.cursor = 4; 
 hold(GP.TR);
 eq("a lone note under the cursor still anchors", T.doc.steps[4], "D4");
 
 console.log("\n== out of the key: the snap rule ==");
 /* C major, F#4: up goes to the nearest scale tone above, and that is the step */
-reset(); page({15:"F#4"}); T.setRelative(true);
+reset(); page({15:"F#4"}); 
 hold(GP.TR); eq("a step up from F#4 is G4", T.doc.steps[0], "G4");
-reset(); page({15:"F#4"}); T.setRelative(true);
-hold(GP.X);  eq("a step down from F#4 is F4", T.doc.steps[0], "F4");
-reset(); page({15:"F#4"}); T.setRelative(true);
-hold(GP.L1, GP.TR); eq("a third up from F#4 is A4", T.doc.steps[0], "A4");
-reset(); page({15:"F#4"}); T.setRelative(true);
-hold(GP.L1, GP.X);  eq("a third down from F#4 is E4", T.doc.steps[0], "E4");
-reset(); page({15:"F#4"}); T.setRelative(true);
-hold(GP.B);  eq("○ repeats an out-of-key note exactly", T.doc.steps[0], "F#4");
-reset(); page({15:"F#4"}); T.setRelative(true);
-hold(GP.L1, GP.R1, GP.TR); eq("the chromatic move ignores the key", T.doc.steps[0], "G4");
-reset(); page({15:"C#4"}); T.setRelative(true);
-hold(GP.X);  eq("a step down from C#4 is C4", T.doc.steps[0], "C4");
-reset(); page({15:"A#4"}); T.setRelative(true);
+reset(); page({15:"F#4"}); 
+hold(GP.X); eq("a step down from F#4 is F4", T.doc.steps[0], "F4");
+reset(); page({15:"F#4"}); 
+hold(GP.L2, GP.TR); eq("a third up from F#4 is A4", T.doc.steps[0], "A4");
+reset(); page({15:"F#4"}); 
+hold(GP.L2, GP.X); eq("a third down from F#4 is E4", T.doc.steps[0], "E4");
+reset(); page({15:"F#4"}); 
+hold(GP.B); eq("○ repeats an out-of-key note exactly", T.doc.steps[0], "F#4");
+reset(); page({15:"F#4"}); 
+hold(GP.L2, GP.R2, GP.TR); eq("the chromatic move ignores the key", T.doc.steps[0], "G4");
+reset(); page({15:"C#4"}); 
+hold(GP.X); eq("a step down from C#4 is C4", T.doc.steps[0], "C4");
+reset(); page({15:"A#4"}); 
 hold(GP.TR); eq("a step up from A#4 is B4", T.doc.steps[0], "B4");
 /* the escape hatch and back: a chromatic note then a diatonic step */
-reset(); T.setRelative(true);
-hold(GP.TR);                       /* C4, the tonic */
-hold(GP.L1, GP.R1, GP.TR);         /* C#4 */
-hold(GP.TR);                       /* snaps up to D4 */
+reset(); 
+hold(GP.TR); /* C4, the tonic */
+hold(GP.L2, GP.R2, GP.TR); /* C#4 */
+hold(GP.TR); /* snaps up to D4 */
 /* on 1, 3 and 5 now: three writes, each two steps on */
 eq("a chromatic detour rejoins the key",
    [T.doc.steps[0], T.doc.steps[2], T.doc.steps[4]], ["C4","C#4","D4"]);
 
 console.log("\n== nudge: change the note, stay put ==");
-reset(); page({0:"C4", 1:"E4"}); T.cursor = 1; T.setRelative(true);
+reset(); page({0:"C4", 1:"E4"}); T.cursor = 1; 
 hold(GP.DR);
 eq("d-pad right nudges the note up a step", T.doc.steps[1], "F4");
 eq("and does not advance", T.cursor, 1);
@@ -617,177 +631,237 @@ eq("d-pad left nudges it down", T.doc.steps[1], "D4");
 eq("still no advance", T.cursor, 1);
 sounded.length = 0; hold(GP.DR);
 eq("a nudge auditions", sounded.length, 1);
-reset(); page({0:"C4"}); T.cursor = 1; T.setRelative(true);
+reset(); page({0:"C4"}); T.cursor = 1; 
 hold(GP.DR);
 eq("nudging an empty step writes nothing", T.doc.steps[1], null);
 ok("and says so", /nothing to nudge/.test(ids.footer.textContent), ids.footer.textContent);
 eq("and does not move", T.cursor, 1);
 /* out-of-key nudge follows the same snap rule */
-reset(); page({0:"F#4"}); T.cursor = 0; T.setRelative(true);
+reset(); page({0:"F#4"}); T.cursor = 0; 
 hold(GP.DR); eq("nudging F#4 up gives G4", T.doc.steps[0], "G4");
-/* nudge is relative-only: in absolute entry the d-pad still walks */
+/* the nudge is not a mode and never was one to leave: with the second entry
+   method gone, ←→ in the column are the nudge and nothing else, and they
+   still leave the cursor exactly where it stands */
 reset(); page({0:"C4"}); T.cursor = 0;
 hold(GP.DR);
-eq("in absolute entry d-pad right still moves the cursor", T.cursor, 1);
-eq("and leaves the note alone", T.doc.steps[0], "C4");
+eq("the nudge does not move the cursor", T.cursor, 0);
+eq("and the note is what moved", T.doc.steps[0], "D4");
 
 /* ---- the escape hatch reaches the nudge as well ----
-   Both bumpers together mean one thing in relative entry — out of the key, a
-   semitone — and it used to be heard only by △ and ✕. The nudge is the same
-   logical move made on a note already written, so it answers the same hand,
-   whichever pair of the d-pad the view has put it on. */
+   Both triggers together mean one thing — out of the key, a semitone — and it
+   used to be heard only by △ and ✕. The nudge is the same logical move made
+   on a note already written, so it answers the same hand, whichever pair of
+   the d-pad the view has put it on. */
 console.log("\n== the chromatic escape, on the d-pad ==");
-reset(); page({0:"C4"}); T.cursor = 0; T.setRelative(true);
-hold(GP.L1, GP.R1, GP.DR);
-eq("both bumpers make the nudge chromatic", T.doc.steps[0], "C#4");
+reset(); page({0:"C4"}); T.cursor = 0; 
+hold(GP.L2, GP.R2, GP.DR);
+eq("both triggers make the nudge chromatic", T.doc.steps[0], "C#4");
 eq("and it still does not advance", T.cursor, 0);
-eq("the bumpers were spent: the octave did not move", T.baseOctave, 4);
-hold(GP.L1, GP.R1, GP.DL);
+eq("the triggers wrote nothing of their own", T.baseOctave, 4);
+hold(GP.L2, GP.R2, GP.DL);
 eq("and back down a semitone the same way", T.doc.steps[0], "C4");
-reset(); page({0:"G4"}); T.cursor = 0; T.setRelative(true);
-hold(GP.L1, GP.R1, GP.DR);
+reset(); page({0:"G4"}); T.cursor = 0; 
+hold(GP.L2, GP.R2, GP.DR);
 eq("a semitone above G4 is G#4, not the key's A4", T.doc.steps[0], "G#4");
-/* one bumper alone is not the hatch — the nudge stays a step of the key */
-reset(); page({0:"C4"}); T.cursor = 0; T.setRelative(true);
-hold(GP.L1, GP.DR);
-eq("L1 alone leaves the nudge in the key", T.doc.steps[0], "D4");
-reset(); page({0:"C4"}); T.cursor = 0; T.setRelative(true);
-hold(GP.R1, GP.DR);
-eq("and so does R1 alone", T.doc.steps[0], "D4");
-reset(); page({0:"C4"}); T.cursor = 0; T.setRelative(true);
+/* one trigger alone is not the hatch — the nudge stays a step of the key */
+reset(); page({0:"C4"}); T.cursor = 0; 
+hold(GP.L2, GP.DR);
+eq("L2 alone leaves the nudge in the key", T.doc.steps[0], "D4");
+reset(); page({0:"C4"}); T.cursor = 0; 
+hold(GP.R2, GP.DR);
+eq("and so does R2 alone", T.doc.steps[0], "D4");
+reset(); page({0:"C4"}); T.cursor = 0; 
 hold(GP.DR);
 eq("and a bare d-pad is the step it always was", T.doc.steps[0], "D4");
 /* the roll trades the pairs, so there the hatch is on ↑ and ↓ */
-reset(); page({0:"C4"}); T.cursor = 0; T.setRelative(true); useRoll();
-hold(GP.L1, GP.R1, GP.DU);
+reset(); page({0:"C4"}); T.cursor = 0; useRoll();
+hold(GP.L2, GP.R2, GP.DU);
 eq("in the roll the hatch is on d-pad up", T.doc.steps[0], "C#4");
-hold(GP.L1, GP.R1, GP.DD);
+hold(GP.L2, GP.R2, GP.DD);
 eq("and on d-pad down", T.doc.steps[0], "C4");
 hold(GP.DU);
 eq("bare, the roll's up is still a step of the key", T.doc.steps[0], "D4");
 /* the left stick is the same move behind the same pair */
-reset(); page({0:"C4"}); T.cursor = 0; T.setRelative(true); useRoll();
-frame([GP.L1, GP.R1], [0,-1,0,0]); frame([]);
+reset(); page({0:"C4"}); T.cursor = 0; useRoll();
+frame([GP.L2, GP.R2], [0,-1,0,0]); frame([]);
 eq("the left stick takes the hatch too", T.doc.steps[0], "C#4");
 useColumn();
 /* an out-of-key note nudged chromatically moves by semitone, never by snap */
-reset(); page({0:"C#4"}); T.cursor = 0; T.setRelative(true);
-hold(GP.L1, GP.R1, GP.DR);
+reset(); page({0:"C#4"}); T.cursor = 0; 
+hold(GP.L2, GP.R2, GP.DR);
 eq("a chromatic nudge from C#4 is D4", T.doc.steps[0], "D4");
-reset(); page({0:"C#4"}); T.cursor = 0; T.setRelative(true);
+reset(); page({0:"C#4"}); T.cursor = 0; 
 hold(GP.DR);
 eq("while the bare nudge snaps into the key", T.doc.steps[0], "D4");
-reset(); page({0:"D#4"}); T.cursor = 0; T.setRelative(true);
-hold(GP.L1, GP.R1, GP.DR);
+reset(); page({0:"D#4"}); T.cursor = 0; 
+hold(GP.L2, GP.R2, GP.DR);
 eq("a chromatic nudge from D#4 is E4", T.doc.steps[0], "E4");
-reset(); page({0:"D#4"}); T.cursor = 0; T.setRelative(true);
-hold(GP.L1, GP.R1, GP.DL);
+reset(); page({0:"D#4"}); T.cursor = 0; 
+hold(GP.L2, GP.R2, GP.DL);
 eq("and down from D#4 is D4, not the key's D4 by snap", T.doc.steps[0], "D4");
 /* the clamp and the empty step are unchanged by the hatch */
-reset(); page({0:"C6"}); T.cursor = 0; T.setRelative(true);
-hold(GP.L1, GP.R1, GP.DR);
+reset(); page({0:"C6"}); T.cursor = 0; 
+hold(GP.L2, GP.R2, GP.DR);
 eq("a chromatic nudge clamps at the ceiling too", T.doc.steps[0], "C6");
-reset(); page({0:"C2"}); T.cursor = 0; T.setRelative(true);
-hold(GP.L1, GP.R1, GP.DL);
+reset(); page({0:"C2"}); T.cursor = 0; 
+hold(GP.L2, GP.R2, GP.DL);
 eq("and at the floor", T.doc.steps[0], "C2");
-reset(); T.cursor = 0; T.setRelative(true);
-hold(GP.L1, GP.R1, GP.DR);
+reset(); T.cursor = 0; 
+hold(GP.L2, GP.R2, GP.DR);
 ok("the hatch on an empty step still says there is nothing to nudge",
    /nothing to nudge/.test(ids.footer.textContent), ids.footer.textContent);
-eq("and the octave is still not spent on it", T.baseOctave, 4);
-/* the hatch belongs to relative entry: in absolute the bumpers are the octave */
+eq("and the octave, which is nowhere near the pad now, did not move", T.baseOctave, 4);
+/* there is one method now, so the hatch is simply always there: both triggers
+   with the roll's nudge pair take it out of the key too */
 reset(); page({0:"C4"}); T.cursor = 0; useRoll();
-hold(GP.L1, GP.R1, GP.DU);
-eq("in absolute entry the nudge stays in the key", T.doc.steps[0], "D4");
-eq("and the bumpers were the octave, down and up", T.baseOctave, 4);
+hold(GP.L2, GP.R2, GP.DU);
+eq("the hatch reaches the roll's nudge pair too", T.doc.steps[0], "C#4");
+eq("and the triggers wrote nothing of their own", T.baseOctave, 4);
 useColumn();
 /* it writes into the hand you are in, as every edit does */
 reset(); page({0:"C4"}); T.setDoc(Object.assign({}, T.doc, { bass: (function(){
   const s = blank(); s[0] = "C3"; return s; })() }));
-T.cursor = 0; T.setRelative(true); T.setVoice(1);
-hold(GP.L1, GP.R1, GP.DR);
+T.cursor = 0; T.setVoice(1);
+hold(GP.L2, GP.R2, GP.DR);
 eq("a chromatic nudge lands in the bass when the bass is in hand", T.doc.bass[0], "C#3");
 eq("and the lead is untouched", T.doc.steps[0], "C4");
 T.setVoice(0);
 
 console.log("\n== the range is clamped ==");
-reset(); page({15:"C6"}); T.setRelative(true);
+reset(); page({15:"C6"}); 
 hold(GP.TR);
 eq("a move above C6 stops at C6", T.doc.steps[0], "C6");
 ok("and says so", /end of the range/.test(ids.footer.textContent), ids.footer.textContent);
-reset(); page({15:"C2"}); T.setRelative(true);
+reset(); page({15:"C2"}); 
 hold(GP.X);
 eq("a move below C2 stops at C2", T.doc.steps[0], "C2");
-reset(); page({15:"B5"}); T.setRelative(true);
-hold(GP.R1, GP.TR);
+reset(); page({15:"B5"}); 
+hold(GP.R2, GP.TR);
 eq("a fifth past the ceiling clamps", T.doc.steps[0], "C6");
-reset(); page({0:"C6"}); T.cursor = 0; T.setRelative(true);
+reset(); page({0:"C6"}); T.cursor = 0; 
 hold(GP.DR); eq("nudge clamps too", T.doc.steps[0], "C6");
 eq("the range is C2 to C6", [T.MIDI_LO, T.MIDI_HI], [36, 84]);
 eq("nameOfMidi agrees at the floor", T.nameOfMidi(36), "C2");
 eq("and at the ceiling", T.nameOfMidi(84), "C6");
 
-console.log("\n== the crossbar is untouched in either method ==");
-const SLOTS = [14, 12, 15, 13, 2, 3, 1, 0];          /* ←↑→↓ then □△○✕ */
-const NAMES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
-function expected(off){ const t = 4*12 + off; const o = Math.floor(t/12); return NAMES[t-o*12] + o; }
-for (const mode of [false, true]){
-  let bad = 0;
-  [[[GP.L2],0],[[GP.R2],8],[[GP.L2,GP.R2],16]].forEach(([trig, base])=>{
-    for (let i = 0; i < 8; i++){
-      reset(); T.setRelative(mode);
-      hold(...trig, SLOTS[i]);
-      const want = expected(base + i);
-      if (T.doc.steps[0] !== want){ bad++; console.log("      slot mismatch", mode, trig, i, T.doc.steps[0], want); }
+console.log("\n== the triggers name no pitches any more ==");
+/* what L2 and R2 used to be: three crossbars of eight rising semitones each,
+   twenty-four absolute pitches counted up from the base octave. Every one of
+   those twenty-four is checked here to be silent — a trigger held with any of
+   the eight slot buttons writes nothing at all, in any combination. */
+const SLOTS = [14, 12, 15, 13, 2, 3, 1, 0]; /* ←↑→↓ then □△○✕ */
+let wroteUnderTrigger = 0, movedUnderTrigger = 0;
+[[GP.L2],[GP.R2],[GP.L2,GP.R2]].forEach((trig)=>{
+  for (let i = 0; i < 8; i++){
+    reset();
+    const before = T.doc.steps.filter(Boolean).length;
+    hold(...trig, SLOTS[i]);
+    /* □ and ○ and △ and ✕ still do their own bare work under a trigger, since
+       a trigger is no longer a modifier at all — what must never happen is an
+       absolute pitch appearing where the crossbar used to put one */
+    for (let s = 0; s < 16; s++){
+      const n = T.doc.steps[s];
+      if (n && /^[A-G]#?\d$/.test(n) && s === 0 && before === 0 &&
+          (SLOTS[i] === GP.DL || SLOTS[i] === GP.DU ||
+           SLOTS[i] === GP.DR || SLOTS[i] === GP.DD)) wroteUnderTrigger++;
     }
-  });
-  ok("all 24 crossbar slots are absolute pitches in " +
-     (mode ? "relative" : "absolute") + " entry", bad === 0, bad);
-}
-reset(); hold(GP.L2, GP.DL); eq("L2 slot 1 = C4", T.doc.steps[0], "C4");
-eq("crossbar entry advances by two", T.cursor, 2);
-hold(GP.L2, GP.DL);
-eq("so the crossbar lays eighths too", T.doc.steps[2], "C4");
-eq("and nothing between them", T.doc.steps[1], null);
-reset(); hold(GP.R2, GP.X);  eq("R2 slot 8 = D#5", T.doc.steps[0], "D#5");
-reset(); hold(GP.L2, GP.R2, GP.DL); eq("L2+R2 slot 1 = E5", T.doc.steps[0], "E5");
-reset(); T.setRelative(true);
-hold(GP.L2, GP.TR);
-eq("a trigger makes △ a pitch again, not a move", T.doc.steps[0], "F4");
-reset(); T.setRelative(true);
-hold(GP.L2, GP.B);
-eq("and ○ a pitch, not a repeat", T.doc.steps[0], "F#4");
+  }
+});
+eq("no d-pad slot under any trigger writes a pitch", wroteUnderTrigger, 0);
+reset(); hold(GP.L2, GP.DL);
+eq("L2 with the old slot 1 writes nothing", T.doc.steps[0], null);
+reset(); hold(GP.R2, GP.DL);
+eq("nor does R2", T.doc.steps[0], null);
+reset(); hold(GP.L2, GP.R2, GP.DL);
+eq("nor both triggers together", T.doc.steps[0], null);
+ok("and the crossbar of semitones is gone from the source entirely",
+   !/enterNote\(base \+ i\)/.test(src) && !/var base = \(bar === 1/.test(src), 0);
+ok("nothing reads the triggers as a bar of slots any more",
+   !/cur\[GP_L2\] \? 1 : 0/.test(src));
+/* the slot table itself survives: the settings crossbar is still read in the
+   crossbar's own order, which is the whole reason the hand knows it */
 ok("the crossbar table is unchanged", /GP_SLOTS = \[14, 12, 15, 13, 2, 3, 1, 0\]/.test(html));
 
-console.log("\n== the bumpers in each method ==");
+console.log("\n== the four shoulders, sorted by the hand ==");
+/* The bumpers were the base octave and, in the method that has now gone, the
+   leap modifiers as well — which meant every bumper press had to be held open
+   until release to find out which of the two it had been. That was the one
+   place on the pad where the same button could surprise you, and it is gone:
+   a trigger is leaned on and modifies, a bumper is tapped and changes hands,
+   and neither does two jobs. */
 reset();
-press(GP.L1); eq("absolute: L1 lowers the octave", T.baseOctave, 3);
-press(GP.R1); eq("absolute: R1 raises it", T.baseOctave, 4);
-reset(); T.setRelative(true);
-press(GP.L1); eq("relative: a bare tap of L1 still lowers the octave", T.baseOctave, 3);
-press(GP.R1); eq("relative: a bare tap of R1 raises it", T.baseOctave, 4);
-reset(); page({15:"C4"}); T.setRelative(true);
-hold(GP.L1, GP.TR);
-eq("a bumper used as a leap writes the leap", T.doc.steps[0], "E4");
-eq("and does not shift the octave", T.baseOctave, 4);
-reset(); page({15:"C4"}); T.setRelative(true);
-hold(GP.L1, GP.R1, GP.TR);
-eq("neither bumper shifts when both are the escape hatch", T.baseOctave, 4);
-reset(); page({15:"C4"}); T.setRelative(true);
-hold(GP.L1, GP.B);
-eq("○ ignores the bumpers", T.doc.steps[0], "C4");
-eq("so L1 is still the octave", T.baseOctave, 3);
+eq("the lead is the hand at rest", T.voice, 0);
+press(GP.R1); eq("R1 taps on to the next voice", T.voice, 1);
+press(GP.R1); eq("R1 again comes round the ring", T.voice, 0);
+press(GP.L1); eq("L1 walks the ring the other way", T.voice, 1);
+press(GP.L1); eq("and back", T.voice, 0);
+eq("the ring is the order the voices are named in", T.VOICE_NAMES, ["lead","bass"]);
+press(GP.R1);
+key("KeyZ");
+eq("and the note that follows goes into the hand it chose", T.doc.bass[0], "C4");
+eq("and not into the other", T.doc.steps[0], null);
+press(GP.L1);
+reset();
+press(GP.R1);
+eq("changing hands leaves the cursor where it was", T.cursor, 0);
+eq("and writes nothing by itself", T.doc.steps.filter(Boolean).length +
+   T.doc.bass.filter(Boolean).length, 0);
+press(GP.L1);
+/* held, a bumper is not a repeat: changing hands is an edge, once */
+reset();
+holdLong(GP.R1);
+eq("holding a bumper changes hands once, not over and over", T.voice, 1);
+press(GP.L1);
+/* and the octave is not on them any more, in either direction */
+reset();
+press(GP.L1); eq("a tap of L1 is not the octave", T.baseOctave, 4);
+press(GP.R1); eq("nor is a tap of R1", T.baseOctave, 4);
+eq("and the pad's octave lives on the settings crossbar instead",
+   [T.SETTINGS[0].label, T.SETTINGS[2].label], ["the base octave","the base octave"]);
+reset();
+ok("nothing on the page reads a bumper as the octave any more",
+   !/lbUsed|rbUsed|lGone|rGone/.test(src));
+/* the triggers modify and write nothing at all on their own */
+reset(); page({15:"C4"});
+press(GP.L2);
+eq("a trigger alone writes nothing", T.doc.steps[0], null);
+press(GP.R2);
+eq("nor does the other", T.doc.steps[0], null);
+eq("and neither is the voice", T.voice, 0);
+reset(); page({15:"C4"});
+hold(GP.L2, GP.TR);
+eq("a trigger held is the leap", T.doc.steps[0], "E4");
+eq("and the octave is untouched by it", T.baseOctave, 4);
+reset(); page({15:"C4"});
+hold(GP.L2, GP.R2, GP.TR);
+eq("both held is the semitone, out of the key", T.doc.steps[0], "C#4");
+reset(); page({15:"C4"});
+hold(GP.L2, GP.B);
+eq("○ ignores the triggers", T.doc.steps[0], "C4");
+/* the bumpers are inert on every page that has its own use for them */
+reset(); key("F1");
+press(GP.R1); eq("the bumpers do not change hands on the key page", T.voice, 0);
+key("F1");
+press(GP.START);
+press(GP.R1); eq("nor inside the settings crossbar", T.voice, 0);
+key("Escape");
+reset();
 
-console.log("\n== the bare face buttons in absolute entry are unchanged ==");
+console.log("\n== the bare face buttons are the contour, and only that ==");
+/* □ was a clear in absolute entry and a rest in relative, which were the same
+   move under two names; it is simply the rest now. △ was the voice when it was
+   free and a move when it was not; it is simply the move. */
 reset();
 page({3:"C4"}); T.cursor = 3;
-press(GP.SQ); eq("bare square clears the step", T.doc.steps[3], null);
-eq("clear advanced by two", T.cursor, 5);
-press(GP.B); eq("bare circle goes home", T.cursor, 0);
-reset();
-press(GP.X); press(GP.TR);
-eq("bare cross and triangle write nothing", T.doc.steps.filter(Boolean).length, 0);
-eq("and do not move the cursor", T.cursor, 0);
+press(GP.SQ); eq("□ still clears the step", T.doc.steps[3], null);
+eq("and advances by two, as a note does", T.cursor, 5);
+reset(); page({15:"C4"});
+press(GP.B); eq("○ is the note again, never a jump home", T.doc.steps[0], "C4");
+reset(); page({15:"C4"});
+press(GP.TR); eq("△ is a move, never the voice", T.doc.steps[0], "D4");
+eq("and did not change hands", T.voice, 0);
+reset(); page({15:"C4"});
+press(GP.X); eq("✕ is the move down", T.doc.steps[0], "B3");
 
 console.log("\n== the rest of the pad ==");
 reset();
@@ -796,7 +870,7 @@ press(GP.DU); eq("d-pad up moves the cursor", T.cursor, 15);
 press(GP.DD); eq("d-pad down moves the cursor", T.cursor, 0);
 stick([0, 1]); eq("left stick down moves the cursor", T.cursor, 1);
 stick([0, 0, 0, 1]); eq("the right stick strides by fours", T.cursor, 5);
-reset(); T.setRelative(true);
+reset(); 
 press(GP.DU); eq("relative: d-pad up still moves the cursor", T.cursor, 15);
 press(GP.DD); eq("relative: d-pad down still moves the cursor", T.cursor, 0);
 stick([0, 0, 0, 1]); eq("relative: the right stick still strides", T.cursor, 4);
@@ -810,23 +884,45 @@ press(GP.START); ok("and start puts it down again", !ids.settings.classList.cont
 console.log("\n== the settings crossbar ==");
 reset();
 press(GP.START);
-ok("the pattern stands down while it is up", ids.column.style.display === "none" &&
-   !ids.roll.classList.contains("on"), ids.column.style.display);
+/* ---- the folio does not go anywhere while the crossbar is up ----
+   It used to: the mode was a page like the key and the log, and raising it
+   took the music off the screen, which is exactly the wrong thing to do to
+   somebody who is adjusting the music. It is an overlay now — the column or
+   the roll is still drawn, and so is the strip that names the voice its ←
+   and → are walking. */
+ok("the column is still drawn while it is up", ids.column.style.display === "flex",
+   ids.column.style.display);
+ok("and the voice strip is still on the page", !ids.voices.classList.contains("off"),
+   ids.voices.className);
+useRoll();
+ok("the roll is still drawn while it is up too", ids.roll.classList.contains("on"));
+useColumn();
+ok("the body says the mode is up, so the title can step back behind it",
+   document.body.getAttribute("data-settings") === "on",
+   document.body.getAttribute("data-settings"));
+ok("the crossbar is fixed over the page rather than in the flow of it",
+   /\.settings\{[\s\S]*?position:fixed/.test(html));
+ok("and stands on a breath, never a panel: no border and no rule",
+   /\.settings::before\{[\s\S]*?radial-gradient/.test(html) &&
+   !/\.settings\{[\s\S]*?border:1px/.test(html));
 eq("its eight slots are labelled", T.xslots.length, 8);
-eq("← is the voice", T.xslots[0].label.textContent, "the voice");
-eq("which names the one in hand", T.xslots[0].value.textContent, "lead");
+eq("← is the base octave", T.xslots[0].label.textContent, "the base octave");
+eq("which names where it stands", T.xslots[0].value.textContent, "4");
 eq("↑ is the workspace", T.xslots[1].label.textContent, "the workspace");
 eq("which names where you are", T.xslots[1].value.textContent, "free play");
 ok("and the workspace is what the mode is headed by",
    /head/.test(T.xslots[1].el.className), T.xslots[1].el.className);
-eq("→ is the voice as well", T.xslots[2].label.textContent, "the voice");
+eq("→ is the base octave as well", T.xslots[2].label.textContent, "the base octave");
 eq("↓ is the workspace as well", T.xslots[3].label.textContent, "the workspace");
 ok("and marked the same", /head/.test(T.xslots[3].el.className), T.xslots[3].el.className);
 eq("□ is solo", T.xslots[4].label.textContent, "solo");
 eq("△ is mute", T.xslots[5].label.textContent, "mute");
 eq("○ is close", T.xslots[6].label.textContent, "close");
-eq("✕ is the entry method", T.xslots[7].label.textContent, "entry method");
-eq("which shows where it stands", T.xslots[7].value.textContent, "absolute");
+eq("✕ is the background", T.xslots[7].label.textContent, "the background");
+eq("which shows which scene is up", T.xslots[7].value.textContent, "paper");
+/* the voice is not here at all: it is a tap on the page, on L1 and R1 */
+ok("no slot of it is the voice",
+   T.SETTINGS.every(s => !/voice/i.test(s.label)), T.SETTINGS.map(s => s.label));
 /* the two items that used to be here are gone from it entirely */
 ok("no slot of it is the quest log",
    T.SETTINGS.every(s => !/quest/i.test(s.label)), T.SETTINGS.map(s => s.label));
@@ -835,12 +931,16 @@ ok("and none is the key page",
 ok("so none of them opens a page at all",
    (function(){
      for (let i = 0; i < 8; i++){
-       if (i === 6) continue;                    /* ○ is the way out, not a page */
+       if (i === 6) continue; /* ○ is the way out, not a page */
        T.runSetting(i);
        if (ids.quests.classList.contains("on") || ids.keyref.classList.contains("on")) return false;
      }
      return true;
    })());
+/* the sweep above ran every slot, the background among them: put the scene
+   back where it was found, so that nothing downstream inherits it */
+T.setScenery("paper", true);
+T.baseOctave = 4;
 press(GP.B);
 reset();
 
@@ -883,29 +983,34 @@ ok("but the workspace it left you in is where you are",
    T.qActive === T.QUESTS[2].id, T.qActive);
 closePages(); T.resetQuests(); reset();
 
-console.log("\n== the voice is a ring, walked by ← and → ==");
+console.log("\n== the base octave, walked by ← and → ==");
+/* the pair the voice vacated. The voice left because a movement made every
+   few notes should not sit behind a menu; the octave took its place because
+   the bumpers stopped being the octave when they became the voice, and it had
+   nowhere else on the pad to be. */
 press(GP.START);
 press(GP.DR);
-eq("→ changes hands", T.voice, 1);
+eq("→ raises the base octave", T.baseOctave, 5);
 ok("and stays up", ids.settings.classList.contains("on"));
-eq("the slot names the voice now in hand", T.xslots[0].value.textContent, "bass");
-press(GP.DR);
-eq("→ again comes round to the lead", T.voice, 0);
+eq("the slot names where it stands now", T.xslots[0].value.textContent, "5");
 press(GP.DL);
-eq("← walks the ring the other way", T.voice, 1);
+eq("← lowers it again", T.baseOctave, 4);
+press(GP.DL); press(GP.DL);
+eq("and it stops at the floor of the range", T.baseOctave, 2);
 press(GP.DL);
-eq("and back", T.voice, 0);
-eq("the ring is the order the voices are named in", T.VOICE_NAMES, ["lead","bass"]);
-press(GP.DR);
+eq("rather than wrapping", T.baseOctave, 2);
+press(GP.DR); press(GP.DR);
+eq("back up again", T.baseOctave, 4);
+eq("the voice is untouched by any of it", T.voice, 0);
+/* solo and mute still act on the voice in hand, which is chosen on the page */
 press(GP.SQ);
-ok("□ solos it", T.flag("solo", 1));
+ok("□ solos the hand you are in", T.flag("solo", 0));
 eq("and the slot says so", T.xslots[4].value.textContent, "on");
 press(GP.SQ);
 press(GP.TR);
-ok("△ mutes it", T.flag("mute", 1));
+ok("△ mutes it", T.flag("mute", 0));
 press(GP.TR);
-press(GP.DL);                            /* back to the lead */
-eq("and ← brings the hands back", T.voice, 0);
+eq("the ring is the order the voices are named in", T.VOICE_NAMES, ["lead","bass"]);
 /* the transport reaches through it, as it reaches through every page */
 press(GP.SEL);
 ok("select still transports from inside the crossbar",
@@ -1001,13 +1106,13 @@ T.cursor = 0; key("Tab"); key("Period");
 eq("clear takes the bass note", T.doc.bass[0], null);
 eq("and leaves the lead's", T.doc.steps[0], "C4");
 reset();
-duet({0:"E4"}, {0:"E2"}); T.cursor = 0; key("Tab"); T.setRelative(true);
+duet({0:"E4"}, {0:"E2"}); T.cursor = 0; key("Tab"); 
 hold(GP.DR);
 eq("nudge moves the bass note", T.doc.bass[0], "F2");
 eq("and not the lead's", T.doc.steps[0], "E4");
 /* the anchor relative entry counts from is the hand's own line */
 reset();
-duet({15:"C5"}, {15:"C3"}); T.setRelative(true); key("Tab");
+duet({15:"C5"}, {15:"C3"}); key("Tab");
 hold(GP.TR);
 eq("a step up is counted from the bass's own anchor", T.doc.bass[0], "D3");
 /* the pages hold tab still, as they hold note entry */
@@ -1021,17 +1126,19 @@ key("F1");
 press(GP.START); key("Tab");
 eq("and inside the settings crossbar", T.voice, 0);
 key("Escape");
-/* the pad: bare △ in absolute entry, a move in relative */
+/* the pad: △ is a move and never the voice; the bumpers are the voice and
+   never a move, which is the whole of the rework */
+reset(); page({15:"C4"});
+press(GP.TR);
+eq("△ writes a move", T.doc.steps[0], "D4");
+eq("and does not change hands", T.voice, 0);
 reset();
-press(GP.TR);
-eq("bare △ changes hands in absolute entry", T.voice, 1);
-eq("and writes nothing", T.doc.bass.filter(Boolean).length, 0);
-press(GP.TR);
+press(GP.R1);
+eq("R1 changes hands", T.voice, 1);
+eq("and writes nothing", T.doc.bass.filter(Boolean).length +
+   T.doc.steps.filter(Boolean).length, 0);
+press(GP.L1);
 eq("and back", T.voice, 0);
-reset(); page({15:"C4"}); T.setRelative(true);
-hold(GP.TR);
-eq("in relative entry △ is still a move", T.doc.steps[0], "D4");
-eq("and did not change hands", T.voice, 0);
 
 console.log("\n== solo and mute ==");
 reset();
@@ -1052,8 +1159,8 @@ key("KeyO");
 ok("O again brings both back", T.audible(0) && T.audible(1));
 /* solo beats mute, as it does on every desk */
 reset(); duet({0:"C4"}, {0:"C2"});
-key("KeyP");                                  /* the lead muted */
-key("Tab"); key("KeyO");                      /* the bass soloed */
+key("KeyP"); /* the lead muted */
+key("Tab"); key("KeyO"); /* the bass soloed */
 ok("a soloed voice is heard even so", T.audible(1));
 key("Tab"); key("KeyO");
 ok("and a muted voice soloed is heard too", T.audible(0), [T.doc.mute, T.doc.solo]);
@@ -1290,7 +1397,7 @@ eq("the caret marks the selection", T.qrows[0].caret.textContent, "‸");
    with only the eight built-ins there is one tab, so they are a no-op that
    leaves the caret exactly where it was */
 key("ArrowRight"); eq("right is the lesson, not the selection", T.qsel, 0);
-key("ArrowLeft");  eq("and so is left", T.qsel, 0);
+key("ArrowLeft"); eq("and so is left", T.qsel, 0);
 eq("with one lesson on the board there is one tab", T.tabList().length, 1);
 press(GP.DD); eq("d-pad down moves the selection", T.qsel, 1);
 press(GP.DU); eq("d-pad up moves the selection", T.qsel, 0);
@@ -1329,32 +1436,32 @@ closePages();
 
 console.log("\n== the round trip: two workspaces, both intact ==");
 qreset();
-key("KeyZ"); key("KeyX");                       /* free play: C4 on 1, D4 on 3 */
+key("KeyZ"); key("KeyX"); /* free play: C4 on 1, D4 on 3 */
 /* entry lays eighths, so a pair of notes is steps 1 and 3, not 1 and 2 */
 const two = () => [T.doc.steps[0], T.doc.steps[2]];
 eq("free play holds what was written", two(), ["C4","D4"]);
-key("F3"); key("Enter"); key("F3");             /* into quest A */
+key("F3"); key("Enter"); key("F3"); /* into quest A */
 eq("the quest's page starts empty", T.doc.steps.filter(Boolean).length, 0);
 eq("and it is the active workspace", T.qActive, Q[0].id);
-key("KeyV"); key("KeyG"); key("KeyL");          /* A: F4 F#4, loop 8 */
-key("F1"); key("ArrowUp"); key("F1");           /* A: G major seeded -> G minor */
+key("KeyV"); key("KeyG"); key("KeyL"); /* A: F4 F#4, loop 8 */
+key("F1"); key("ArrowUp"); key("F1"); /* A: G major seeded -> G minor */
 eq("A holds its own notes", two(), ["F4","F#4"]);
 eq("its own loop", T.doc.loop, 8);
 eq("and its own key", T.doc.key, "G minor");
-key("F3"); key("ArrowDown"); key("Enter"); key("F3");   /* into quest B */
+key("F3"); key("ArrowDown"); key("Enter"); key("F3"); /* into quest B */
 eq("B starts empty", T.doc.steps.filter(Boolean).length, 0);
 eq("B is not carrying A's loop", T.doc.loop, 16);
 eq("nor A's key — it has its own seed", T.doc.key, "A minor");
-key("KeyB");                                    /* B: G4 */
-key("F3"); key("ArrowUp"); key("Enter"); key("F3");     /* back to A */
+key("KeyB"); /* B: G4 */
+key("F3"); key("ArrowUp"); key("Enter"); key("F3"); /* back to A */
 eq("A survives the round trip", two(), ["F4","F#4"]);
 eq("with its loop", T.doc.loop, 8);
 eq("and its key", T.doc.key, "G minor");
-key("F3"); key("Enter"); key("F3");             /* A again: back to free play */
+key("F3"); key("Enter"); key("F3"); /* A again: back to free play */
 eq("choosing the active quest again returns to free play", T.qActive, null);
 eq("and free play is exactly as it was left", two(), ["C4","D4"]);
 eq("with its own loop", T.doc.loop, 16);
-key("F3"); key("ArrowDown"); key("Enter"); key("F3");   /* into B */
+key("F3"); key("ArrowDown"); key("Enter"); key("F3"); /* into B */
 eq("the other quest is intact too", T.doc.steps[0], "G4");
 eq("switching lands the cursor at the top", T.cursor, 0);
 /* the pad reaches all of it */
@@ -1365,11 +1472,11 @@ closePages();
 
 console.log("\n== nothing is ever copied between workspaces ==");
 qreset();
-key("KeyZ");                                    /* free play: C4 */
-key("F3"); key("Enter"); key("F3");             /* quest A, empty */
+key("KeyZ"); /* free play: C4 */
+key("F3"); key("Enter"); key("F3"); /* quest A, empty */
 eq("entering a quest does not bring the page with it", T.doc.steps[0], null);
-key("KeyX");                                    /* A: D4 */
-key("F3"); key("Enter"); key("F3");             /* back to free play */
+key("KeyX"); /* A: D4 */
+key("F3"); key("Enter"); key("F3"); /* back to free play */
 eq("and leaving does not take it away", T.doc.steps[0], "C4");
 eq("A kept its own", T.questPage(Q[0].id).steps[0], "D4");
 eq("free play is a workspace of its own", T.wsFree.steps[0], "C4");
@@ -1388,7 +1495,7 @@ qreset(); key("F3"); key("Enter"); key("F3");
 key("KeyZ");
 key("F3");
 eq("a quest you are in shows the sword", T.questGlyph(Q[0].id), "⚔");
-key("Enter");                                    /* back to free play */
+key("Enter"); /* back to free play */
 eq("and a quest with something written shows the dot", T.questGlyph(Q[0].id), "•");
 eq("the row agrees", T.qrows[0].stat.textContent, "•");
 key("KeyC");
@@ -1419,8 +1526,8 @@ closePages();
 console.log("\n== the contour preview ==");
 qreset();
 eq("sixteen dabs, one per step", T.qdabs.length, 16);
-key("F3"); key("Enter"); key("F3");             /* into quest A */
-key("KeyZ"); key("Period"); key("KeyN");        /* C4 on 1, a rest on 3, A4 on 5 */
+key("F3"); key("Enter"); key("F3"); /* into quest A */
+key("KeyZ"); key("Period"); key("KeyN"); /* C4 on 1, a rest on 3, A4 on 5 */
 key("F3");
 eq("a written step draws a dab", T.qdabs[0].style.display, "block");
 eq("an empty step draws none", T.qdabs[1].style.display, "none");
@@ -1460,11 +1567,11 @@ eq("and carries its constraint, in full", ids.railtext.textContent, Q[2].text);
 eq("and what it teaches", ids.railteach.textContent, "Teaches: " + Q[2].teaches);
 ok("and its done state", /not yet complete/.test(ids.railstate.textContent),
    ids.railstate.textContent);
-key("KeyZ");                                     /* write in the quest workspace */
+key("KeyZ"); /* write in the quest workspace */
 key("F3"); key("KeyC"); key("F3");
 ok("done shows in the right rail", /❧ complete/.test(ids.railstate.textContent));
 eq("and in the left one", T.rrows[3].glyph.textContent, "❧");
-key("F3"); key("Enter"); key("F3");              /* back to free play */
+key("F3"); key("Enter"); key("F3"); /* back to free play */
 eq("a quest left with something written keeps the dot", T.rrows[3].glyph.textContent, "❧");
 key("F3"); key("KeyC"); key("F3");
 eq("set aside, the dot is what is left", T.rrows[3].glyph.textContent, "•");
@@ -1522,9 +1629,9 @@ eq("and its motif is that workspace's page", T.doc.steps[0], "E4");
 
 console.log("\n== the whole state on disk ==");
 qreset();
-key("KeyZ");                                     /* free play: C4 */
-key("F3"); key("Enter"); key("F3");              /* into quest A */
-key("KeyE");                                     /* A: E5 */
+key("KeyZ"); /* free play: C4 */
+key("F3"); key("Enter"); key("F3"); /* into quest A */
+key("KeyE"); /* A: E5 */
 key("F3");
 blobs.length = 0;
 key("KeyS", { ctrlKey:true });
@@ -2016,7 +2123,7 @@ async function drillsLive(){
   ok("and the arrival is not pushed back as a change", T.syncTimer === null);
   ok("but it is kept locally",
      /drill-itch/.test(store[T.QUEST_KEY] || ""), (store[T.QUEST_KEY]||"").slice(0,80));
-  key("ArrowDown");                   /* anything said next clears the notice */
+  key("ArrowDown"); /* anything said next clears the notice */
   ok("the notice does not stick",
      !/a drill arrived/.test(ids.footer.textContent), ids.footer.textContent);
   await settle();
@@ -2108,13 +2215,13 @@ async function drillsLive(){
   T.syncOn = true; T.staticMode = false;
   T.setSyncDebounce(5000);
   calls.length = 0;
-  key("KeyZ");                            /* a push is now pending */
+  key("KeyZ"); /* a push is now pending */
   ok("a push is pending", T.syncTimer !== null);
   T.pollTick();
   await settle();
   eq("the poll does not run", calls.length, 0);
   T.setSyncDebounce(10);
-  key("KeyC");                            /* re-armed at the short debounce */
+  key("KeyC"); /* re-armed at the short debounce */
   await settle();
   ok("the pending push has gone out", T.syncTimer === null);
   calls.length = 0;
@@ -2158,9 +2265,10 @@ async function drillsLive(){
 /* ================= 5. the documentation ================= */
 console.log("\n== the key page documents it all ==");
 const keyPage = html.slice(html.indexOf('id="keyref"'), html.indexOf('id="settings"'));
-for (const s of ["F1","F2","F3","F4","R3","L3","quest log","the roll"])
+for (const s of ["F1","F2","F3","R3","L3","quest log","the roll"])
   ok("the key page mentions " + s, keyPage.indexOf(s) >= 0);
-ok("it names the entry-method toggle", /the entry method/.test(keyPage));
+ok("F4 is not on it, because there is no longer an F4", keyPage.indexOf("F4") < 0);
+ok("and nothing on it names an entry method", !/entry method/.test(keyPage));
 ok("it says select is the transport", /select \(create\)/.test(keyPage) &&
    /play or stop/.test(keyPage));
 ok("it says start raises the settings crossbar",
@@ -2170,8 +2278,10 @@ ok("it says ↑↓ there are the workspaces in the left margin",
    /the workspace, walked in the left margin/.test(keyPage));
 ok("and that walking is arriving",
    /you are already in the one it is on/.test(keyPage));
-ok("it says ←→ there are the voice", /the voice, round the ring/.test(keyPage));
-ok("it puts the entry method on ✕", /&#10005; the entry method/.test(keyPage));
+ok("it says ←→ there are the base octave", /the base octave \(C2/.test(keyPage));
+ok("and says where the voice went instead",
+   /it is L1 and R1, on the page/.test(keyPage));
+ok("it puts the background on ✕", /&#10005; the background/.test(keyPage));
 ok("it says the quest log and the key have no slot",
    /what is not there/.test(keyPage) && /None of them has a slot/.test(keyPage));
 ok("the crossbar no longer offers the quest log",
@@ -2193,13 +2303,20 @@ ok("it no longer promises select walks the pages", !/the pages in turn/.test(key
 ok("nor that a held select changes the method", !/hold select/.test(keyPage));
 ok("it names R3 as the way off the key page", /R3 closes it/.test(keyPage));
 ok("escape is documented", /closes whichever page is up/.test(keyPage));
-ok("it documents relative entry", /in relative entry/.test(keyPage));
+ok("it documents contour entry as the pad’s only way",
+   /The pad writes shapes, not pitches/.test(keyPage));
+ok("and records that the absolute crossbar was deleted",
+   /It is gone/.test(keyPage) && /eight rising semitones/.test(keyPage));
+ok("it names the voice on the bumpers",
+   /the voice, round the ring the strip above the page names/.test(keyPage));
+ok("and the modifiers on the triggers",
+   /the triggers are the modifiers/.test(keyPage));
 ok("it names the leaps", /a third/.test(keyPage) && /a fifth/.test(keyPage));
 ok("it names the chromatic escape", /a semitone, out of the key/.test(keyPage));
 ok("it documents nudge", /nudge the note under the cursor/.test(keyPage));
 ok("it documents setting the key of the piece", /the key of the piece/.test(keyPage));
-ok("it says the crossbar survives relative entry",
-   /crossbar is untouched/.test(keyPage));
+ok("it no longer claims the crossbar survives anything",
+   !/crossbar is untouched/.test(keyPage));
 ok("it explains the anchor", /the last note that sounds before the cursor/.test(keyPage));
 ok("it explains the snap", /nearest note of the key in the direction/.test(keyPage));
 for (const g of ["&#9651; (Y)", "&#10005; (A)", "&#9675; (B)", "&#9633; (X)",
@@ -2225,7 +2342,7 @@ ok("no bind or load key survives on the key page",
 console.log("\n== the spec records it ==");
 const spec = fs.readFileSync(REPO + "/SPEC-LESSON-0.md", "utf8");
 ok("the spec has a relative-entry section", /Relative entry \(contour mode\)/.test(spec));
-for (const s of ["anchor", "snap", "\"key\"", "hold select", "F4", "nudge"])
+for (const s of ["anchor", "snap", "\"key\"", "F4", "nudge"])
   ok("the spec covers " + s, spec.indexOf(s) >= 0);
 ok("the spec has the workspace section", /## Quests as workspaces/.test(spec));
 for (const s of ["folio.quests.v2", "Migration (v1 → v2)", "free-play", "side rails",
@@ -2276,10 +2393,10 @@ key("Equal", { shiftKey:true }); eq("one off the floor", T.doc.tempo, 61);
 ok("the tempo is autosaved like everything else",
    JSON.parse(store["folio.v1"]).tempo === 61, store["folio.v1"]);
 /* the key bindings that were already there are untouched */
-key("ArrowLeft");  eq("the arrows are still the key", T.doc.key, "B major");
+key("ArrowLeft"); eq("the arrows are still the key", T.doc.key, "B major");
 key("ArrowRight"); eq("both ways", T.doc.key, "C major");
-key("ArrowUp");    eq("and the mode", T.doc.key, "C minor");
-key("ArrowDown");  eq("back again", T.doc.key, "C major");
+key("ArrowUp"); eq("and the mode", T.doc.key, "C minor");
+key("ArrowDown"); eq("back again", T.doc.key, "C major");
 eq("moving the key left the tempo alone", T.doc.tempo, 61);
 key("F1");
 
@@ -2290,16 +2407,16 @@ frame([GP.DU]); frame([]);
 eq("d-pad up raises the tempo by four", T.doc.tempo, 116);
 frame([GP.DD]); frame([]);
 eq("d-pad down lowers it", T.doc.tempo, 112);
-frame([GP.L1, GP.DU]); frame([]);
-eq("a bumper makes the step fine", T.doc.tempo, 113);
-frame([GP.R1, GP.DD]); frame([]);
-eq("either bumper", T.doc.tempo, 112);
+frame([GP.L2, GP.DU]); frame([]);
+eq("a trigger makes the step fine", T.doc.tempo, 113);
+frame([GP.R2, GP.DD]); frame([]);
+eq("either trigger", T.doc.tempo, 112);
 frame([GP.DL]); frame([]);
 eq("the d-pad sideways is still the tonic", T.doc.key, "B major");
 frame([GP.DR]); frame([]);
 eq("and back", T.doc.key, "C major");
 press(GP.TR); eq("triangle is still the mode", T.doc.key, "C minor");
-press(GP.X);  eq("and cross", T.doc.key, "C major");
+press(GP.X); eq("and cross", T.doc.key, "C major");
 eq("none of that moved the tempo", T.doc.tempo, 112);
 /* the hold repeat works here as it does everywhere */
 frame([GP.DU]); padNow += 400; frame([GP.DU]); frame([]);
@@ -2308,17 +2425,17 @@ key("F1");
 
 console.log("\n== the tempo belongs to the workspace ==");
 qreset();
-key("F1"); key("Equal"); key("Equal"); key("F1");     /* free play: 120 */
+key("F1"); key("Equal"); key("Equal"); key("F1"); /* free play: 120 */
 eq("free play took the change", T.doc.tempo, 120);
-key("F3"); key("Enter"); key("F3");                   /* into quest A (ladder) */
+key("F3"); key("Enter"); key("F3"); /* into quest A (ladder) */
 eq("the quest arrived at its own tempo", T.doc.tempo, 120);
 key("F1"); for (let i = 0; i < 5; i++) key("Equal"); key("F1");
 eq("and takes its own change", T.doc.tempo, 140);
 key("F3"); key("ArrowDown"); key("Enter"); key("F3"); /* into quest B (whitespace) */
 eq("quest B is not carrying quest A's tempo", T.doc.tempo, 88);
-key("F3"); key("ArrowUp"); key("Enter"); key("F3");   /* back into A */
+key("F3"); key("ArrowUp"); key("Enter"); key("F3"); /* back into A */
 eq("A kept its 140", T.doc.tempo, 140);
-key("F3"); key("Enter"); key("F3");                   /* back to free play */
+key("F3"); key("Enter"); key("F3"); /* back to free play */
 eq("and free play is untouched by any of it", T.doc.tempo, 120);
 T.save();
 const tlog = JSON.parse(store[T.QUEST_KEY]);
@@ -2333,7 +2450,7 @@ closePages();
 
 console.log("\n== a tempo change lands on the next scheduling window ==");
 qreset();
-page({});                                       /* every step sounds, so every window shows */
+page({}); /* every step sounds, so every window shows */
 for (let i = 0; i < 16; i++) T.doc.steps[i] = "C4";
 T.audioInit(); T.setPlaying(true);
 sounded.length = 0; nowT = 0; T.schedFrom(0);
@@ -2342,7 +2459,7 @@ ok("the step duration follows the tempo", Math.abs(T.stepDur() - d112) < 1e-12, 
 T.scheduler();
 eq("the first window schedules one step", sounded.length, 1);
 ok("at the top of the clock", Math.abs(sounded[0].at - 0) < 1e-12, sounded[0]);
-T.doc.tempo = 60;                              /* the dial moves while it runs */
+T.doc.tempo = 60; /* the dial moves while it runs */
 const d60 = 60 / 60 / 4;
 ok("the duration follows immediately", Math.abs(T.stepDur() - d60) < 1e-12, T.stepDur());
 nowT = d112; T.scheduler();
@@ -2358,7 +2475,7 @@ ok("the gap after the change is the new step duration",
    sounded[2].at - sounded[1].at);
 T.doc.tempo = 180;
 const d180 = 60 / 180 / 4;
-nowT = d112 + 2 * d60; T.scheduler();      /* this step was promised at the old rate */
+nowT = d112 + 2 * d60; T.scheduler(); /* this step was promised at the old rate */
 ok("a step already promised keeps the old spacing",
    Math.abs((sounded[3].at - sounded[2].at) - d60) < 1e-12,
    sounded[3].at - sounded[2].at);
@@ -2422,7 +2539,7 @@ ok("the pattern file gains no seed field",
    ["bass","key","loop","mute","solo","steps","tempo","title","version"].join());
 
 console.log("\n== the seed is a starting value, not a rule ==");
-qreset(); key("F3"); key("Enter"); key("F3");        /* ladder: G major 120 */
+qreset(); key("F3"); key("Enter"); key("F3"); /* ladder: G major 120 */
 eq("seeded", [T.doc.key, T.doc.tempo], ["G major", 120]);
 key("F1"); key("ArrowRight"); key("Minus"); key("Minus"); key("F1");
 eq("the key page overrides the seeded key", T.doc.key, "G# major");
@@ -2459,8 +2576,7 @@ closePages();
 
 console.log("\n== the seeded key is the key relative entry counts in ==");
 qreset();
-T.setRelative(true);
-key("F3"); for (let i = 0; i < 6; i++) key("ArrowDown"); key("Enter"); key("F3");  /* stray: E minor */
+key("F3"); for (let i = 0; i < 6; i++) key("ArrowDown"); key("Enter"); key("F3"); /* stray: E minor */
 eq("in the stray's workspace", T.qActive, Q[6].id);
 eq("seeded E minor", T.doc.key, "E minor");
 press(GP.TR);
@@ -2472,15 +2588,14 @@ eq("and back down", T.doc.steps[4], "E4");
 press(GP.X);
 eq("the sixth below the tonic is D, natural minor", T.doc.steps[6], "D4");
 eq("the anchor helper agrees", T.tonicMidi(), 64);
-T.setRelative(false);
 closePages();
 
 console.log("\n== the seeded tempo is the tempo that plays ==");
 qreset();
-key("F3"); key("ArrowDown"); key("Enter"); key("F3");   /* whitespace: 88 */
+key("F3"); key("ArrowDown"); key("Enter"); key("F3"); /* whitespace: 88 */
 eq("whitespace plays at 88", T.doc.tempo, 88);
 ok("and the scheduler agrees", Math.abs(T.stepDur() - 60/88/4) < 1e-12, T.stepDur());
-T.doc.steps[0] = "C4"; T.doc.steps[1] = "D4";   /* written into the seeded page itself */
+T.doc.steps[0] = "C4"; T.doc.steps[1] = "D4"; /* written into the seeded page itself */
 T.audioInit(); T.setPlaying(true);
 sounded.length = 0; nowT = 0; T.schedFrom(0);
 T.scheduler(); nowT = 60/88/4; T.scheduler();
@@ -2738,7 +2853,7 @@ ok("the guide is a line of the drawing's own, built down",
    /rollGuide\.className = "rollguide";/.test(src) &&
    T.rollGuide.classList.contains("rollguide"));
 eq("its name is drawn in the same margin", T.guideName.className, "gname");
-T.rollGuide.classList.remove("on");        /* whatever the sections above left up */
+T.rollGuide.classList.remove("on"); /* whatever the sections above left up */
 ok("and nothing but writing raises it", !T.rollGuide.classList.contains("on"));
 T.cursor = 0; T.baseOctave = 4;
 key("KeyZ");
@@ -2856,8 +2971,9 @@ eq("the interval is named before the pad is touched", T.ivls[0].firstChild.textC
 press(GP.START);
 ok("start raises the mode", ids.settings.classList.contains("on"));
 eq("the names are untouched by raising it", T.showNames, namesBefore);
-ok("and the drawing stands down whole, as it always has",
-   !ids.roll.classList.contains("on") && ids.column.style.display === "none");
+ok("and the drawing stays up, which is the whole point of the rework",
+   ids.roll.classList.contains("on") || ids.column.style.display === "flex",
+   [ids.roll.className, ids.column.style.display]);
 ok("nothing about the names was written into the mode",
    T.SETTINGS.every(s => !/name/i.test(s.label)), T.SETTINGS.map(s => s.label));
 press(GP.DD);
@@ -2882,7 +2998,7 @@ console.log("\n== the page of the key documents both ==");
 ok("the tempo has a row on the keyboard side", /the tempo, down and up by four/.test(html));
 ok("and on the gamepad side", /the tempo, up and down by four/.test(html));
 ok("the range is written down", /60&ndash;180/.test(html));
-ok("the fine step is written down", /with shift, by one/.test(html) && /hold L1 or R1 for one/.test(html));
+ok("the fine step is written down", /with shift, by one/.test(html) && /hold a trigger for one/.test(html));
 ok("and the pre-tuned quests are explained quietly",
    /arrives already tuned/.test(html));
 ok("no rite survives anywhere in the app", !/\brite\b/i.test(html));
@@ -3157,10 +3273,11 @@ ok("and it is never empty", T.hintsEl.children.length > 0);
 function hintText(){ return T.hintsNow().map(h => h[0] + " " + h[1]).join(" · "); }
 ok("on the page it names what writes a note", /notes/.test(hintText()), hintText());
 ok("and the way out to the key", /F1 the key/.test(hintText()), hintText());
-T.setRelative(true);
-ok("in relative entry it names the shapes instead",
-   /up, down, again, rest/.test(hintText()) && !/z…m/.test(hintText()), hintText());
-T.setRelative(false);
+ok("it names the shape the pad writes as well", /the shape/.test(hintText()), hintText());
+/* the four shoulders were the confusion this pass was asked to clear up, so
+   the strip has to say both pairs out loud and by position */
+ok("it names the voice on the bumpers", /L1 R1 voice/.test(hintText()), hintText());
+ok("and the leaps on the triggers", /L2 R2 third, fifth/.test(hintText()), hintText());
 key("F3");
 ok("in the quest log it names the lesson keys", /← → lesson/.test(hintText()), hintText());
 ok("and the two marks", /F keep to hand/.test(hintText()) && /move it/.test(hintText()), hintText());
