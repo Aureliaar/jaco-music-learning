@@ -384,15 +384,20 @@ eq("natural minor scale", T.SCALES.minor, [0,2,3,5,7,8,10]);
 
 console.log("\n== the key is shown in the header ==");
 reset();
-eq("the meta line names the key", ids.metatext.textContent,
-   "untitled folio \u00b7 112 \u00b7 octave 4 \u00b7 C major \u00b7 lead");
+/* Seven things, of which four were said better elsewhere: the title (which
+   meant nothing), the quest (both margins), the voice and its state (the
+   strip below), the loop (the page draws it). Three settings are left. */
+eq("the meta line is the tempo, the octave and the key", ids.metatext.textContent,
+   "112 \u00b7 octave 4 \u00b7 C major");
 T.setKey("E minor");
-eq("and follows it", ids.metatext.textContent,
-   "untitled folio \u00b7 112 \u00b7 octave 4 \u00b7 E minor \u00b7 lead");
+eq("and follows the key", ids.metatext.textContent,
+   "112 \u00b7 octave 4 \u00b7 E minor");
 reset();
 key("KeyL");
-eq("loop still reads after the key", ids.metatext.textContent,
-   "untitled folio \u00b7 112 \u00b7 octave 4 \u00b7 C major \u00b7 loop 8 \u00b7 lead");
+eq("the loop is not repeated there \u2014 the page draws it", ids.metatext.textContent,
+   "112 \u00b7 octave 4 \u00b7 C major");
+ok("nor is the title, which never said anything",
+   ids.metatext.textContent.indexOf("untitled") < 0, ids.metatext.textContent);
 reset();
 
 console.log("\n== setting the key on the key page ==");
@@ -816,8 +821,11 @@ press(GP.L1);
 reset();
 press(GP.L1); eq("a tap of L1 is not the octave", T.baseOctave, 4);
 press(GP.R1); eq("nor is a tap of R1", T.baseOctave, 4);
-eq("and the pad's octave lives on the settings crossbar instead",
-   [T.SETTINGS[0].label, T.SETTINGS[2].label], ["the base octave","the base octave"]);
+/* nor anywhere else on the pad: an octave setting has nothing to say to a
+   method that counts from the note before. It survives as what it always was
+   — which octaves the keyboard's note rows are — on page up and page down. */
+ok("nor is the octave anywhere on the pad at all",
+   T.SETTINGS.every(s => !/octave/i.test(s.label)), T.SETTINGS.map(s => s.label));
 reset();
 ok("nothing on the page reads a bumper as the octave any more",
    !/lbUsed|rbUsed|lGone|rGone/.test(src));
@@ -904,17 +912,20 @@ ok("the crossbar is fixed over the page rather than in the flow of it",
    /\.settings\{[\s\S]*?position:fixed/.test(html));
 ok("and stands on a breath, never a panel: no border and no rule",
    /\.settings::before\{[\s\S]*?radial-gradient/.test(html) &&
-   !/\.settings\{[\s\S]*?border:1px/.test(html));
+   !/\.settings\{[^}]*border:1px/.test(html));
 eq("its eight slots are labelled", T.xslots.length, 8);
-eq("← is the base octave", T.xslots[0].label.textContent, "the base octave");
-eq("which names where it stands", T.xslots[0].value.textContent, "4");
+eq("← is the lesson the margin is showing", T.xslots[0].label.textContent, "the lesson");
+eq("which names which lesson that is", T.xslots[0].value.textContent, "L1");
 eq("↑ is the workspace", T.xslots[1].label.textContent, "the workspace");
 eq("which names where you are", T.xslots[1].value.textContent, "free play");
 ok("and the workspace is what the mode is headed by",
    /head/.test(T.xslots[1].el.className), T.xslots[1].el.className);
-eq("→ is the base octave as well", T.xslots[2].label.textContent, "the base octave");
+eq("→ is the lesson as well", T.xslots[2].label.textContent, "the lesson");
 eq("↓ is the workspace as well", T.xslots[3].label.textContent, "the workspace");
 ok("and marked the same", /head/.test(T.xslots[3].el.className), T.xslots[3].el.className);
+ok("and every direction of it is the margin, marked alike",
+   [0,1,2,3].every(i => /head/.test(T.xslots[i].el.className)),
+   [0,1,2,3].map(i => T.xslots[i].el.className));
 eq("□ is solo", T.xslots[4].label.textContent, "solo");
 eq("△ is mute", T.xslots[5].label.textContent, "mute");
 eq("○ is close", T.xslots[6].label.textContent, "close");
@@ -983,25 +994,38 @@ ok("but the workspace it left you in is where you are",
    T.qActive === T.QUESTS[2].id, T.qActive);
 closePages(); T.resetQuests(); reset();
 
-console.log("\n== the base octave, walked by ← and → ==");
-/* the pair the voice vacated. The voice left because a movement made every
-   few notes should not sit behind a menu; the octave took its place because
-   the bumpers stopped being the octave when they became the voice, and it had
-   nowhere else on the pad to be. */
+console.log("\n== the lesson, turned by ← and → ==");
+/* The pair carried the base octave for one pass; it is not a command now.
+   All four directions are the margin: across the lessons, down the
+   workspaces — the whole board, in the margin the thumb is already on. */
+T.applyState({ folio:"quest-log", version:2, active:null, quests:{},
+  drills:[{ id:"l2-turner", name:"⚔ a lesson two quest", lesson:2,
+            summary:"s", teaches:"t", pattern:null }] });
+T.setTab(1, true);
 press(GP.START);
+eq("the margin starts on the lesson the board is on", T.currentTab(), 1);
+eq("and the slot names which lesson that is", T.xslots[0].value.textContent, "L1");
+eq("the margin is free play and that one lesson, and no more",
+   T.railOrder().length, 9);
 press(GP.DR);
-eq("→ raises the base octave", T.baseOctave, 5);
-ok("and stays up", ids.settings.classList.contains("on"));
-eq("the slot names where it stands now", T.xslots[0].value.textContent, "5");
+eq("→ turns to the next lesson", T.currentTab(), 2);
+eq("the slot follows it", T.xslots[0].value.textContent, "L2");
+eq("and the margin is that lesson now", T.railOrder(), [null, "l2-turner"]);
+ok("turning a lesson enters nothing", T.qActive === null, T.qActive);
+ok("and the crossbar stays up", ids.settings.classList.contains("on"));
+press(GP.DD);
+eq("↓ from there walks into that lesson's first quest", T.qActive, "l2-turner");
 press(GP.DL);
-eq("← lowers it again", T.baseOctave, 4);
-press(GP.DL); press(GP.DL);
-eq("and it stops at the floor of the range", T.baseOctave, 2);
+eq("← turns back", T.currentTab(), 1);
+eq("and the margin comes back with it", T.railOrder()[1], T.QUESTS[0].id);
 press(GP.DL);
-eq("rather than wrapping", T.baseOctave, 2);
-press(GP.DR); press(GP.DR);
-eq("back up again", T.baseOctave, 4);
+eq("and the lessons are a ring, as every list on the pad is", T.currentTab(), 2);
+press(GP.DR);
+eq("the base octave is not on that pair, or anywhere on the pad", T.baseOctave, 4);
 eq("the voice is untouched by any of it", T.voice, 0);
+press(GP.START);
+closePages(); T.resetDrills(); T.resetQuests(); reset();
+press(GP.START);
 /* solo and mute still act on the voice in hand, which is chosen on the page */
 press(GP.SQ);
 ok("□ solos the hand you are in", T.flag("solo", 0));
@@ -1148,13 +1172,17 @@ key("KeyP");
 ok("P mutes the voice in hand", !T.audible(0));
 ok("and leaves the other alone", T.audible(1));
 ok("the strip says so", /muted/.test(ids.vmark0.textContent), ids.vmark0.textContent);
-ok("and so does the header", /lead \(muted\)/.test(ids.metatext.textContent), ids.metatext.textContent);
+ok("and the header does not say it a second time",
+   !/muted/.test(ids.metatext.textContent), ids.metatext.textContent);
 key("KeyP");
 ok("P again gives it back", T.audible(0));
 key("Tab"); key("KeyO");
 ok("O solos the voice in hand", T.audible(1));
 ok("and takes the other away", !T.audible(0));
 ok("the strip marks the solo", /solo/.test(ids.vmark1.textContent), ids.vmark1.textContent);
+/* and the voice it silenced says so in a word, not in a dash */
+ok("and marks the voice it silenced", /silent/.test(ids.vmark0.textContent),
+   ids.vmark0.textContent);
 key("KeyO");
 ok("O again brings both back", T.audible(0) && T.audible(1));
 /* solo beats mute, as it does on every desk */
@@ -1230,12 +1258,14 @@ ok("the window opens wide enough to hold both",
    T.bars2[0].style.top);
 ok("and neither bar falls off it",
    parseFloat(T.bars[0].style.top) >= 0 && parseFloat(T.bars[0].style.top) <= 100);
-/* the header names the hand */
+/* the strip names the hand, and it is the only thing that does */
 reset();
-ok("the header names the voice in hand", / · lead$/.test(ids.metatext.textContent),
-   ids.metatext.textContent);
+ok("the strip marks the voice in hand", /on/.test(ids.vname0.className), ids.vname0.className);
 key("Tab");
-ok("and follows it", / · bass$/.test(ids.metatext.textContent), ids.metatext.textContent);
+ok("and follows it", /on/.test(ids.vname1.className) && !/on/.test(ids.vname0.className),
+   [ids.vname0.className, ids.vname1.className]);
+ok("the header names no voice at all", !/lead|bass/.test(ids.metatext.textContent),
+   ids.metatext.textContent);
 key("Tab");
 
 console.log("\n== the second voice is saved and read back ==");
@@ -1424,10 +1454,12 @@ eq("the sigil marks it", T.qrows[2].sigil.textContent, "⚔");
 eq("and the free-play line is not", ids.qfreesigil.textContent, "");
 ok("the footer says where you are", /the summit/.test(ids.footer.textContent), ids.footer.textContent);
 key("F3");
-ok("the meta line shows it quietly", /⚔ the summit$/.test(ids.metatext.textContent), ids.metatext.textContent);
-ok("in the ordinary meta shape",
-   /^untitled folio · 112 · octave 4 · D major · lead · ⚔ the summit$/.test(ids.metatext.textContent),
+ok("the meta line does not name the quest — both margins already do",
+   ids.metatext.textContent.indexOf("summit") < 0, ids.metatext.textContent);
+ok("it carries that workspace's own tempo and key instead",
+   /^112 · octave 4 · D major$/.test(ids.metatext.textContent),
    ids.metatext.textContent);
+eq("and the margin is where the quest is named", ids.railtitle.textContent, "The Summit");
 eq("stored as the id", JSON.parse(store[T.QUEST_KEY]).active, Q[2].id);
 eq("and the storage key is version 2", JSON.parse(store[T.QUEST_KEY]).version, 2);
 T.resetQuests(); T.loadQuests(); T.renderQuests();
@@ -1499,7 +1531,10 @@ key("Enter"); /* back to free play */
 eq("and a quest with something written shows the dot", T.questGlyph(Q[0].id), "•");
 eq("the row agrees", T.qrows[0].stat.textContent, "•");
 key("KeyC");
-eq("complete outranks both", T.questGlyph(Q[0].id), "❧");
+/* complete used to take that column and hide the sword saying you are
+   standing in it; it has a mark of its own at the end of the line now */
+eq("complete does not take the column from the dot", T.questGlyph(Q[0].id), "•");
+eq("the row says complete in its own place", T.qrows[0].stat.textContent, "❧");
 closePages();
 
 console.log("\n== the selected quest, read in full ==");
@@ -1570,11 +1605,15 @@ ok("and its done state", /not yet complete/.test(ids.railstate.textContent),
 key("KeyZ"); /* write in the quest workspace */
 key("F3"); key("KeyC"); key("F3");
 ok("done shows in the right rail", /❧ complete/.test(ids.railstate.textContent));
-eq("and in the left one", T.rrows[3].glyph.textContent, "❧");
+/* and in the left it has a mark of its own rather than the sword's place */
+eq("and in the left one, in its own mark", T.rrows[3].done.textContent, "❧");
+eq("with the sword still saying where you are", T.rrows[3].glyph.textContent, "⚔");
 key("F3"); key("Enter"); key("F3"); /* back to free play */
-eq("a quest left with something written keeps the dot", T.rrows[3].glyph.textContent, "❧");
+eq("a quest left with something written keeps the dot", T.rrows[3].glyph.textContent, "•");
+eq("and is still marked complete", T.rrows[3].done.textContent, "❧");
 key("F3"); key("KeyC"); key("F3");
-eq("set aside, the dot is what is left", T.rrows[3].glyph.textContent, "•");
+eq("set aside, the mark goes and the dot stays", T.rrows[3].done.textContent, "");
+eq("the dot being what is left", T.rrows[3].glyph.textContent, "•");
 eq("the left rail names the quests by their short names", T.rrows[1].name.textContent, Q[0].short);
 ok("and the list rows carry no sword of their own",
    T.qrows.every((r,i)=>true) && !/⚔/.test(ids.qlist.children[0].children[2].textContent),
@@ -1955,7 +1994,8 @@ qreset();
 eq("with no drills the list is the eight", T.ALL.length, 8);
 eq("and so are the rows", T.qrowsNow.length, 8);
 eq("no divider is drawn for nothing", hairs(T.qlistEl, "qhair"), 0);
-eq("nor in the margin", hairs(T.railEl, "rhair"), 0);
+/* the margin is one lesson deep now, so it has nothing to divide */
+eq("nor any in the margin, ever", hairs(T.railEl, "rhair"), 0);
 
 ok("a log with a drill applies", T.applyState(logWith([ITCH])));
 eq("the drill joins the list", T.ALL.length, 9);
@@ -1968,13 +2008,17 @@ eq("named plainly on its row", T.qrowsNow[8].el.children[2].textContent, "the it
    draws no hairline until something is kept to hand */
 eq("the drills take a tab of their own", T.tabList().map(T.tabLabel), ["L1","drills"]);
 eq("and the list draws no divider inside a tab", hairs(T.qlistEl, "qhair"), 0);
-eq("the left rail grows too", T.rrowsNow.length, 10);
-eq("with the same divider, once", hairs(T.railEl, "rhair"), 1);
-eq("labelled", T.railEl.children.find(c=>c.className==="rhair").children[0].textContent, "drills");
+eq("the left rail has a line for it too", T.rrowsNow.length, 10);
+/* the margin shows the tab the board is on, and not before */
+eq("but the margin is on Lesson 1, and shows Lesson 1", T.railOrder().length, 9);
+T.setTab(0, true);
+eq("turning to the drills turns the margin with it",
+   T.railOrder(), [null, "drill-itch"]);
 eq("and the drill's name in the margin", T.rrowsNow[9].name.textContent, "the itch drill");
+eq("with no divider needed to say so", hairs(T.railEl, "rhair"), 0);
+T.setTab(1, true);
 eq("a second drill lands after the first", (T.applyState(logWith([ITCH, SECOND])), T.ALL.length), 10);
 eq("still the two tabs", T.tabList().length, 2);
-eq("and still one divider in the margin", hairs(T.railEl, "rhair"), 1);
 
 console.log("\n== a drill is a workspace like any other ==");
 qreset();
@@ -2278,7 +2322,12 @@ ok("it says ↑↓ there are the workspaces in the left margin",
    /the workspace, walked in the left margin/.test(keyPage));
 ok("and that walking is arriving",
    /you are already in the one it is on/.test(keyPage));
-ok("it says ←→ there are the base octave", /the base octave \(C2/.test(keyPage));
+ok("it says ←→ there turn the lesson the margin shows",
+   /the lesson that margin is showing/.test(keyPage));
+ok("and that turning one enters nothing",
+   /Turning a lesson enters nothing/.test(keyPage));
+ok("the base octave is gone from the crossbar's own listing",
+   !/its eight slots<\/dt><dd>[^<]*octave/.test(keyPage), keyPage.indexOf("octave"));
 ok("and says where the voice went instead",
    /it is L1 and R1, on the page/.test(keyPage));
 ok("it puts the background on ✕", /&#10005; the background/.test(keyPage));
@@ -2327,7 +2376,7 @@ ok("the key page describes the workspace model",
    /Every quest is a workspace/.test(keyPage), keyPage.indexOf("workspace"));
 ok("it says the page saves itself", /saves itself into the workspace/.test(keyPage));
 ok("it says nothing is bound or loaded", /Nothing is bound, nothing is loaded/.test(keyPage));
-ok("it describes the rails", /on the left every workspace/.test(keyPage));
+ok("it describes the rails", /on the left one lesson's workspaces/.test(keyPage));
 ok("and their collapse", /narrow window drops both/.test(keyPage));
 ok("the quest-page instructions are the new ones",
    /enter on the quest you are already in returns to free play/.test(keyPage));
@@ -2381,7 +2430,7 @@ key("Minus", { shiftKey:true }); eq("and down by one", T.doc.tempo, 112);
 key("NumpadAdd"); eq("the numpad agrees", T.doc.tempo, 116);
 key("NumpadSubtract"); eq("both ways", T.doc.tempo, 112);
 ok("the footer says the new tempo", /tempo · 112/.test(ids.footer.textContent), ids.footer.textContent);
-ok("the header meta carries it", / · 112 · /.test(ids.metatext.textContent), ids.metatext.textContent);
+ok("the header meta leads with it", /^112 · /.test(ids.metatext.textContent), ids.metatext.textContent);
 for (let i = 0; i < 40; i++) key("Equal");
 eq("it clamps at 180", T.doc.tempo, 180);
 ok("and says so", /the end of the range/.test(ids.footer.textContent), ids.footer.textContent);
@@ -2521,7 +2570,7 @@ for (let i = 0; i < Q.length; i++){
   eq("entering " + Q[i].id + " lands in " + want[0], T.doc.key, want[0]);
   eq("… at " + want[1], T.doc.tempo, want[1]);
   ok("… and the header says so",
-     ids.metatext.textContent.indexOf(" · " + want[1] + " · ") > 0 &&
+     ids.metatext.textContent.indexOf(want[1] + " · ") === 0 &&
      ids.metatext.textContent.indexOf(want[0]) > 0, ids.metatext.textContent);
   eq("… with an empty page and nothing else changed", T.doc.steps.filter(Boolean).length, 0);
   eq("… and the loop untouched", T.doc.loop, 16);
@@ -3150,11 +3199,18 @@ eq("the caret wraps inside its own tab", (key("ArrowUp"), T.ALL[T.qsel].id), T.A
 eq("and never walks out of it", T.questGroup(T.ALL[T.qsel]), 1);
 key("ArrowDown");
 eq("down wraps back to the head", T.qsel, 0);
-/* the bumpers do on the pad what left and right do on the board */
+/* ---- and the pad builds no second board in here ----
+   The log's own pad bindings — the bumpers for the tabs, □ for the
+   favourite, △ held to carry — were never reached: the hand that has a pad
+   lives under start, and raising the crossbar closes this page and this
+   branch with it. The pad has the left margin instead, so they are gone. */
+const tabWas = T.activeTab;
 press(GP.R1);
-eq("R1 turns the lesson", T.activeTab, 2);
+eq("R1 does not turn a lesson in here", T.activeTab, tabWas);
 press(GP.L1);
-eq("and L1 turns it back", T.activeTab, 1);
+eq("nor does L1", T.activeTab, tabWas);
+ok("and neither wrote anything into the page",
+   T.doc.steps.filter(Boolean).length === 0, T.doc.steps);
 key("F3");
 
 console.log("\n== choosing from the margin brings the lesson forward ==");
@@ -3182,11 +3238,11 @@ eq("with the rest behind it in the order they were", T.view().slice(1), [0,1,2,3
 eq("the list draws a hairline where the run changes", hairs(T.qlistEl, "qhair"), 1);
 eq("labelled with the lesson it goes back to",
    T.qlistEl.children.find(c => c.className === "qhair").children[0].textContent, "L1");
-/* and to the head of the margin, whatever lesson it came from */
-eq("the margin puts the favourites first", T.railSections()[0].label, "favourites");
-eq("with that quest in them", T.railSections()[0].idx, [5]);
-eq("the pad walks the margin in the same order", T.railOrder()[1], Q[5].id);
-eq("and a divider names the run below", hairs(T.railEl, "rhair"), 1);
+/* and to the head of the margin, which shows that lesson */
+eq("the margin puts it straight under free play", T.railOrder()[1], Q[5].id);
+eq("the margin walks exactly the tab it is showing", T.railSequence(), T.view());
+eq("and needs no divider to say it", hairs(T.railEl, "rhair"), 0);
+eq("the mark is on its line there too", T.rrowsNow[6].fav.textContent, "✦");
 /* it rides out with the log, and only where it was made */
 const favJSON = T.stateToJSON();
 eq("the mark rides out with the quest", favJSON.quests[Q[5].id].fav, true);
@@ -3194,20 +3250,18 @@ ok("and nowhere it was not made",
    Object.keys(favJSON.quests).every(id => id === Q[5].id || favJSON.quests[id].fav === undefined),
    favJSON.quests);
 ok("a log applied back keeps it", (T.applyState(favJSON), T.favOf(Q[5].id)));
-/* □ is the same thing on the pad */
+/* ---- and both marks are the keyboard's ----
+   Arranging the board is done once and lived with, so it costs nothing to
+   leave it to F and to shift with the arrows — and it saves the pad two
+   bindings that only ever looked as though they worked. */
 T.qsel = 2; T.renderQuests();
-ok("the pad's quest is not kept to hand yet", !T.favOf(Q[2].id));
+const favWas = T.favOf(Q[2].id);
 press(GP.SQ);
-ok("□ keeps the chosen quest to hand", T.favOf(Q[2].id));
-press(GP.SQ);
-ok("and □ again lets it go", !T.favOf(Q[2].id));
-/* △ held turns the d-pad from a step into a move */
+eq("□ keeps nothing to hand any more", T.favOf(Q[2].id), favWas);
 T.qsel = 1; T.renderQuests();
 const beforeCarry = T.view().slice();
 frame([GP.TR, GP.DU]); frame([]);
-ok("△ held, d-pad up carries the quest with the caret",
-   JSON.stringify(T.view()) !== JSON.stringify(beforeCarry), [beforeCarry, T.view()]);
-eq("and the caret is still on it", T.qsel, 1);
+eq("△ held carries nothing either — the order is untouched", T.view(), beforeCarry);
 key("F3");
 
 console.log("\n== moving a quest, and it staying put ==");
@@ -3334,10 +3388,17 @@ ok("the deploy takes the stills with it",
    /quest-backgrounds/.test(fs.readFileSync(REPO + "/scripts/build.mjs","utf8")));
 
 console.log("\n== the new furniture keeps the house rules ==");
-ok("the tabs are words under a hairline, not boxes",
-   /\.qtabs\{/.test(html) && !/\.qtab\{[^}]*border:1px solid var\(--rule\)/.test(html));
-ok("the one in hand is marked as the voice in hand is",
-   /\.qtab\.on\{color:var\(--ink\);border-bottom-color:var\(--gilt\);\}/.test(html));
+/* a row of underlined words read as a heading several words long: nothing
+   said it could be pressed. Each lesson is a rimmed, rounded tag now, and
+   the one in hand is filled and rimmed in gilt — two marks, neither harsh. */
+ok("every tab is a card the eye can see is pressable",
+   /\.qtab\{[^}]*border:1px solid var\(--rule\)/.test(html) &&
+   /\.qtab\{[^}]*border-radius/.test(html));
+ok("the one in hand is filled and rimmed in gilt, not merely underlined",
+   /\.qtab\.on\{[^}]*border-color:var\(--gilt\)/.test(html) &&
+   /\.qtab\.on\{[^}]*background-color:var\(--wash\)/.test(html));
+ok("and the margin wears the same tags, at its own size",
+   /\.rtabs\{/.test(html) && /\.rtab\.on\{[^}]*border-color:var\(--gilt\)/.test(html));
 ok("still nothing that blinks", !/@keyframes/.test(html));
 ok("still no pure white or black", !/#fff\b|#ffffff|#000\b|#000000/i.test(html));
 ok("and still no repeating pattern anywhere",

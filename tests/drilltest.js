@@ -115,12 +115,18 @@ const SEAM = { id:"drill-seam", name:"the seam drill",
   await wait(120);
   ok("the delivered drill is in the drills tab", /the itch drill/.test(await listText()));
   ok("alone", (await b.eval("document.querySelectorAll('#qlist .quest').length")) === 1);
-  ok("and in the left rail", /the itch drill/.test(await railText()));
-  ok("the margin keeps the labelled divider between the two runs",
+  /* the margin reads the same tab the board does, so turning to the drills
+     turned the margin to them as well — it is one lesson deep now, with no
+     labelled dividers left to draw. The tab is left on the drills, which is
+     where a delivered drill lands and so where it has to be seen arriving. */
+  ok("and in the left rail, which turned with the board",
+     /the itch drill/.test(await railText()));
+  ok("the margin draws no dividers at all now",
+     (await b.eval("document.querySelectorAll('#railquests .rhair').length")) === 0);
+  ok("its own tag says which tab it is showing",
      /drills/.test(await b.eval(
-       "(document.querySelector('#railquests .rhair')||{}).textContent||''")));
-  await b.key("ArrowLeft", { key:"ArrowLeft", vk:37 });
-  await wait(150);
+       "(document.querySelector('#rtabs .rtab.on')||{}).textContent||''")),
+     await b.eval("(document.querySelector('#rtabs .rtab.on')||{}).textContent||''"));
   await b.key("F3", { key:"F3", vk:114 });
   await wait(200);                        /* the log is a page: let it close */
 
@@ -155,17 +161,15 @@ const SEAM = { id:"drill-seam", name:"the seam drill",
      /a drill arrived: the seam drill/.test(
        await b.eval("document.getElementById('footer').textContent")),
      await b.eval("document.getElementById('footer').textContent"));
-  ok("still one divider in the margin",
-     (await b.eval("document.querySelectorAll('#railquests .rhair').length")) === 1);
+  ok("and still no dividers in the margin",
+     (await b.eval("document.querySelectorAll('#railquests .rhair').length")) === 0);
   ok("the work already on the page is untouched",
      /D-4/.test(await b.eval("document.querySelectorAll('#column .row')[1].textContent")),
      await b.eval("document.querySelectorAll('#column .row')[1].textContent"));
 
   /* enter it: the seed is what the page arrives holding */
   await b.key("F3", { key:"F3", vk:114 });
-  await wait(200);
-  await b.key("ArrowRight", RIGHT);            /* over to the drills */
-  await wait(120);
+  await wait(200);                             /* already on the drills tab */
   ok("and in the drills tab beside the first", /the seam drill/.test(await listText()));
   const idx = await b.eval(
     "(function(){var r=document.querySelectorAll('#qlist .quest');for(var i=0;i<r.length;i++)" +
@@ -179,7 +183,7 @@ const SEAM = { id:"drill-seam", name:"the seam drill",
   await wait(300);
   const meta = await b.eval("document.getElementById('metatext').textContent");
   ok("entering it lands in its seeded key", /D minor/.test(meta), meta);
-  ok("at its tempo", / · 92 · /.test(meta), meta);
+  ok("at its tempo, which the meta line now leads with", /^92 · /.test(meta), meta);
   const col = await b.eval("document.getElementById('column').textContent");
   ok("with its pattern on the page", /D-4/.test(col) && /F-4/.test(col) && /A-4/.test(col), col);
   ok("the right rail carries its summary",

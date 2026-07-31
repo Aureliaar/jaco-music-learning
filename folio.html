@@ -69,6 +69,26 @@
     background-size:cover;
     background-position:center;
   }
+  /* ---- one scene giving way to another ----
+     A picture is never put on the body until it has been fetched *and*
+     decoded, so the ground can no longer change to an image that is not there
+     yet — which is what showed the bare parchment for a handful of frames and
+     read as a flash. Once it is decoded the swap itself is free, and this
+     layer is what makes it calm: it holds the scene being left, over the one
+     arriving, and dissolves. It is only ever used between two pictures. Paper
+     has no picture to dissolve, so the two edges of the ring are a single
+     clean step rather than a wash of parchment over a photograph.
+     It is a fade of one still image into another and nothing moves. */
+  .scenefade{
+    position:fixed;
+    inset:0;
+    z-index:-1;
+    background-size:cover;
+    background-position:center;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 0.55s ease-out;
+  }
   /* No animation anywhere. This block is belt-and-braces. */
   *,*::before,*::after{animation:none !important;}
   @media (prefers-reduced-motion:reduce){
@@ -218,6 +238,13 @@
     cursor:pointer;
   }
   .vname.on{color:var(--ink);border-bottom-color:var(--gilt);}
+  /* ---- what each voice is doing, on the strip that names them ----
+     Solo and mute used to be said twice: here, and again in the header's meta
+     line. The strip is the one indicator of where the hands are, so it is
+     where the state of the hands belongs, and the meta line has stopped
+     repeating it. A voice with nothing to say leaves an empty line of its own
+     height, so the strip never changes size and nothing on the page moves
+     when a voice is taken away or given back. */
   .vmark{
     display:block;
     text-align:center;
@@ -226,6 +253,7 @@
     font-size:0.8rem;
     color:var(--faded);
     min-height:1.2em;
+    cursor:pointer;
   }
   .vmark.solo{color:var(--gilt);}
   /* steps beyond the loop length: present, editable, quieter on the page */
@@ -541,19 +569,24 @@
   }
   /* ---- the tabs ----
      The board outgrew a single list at Lesson 2 and will outgrow it again, so
-     the log is read one lesson at a time. The strip is a row of words under a
-     hairline, not a row of boxes: nothing here is a tab-shaped container and
-     nothing here is a grid. The one in hand is in ink over a gilt underline —
-     the same mark the voice strip uses for the line in hand, because it means
-     the same thing. A lesson that does not exist yet has no tab; the moment a
-     quest belonging to it is in the log, its tab is simply there. */
+     the log is read one lesson at a time. A row of underlined words was the
+     first try and it was not enough: it read as a heading that happened to be
+     several words long, and nothing about it said that the words could be
+     pressed. So each lesson is a card — a sealed tag with a hairline rim, the
+     shape a paper tab actually is — and the one in hand is the one filled
+     with the page's own wash and rimmed in gilt, in ink instead of faded.
+     Two things say which is which, fill and rim, and neither of them is a
+     contrast the eye has to work at. They sit in a single row on a rule; a
+     row of a handful of rounded tags is not a grid and not a stripe. A lesson
+     that does not exist yet has no tab; the moment a quest belonging to it is
+     in the log, its tab is simply there. */
   .qtabs{
     display:flex;
-    align-items:baseline;
+    align-items:center;
     flex-wrap:wrap;
-    gap:1.1em;
+    gap:0.45em;
     margin:0.7rem 0 0.2rem;
-    padding:0 0.5em 0.45rem;
+    padding:0 0.4em 0.5rem;
     border-bottom:1px solid var(--rule);
     font-variant:small-caps;
     letter-spacing:0.14em;
@@ -562,11 +595,18 @@
   }
   .qtab{
     display:block;
-    padding:0 0.15em 0.2rem;
-    border-bottom:1px solid transparent;
+    padding:0.24em 0.85em 0.3em;
+    border:1px solid var(--rule);
+    border-radius:0.55rem;
+    background-color:transparent;
+    color:var(--faded);
     cursor:pointer;
   }
-  .qtab.on{color:var(--ink);border-bottom-color:var(--gilt);}
+  .qtab.on{
+    color:var(--ink);
+    border-color:var(--gilt);
+    background-color:var(--wash);
+  }
   .qtab .qtn{color:var(--faded);font-variant:normal;letter-spacing:0.02em;font-size:0.86em;}
   /* the count on the tab in hand is not louder than the tab */
   .qtab.on .qtn{color:var(--faded);}
@@ -675,6 +715,34 @@
     color:var(--faded);
   }
   .rail .hair{height:1px;background:var(--rule);opacity:0.7;margin:0 0 0.7rem;}
+  /* ---- the margin's own tabs ----
+     The left margin used to list every workspace there is — the favourites,
+     every lesson, the drills — each run under a labelled hairline. That was the whole
+     board printed down the side of the page while you were trying to write,
+     and it only got longer. It shows one lesson now, the same lesson the log
+     is on, and the strip above it says which — the log's tags, smaller,
+     because they are the same thing and the hand should not have to learn
+     them twice. The crossbar's ← and → turn them. */
+  .rtabs{
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:0.35em;
+    margin:0 0 0.55rem;
+    font-variant:small-caps;
+    letter-spacing:0.12em;
+    font-size:0.76rem;
+  }
+  .rtab{
+    display:block;
+    padding:0.16em 0.6em 0.2em;
+    border:1px solid var(--rule);
+    border-radius:0.5rem;
+    color:var(--faded);
+    cursor:pointer;
+    pointer-events:auto;             /* back on, under the rail's blanket none */
+  }
+  .rtab.on{color:var(--ink);border-color:var(--gilt);background-color:var(--wash);}
   /* the same divider in the margin, labelled once */
   .rhair{
     display:flex;
@@ -918,6 +986,7 @@
 </style>
 </head>
 <body data-scenery="paper">
+<div class="scenefade" id="scenefade" aria-hidden="true"></div>
 <main>
   <header>
     <h1>Folio</h1>
@@ -950,7 +1019,7 @@
           <dt>period, delete</dt><dd>clear the step, and on two steps as a note does</dd>
           <dt>the arrows</dt><dd>all four move the cursor by one step (wraps): up or left is back, down or right is forward. This is how a sixteenth is placed &mdash; step back one, and write</dd>
           <dt>home, end</dt><dd>step 1, step 16</dd>
-          <dt>page up, page down</dt><dd>base octave up, down (C2&ndash;C6)</dd>
+          <dt>page up, page down</dt><dd>the two rows of note keys, an octave higher or lower, so that the whole of C2&ndash;C6 is under the hands. The header says which octave they are in</dd>
           <dt>space</dt><dd>play or stop; playback loops</dd>
           <dt>L</dt><dd>loop length: the whole page &rarr; 8 &rarr; 4 &rarr; whole again</dd>
           <dt>tab</dt><dd>the other voice &mdash; the lead, the bass, and round again. With shift, round the other way, so whichever line you want is one press away however many there come to be. Everything you type goes into the one named above the page. The pad has the same ring on its two bumpers, L1 and R1</dd>
@@ -970,13 +1039,13 @@
           <dt>&hellip; shift + up, down</dt><dd>move the chosen quest up or down the list, and it stays where you put it. A quest moves among its own &mdash; the ones kept to hand, or the rest &mdash; and never crosses the hairline by being nudged</dd>
         </dl>
         <p>Notes are entered by position, not by letter, so the layout is the same on any keyboard. Entering a note advances the cursor two steps, and so does clearing one: a step is a sixteenth, sixteen of them are a bar, and eighths are what most of this is thought in &mdash; so writing straight ahead lays notes on 1, 3, 5, 7 and counts nothing. A sixteenth is one deliberate movement away: step back with an arrow and write there. Nothing is snapped to a grid; it is two steps on from wherever the cursor is, and it wraps around the page as the arrows do.</p>
-        <p>The page holds two voices &mdash; a lead and a bass &mdash; and they play together, from the one clock. They are written one at a time: the strip above the page names both and marks the one in hand, the column gives each a place of its own beside the step number, and in the roll they are drawn in the same field, the voice you are not in a shade back. Tab changes hands. Everything else &mdash; the key, the tempo, the loop, the whole page &mdash; the two share; only the notes and the timbre are their own. The bass is rounder and darker, so a bass written up in the melody's octave still sounds like the bass. Solo (O) and mute (P) act on the voice you are in; solo, if any voice has it, is what decides, and a change is heard on the next step without a restart. A page written before there were two voices opens exactly as it always did, with a silent bass under it.</p>
+        <p>The page holds two voices &mdash; a lead and a bass &mdash; and they play together, from the one clock. They are written one at a time: the strip above the page names both and marks the one in hand, the column gives each a place of its own beside the step number, and in the roll they are drawn in the same field, the voice you are not in a shade back. Tab changes hands. Everything else &mdash; the key, the tempo, the loop, the whole page &mdash; the two share; only the notes and the timbre are their own. The bass is rounder and darker, so a bass written up in the melody's octave still sounds like the bass. Solo (O) and mute (P) act on the voice you are in; solo, if any voice has it, is what decides, and a change is heard on the next step without a restart. What each voice is doing is written under its name on that strip and nowhere else &mdash; solo, muted, or silent under the other's solo &mdash; so there is one place to look, and the header has stopped saying it twice. A page written before there were two voices opens exactly as it always did, with a silent bass under it.</p>
         <p>The drawing names what it draws, in its margin rather than on top of itself. The home note of the page &mdash; the tonic of its key &mdash; is ruled across the roll at every octave in view and named once, at the side of its line, with the word home under the name: in C major those rules are the Cs, in G major the Gs, in A minor the As, and they move the moment the key does. Home is therefore a line you can see, and how far a note sits from it is how far it is from home. The octave is numbered the international way, so that C4 is middle C and the page runs from C2 to C6. Place a note, or move one, and a line of its own is drawn at that note's pitch, parallel to those rules and named beside them; it holds for a moment and then fades, so the pitch is said when you ask for it and the drawing is left alone the rest of the time. The column has always named its notes in the same alphabet, a dash standing in where there is no sharp, so that the two columns line up. Where both voices sound on the same step the roll also writes the interval between them, on a hairline tie drawn from the one bar to the other, so that the name belongs to that pair of notes and to nothing else however far apart the voices are. Below the octave the short names are the usual ones &mdash; P1, m2, M2, m3, M3, P4, TT, P5, m6, M6, m7, M7, P8 &mdash; and wider than an octave the compound name is used: the simple number plus seven for every octave crossed, so a minor third and an octave is m10, a fifth and an octave is P12, two octaves is P15. The tritone keeps its name and takes the compound number with it: TT, then TT11, then TT18. Only the distance is named, never the direction, so it reads the same whichever voice is on top. Nothing here judges: no interval is coloured, ranked, or marked as wanting anything. The page says what the two notes are; what they are worth is for the ear. K puts the whole lot away and brings it back.</p>
         <p>The key and the tempo both belong to the page you are on, and so to the workspace it lives in: each quest keeps its own, free play keeps its own, and changing one changes nothing anywhere else. Either may be changed while the loop runs; the change is heard at the next step, without a restart. A quest's page arrives already tuned &mdash; its own key and its own tempo, chosen to suit its constraint &mdash; so there is nothing to decide before writing; change them here whenever you like, and the change stays with that quest. Free play always begins in C major at 112.</p>
-        <p>Every quest is a workspace: a whole page of its own &mdash; steps, title, tempo, loop and key &mdash; and one more page, free play, belongs to no quest. The page in front of you saves itself into the workspace you are in, on every change, as it always did; choosing another quest simply puts a different page in front of you. Nothing is bound, nothing is loaded, nothing is copied, and so nothing can be written over. The margins of this page carry the same thing quietly while you work: on the left every workspace and where you are, on the right the constraint you are under. A narrow window drops both rather than squeeze the column.</p>
+        <p>Every quest is a workspace: a whole page of its own &mdash; steps, title, tempo, loop and key &mdash; and one more page, free play, belongs to no quest. The page in front of you saves itself into the workspace you are in, on every change, as it always did; choosing another quest simply puts a different page in front of you. Nothing is bound, nothing is loaded, nothing is copied, and so nothing can be written over. The margins carry the same thing quietly while you work: on the left one lesson's workspaces and which you are in, marked as on the board (&#10087; complete, &#10022; kept to hand); on the right the constraint you are under. A narrow window drops both rather than squeeze the column.</p>
         <p>Below the eight, under their own tab, sit the drills: short &eacute;tudes written into the quest log from outside, each with its own page already on it. They are workspaces like any other &mdash; enter one, write, mark it complete &mdash; and when the folio is served, a drill added to the log while this page is open simply appears in the list, quietly, without a reload and without disturbing a line of what you have written.</p>
-        <p>The board is read one lesson at a time. The strip above the list has a tab for every lesson that actually has quests in it and one for the drills, and a lesson that does not exist yet has no tab: the moment its quests are in the log, its tab is simply there. Nothing has to be told which lesson a quest belongs to &mdash; the eight standing quests are Lesson 1, a delivered quest may say which lesson it is for, and one that says nothing joins the newest lesson on the board. A quest kept to hand (F) is pinned to the head of its lesson and to the head of the left margin, where it is in view while you write; shift with up or down moves a quest and it stays where it is put. Both marks travel with the quest log, and a log written before either existed opens exactly as it always did.</p>
-        <p>The background can also be the workspace's own: shift&#8239;+&#8239;B once past the sea, and the scene behind the sheet becomes the picture that belongs to the quest you are in. There is one for most of the board and none for free play, and a workspace without one simply stays on paper &mdash; nothing waits for a picture and nothing moves when one arrives.</p>
+        <p>The board is read one lesson at a time. The strip above the list has a tab for every lesson that actually has quests in it and one for the drills, and a lesson that does not exist yet has no tab: the moment its quests are in the log, its tab is simply there. Nothing has to be told which lesson a quest belongs to &mdash; the eight standing quests are Lesson 1, a delivered quest may say which lesson it is for, and one that says nothing joins the newest lesson on the board. The left margin reads the same tab &mdash; free play and that one lesson, under the same tags &mdash; and the two turn together, from the log's arrows or the crossbar's &#8592; and &#8594;; entering a workspace brings its lesson forward by itself. A quest kept to hand (F) is pinned to the head of its lesson, and so of the margin while that lesson is in view; shift with up or down moves a quest and it stays where it is put. Both marks travel with the quest log, and a log written before either existed opens exactly as it always did.</p>
+        <p>The background can also be the workspace's own: shift&#8239;+&#8239;B once past the sea, and the scene behind the sheet becomes the picture that belongs to the quest you are in. There is one for most of the board and none for free play, and a workspace without one simply stays on paper &mdash; nothing waits for a picture and nothing moves when one arrives. No scene is put up until its picture has been fetched and drawn, so the ground never changes to something that is not there yet; and where one picture gives way to another, the first dissolves over the second rather than cutting.</p>
         <p>Opened from a file, the folio keeps everything in the browser alone. Started with folio.cmd and opened at http://localhost:4173, it also keeps the whole quest log in a real file &mdash; quests/quest&#8209;log.json &mdash; written a couple of seconds after every change, and read back when it opens. The footer says &middot;&#8239;synced while the quest log is open. If the server goes away the work carries on in the browser and the footer says so; the next change tries again.</p>
         <p>A copy of the folio can also be put on an ordinary web host and sent to somebody. There is no server behind that copy, so it never sends anything anywhere: it reads the quest log that travelled with it once, on a browser that has nothing of its own yet, and after that everything the reader writes is theirs and stays in their browser. The footer says &middot;&#8239;read&#8209;only copy while the quest log is open.</p>
       </div>
@@ -993,8 +1062,9 @@
           <dt>R3 (right stick click)</dt><dd>the roll: the page drawn or written</dd>
           <dt>select (create)</dt><dd>play or stop &mdash; from any page, and while any page is up</dd>
           <dt>start (options)</dt><dd>the settings crossbar: eight slots of items, read left, up, right, down &mdash; d&#8209;pad &#8592;&#8593;&#8594;&#8595;, then &#9633;&#9651;&#9675;&#10005; (X, Y, B, A). The folio does not go anywhere while it is up: the crossbar stands over the head of the page, not in place of it, so the music you are adjusting stays in view. Start again, &#9675;, or escape puts it down</dd>
-          <dt>&hellip; its eight slots</dt><dd>&#8593; &#8595; the workspace, walked in the left margin &middot; &#8592; &#8594; the base octave (C2&ndash;C6) &middot; &#9633; solo &middot; &#9651; mute &middot; &#9675; close &middot; &#10005; the background. The voice is not here: it is L1 and R1, on the page, where a tap is cheaper than a menu</dd>
-          <dt>&hellip; &#8593; and &#8595; there</dt><dd>the highlight moves down the workspaces in the left margin and you are already in the one it is on &mdash; nothing to confirm, and no list opened first. Hold to walk. Free play is the first line, the drills the last</dd>
+          <dt>&hellip; its eight slots</dt><dd>&#8593; &#8595; the workspace, walked in the left margin &middot; &#8592; &#8594; the lesson that margin is showing &middot; &#9633; solo &middot; &#9651; mute &middot; &#9675; close &middot; &#10005; the background. The voice is not here: it is L1 and R1, on the page, where a tap is cheaper than a menu</dd>
+          <dt>&hellip; &#8593; and &#8595; there</dt><dd>the highlight moves down the workspaces in the left margin and you are already in the one it is on &mdash; nothing to confirm, and no list opened first. Hold to walk. Free play is the first line, then that lesson's quests, the ones kept to hand at the head</dd>
+          <dt>&hellip; &#8592; and &#8594; there</dt><dd>the lesson, turned. The margin shows one at a time, the same one the quest log is on, so the four directions are the whole board: across to the lesson, down to the workspace. Turning a lesson enters nothing</dd>
           <dt>&hellip; what is not there</dt><dd>the key page (F1, and R3 off it), the quest log (F3), the view (R3, F2), and the names on the drawing (K). None of them has a slot: all eight are spoken for</dd>
           <dt>d&#8209;pad, bare</dt><dd>&#8593;&#8595; move the cursor one step; hold to repeat. One step back, then a note, is how a sixteenth is placed. &#8592;&#8594; nudge the note under the cursor a step of the key, without advancing. In the roll the drawing decides and the pairs trade places: &#8592;&#8594; are time, &#8593;&#8595; are the nudge</dd>
           <dt>&hellip; L2 and R2 together</dt><dd>take the nudge out of the key too, a semitone at a time, exactly as they take &#9651; and &#10005;</dd>
@@ -1002,12 +1072,12 @@
           <dt>right stick</dt><dd>the cursor by fours, beat to beat</dd>
           <dt>here, d&#8209;pad &#8592;&#8594;</dt><dd>the tonic; &#9651; or &#10005; (Y, A) make the key major or minor</dd>
           <dt>here, d&#8209;pad &#8593;&#8595;</dt><dd>the tempo, up and down by four (60&ndash;180); hold a trigger for one</dd>
-          <dt>in the quest log</dt><dd>d&#8209;pad up, down choose a quest; L1 and R1 change lesson; &#10005; (A) opens its page, or returns to free play if you are in it already; &#9675; (B) marks it complete; &#9633; (X) keeps it to hand; &#9651; (Y) held, up and down carry the quest with the caret instead of leaving it; R3 closes</dd>
+          <dt>in the quest log</dt><dd>d&#8209;pad up, down choose a quest; &#10005; (A) opens its page, or returns to free play if you are in it already; &#9675; (B) marks it complete; R3 closes. Nothing else: the pad's way round the board is the left margin under start, not a second copy of this page, and both marks are the keyboard's (F, and shift with the arrows)</dd>
           <dt>on the key page</dt><dd>R3 closes it, as it closes the quest log</dd>
         </dl>
         <p>The pad writes shapes, not pitches: you give the move &mdash; up, down, again, rest &mdash; and the page keeps ordinary notes, as always. A move is one step of the key shown in the header, counted from the last note that sounds before the cursor; rests are stepped over, and the search wraps around the loop. An empty page begins on the tonic. A note that lies outside the key moves first to the nearest note of the key in the direction you asked, and that counts as the step. Set the key on this page.</p>
         <p>There was a second way once: hold a trigger and the eight slots became eight rising semitones, twenty&#8209;four of them across three trigger states &mdash; the cross hotbar borrowed whole. It is gone. Naming a pitch is what the keyboard is for, and it was never what the pad was reached for; nothing has to be switched between before writing, and every pitch the crossbar could reach is still on the two rows of the keyboard, by position.</p>
-        <p>The four shoulders were sorted by the hand rather than by the history when it went. A trigger is made to be leaned on, so the triggers are the modifiers: held, they widen a move, and they do nothing else. A bumper is made to be tapped, so the bumpers are the voice: L1 back a line, R1 on a line, no mode raised first. Neither pair does two jobs, so nothing has to work out whether a press was a tap or a hold &mdash; which is what the bumpers used to have to do, and the one place on the pad where the same button could surprise you. The base octave, which the bumpers used to carry, is on the settings crossbar's &#8592; and &#8594;, and on page up and page down.</p>
+        <p>The four shoulders were sorted by the hand rather than by the history when it went. A trigger is made to be leaned on, so the triggers are the modifiers: held, they widen a move, and they do nothing else. A bumper is made to be tapped, so the bumpers are the voice: L1 back a line, R1 on a line, no mode raised first. Neither pair does two jobs, so nothing has to work out whether a press was a tap or a hold &mdash; which is what the bumpers used to have to do, and the one place on the pad where the same button could surprise you. The base octave the bumpers used to carry is nowhere on the pad and is not a command any more: the pad writes contours, counted from the note before, and an octave setting has nothing to say to that. It survives as what it always was &mdash; which pair of octaves the keyboard's note rows are, on page up and page down.</p>
         <p>A DualSense and an Xbox pad report the same positions. A browser notices a pad only after you press one of its buttons: press start if nothing answers &mdash; the settings crossbar coming up is the pad saying hello. Sound may wait for one keyboard touch.</p>
       </div>
     </div>
@@ -1035,7 +1105,7 @@
       <div class="qpreview" id="qpreview"></div>
       <div class="qdstate" id="qdstate"></div>
     </div>
-    <p>Constraint &eacute;tudes, in any order, abandoned guiltlessly. Each is a workspace holding its own page, and nothing is ever bound, loaded or lost. &#10087; complete &middot; &#8226; something written &middot; &#9876; where you are &middot; &#10022; kept to hand.</p>
+    <p>Constraint &eacute;tudes, in any order, abandoned guiltlessly. Each is a workspace holding its own page, and nothing is ever bound, loaded or lost. &#10087; complete &middot; &#8226; something written &middot; &#9876; where you are &middot; &#10022; kept to hand. The left margin carries the same marks for the lesson it is showing.</p>
   </section>
   </div>
 
@@ -1047,7 +1117,7 @@
 </main>
 
 <aside class="rail left" id="raill" aria-label="workspaces">
-  <h3>Workspaces</h3>
+  <div class="rtabs" id="rtabs" role="tablist" aria-label="the lessons"></div>
   <div class="hair"></div>
   <div id="railquests"></div>
 </aside>
@@ -1291,6 +1361,7 @@
   var qdstate = document.getElementById("qdstate");
   var qpreview = document.getElementById("qpreview");
   var railquests = document.getElementById("railquests");
+  var rtabs = document.getElementById("rtabs");
   var railtitle = document.getElementById("railtitle");
   var railtext  = document.getElementById("railtext");
   var railteach = document.getElementById("railteach");
@@ -1316,32 +1387,120 @@
   var QUEST_BG_DIR = "quest-backgrounds/";
   var scenePref = "paper";
   var bgKnown = {};                  /* id -> true | false | null (asked) */
+  var sceneFade = document.getElementById("scenefade");
+  /* url -> "ok" | "bad": a picture is only ever "ok" once it has been both
+     fetched and *decoded*, which is the whole point. An image that has merely
+     loaded still has to be turned into pixels, and the browser does that on
+     the frame it is first painted — which is the frame the ground changes on.
+     That one frame is what the parchment was showing through. */
+  var picState = {};
+  /* what the ground is wearing right now, named by scene *and* picture, so
+     that walking from one quest's workspace to another's — both of them the
+     "quest" scene, with different pictures — is seen for the change it is */
+  var sceneKey = "paper|";
 
   function questBgUrl(id){ return QUEST_BG_DIR + encodeURIComponent(id) + ".png"; }
+  /* the picture each scene stands on, or nothing where the scene is paper */
+  function sceneUrl(s){
+    if (s === "forest") return "folio-forest.png";
+    if (s === "sea") return "folio-sea.png";
+    if (s === "quest") return qActive ? questBgUrl(qActive) : null;
+    return null;
+  }
+  /* fetch it, decode it, and only then say it is ready. decode() is asked for
+     where it exists; where it does not, the load event is the best answer
+     there is and is taken. Either way nothing visual has happened yet. */
+  function readyPic(url, cb){
+    var known = picState[url];
+    if (known === "ok" || known === "bad"){ cb(known === "ok"); return; }
+    if (typeof Image !== "function"){ picState[url] = "bad"; cb(false); return; }
+    var im = new Image();
+    function settle(okay){ picState[url] = okay ? "ok" : "bad"; cb(okay); }
+    im.onerror = function(){ settle(false); };
+    im.onload = function(){
+      if (im.decode) im.decode().then(function(){ settle(true); }, function(){ settle(true); });
+      else settle(true);
+    };
+    im.src = url;
+  }
   function probeBg(id){
     if (!id) return;
     if (Object.prototype.hasOwnProperty.call(bgKnown, id)) return;
-    if (typeof Image !== "function"){ bgKnown[id] = false; return; }
     bgKnown[id] = null;
-    var im = new Image();
-    im.onload  = function(){ bgKnown[id] = true;  applyScenery(); scenerySettled(); };
-    im.onerror = function(){ bgKnown[id] = false; applyScenery(); scenerySettled(); };
-    im.src = questBgUrl(id);
+    readyPic(questBgUrl(id), function(okay){
+      bgKnown[id] = okay;
+      applyScenery(); scenerySettled();
+    });
   }
-  /* what the body is actually wearing, which is the preference except where
-     the preference has nothing to show */
+  /* ---- what the body should be wearing ----
+     The preference, except where the preference has nothing to show. The
+     fourth scene has a third answer as well as yes and no: *not yet*. Falling
+     to paper while the question was still out was the whole of the flash —
+     walking from one quest's workspace to another's put the parchment up for
+     the few hundred milliseconds it took to find out whether the next quest
+     had a picture, and then put the picture up over it. So a question still
+     out holds the ground exactly where it is: null means "keep what is up",
+     and paper is only ever worn when it is the actual answer. */
   function sceneNow(){
     if (scenePref !== "quest") return scenePref;
-    if (qActive && bgKnown[qActive] === true) return "quest";
+    if (!qActive) return "paper";              /* free play has none, and will not */
+    if (bgKnown[qActive] === true) return "quest";
+    if (bgKnown[qActive] === false) return "paper";
     probeBg(qActive);
-    return "paper";
+    return null;
+  }
+  /* the swap itself, once there is certainly something to swap to. Between two
+     pictures the one being left is lifted onto the fade layer and dissolved
+     over the one arriving; to or from paper there is only one picture in the
+     movement, and a single step is cleaner than washing a photograph over the
+     page. Nothing here can show an undrawn image: readyPic has already been
+     waited on. */
+  function swapScene(eff, url, key){
+    var bar = sceneKey.indexOf("|"), leaving = sceneKey.slice(bar + 1);
+    var cross = !!(leaving && url && sceneFade && window.getComputedStyle);
+    var s = document.body.style;
+    if (cross){
+      sceneFade.style.transition = "none";
+      sceneFade.style.backgroundImage =
+        window.getComputedStyle(document.body).backgroundImage;
+      sceneFade.style.opacity = "1";
+    }
+    if (eff === "quest" && s && s.setProperty)
+      s.setProperty("--questbg", 'url("' + url + '")');
+    document.body.setAttribute("data-scenery", eff);
+    sceneKey = key;
+    if (cross && typeof requestAnimationFrame === "function"){
+      /* two frames: the arriving ground is painted under the leaving one
+         before the dissolve is asked for, or the transition has nothing to
+         start from and the swap is a cut after all */
+      requestAnimationFrame(function(){
+        requestAnimationFrame(function(){
+          sceneFade.style.transition = "";
+          sceneFade.style.opacity = "0";
+        });
+      });
+    }
   }
   function applyScenery(){
-    var eff = sceneNow(), s = document.body.style;
-    if (eff === "quest" && s && s.setProperty)
-      s.setProperty("--questbg", 'url("' + questBgUrl(qActive) + '")');
-    document.body.setAttribute("data-scenery", eff);
+    var eff = sceneNow(), url, key;
+    if (eff === null) return;                  /* still asking: hold the ground */
+    url = sceneUrl(eff); key = eff + "|" + (url || "");
+    if (key === sceneKey) return;
+    if (url && !picState[url]){
+      /* nothing is known about that picture yet: the ground stays exactly as
+         it is until there is an answer, and this is asked again with it in
+         hand. A picture that cannot be had is an answer too — the scene is
+         then worn for its veil alone, exactly as it always was. */
+      readyPic(url, function(){ applyScenery(); });
+      return;
+    }
+    swapScene(eff, url, key);
   }
+  if (sceneFade && sceneFade.addEventListener)
+    sceneFade.addEventListener("transitionend", function(){
+      /* the scene it was holding has gone: let go of the bitmap too */
+      if (sceneFade.style.opacity === "0") sceneFade.style.backgroundImage = "none";
+    });
   /* what the scenery control is saying, which for the fourth scene depends on
      an answer that may still be coming back over the wire */
   function sceneryLine(){
@@ -1669,9 +1828,12 @@
     for (var v = 0; v < VOICES; v++){
       vnames[v].classList.toggle("on", v === voice);
       var st = voiceState(v);
+      /* the third state is a voice that is not muted but is not being heard
+         either, because the other one is soloed: it says so in a word rather
+         than in a dash, which said nothing to anybody */
       vmarks[v].textContent = st === "solo" ? "solo"
                             : st === "muted" ? "muted"
-                            : st ? "—" : "";
+                            : st ? "silent" : "";
       vmarks[v].className = "vmark" + (st === "solo" ? " solo" : "");
     }
     voicesEl.classList.toggle("off",
@@ -1702,14 +1864,18 @@
     }
     shownPlayhead = step;
   }
+  /* ---- the meta line, pared back to what only it says ----
+     It used to carry the title, the tempo, the octave, the key, the loop, the
+     voice in hand and the quest — seven things, of which four were already on
+     the screen somewhere better. The title was "untitled folio" and meant
+     nothing. The quest is named twice over in the right margin and marked in
+     the left. The voice in hand is the whole point of the strip directly
+     below, and what it is doing is marked there too. The loop is drawn on the
+     page itself, in the steps that fall outside it. What is left is the three
+     settings of the piece that have no other home: how fast, how high, and in
+     what. That is what the line is for. */
   function renderMeta(){
-    var obj = activeQuest();
-    var st = voiceState(voice);
-    meta.textContent = doc.title + " · " + doc.tempo + " · octave " + baseOctave +
-                       " · " + doc.key +
-                       (doc.loop < STEPS ? " · loop " + doc.loop : "") +
-                       " · " + voiceName(voice) + (st ? " (" + st + ")" : "") +
-                       (obj ? " · ⚔ " + obj.short : "");
+    meta.textContent = doc.tempo + " · octave " + baseOctave + " · " + doc.key;
   }
   function renderLoop(){
     for (var i = 0; i < STEPS; i++){
@@ -1728,7 +1894,7 @@
      is: the letters are places on the board, not what a keyboard prints. */
   function hintsNow(){
     if (settingsEl.classList.contains("on"))
-      return [["↑ ↓","workspace"],["← →","base octave"],["□","solo"],["△","mute"],
+      return [["↑ ↓","workspace"],["← →","lesson"],["□","solo"],["△","mute"],
               ["✕","the background"],["start","close"]];
     if (questsEl.classList.contains("on"))
       return [["↑ ↓","quest"],["← →","lesson"],["enter","work here"],
@@ -2268,37 +2434,41 @@
      same order the crossbar always reads — left, up, right, down, then □ △ ○ ✕
      — so the hand that knows the crossbar already knows this.
 
-     What the mode is chiefly for is the left margin: ↑ and ↓ walk the
-     workspaces there, and walking is arriving — the highlight moves and you
-     are already in that workspace. There is no list to open first and nothing
-     to confirm, so no slot opens a page of any kind.
+     What the mode is for is the left margin, and now it is the whole margin.
+     ↑ and ↓ walk the workspaces there, and walking is arriving — the
+     highlight moves and you are already in that workspace. ← and → turn the
+     lesson the margin is showing, because the margin shows one lesson at a
+     time, exactly as the log does and on the same tab. There is no list to
+     open first and nothing to confirm, so no slot opens a page of any kind:
+     the four directions are the margin, entire, and that is the mode.
 
-     ← and → were the voice, and are the base octave. The voice moved out of
-     this menu and onto L1 and R1, where it is a tap rather than a mode to
-     raise first — which is what "easier" had to mean for the movement made
-     most often on the page. That left the base octave with nowhere on the
-     pad at all, the bumpers having stopped being the octave when they became
-     the voice, so it took the pair the voice vacated. It is a setting, and
-     this is where the settings are.
+     ← and → were the base octave for one pass, and the base octave is not a
+     command any more. It was a leftover from the days when the pad named
+     pitches; the pad writes contours now, counted from the note before, and
+     the octave has nothing to do with any of it. The keyboard, which does
+     name pitches, keeps it on page up and page down where it belongs — it is
+     which pair of octaves the two rows of note keys are, not a setting — and
+     the header still says which octave those rows are in.
 
      The key page is not here at all: it is F1, and R3 off it. The quest log
      is not here either: it is F3, and the margin has already replaced what
-     one would have come here to do.
+     one would have come here to do. There is no second quest log on the pad:
+     there is the margin, which was always there, and start hands it over.
 
      ✕ used to be the entry method, and there is no longer an entry method to
      choose: the pad writes contours and nothing else. The freed slot went to
      the one preference the pad could not reach at all — the scene behind the
      sheet, which is Shift+B on the keyboard and was nowhere on the pad. */
   var SETTINGS = [
-    { glyph:"←", label:"the base octave",
-      value:function(){ return String(baseOctave); },
-      run:function(){ shiftOctave(-1); renderSettings(); } },
+    { glyph:"←", label:"the lesson",
+      value:function(){ return tabLabel(currentTab()); },
+      run:function(){ railTab(-1); }, head:true },
     { glyph:"↑", label:"the workspace",
       value:function(){ return workspaceName(); },
       run:function(){ railStep(-1); }, head:true },
-    { glyph:"→", label:"the base octave",
-      value:function(){ return String(baseOctave); },
-      run:function(){ shiftOctave(1); renderSettings(); } },
+    { glyph:"→", label:"the lesson",
+      value:function(){ return tabLabel(currentTab()); },
+      run:function(){ railTab(1); }, head:true },
     { glyph:"↓", label:"the workspace",
       value:function(){ return workspaceName(); },
       run:function(){ railStep(1); }, head:true },
@@ -2393,7 +2563,7 @@
     applyViz();
     if (on) renderSettings();
     renderRails();
-    say(on ? "settings · ↑↓ the workspace, ←→ the base octave · the page stays in view"
+    say(on ? "settings · ↑↓ the workspace, ←→ the lesson · the margin, in the thumb"
            : "‸ cursor row");
   }
 
@@ -2596,6 +2766,12 @@
        shows you where you actually are, in the lesson you are actually in */
     if (qActive)
       for (var wi = 0; wi < ALL.length; wi++) if (ALL[wi].id === qActive){ qsel = wi; break; }
+    /* and the lesson comes forward with it, so that opening the log — or
+       glancing at the margin — always shows the lesson you are actually
+       working in. Free play belongs to no lesson and turns no page: the
+       margin stays on whatever tab you left it on, which is where you were
+       about to go back to. */
+    if (qActive) activeTab = questGroup(questById(qActive));
     doc = workspaceDoc(qActive);
     cursor = 0;
     if (playing) stop();
@@ -2631,31 +2807,14 @@
      are in, so a step up or down is a switch, and the switch is the whole
      interaction. Nothing is confirmed and no page is opened on the way. */
   /* ---- how the margin is arranged ----
-     The favourites first, across the whole board — the margin is the one
-     surface in view while you are actually writing, so a quest kept to hand
-     belongs at the top of it whatever lesson it came from — and then a run
-     per lesson, the drills last. The pad walks exactly this order, so what
-     the thumb does and what the eye reads are the same list. */
-  function railSections(){
-    var t = tabList(), out = [], favs = [], rest, v, i, j;
-    for (i = 0; i < t.length; i++){
-      v = viewOf(t[i]);
-      for (j = 0; j < v.length; j++) if (favOf(ALL[v[j]].id)) favs.push(v[j]);
-    }
-    if (favs.length) out.push({ label:"favourites", idx:favs });
-    for (i = 0; i < t.length; i++){
-      v = viewOf(t[i]); rest = [];
-      for (j = 0; j < v.length; j++) if (!favOf(ALL[v[j]].id)) rest.push(v[j]);
-      if (rest.length) out.push({ label: tabLabel(t[i]), idx: rest });
-    }
-    return out;
-  }
-  function railSequence(){
-    var s = railSections(), out = [], i, j;
-    for (i = 0; i < s.length; i++)
-      for (j = 0; j < s[i].idx.length; j++) out.push(s[i].idx[j]);
-    return out;
-  }
+     One lesson, the lesson the log is on: free play at the head, then that
+     tab's quests in the order the tab reads them — the ones kept to hand
+     first, as they are on the board. It used to be every workspace there is,
+     in runs under labelled hairlines, which is the whole board printed down
+     the side of the page while you are trying to write. The pad walks exactly
+     this list, so what the thumb does and what the eye reads are the same
+     thing, and ← and → turn the page of it. */
+  function railSequence(){ return viewOf(currentTab()); }
   function railOrder(){
     var seq = railSequence(), out = [null], i;
     for (i = 0; i < seq.length; i++) out.push(ALL[seq[i]].id);
@@ -2676,6 +2835,14 @@
     if (!id){ say("free play · no constraint"); return; }
     var q = questById(id);
     say(q.short + " · its own page" + (questHasContent(id) ? "" : ", empty"));
+  }
+  /* ← and → under the crossbar: the margin turns to another lesson, and the
+     board turns with it — one tab, read in two places. Nothing is entered by
+     turning a page; the workspace you are in is the workspace you are in
+     until ↑ or ↓ walks you into another. */
+  function railTab(d){
+    moveTab(d);
+    if (settingsEl.classList.contains("on")) renderSettings();
   }
   function toggleComplete(){
     var q = selQuest(), s = questSlot(q.id);
@@ -2760,6 +2927,8 @@
     qsel = 0;
     if (qActive)
       for (i = 0; i < ALL.length; i++) if (ALL[i].id === qActive){ qsel = i; break; }
+    /* the board and the margin open on the lesson the work is in */
+    if (qActive) activeTab = questGroup(questById(qActive));
     doc = workspaceDoc(qActive);
     droppedMarks = false;      /* the pattern autosave owns that message */
     return true;
@@ -3340,16 +3509,19 @@
   /* the sword means one thing only — the workspace you are in — so the
      flavour sword the names carry is not printed beside it */
   function plainName(q){ return q.name.replace(/^⚔\s*/, ""); }
+  /* what the margin's first column says about a workspace: where you are, or
+     that there is something written in it. Complete used to outrank both and
+     take the column, which meant that finishing a quest hid the sword saying
+     you were standing in it — three states in one slot, and the two that
+     matter most while writing were the ones that lost. Complete has a mark of
+     its own at the other end of the line now, beside the favourite's, so a
+     quest can be finished, written-in, kept to hand and under your feet all
+     at once and say so. */
   function questGlyph(id){
-    if (questSlot(id).done) return "❧";
     if (id === qActive) return "⚔";
     return questHasContent(id) ? "•" : "";
   }
   function renderQuests(){
-    /* the caret is never off the page: choosing a workspace from the margin,
-       or with the pad, brings that quest's lesson forward with it */
-    if (ALL[qsel] && questGroup(ALL[qsel]) !== currentTab())
-      activeTab = questGroup(ALL[qsel]);
     for (var i = 0; i < ALL.length && i < qrows.length; i++){
       var q = ALL[i], s = questSlot(q.id), r = qrows[i];
       r.el.classList.toggle("sel", i === qsel);
@@ -3409,12 +3581,15 @@
       el.className = "rline";
       var g = document.createElement("span"); g.className = "rg";
       var n = document.createElement("span"); n.className = "rn"; n.textContent = name;
-      /* the run at the head of the margin has no hairline above it — there is
-         nothing above to divide it from — so its lines say for themselves
-         what they are */
+      /* two marks at the end of the line, and they mean different things:
+         the work is finished, and the quest is kept to hand. A quest can be
+         both, so neither may be allowed to stand in for the other — which is
+         what one glyph slot for all of it used to do, hiding the sword that
+         says where you are behind the mark that says a thing is done. */
+      var dn = document.createElement("span"); dn.className = "rd";
       var f = document.createElement("span"); f.className = "rf";
-      el.appendChild(g); el.appendChild(n); el.appendChild(f);
-      return { el: el, glyph: g, name: n, fav: f };
+      el.appendChild(g); el.appendChild(n); el.appendChild(dn); el.appendChild(f);
+      return { el: el, glyph: g, name: n, done: dn, fav: f };
     }
     while (railquests.firstChild) railquests.removeChild(railquests.firstChild);
     rrows.length = 0;
@@ -3434,16 +3609,32 @@
      touched on every autosave, which is on every note */
   var railShape = "";
   function layoutRailRows(){
-    var s = railSections(), sig = "", i, j;
-    for (i = 0; i < s.length; i++) sig += s[i].label + ":" + s[i].idx.join(",") + ";";
+    var seq = railSequence(), sig = currentTab() + ":" + seq.join(","), i;
     if (sig === railShape) return;
     railShape = sig;
     while (railquests.firstChild) railquests.removeChild(railquests.firstChild);
     railquests.appendChild(rrows[0].el);
-    for (i = 0; i < s.length; i++){
-      if (i) railquests.appendChild(hairline("rhair", s[i].label));
-      for (j = 0; j < s[i].idx.length; j++)
-        railquests.appendChild(rrows[s[i].idx[j] + 1].el);
+    for (i = 0; i < seq.length; i++) railquests.appendChild(rrows[seq[i] + 1].el);
+  }
+  /* the same tags the board wears, in the margin, at the margin's size: what
+     the crossbar's ← and → are turning, said where it is being turned */
+  var rtabrows = [];
+  function renderRailTabs(){
+    if (!rtabs) return;
+    var t = tabList(), cur = currentTab(), i, el;
+    while (rtabs.firstChild) rtabs.removeChild(rtabs.firstChild);
+    rtabrows.length = 0;
+    for (i = 0; i < t.length; i++){
+      el = document.createElement("div");
+      el.className = "rtab" + (t[i] === cur ? " on" : "");
+      el.setAttribute("role", "tab");
+      el.setAttribute("aria-selected", t[i] === cur ? "true" : "false");
+      el.textContent = tabLabel(t[i]);
+      el.addEventListener("click", (function(g){
+        return function(){ setTab(g); };
+      })(t[i]));
+      rtabs.appendChild(el);
+      rtabrows.push(el);
     }
   }
   buildRailRows();
@@ -3451,6 +3642,7 @@
     /* while start is up the d-pad is walking this list, so the line it is on
        is washed as well as marked — the pad's own highlight, and calm */
     var nav = settingsEl.classList.contains("on");
+    renderRailTabs();
     layoutRailRows();
     rrows[0].el.classList.toggle("act", !qActive);
     rrows[0].el.classList.toggle("nav", nav && !qActive);
@@ -3460,6 +3652,8 @@
       r.el.classList.toggle("act", id === qActive);
       r.el.classList.toggle("nav", nav && id === qActive);
       r.glyph.textContent = questGlyph(id);
+      /* finished, and kept to hand: two marks, because they are two things */
+      if (r.done) r.done.textContent = questSlot(id).done ? "❧" : "";
       if (r.fav) r.fav.textContent = favOf(id) ? "✦" : "";
     }
     var q = activeQuest();
@@ -3761,23 +3955,23 @@
       gpPrev = cur; return;
     }
     if (questsEl.classList.contains("on")){
-      /* full parity with the keyboard page, and just as quiet otherwise:
-         ✕ enters the quest's page (or comes back to free play), ○ marks it
-         complete, R3 closes the log as escape does. △ and □ do nothing —
-         there is nothing left to bind or to load. */
+      /* The log is a keyboard page that the pad can read over your shoulder:
+         d-pad up and down walk the caret, ✕ enters the quest's page (or comes
+         back to free play), ○ marks it complete, R3 closes it as escape does.
+         Nothing more. A pass that gave the pad its own tabs, its own
+         favourite button and its own carry gesture in here was building a
+         second quest log for the thumb, when the pad already has the whole
+         board where the thumb actually is — the left margin, under start,
+         where turning a lesson and walking into a workspace are two
+         directions of one stick. Keeping a quest to hand and moving it up the
+         list are arrangements made once and then lived with; they are F and
+         shift on the keyboard, and that is enough for them. */
       if (gpEdge(cur, GP_CROSS))    chooseWorkspace();
       if (gpEdge(cur, GP_CIRCLE))   toggleComplete();
-      if (gpEdge(cur, GP_SQUARE))   toggleFavourite();
       if (gpEdge(cur, GP_R3))       toggleQuests();
-      /* the bumpers turn the page, as they turn a tab everywhere else */
-      if (gpEdge(cur, GP_L1))       moveTab(-1);
-      if (gpEdge(cur, GP_R1))       moveTab(1);
       var qy = (gp.axes && gp.axes.length > 1) ? gp.axes[1] : 0;
-      /* △ held, the caret carries the quest instead of leaving it: the same
-         thing shift does to the arrows, and no mode either way */
-      var carry = cur[GP_TRIANGLE] ? moveInOrder : moveQuest;
-      gpNav(cur[GP_DU] || qy <= -STICK_DEAD, "up",   -1, now, carry);
-      gpNav(cur[GP_DD] || qy >=  STICK_DEAD, "down",  1, now, carry);
+      gpNav(cur[GP_DU] || qy <= -STICK_DEAD, "up",   -1, now, moveQuest);
+      gpNav(cur[GP_DD] || qy >=  STICK_DEAD, "down",  1, now, moveQuest);
       gpPrev = cur;
       return;
     }
@@ -3875,15 +4069,18 @@
     return restored || have;
   }
   var restored = bootState();
-  /* the tab the log opens on: the one it was left on, or — the first time —
-     the lesson the workspace in hand belongs to, and failing that the newest
-     lesson on the board, which is where the work is */
+  /* the tab the log and the margin open on: the lesson of the workspace in
+     hand, which is where the work is and what the margin is for; failing
+     that the tab it was left on, and failing that the newest lesson on the
+     board */
   var savedTab = null;
   try { savedTab = localStorage.getItem(TAB_KEY); } catch (e){}
-  if (savedTab !== null && savedTab !== "" && !isNaN(parseInt(savedTab, 10)))
+  if (activeQuest())
+    activeTab = questGroup(activeQuest());
+  else if (savedTab !== null && savedTab !== "" && !isNaN(parseInt(savedTab, 10)))
     activeTab = parseInt(savedTab, 10);
   else
-    activeTab = activeQuest() ? questGroup(activeQuest()) : newestLesson();
+    activeTab = newestLesson();
   currentTab();                        /* and fall to the first if it is gone */
   try { if (localStorage.getItem(VIZ_KEY) === "column") viz = "column"; } catch (e){}
   try { if (localStorage.getItem(NAMES_KEY) === "off") showNames = false; } catch (e){}
