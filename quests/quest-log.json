@@ -1,7 +1,7 @@
 {
   "folio": "quest-log",
   "version": 2,
-  "active": "latecomer",
+  "active": "hand",
   "free": {
     "version": 1,
     "title": "untitled folio",
@@ -9,39 +9,39 @@
     "loop": 16,
     "key": "C major",
     "steps": [
+      "B3",
+      "C4",
+      "D4",
+      null,
+      "B3",
+      "C4",
+      "D4",
+      "E4",
+      "F4",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      "A3"
+    ],
+    "bass": [
       "F3",
       null,
       "E3",
       null,
       "F3",
+      "F3",
+      "E3",
       null,
+      "F3",
+      "F3",
+      "E3",
+      null,
+      "F3",
+      "F3",
       "G3",
-      null,
-      "D#4",
-      null,
-      "C4",
-      null,
-      "A3",
-      "G3",
-      "C4",
-      null
-    ],
-    "bass": [
-      null,
-      null,
-      "C3",
-      null,
-      "B2",
-      null,
-      "A2",
-      null,
-      "B2",
-      null,
-      "A2",
-      null,
-      "G2",
-      "E2",
-      "A2",
       null
     ],
     "mute": [
@@ -55,7 +55,7 @@
   },
   "quests": {
     "ladder": {
-      "done": false,
+      "done": true,
       "pattern": {
         "version": 1,
         "title": "untitled folio",
@@ -109,7 +109,7 @@
       }
     },
     "whitespace": {
-      "done": false,
+      "done": true,
       "pattern": {
         "version": 1,
         "title": "untitled folio",
@@ -163,7 +163,7 @@
       }
     },
     "summit": {
-      "done": false,
+      "done": true,
       "pattern": {
         "version": 1,
         "title": "untitled folio",
@@ -217,7 +217,7 @@
       }
     },
     "stones": {
-      "done": false,
+      "done": true,
       "pattern": {
         "version": 1,
         "title": "untitled folio",
@@ -271,7 +271,7 @@
       }
     },
     "ouroboros": {
-      "done": false,
+      "done": true,
       "pattern": {
         "version": 1,
         "title": "untitled folio",
@@ -325,7 +325,7 @@
       }
     },
     "callanswer": {
-      "done": false,
+      "done": true,
       "pattern": {
         "version": 1,
         "title": "untitled folio",
@@ -379,7 +379,7 @@
       }
     },
     "stray": {
-      "done": false,
+      "done": true,
       "pattern": {
         "version": 1,
         "title": "untitled folio",
@@ -594,8 +594,116 @@
         ]
       }
     },
-    "shadow": {
+    "lineup-a": {
       "done": false,
+      "pattern": {
+        "version": 1,
+        "title": "the lineup — a",
+        "tempo": 96,
+        "loop": 16,
+        "key": "E minor",
+        "steps": [
+          "C4",
+          "B3",
+          "G3",
+          null,
+          "A3",
+          "B3",
+          "G#3",
+          null,
+          "G3",
+          "F#3",
+          "E3",
+          null,
+          "C#4",
+          "G3",
+          "A3",
+          null
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "mute": [
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false
+        ]
+      }
+    },
+    "lineup-b": {
+      "done": false,
+      "pattern": {
+        "version": 1,
+        "title": "the lineup — b",
+        "tempo": 96,
+        "loop": 16,
+        "key": "E minor",
+        "steps": [
+          "C4",
+          "G3",
+          "A3",
+          null,
+          "A3",
+          "G3",
+          "B3",
+          null,
+          "G3",
+          "C#4",
+          "B3",
+          null,
+          "E3",
+          "F#3",
+          "G#3",
+          null
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "mute": [
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false
+        ]
+      }
+    },
+    "shadow": {
+      "done": true,
       "pattern": {
         "version": 1,
         "title": "the shadow",
@@ -649,7 +757,7 @@
       }
     },
     "ostinato": {
-      "done": false,
+      "done": true,
       "pattern": {
         "version": 1,
         "title": "ostinato",
@@ -757,7 +865,7 @@
       }
     },
     "drone": {
-      "done": false,
+      "done": true,
       "pattern": {
         "version": 1,
         "title": "the drone",
@@ -811,100 +919,46 @@
       }
     },
     "hocket": {
-      "done": false,
+      "done": true,
       "pattern": {
         "version": 1,
         "title": "hocket",
-        "tempo": 116,
+        "tempo": 84,
         "loop": 16,
         "key": "C major",
         "steps": [
+          "F4",
           null,
+          "F4",
           null,
+          "G4",
           null,
+          "A4",
           null,
+          "G4",
           null,
+          "F4",
           null,
+          "E4",
           null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
+          "C4",
           null
         ],
         "bass": [
           null,
+          "D4",
           null,
+          "C4",
           null,
+          "D4",
           null,
+          "E4",
           null,
+          "F4",
           null,
+          "E4",
           null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
-        ],
-        "mute": [
-          false,
-          false
-        ],
-        "solo": [
-          false,
-          false
-        ]
-      }
-    },
-    "chordisnt": {
-      "done": false,
-      "pattern": {
-        "version": 1,
-        "title": "the chord that isn't",
-        "tempo": 96,
-        "loop": 16,
-        "key": "F major",
-        "steps": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
-        ],
-        "bass": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
+          "E4",
           null,
           null
         ],
@@ -919,7 +973,7 @@
       }
     },
     "oilwater": {
-      "done": false,
+      "done": true,
       "pattern": {
         "version": 1,
         "title": "oil and water",
@@ -981,10 +1035,6 @@
         "loop": 16,
         "key": "D minor",
         "steps": [
-          "D4",
-          null,
-          "E4",
-          null,
           "F4",
           null,
           "F4",
@@ -993,17 +1043,23 @@
           null,
           null,
           null,
-          "D4",
+          "E4",
           null,
-          "C#4",
+          "F4",
+          null,
+          "F4",
+          null,
+          null,
           null
         ],
         "bass": [
-          "D3",
-          null,
-          null,
-          null,
           "A3",
+          null,
+          "G3",
+          null,
+          "G3",
+          null,
+          null,
           null,
           "G3",
           null,
@@ -1011,17 +1067,15 @@
           null,
           "F3",
           null,
-          "D3",
           null,
-          "A3",
           null
         ],
         "mute": [
           false,
-          false
+          true
         ],
         "solo": [
-          false,
+          true,
           false
         ]
       }
@@ -1089,7 +1143,7 @@
         "loop": 16,
         "key": "D minor",
         "steps": [
-          "D4",
+          "A#4",
           "F4",
           "A4",
           "D5",
@@ -1189,7 +1243,7 @@
       }
     },
     "drone-contour": {
-      "done": false,
+      "done": true,
       "pattern": {
         "version": 1,
         "title": "contour drone",
@@ -1295,977 +1349,322 @@
           false
         ]
       }
+    },
+    "hocket-handoff": {
+      "done": true,
+      "pattern": {
+        "version": 1,
+        "title": "hocket: the handoff",
+        "tempo": 108,
+        "loop": 16,
+        "key": "G major",
+        "steps": [
+          "B4",
+          "A4",
+          "B4",
+          null,
+          null,
+          null,
+          null,
+          null,
+          "G4",
+          "A4",
+          "G4",
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          "B3",
+          "A3",
+          "G3",
+          null,
+          null,
+          null,
+          null,
+          null,
+          "G3",
+          "B3",
+          "D4",
+          null
+        ],
+        "mute": [
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false
+        ]
+      }
+    },
+    "hocket-snap": {
+      "done": true,
+      "pattern": {
+        "version": 1,
+        "title": "hocket: the snap",
+        "tempo": 84,
+        "loop": 16,
+        "key": "A minor",
+        "steps": [
+          "A4",
+          "G4",
+          "G4",
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          "E5",
+          "D5",
+          "C5",
+          "B4"
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          "D3",
+          "C3",
+          "B2",
+          null,
+          "B2",
+          "C3",
+          "D3",
+          "E3",
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "mute": [
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false
+        ]
+      }
+    },
+    "l2-candidate-1": {
+      "done": true,
+      "pattern": {
+        "version": 1,
+        "title": "L2 Candidate I",
+        "tempo": 112,
+        "loop": 16,
+        "key": "C major",
+        "steps": [
+          "F3",
+          null,
+          "E3",
+          null,
+          "F3",
+          null,
+          "G3",
+          null,
+          "D#4",
+          null,
+          "C4",
+          null,
+          "A3",
+          "G3",
+          "C4",
+          null
+        ],
+        "bass": [
+          null,
+          null,
+          "C3",
+          null,
+          "B2",
+          null,
+          "A2",
+          null,
+          "B2",
+          null,
+          "A2",
+          null,
+          "G2",
+          "E2",
+          "A2",
+          null
+        ],
+        "mute": [
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false
+        ]
+      }
+    },
+    "l2-candidate-2": {
+      "done": false,
+      "pattern": {
+        "version": 1,
+        "title": "L2 Candidate II",
+        "tempo": 112,
+        "loop": 16,
+        "key": "C major",
+        "steps": [
+          "D4",
+          "C4",
+          "B3",
+          null,
+          "B3",
+          "C4",
+          "D4",
+          null,
+          "F4",
+          null,
+          null,
+          null,
+          null,
+          "A4",
+          "G4",
+          "E4"
+        ],
+        "bass": [
+          "F3",
+          "F3",
+          "E3",
+          null,
+          "F3",
+          "F3",
+          "E3",
+          null,
+          "F3",
+          "F3",
+          "G3",
+          "A3",
+          null,
+          "A3",
+          "G3",
+          null
+        ],
+        "mute": [
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          true
+        ]
+      }
     }
   },
   "drills": [
     {
-      "id": "drill-itch",
-      "name": "the itch drill",
-      "summary": "loop the scale, swap the final note; rank each ender by how badly it wants to move",
-      "teaches": "tendency tones — which notes are chairs and which are standing on one leg",
-      "pattern": {
-        "version": 1,
-        "title": "the itch drill",
-        "tempo": 104,
-        "loop": 8,
-        "key": "F major",
-        "steps": [
-          "F4",
-          "G4",
-          "A4",
-          "A#4",
-          "C5",
-          "D5",
-          "E5",
-          "F5",
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
-        ],
-        "bass": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
-        ],
-        "mute": [
-          false,
-          false
-        ],
-        "solo": [
-          false,
-          false
-        ]
-      }
-    },
-    {
-      "id": "drill-itch-2",
-      "name": "the itch drill, ii",
-      "summary": "flat runway this time — the circling figure predicts nothing; rank the enders again and meet the leading tone honestly",
-      "teaches": "tendency vs contour: what the note wants, when the line is not already deciding for it",
-      "pattern": {
-        "version": 1,
-        "title": "the itch drill, ii",
-        "tempo": 104,
-        "loop": 16,
-        "key": "F major",
-        "steps": [
-          "A4",
-          "G4",
-          "A4",
-          "F4",
-          "G4",
-          "A4",
-          null,
-          "F4",
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
-        ],
-        "bass": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
-        ],
-        "mute": [
-          false,
-          false
-        ],
-        "solo": [
-          false,
-          false
-        ]
-      }
-    },
-    {
-      "id": "lineup-a",
-      "name": "the lineup — a",
-      "summary": "a control for the family lineup: same notes, same rhythm as the real one, order shuffled. Do not say which is which",
-      "teaches": "blind evaluation — politeness cannot pick a melody out of a lineup",
-      "pattern": {
-        "version": 1,
-        "title": "the lineup — a",
-        "tempo": 96,
-        "loop": 16,
-        "key": "E minor",
-        "steps": [
-          "C4",
-          "B3",
-          "G3",
-          null,
-          "A3",
-          "B3",
-          "G#3",
-          null,
-          "G3",
-          "F#3",
-          "E3",
-          null,
-          "C#4",
-          "G3",
-          "A3",
-          null
-        ],
-        "bass": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
-        ],
-        "mute": [
-          false,
-          false
-        ],
-        "solo": [
-          false,
-          false
-        ]
-      }
-    },
-    {
-      "id": "lineup-b",
-      "name": "the lineup — b",
-      "summary": "a control for the family lineup: same notes, same rhythm as the real one, order shuffled. Do not say which is which",
-      "teaches": "blind evaluation — politeness cannot pick a melody out of a lineup",
-      "pattern": {
-        "version": 1,
-        "title": "the lineup — b",
-        "tempo": 96,
-        "loop": 16,
-        "key": "E minor",
-        "steps": [
-          "C4",
-          "G3",
-          "A3",
-          null,
-          "A3",
-          "G3",
-          "B3",
-          null,
-          "G3",
-          "C#4",
-          "B3",
-          null,
-          "E3",
-          "F#3",
-          "G#3",
-          null
-        ],
-        "bass": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
-        ],
-        "mute": [
-          false,
-          false
-        ],
-        "solo": [
-          false,
-          false
-        ]
-      }
-    },
-    {
       "id": "shadow",
-      "name": "⚔ the shadow",
-      "summary": "the bass may only move against the lead: lead up → bass down or holds; lead down → bass up or holds; never the same direction on the same step",
-      "teaches": "contrary motion as an instinct, not an ornament",
-      "pattern": {
-        "version": 1,
-        "title": "the shadow",
-        "tempo": 104,
-        "loop": 16,
-        "key": "B minor",
-        "steps": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
-        ],
-        "bass": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
-        ],
-        "mute": [
-          false,
-          false
-        ],
-        "solo": [
-          false,
-          false
-        ]
-      }
-    },
-    {
-      "id": "ostinato",
-      "name": "⚔ ostinato",
-      "summary": "the bass is a repeating four-note cell, unbroken, all loop; the melody is free above and must not phrase in fours — lean over the barline",
-      "teaches": "the relentless floor — a fixed cell makes a free line sound freer",
-      "pattern": {
-        "version": 1,
-        "title": "ostinato",
-        "tempo": 120,
-        "loop": 16,
-        "key": "A minor",
-        "steps": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
-        ],
-        "bass": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
-        ],
-        "mute": [
-          false,
-          false
-        ],
-        "solo": [
-          false,
-          false
-        ]
-      }
+      "name": "the shadow",
+      "summary": "bass only moves against the lead: lead up, bass down or holds — never the same direction on the same step",
+      "teaches": "contrary motion as instinct",
+      "pattern": null
     },
     {
       "id": "torch",
-      "name": "⚔ pass the torch",
-      "summary": "the call lives in one voice, the answer in the other — one conversation across two registers, not two melodies taking turns",
-      "teaches": "dialogue between voices; register as a character",
-      "pattern": {
-        "version": 1,
-        "title": "pass the torch",
-        "tempo": 100,
-        "loop": 16,
-        "key": "G major",
-        "steps": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
-        ],
-        "bass": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
-        ],
-        "mute": [
-          false,
-          false
-        ],
-        "solo": [
-          false,
-          false
-        ]
-      }
-    },
-    {
-      "id": "drone",
-      "name": "⚔ the drone",
-      "summary": "the bass holds one pitch the entire loop (repeated steps count as holding); the melody alone makes motion, tension and release against the fixed point",
-      "teaches": "oblique motion; how much harmony one stubborn note can imply",
-      "pattern": {
-        "version": 1,
-        "title": "the drone",
-        "tempo": 88,
-        "loop": 16,
-        "key": "E minor",
-        "steps": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
-        ],
-        "bass": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
-        ],
-        "mute": [
-          false,
-          false
-        ],
-        "solo": [
-          false,
-          false
-        ]
-      }
-    },
-    {
-      "id": "hocket",
-      "name": "⚔ hocket",
-      "summary": "the two voices never sound on the same step, and together they leave at most two silent steps — one line, torn between two throats; the composite must be hummable",
-      "teaches": "rhythmic interlock; the groove that lives in the handoff",
-      "pattern": {
-        "version": 1,
-        "title": "hocket",
-        "tempo": 116,
-        "loop": 16,
-        "key": "C major",
-        "steps": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
-        ],
-        "bass": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
-        ],
-        "mute": [
-          false,
-          false
-        ],
-        "solo": [
-          false,
-          false
-        ]
-      }
-    },
-    {
-      "id": "chordisnt",
-      "name": "⚔ the chord that isn't",
-      "summary": "pick two chords; make a listener hear the change at the halfway seam using only two voices, never more than two notes sounding",
-      "teaches": "implied harmony — the ear does the chordal work",
-      "pattern": {
-        "version": 1,
-        "title": "the chord that isn't",
-        "tempo": 96,
-        "loop": 16,
-        "key": "F major",
-        "steps": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
-        ],
-        "bass": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
-        ],
-        "mute": [
-          false,
-          false
-        ],
-        "solo": [
-          false,
-          false
-        ]
-      }
+      "name": "pass the torch",
+      "summary": "the call in one voice, the answer in the other — one conversation across two registers",
+      "teaches": "dialogue; register as a character",
+      "pattern": null
     },
     {
       "id": "oilwater",
-      "name": "⚔ oil and water",
-      "summary": "no perfect unisons or octaves between the voices on any coincident step — the interval chips make it self-checking: no P1, P8, P15 anywhere",
-      "teaches": "independence by prohibition — octaves fuse two voices into one",
-      "pattern": {
-        "version": 1,
-        "title": "oil and water",
-        "tempo": 108,
-        "loop": 16,
-        "key": "A minor",
-        "steps": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
-        ],
-        "bass": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
-        ],
-        "mute": [
-          false,
-          false
-        ],
-        "solo": [
-          false,
-          false
-        ]
-      }
+      "name": "oil and water",
+      "summary": "no perfect unisons or octaves between the voices on any coincident step",
+      "teaches": "independence by prohibition",
+      "pattern": null
     },
     {
       "id": "latecomer",
-      "name": "⚔ the latecomer",
-      "summary": "at least two suspensions: where one voice moves, the other re-strikes its old note into the clash, then steps down to make peace on its next sounding step",
-      "teaches": "the suspension — arrive late, apologize by step",
-      "pattern": {
-        "version": 1,
-        "title": "the latecomer",
-        "tempo": 92,
-        "loop": 16,
-        "key": "D minor",
-        "steps": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
-        ],
-        "bass": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
-        ],
-        "mute": [
-          false,
-          false
-        ],
-        "solo": [
-          false,
-          false
-        ]
-      }
+      "name": "the latecomer ✗",
+      "summary": "failed by design 2026-07-31 — the suspension returns with holds (L3.2)",
+      "teaches": "a drill that punishes the ear for liking things is badly built",
+      "pattern": null
     },
     {
-      "id": "drill-pull",
-      "name": "the pull drill",
-      "summary": "four knots, four untyings: each 4-step cell is a tense interval dissolving into its release. rank the four by how badly the first half wants the second",
-      "teaches": "vertical tension — the consonance spectrum felt as pull, not memorized as a list",
-      "pattern": {
-        "version": 1,
-        "title": "the pull drill",
-        "tempo": 76,
-        "loop": 16,
-        "key": "C major",
-        "steps": [
-          "F4",
-          "F4",
-          "E4",
-          "E4",
-          "D4",
-          "D4",
-          "E4",
-          "E4",
-          "B3",
-          "B3",
-          "C4",
-          "C4",
-          "B3",
-          "B3",
-          "C4",
-          "C4"
-        ],
-        "bass": [
-          "B2",
-          "B2",
-          "C3",
-          "C3",
-          "C3",
-          "C3",
-          "C3",
-          "C3",
-          "C3",
-          "C3",
-          "C3",
-          "C3",
-          "G2",
-          "G2",
-          "C3",
-          "C3"
-        ],
-        "mute": [
-          false,
-          false
-        ],
-        "solo": [
-          false,
-          false
-        ]
-      }
-    },
-    {
-      "id": "drill-seam",
-      "name": "the seam drill",
-      "summary": "end on the fifth and hear the loop pull round",
-      "teaches": "what a seam does to a cadence",
-      "pattern": {
-        "version": 1,
-        "title": "the seam drill",
-        "tempo": 92,
-        "loop": 16,
-        "key": "D minor",
-        "steps": [
-          "D4",
-          "F4",
-          "A4",
-          "D5",
-          null,
-          null,
-          null,
-          null,
-          "C5",
-          "A4",
-          "F4",
-          "A4",
-          null,
-          null,
-          null,
-          null
-        ],
-        "bass": [
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
-        ],
-        "mute": [
-          false,
-          false
-        ],
-        "solo": [
-          false,
-          false
-        ]
-      }
-    },
-    {
-      "id": "torch-notes",
-      "name": "⚔ pass the torch — notes",
-      "summary": "same conversation, but chase the question-ness through pitch instead of shape — unstable ending degrees, leading tones, the hang chosen by note choice; starts from where shape left off",
-      "teaches": "that ? and ! live in scale degrees as much as in contour",
-      "pattern": {
-        "version": 1,
-        "title": "pass the torch — notes",
-        "tempo": 100,
-        "loop": 16,
-        "key": "G major",
-        "steps": [
-          "B3",
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          "D4",
-          "E4",
-          null,
-          "E4",
-          "D4",
-          "C4"
-        ],
-        "bass": [
-          "G3",
-          null,
-          null,
-          "G3",
-          "A3",
-          "B3",
-          "A3",
-          "G3",
-          "A3",
-          null,
-          "A3",
-          null,
-          null,
-          "B3",
-          null,
-          null
-        ],
-        "mute": [
-          false,
-          false
-        ],
-        "solo": [
-          false,
-          false
-        ]
-      }
+      "id": "drone",
+      "name": "the drone",
+      "summary": "the bass holds one pitch the entire loop; the melody alone makes motion, tension, release",
+      "teaches": "oblique motion",
+      "pattern": null
     },
     {
       "id": "drone-contour",
-      "name": "⚔ contour drone",
-      "summary": "the drone keeps one pitch but its strike-rate gets phrasing: dense where the music leans, thin where it breathes — intensity as a contour",
-      "teaches": "density is a voice: rate can phrase while pitch holds still",
-      "pattern": {
-        "version": 1,
-        "title": "contour drone",
-        "tempo": 88,
-        "loop": 16,
-        "key": "E minor",
-        "steps": [
-          "F#4",
-          "E4",
-          "D4",
-          null,
-          "C4",
-          null,
-          "B3",
-          null,
-          "B3",
-          "F#4",
-          "D4",
-          null,
-          null,
-          null,
-          null,
-          null
-        ],
-        "bass": [
-          "G2",
-          "G2",
-          "G2",
-          null,
-          "G2",
-          null,
-          null,
-          null,
-          "G2",
-          null,
-          null,
-          null,
-          "G2",
-          null,
-          null,
-          null
-        ],
-        "mute": [
-          false,
-          false
-        ],
-        "solo": [
-          false,
-          false
-        ]
-      }
+      "name": "contour drone",
+      "summary": "the closed drone: mediant drone with a density contour",
+      "teaches": "how much harmony one stubborn note implies",
+      "pattern": null
     },
     {
       "id": "drone-relentless",
-      "name": "⚔ relentless drone",
-      "summary": "the dense engine version, kept as-is — a section motif filed for the lesson where bursts and form exist. grating on infinite loop is allowed here",
-      "teaches": "relentless texture is a section device; the payoff is the relenting, which needs form",
-      "pattern": {
-        "version": 1,
-        "title": "relentless drone",
-        "tempo": 88,
-        "loop": 16,
-        "key": "E minor",
-        "steps": [
-          "F#4",
-          "E4",
-          "D4",
-          null,
-          "C4",
-          null,
-          "B3",
-          null,
-          "B3",
-          "F#4",
-          "D4",
-          null,
-          null,
-          null,
-          null,
-          null
-        ],
-        "bass": [
-          "G2",
-          "G2",
-          "G2",
-          null,
-          "G2",
-          null,
-          null,
-          null,
-          "G2",
-          null,
-          null,
-          null,
-          "G2",
-          null,
-          null,
-          null
-        ],
-        "mute": [
-          false,
-          false
-        ],
-        "solo": [
-          false,
-          false
-        ]
-      }
+      "name": "relentless drone",
+      "summary": "the relentless variant — filed as a section motif for when form exists",
+      "teaches": "a texture banked for L7",
+      "pattern": null
+    },
+    {
+      "id": "hocket",
+      "name": "hocket: the hiccup",
+      "summary": "never share a step / at most two rests / no voice twice in a row / one octave",
+      "teaches": "note-level interlock",
+      "pattern": null
+    },
+    {
+      "id": "hocket-handoff",
+      "name": "hocket: the handoff",
+      "summary": "never share a step / at most four rests, none adjacent / handoffs every 2-3 notes, never one, never four",
+      "teaches": "the groove lives in the handoff",
+      "pattern": null
+    },
+    {
+      "id": "hocket-snap",
+      "name": "hocket: the snap",
+      "summary": "never share a step / at most two rests / lead an octave above bass, always",
+      "teaches": "fusion’s breaking distance",
+      "pattern": null
+    },
+    {
+      "id": "ostinato",
+      "name": "ostinato",
+      "summary": "the bass is an unbroken four-note cell; the melody must not phrase in fours",
+      "teaches": "the relentless floor",
+      "pattern": null
+    },
+    {
+      "id": "ostinato-variant",
+      "name": "Ostinato Variant",
+      "summary": "the F-F-E cell with one substitution at the seam",
+      "teaches": "one rule-break, placed where it lands",
+      "pattern": null
+    },
+    {
+      "id": "l2-candidate-1",
+      "name": "L2 Candidate I",
+      "summary": "the L2 deliverable: C-major contrappunto wedge, bare-tritone implied G7, stray D#",
+      "teaches": "the letter of the law, served",
+      "pattern": null
+    },
+    {
+      "id": "l2-candidate-2",
+      "name": "L2 Candidate II",
+      "summary": "the ostinato cell that climbs out of its own floor; keystone runner-up",
+      "teaches": "repetition buys the departure",
+      "pattern": null
     }
   ]
 }
