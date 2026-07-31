@@ -1,137 +1,14 @@
-/* Focused harness for the gamepad relative-entry leap path in folio.html.
-   Same rig as reltest.js, but only what the leaps need — and unlike reltest's
-   hold(), every sequence here is multi-frame: the modifier goes down on one
-   frame, the face button edges several frames later, and the releases are
-   staggered, which is how a hand actually plays it. */
-const fs = require("fs");
-const REPO = require("path").resolve(__dirname, "..").split("\\").join("/");
-const path = REPO + "/folio.html";
-const html = fs.readFileSync(path, "utf8");
-const src = html.slice(html.indexOf("<script>") + 8, html.lastIndexOf("</script>"));
+/* Focused harness for the gamepad leap path in folio.html.
 
-/* ---------- fake dom ---------- */
-function mkEl(tag){
-  const set = new Set();
-  const el = {
-    tagName: tag, children: [], style: {}, textContent: "", value: "", files: null,
-    get className(){ return [...set].join(" "); },
-    set className(v){ set.clear(); String(v).split(/\s+/).filter(Boolean).forEach(c=>set.add(c)); },
-    classList: {
-      add:c=>set.add(c), remove:c=>set.delete(c), contains:c=>set.has(c),
-      toggle:(c,f)=>{ const on = f===undefined ? !set.has(c) : !!f; on?set.add(c):set.delete(c); return on; }
-    },
-    get firstChild(){ return el.children[0] || null; },
-    appendChild(c){ el.children.push(c); return c; },
-    insertBefore(c, ref){ const i = ref ? el.children.indexOf(ref) : -1;
-      if (i >= 0) el.children.splice(i, 0, c); else el.children.push(c); return c; },
-    removeChild(c){ const i=el.children.indexOf(c); if(i>=0) el.children.splice(i,1); },
-    addEventListener(){}, click(){},
-    setAttribute(k, v){ el._attrs = el._attrs || {}; el._attrs[k] = String(v); },
-    getAttribute(k){ return (el._attrs && k in el._attrs) ? el._attrs[k] : null; },
-    removeAttribute(k){ if (el._attrs) delete el._attrs[k]; },
-    querySelectorAll(){ return []; }
-  };
-  return el;
-}
-const ids = {};
-["column","footer","metatext","keyref","picker","quests","qlist","qtabs","hints",
- "roll","rollfield","rollbase",
- "qfree","qfreesigil","qdname","qdtext","qdteach","qdstate","qpreview",
- "railquests","railtitle","railtext","railteach","railstate",
- "settings","xbarpad","xbarface","voices","vname0","vname1","vmark0","vmark1",
- "scenery"].forEach(i=>ids[i]=mkEl("div"));
-let keyHandler = null;
-const document = {
-  getElementById: i => (i in ids ? ids[i] : null),
-  createElement: mkEl,
-  body: mkEl("body"),
-  addEventListener(t,f){ if(t==="keydown") keyHandler = f; }
-};
-const winHandlers = {};
-let padNow = 1000;
-globalThis.performance = { now: () => padNow };
-const window = {
-  addEventListener(t,f){ (winHandlers[t]=winHandlers[t]||[]).push(f); },
-  performance: { now: () => padNow },
-  location: { protocol: "file:", origin: "null", href: "file:///folio.html" }
-};
-const store = {};
-const localStorage = {
-  getItem: k => (k in store ? store[k] : null),
-  setItem: (k,v) => { store[k] = String(v); },
-  removeItem: k => { delete store[k]; }
-};
-const requestAnimationFrame = () => 0;
+   Same instrument as reltest.js, but only what the leaps need — and unlike
+   reltest's single-frame hold(), every sequence here is multi-frame: the
+   modifier goes down on one frame, the face button edges several frames
+   later, and the releases are staggered, which is how a hand actually plays
+   it. The bench is tests/rig.js. */
+const rig = require("./rig.js");
+const R = rig.boot({ location: { protocol:"file:", origin:"null", href:"file:///folio.html" } });
+const { T, ok, eq, frame, frames, blank, steps, clock, GP } = R;
 
-/* ---------- fake web audio ---------- */
-const sounded = [];
-let nowT = 0;
-function param(){ return { setValueAtTime(){}, linearRampToValueAtTime(){}, cancelScheduledValues(){}, value:1 }; }
-class FakeCtx {
-  constructor(){ this.state = "running"; }
-  get currentTime(){ return nowT; }
-  resume(){}
-  createGain(){ return { gain: param(), connect(){}, disconnect(){} }; }
-  createBiquadFilter(){ return { type:"", frequency:param(), Q:param(), connect(){}, disconnect(){} }; }
-  createOscillator(){
-    const o = { type:"", frequency:{ setValueAtTime:(f,at)=>{ o._f=f; o._at=at; } },
-      connect(){}, disconnect(){}, start(){ sounded.push({freq:o._f, at:o._at}); }, stop(){}, onended:null };
-    return o;
-  }
-  get destination(){ return {}; }
-}
-let gamepads = [null];
-const navigator = { getGamepads: () => gamepads };
-const URL = { createObjectURL:()=>"blob:x", revokeObjectURL(){} };
-function Blob(){}
-
-const hook = `
-  window.__t = { get doc(){return doc;}, get cursor(){return cursor;}, set cursor(v){cursor=v;},
-    get baseOctave(){return baseOctave;}, set baseOctave(v){baseOctave=v;},
-    setDoc: function(d){ doc = d; renderAll(); },
-    pollPads: pollPads, relStep: relStep, moveDegrees: moveDegrees,
-    nameOfMidi: nameOfMidi, anchorMidi: anchorMidi,
-    /* the entry method is gone: contour is the pad's only way of writing, so
-       there is nothing to put the pad into any more */
-    prevVoice: prevVoice, nextVoice: nextVoice, get voice(){return voice;},
-    get viz(){return viz;}, toggleViz: toggleViz, nudge: nudge,
-    /* the bumpers' spent-as-modifier flags went with the method they belonged
-       to; the triggers that replaced them are never spent, which is what makes
-       a leap and an edge able to share one hold */
-    writtenLen: writtenLen, spanOf: spanOf };
-`;
-const patched = src.replace(/\}\)\(\);\s*$/, hook + "\n})();");
-if (patched === src) throw new Error("could not inject hook");
-
-const fn = new Function("document","window","localStorage","requestAnimationFrame",
-  "navigator","URL","Blob","AudioContext","setTimeout","setInterval","clearInterval","fetch",
-  patched);
-window.AudioContext = FakeCtx;
-fn(document, window, localStorage, requestAnimationFrame, navigator, URL, Blob, FakeCtx,
-   setTimeout, setInterval, clearInterval, undefined);
-
-const T = window.__t;
-
-/* ---------- test rig ---------- */
-let pass = 0, fail = 0;
-function ok(name, cond, extra){
-  if (cond){ pass++; console.log("  ok   " + name); }
-  else { fail++; console.log("  FAIL " + name + (extra !== undefined ? "  -> " + JSON.stringify(extra) : "")); }
-}
-function eq(name, a, b){ ok(name, JSON.stringify(a) === JSON.stringify(b), {got:a, want:b}); }
-function blank(){ return new Array(16).fill(null); }
-function steps(o){ const s = blank(); for (const k in o) s[k|0] = o[k]; return s; }
-
-const GP = { X:0, B:1, SQ:2, TR:3, L1:4, R1:5, L2:6, R2:7, SEL:8, START:9,
-             L3:10, R3:11, DU:12, DD:13, DL:14, DR:15 };
-
-function pad(down, axes){
-  const buttons = [];
-  for (let i = 0; i < 17; i++) buttons.push({ pressed: down.indexOf(i) >= 0, value: down.indexOf(i) >= 0 ? 1 : 0 });
-  return { connected:true, mapping:"standard", buttons, axes: axes || [0,0,0,0], index:0 };
-}
-function frame(down){ padNow += 16; gamepads = [pad(down||[])]; T.pollPads(); }
-function frames(n, down){ for (let i = 0; i < n; i++) frame(down); }
 
 /* a fresh relative page anchored on C4 behind step 1, octave 4 */
 function stage(anchor, key){
@@ -139,7 +16,7 @@ function stage(anchor, key){
              steps: steps({15: anchor === undefined ? "C4" : anchor}) });
   T.cursor = 0;
   T.baseOctave = 4;
-  gamepads = [pad([])]; T.pollPads(); frame([]);
+  frame([]); frame([]);
 }
 /* what got written at step 1, and where the base octave ended up */
 function wrote(){ return T.doc.steps[0]; }
@@ -326,7 +203,7 @@ eq("and back", T.voice, 0);
 T.setDoc({ version:1, title:"t", tempo:112, loop:16, key:"C major",
            steps: steps({15:"C4"}), bass: steps({15:"C4"}) });
 T.cursor = 0; T.baseOctave = 4;
-gamepads = [pad([])]; T.pollPads(); frame([]);
+frame([]); frame([]);
 frames(3, [GP.L1]);
 frame([GP.L1, GP.X]);
 frames(3, []);
@@ -423,7 +300,7 @@ function stageAt(note, key){
              steps: steps({0: note === undefined ? "C4" : note}) });
   T.cursor = 0;
   T.baseOctave = 4;
-  gamepads = [pad([])]; T.pollPads(); frame([]);
+  frame([]); frame([]);
 }
 /* the modifier settles, the direction edges, then both are let go */
 function nudgeHeld(mods, dir, note, key){
@@ -522,5 +399,4 @@ for (const key of ["C major","E minor","F# major","A minor"]){
 }
 ok("96 chromatic nudges in four keys, from twelve anchors, all exact", off === 0, off);
 
-console.log("\n" + pass + " passed, " + fail + " failed\n");
-process.exit(fail ? 1 : 0);
+R.done();

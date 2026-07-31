@@ -14,7 +14,7 @@
    scale and quintupled the file.
 
    Zero dependencies: the compositing runs in headless Chrome (canvas), driven
-   by tests/cdp.mjs, because Node alone cannot decode a PNG.
+   by tests/cdp.js, because Node alone cannot decode a PNG.
 
    Run:  node scripts/bake-paper.mjs
          node scripts/bake-paper.mjs --ground #E3D7C0 --out folio-paper.png
@@ -23,7 +23,7 @@
    The measured profile of the sheet this bakes (and of the one before it):
    tear depth 30–60 px out of 1280, median ~48, the alpha crossing ~8 px wide. */
 
-import { launch, newPage, close } from "../tests/cdp.mjs";
+import cdp from "../tests/cdp.js";   /* the one CDP driver the repo has */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -68,9 +68,8 @@ for (const f of [CLOUD, FIBRE])
 
 const dataURL = f => "data:image/png;base64," + fs.readFileSync(f).toString("base64");
 
-const browser = await launch(9391);
+const page = await cdp.launch({ port: 9391 });
 try {
-  const page = await newPage(browser);
   await page.eval(`window.__cloud=${JSON.stringify(dataURL(CLOUD))};
                    window.__fibre=${JSON.stringify(dataURL(FIBRE))};1`);
 
@@ -148,5 +147,5 @@ try {
   console.log("baked " + opt.out + "  ground " + opt.ground +
               "  " + opt.size + "x" + opt.size + "  " + Math.round(buf.length/1024) + " KB");
 } finally {
-  await close(browser);
+  page.close();
 }

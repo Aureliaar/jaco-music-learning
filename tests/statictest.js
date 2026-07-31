@@ -202,21 +202,27 @@ const seen = [];
   ok("and says which choice is pressed",
      (await b.eval("document.querySelector('button[data-scene=sea]').getAttribute('aria-pressed')")) === "true");
 
-  const disk = JSON.parse(fs.readFileSync(REPO + "/quests/quest-log.json", "utf8"));
   const sharedDisk = JSON.parse(fs.readFileSync(DIST + "/quests/quest-log.json", "utf8"));
   const inPage = await b.eval("JSON.parse(localStorage.getItem('folio.quests.v2'))");
   ok("the committed quests are what the page holds",
      JSON.stringify(Object.keys(inPage.quests || {}).sort()) ===
      JSON.stringify(Object.keys(sharedDisk.quests || {}).sort()),
      [Object.keys(inPage.quests||{}), Object.keys(sharedDisk.quests||{})]);
-  ok("the shared snapshot marks all eleven documented completions",
-     Object.values(inPage.quests || {}).filter(q => q.done).length === 11,
-     Object.entries(inPage.quests || {}).filter(([,q]) => q.done).map(([id]) => id));
-  const firstQuest = Object.keys(disk.quests || {})[0];
+  /* The build marks the completions QUESTS.md records; whatever that list is
+     on the day, the page must hold exactly what the snapshot holds. What is
+     deliberately *not* asserted here is any particular count or any
+     particular melody: quests/quest-log.json is the player's live workspace,
+     and a harness that reads its contents is a harness that goes red every
+     time they write something. */
+  const doneInPage = Object.keys(inPage.quests || {}).filter(id => inPage.quests[id].done).sort();
+  const doneInSnap = Object.keys(sharedDisk.quests || {}).filter(id => sharedDisk.quests[id].done).sort();
+  ok("the completions the snapshot marks are the completions the page shows",
+     JSON.stringify(doneInPage) === JSON.stringify(doneInSnap), [doneInPage, doneInSnap]);
+  const firstQuest = Object.keys(sharedDisk.quests || {})[0];
   if (firstQuest){
-    const a = JSON.stringify((disk.quests[firstQuest].pattern || disk.quests[firstQuest].motif || {}).steps);
+    const a = JSON.stringify((sharedDisk.quests[firstQuest].pattern || {}).steps);
     const c = JSON.stringify((inPage.quests[firstQuest].pattern || {}).steps);
-    ok("and his melody came through note for note (" + firstQuest + ")", a === c, [a, c]);
+    ok("and the melody in it came through note for note (" + firstQuest + ")", a === c, [a, c]);
   }
 
   await b.key("F3", { key:"F3", vk:114 });

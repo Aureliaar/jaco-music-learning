@@ -19,8 +19,13 @@ import crypto from "node:crypto";         /* core module, only for the ETag */
 import { fileURLToPath } from "node:url";
 
 const ROOT     = path.dirname(fileURLToPath(import.meta.url));
-const LOG_DIR  = path.join(ROOT, "quests");
-const LOG_FILE = path.join(LOG_DIR, "quest-log.json");
+/* The log lives beside the folio, in quests/. FOLIO_LOG moves it and nothing
+   else — the pages, the scenery and the stills are still served from the repo
+   root. It exists so that a test run can drive a real server against a real
+   log in a temp directory instead of writing over the player's own; the file
+   in quests/ is their work, and a harness must never touch it. */
+const LOG_FILE = process.env.FOLIO_LOG || path.join(ROOT, "quests", "quest-log.json");
+const LOG_DIR  = path.dirname(LOG_FILE);
 
 const args = process.argv.slice(2);
 const LAN  = args.includes("--lan");

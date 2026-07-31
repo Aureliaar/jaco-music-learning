@@ -6,8 +6,38 @@ const net = require("net");
 const { launch } = require("./cdp.js");
 
 const REPO = require("path").resolve(__dirname, "..").split("\\").join("/");
-const LOG  = REPO + "/quests/quest-log.json";
-const BACK = __dirname + "/quest-log.bootbackup.json";
+/* ---- the log this run drives is never the player's ----
+   Two earlier runs of these harnesses clobbered quests/quest-log.json — one
+   timed out and left its test seed sitting in the player's workspaces. The
+   file in quests/ is their music. So the server is pointed (FOLIO_LOG) at a
+   log in a temp directory that this process makes and removes, and the
+   tracked file is neither read nor written by anything below. */
+const TMP  = require("fs").mkdtempSync(require("path").join(require("os").tmpdir(), "folio-test-"));
+const LOG  = require("path").join(TMP, "quest-log.json");
+
+/* ---- and it is seeded, rather than borrowed ----
+   This harness used to read whatever happened to be in the player's log,
+   which made it a test of their composing as much as of the folio: the tabs
+   it walks, the workspace it enters and the picture it expects were all
+   whatever they had last written. The fixture is here now, in the file, and
+   says exactly what the checks below need — two lessons and a drills tab, and
+   a workspace with a still of its own. */
+const SILENCE = new Array(16).fill(null);
+const SEED = {
+  folio:"quest-log", version:2, active:null,
+  free:{ version:1, title:"untitled folio", tempo:112, loop:16, key:"C major",
+         steps: SILENCE.slice() },
+  quests:{},
+  drills:[
+    { id:"shadow", name:"⚔ The Shadow", lesson:2,
+      summary:"the second voice shadows the first a third below",
+      teaches:"two lines that are one line",
+      pattern:{ version:1, title:"shadow", tempo:104, loop:16, key:"D minor",
+                steps: SILENCE.slice() } },
+    { id:"drill-pull", name:"the pull drill", summary:"an étude, not a quest",
+      teaches:"tendency", pattern:null }
+  ]
+};
 
 let pass = 0, fail = 0;
 function ok(name, cond, extra){
@@ -29,10 +59,10 @@ function freePort(start){
 (async function(){
   const port = Number(process.env.PORT) || await freePort(4173);
   const BASE = "http://localhost:" + port;
-  if (fs.existsSync(LOG)) fs.copyFileSync(LOG, BACK);
 
+  fs.writeFileSync(LOG, JSON.stringify(SEED, null, 2));
   const srv = spawn(process.execPath, [REPO + "/server.mjs"],
-    { cwd: REPO, stdio: ["ignore","pipe","pipe"], env: Object.assign({}, process.env, { PORT: String(port) }) });
+    { cwd: REPO, stdio: ["ignore","pipe","pipe"], env: Object.assign({}, process.env, { PORT: String(port), FOLIO_LOG: LOG }) });
   let srvlog = "";
   srv.stdout.on("data", d => { srvlog += d; });
   srv.stderr.on("data", d => { srvlog += d; });
@@ -1142,7 +1172,7 @@ function freePort(start){
   b.close();
   srv.kill();
   await wait(400);
-  if (fs.existsSync(BACK)) fs.copyFileSync(BACK, LOG);
+  try { fs.rmSync(TMP, { recursive:true, force:true }); } catch (e){}
   console.log("\n" + pass + " passed, " + fail + " failed\n");
   process.exit(fail ? 1 : 0);
 })().catch(e => { console.log("harness crashed: " + (e && e.stack || e)); process.exit(1); });
