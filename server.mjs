@@ -35,10 +35,12 @@ const HOST = LAN ? "0.0.0.0" : "127.0.0.1";
 const INDEX = "folio.html";
 const MAX_BODY = 4 * 1024 * 1024;         /* a quest log is kilobytes; this is generous */
 
-/* Only these are served, and only from the repo root or from one named
-   folder below it. Everything else — the markdown, the git directory, any
-   other subdirectory — is not web content and is not offered as such. */
-const STATIC_DIRS = ["quest-backgrounds"];
+/* Only these are served, and only from the repo root or from one of the
+   named folders below it: js/, which is the app itself since folio.html was
+   split, and quest-backgrounds/, which is the workspaces' stills. Everything
+   else — the markdown, the git directory, the tests, the quest log as a file
+   — is not web content and is not offered as such. */
+const STATIC_DIRS = ["js", "quest-backgrounds"];
 const MIME = {
   ".html": "text/html; charset=utf-8",
   ".js":   "text/javascript; charset=utf-8",
@@ -166,12 +168,12 @@ async function serveStatic(req, res, pathname){
   const base = name.slice(1);
   if (!base){ send(req, res, 404, "not found"); return; }
 
-  /* The one exception to "the root and nothing else": the per-workspace
-     scenery lives in a folder of its own, because twenty-two stills loose in
-     the root would bury everything around them. Exactly one directory is
-     named, exactly one level deep, and the resolved file is still checked
-     against that directory afterwards — the rest of the disk is as
-     unreachable as it always was. */
+  /* The two exceptions to "the root and nothing else": js/, which is the
+     instrument since folio.html was split, and quest-backgrounds/, because
+     twenty-two stills loose in the root would bury everything around them.
+     Both are named explicitly, both are exactly one level deep, and the
+     resolved file is still checked against its directory afterwards — the
+     rest of the disk is as unreachable as it always was. */
   let dir = ROOT, leaf = base;
   const cut = base.indexOf("/");
   if (cut >= 0){

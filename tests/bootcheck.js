@@ -1085,7 +1085,7 @@ function freePort(start){
   ok("every tab of the log fits the window",
      tabHeights.every(h => h <= winFit), [tabHeights, winFit]);
   ok("however long a lesson gets, the list itself is bounded",
-     /#qlist\{[\s\S]*?max-height/.test(fs.readFileSync(REPO + "/folio.html", "utf8")));
+     /#qlist\{[\s\S]*?max-height/.test(fs.readFileSync(REPO + "/folio.css", "utf8")));
   const bodyH = mainC.h;                       /* the key page, the tallest */
   const winH = await b.eval("window.innerHeight");
   ok("the page still never offers a scrollbar",
@@ -1131,7 +1131,7 @@ function freePort(start){
        "i.src='quest-backgrounds/shadow.png';return i.complete;})()"));
   ok("and one scene giving way to another has a layer to do it on",
      (await b.eval("!!document.getElementById('scenefade')")) &&
-     /\.scenefade\{[\s\S]*?transition:opacity/.test(fs.readFileSync(REPO + "/folio.html", "utf8")));
+     /\.scenefade\{[\s\S]*?transition:opacity/.test(fs.readFileSync(REPO + "/folio.css", "utf8")));
   ok("the torn sheet is under the work",
      (await b.eval("getComputedStyle(document.querySelector('.field'),'::before').backgroundImage"))
        .indexOf("folio-paper.png") >= 0);

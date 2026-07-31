@@ -27,7 +27,8 @@ function freePort(start){
 }
 
 const MIME = { ".html":"text/html; charset=utf-8", ".json":"application/json; charset=utf-8",
-               ".png":"image/png" };
+               ".png":"image/png", ".css":"text/css; charset=utf-8",
+               ".js":"text/javascript; charset=utf-8" };
 const seen = [];
 
 (async function(){
@@ -42,9 +43,21 @@ const seen = [];
      page, the seed, and the pictures — and nothing else */
   const stills = listed.filter(n => n.indexOf("quest-backgrounds/") === 0);
   const rest = listed.filter(n => n.indexOf("quest-backgrounds/") !== 0);
-  ok("dist holds the pages and the seed and nothing else",
+  ok("dist holds the pages, the app, the seed and nothing else",
      JSON.stringify(rest) === JSON.stringify(
-       ["auditor.html","folio-forest.png","folio-paper.png","folio-sea.png","index.html","quests/quest-log.json"]), rest);
+       ["auditor.html","folio-forest.png","folio-paper.png","folio-sea.png",
+        "folio.css","index.html",
+        "js/audio.js","js/boot.js","js/edit.js","js/entry.js","js/quests.js",
+        "js/state.js","js/views.js",
+        "quests/quest-log.json"]), rest);
+  /* the split is only safe if every script the page names actually travels */
+  const named = (fs.readFileSync(DIST + "/index.html", "utf8")
+                   .match(/<script src="([^"]+)"/g) || [])
+                  .map(t => t.slice(13, -1));
+  ok("and every script index.html names is one of them",
+     named.length === 7 && named.every(n => listed.includes(n)), named);
+  ok("with the stylesheet it names beside them",
+     /<link[^>]+href="folio\.css"/.test(fs.readFileSync(DIST + "/index.html", "utf8")));
   ok("and the workspaces' own stills travel with them",
      stills.length === fs.readdirSync(REPO + "/quest-backgrounds").filter(n => n.endsWith(".png")).length &&
      stills.length > 0, stills.length);

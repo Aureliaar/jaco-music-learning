@@ -4,6 +4,8 @@
    what leaves the repository. This copies that short list into ./dist:
 
      folio.html              -> dist/index.html
+     folio.css               -> dist/folio.css               (the whole look)
+     js/*.js                 -> dist/js/*.js                 (the app itself)
      auditor.html            -> dist/auditor.html            (the blind lineup)
      quests/quest-log.json   -> dist/quests/quest-log.json   (the seed)
      folio-forest.png        -> dist/folio-forest.png        (quiet scenery)
@@ -24,6 +26,16 @@ const DIST = path.join(ROOT, "dist");
 
 const FILES = [
   ["folio.html", "index.html"],
+  /* the instrument is seven plain scripts and one stylesheet since the split;
+     folio.html names them, and they travel with it or it does nothing */
+  ["folio.css", "folio.css"],
+  ["js/state.js", "js/state.js"],
+  ["js/views.js", "js/views.js"],
+  ["js/audio.js", "js/audio.js"],
+  ["js/edit.js", "js/edit.js"],
+  ["js/quests.js", "js/quests.js"],
+  ["js/entry.js", "js/entry.js"],
+  ["js/boot.js", "js/boot.js"],
   ["auditor.html", "auditor.html"],
   ["folio-forest.png", "folio-forest.png"],
   ["folio-sea.png", "folio-sea.png"],
