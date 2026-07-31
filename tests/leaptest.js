@@ -95,7 +95,10 @@ const hook = `
        there is nothing to put the pad into any more */
     prevVoice: prevVoice, nextVoice: nextVoice, get voice(){return voice;},
     get viz(){return viz;}, toggleViz: toggleViz, nudge: nudge,
-    get lbUsed(){return lbUsed;}, get rbUsed(){return rbUsed;} };
+    /* the bumpers' spent-as-modifier flags went with the method they belonged
+       to; the triggers that replaced them are never spent, which is what makes
+       a leap and an edge able to share one hold */
+    writtenLen: writtenLen, spanOf: spanOf };
 `;
 const patched = src.replace(/\}\)\(\);\s*$/, hook + "\n})();");
 if (patched === src) throw new Error("could not inject hook");
@@ -439,10 +442,28 @@ eq("and the triggers were spent on it, not on the octave", d.oct, 4);
 d = nudgeHeld([GP.L2, GP.R2], GP.DL);
 eq("both held, then d-pad left: a semitone down", d.note, "B3");
 eq("still no octave shift on the release", d.oct, 4);
-d = nudgeHeld([GP.L2], GP.DR);
-eq("L2 alone is not the hatch: a step of the key", d.note, "D4");
+/* one trigger alone is not the hatch, and since Lesson 3 it is not the nudge
+   either: it is the note's own edge, which moves no pitch at all. Held under a
+   face button the same trigger is still the leap — the leap reads a button
+   edge, the edge reads a direction held, and neither takes the other's input. */
 d = nudgeHeld([GP.R2], GP.DR);
-eq("nor is R2 alone", d.note, "D4");
+eq("R2 alone leaves the pitch alone — it is the note's end", d.note, "C4");
+eq("and lengthened it instead", T.writtenLen(T.doc, 0, 0), 2);
+eq("with no octave shift on the release", d.oct, 4);
+d = nudgeHeld([GP.L2], GP.DR);
+eq("L2 alone is the note's start, and moves no pitch", d.note, "C4");
+eq("nor could it move a sixteenth's start past its own end", T.doc.steps[1], null);
+eq("and the octave is still nowhere on the pad", d.oct, 4);
+/* both, under one unbroken hold */
+stageAt();
+frames(3, [GP.R2]);
+frame([GP.R2, GP.DR]);              /* the edge: the note rings a step longer */
+frames(2, [GP.R2]);
+frame([GP.R2, GP.TR]);              /* the leap: still a fifth up, same hold */
+frames(2, [GP.R2]);
+frames(2, []);
+eq("an edge then a leap under one unbroken hold: the leap leapt", wrote(), "G4");
+eq("and the released trigger was still not the octave", oct(), 4);
 d = nudgeHeld([], GP.DR);
 eq("and bare it is the step it always was", d.note, "D4");
 /* the trigger let go before the direction, and the other way round */

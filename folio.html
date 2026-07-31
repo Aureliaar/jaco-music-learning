@@ -209,8 +209,41 @@
   .fleuron{color:var(--gilt);text-align:center;font-size:1em;line-height:1;}
   .caret{color:var(--ink);text-align:center;font-size:1.05em;line-height:1;}
   .num{color:var(--faded);text-align:right;font-size:0.9em;}
-  .note{color:var(--ink);text-align:left;letter-spacing:0.04em;}
+  .note{position:relative;color:var(--ink);text-align:left;letter-spacing:0.04em;}
   .note.empty{color:var(--faded);}
+  /* ---- the held note, written ----
+     A note that rings on does not become more notes: the steps it covers are
+     not marked one by one but joined, by a single ink hairline running down
+     the column under the name, from the note to where it stops. It is drawn
+     as a pseudo-element so that the run of rows carries no text of its own —
+     one continuous stroke, not a stack of glyphs — and it overshoots each row
+     a little at both ends so that the row's own hairline does not cut it.
+     Sixteen of these could never add up to a grid: there is at most one per
+     voice per note, it is vertical only, and it is quieter than the writing.
+     Where it ends it turns a short foot, because the end of a held note is a
+     decision and the page should say where it was made. */
+  .note.hold::after{
+    content:"";
+    position:absolute;
+    left:0.22em;
+    top:-0.62em;bottom:-0.62em;
+    width:1px;
+    background:rgba(59,47,30,0.34);
+  }
+  .note.hold.dim::after{background:rgba(59,47,30,0.20);}
+  .note.hold.last::before{
+    content:"";
+    position:absolute;
+    left:0.22em;
+    bottom:-0.62em;
+    width:0.46em;height:1px;
+    background:rgba(59,47,30,0.34);
+  }
+  .note.hold.last.dim::before{background:rgba(59,47,30,0.20);}
+  /* past the loop the writing is quieter; its stroke goes with it */
+  .row.outside .note.hold::after,.row.outside .note.hold.last::before{
+    background:rgba(59,47,30,0.16);
+  }
   /* the voice not being written into: present, readable, a shade back */
   .note.dim{color:var(--faded);}
   .row.cursor .note{font-weight:700;}         /* the only bold in the app */
@@ -1016,7 +1049,9 @@
           <dt>row starting at Z</dt><dd>lower octave, white keys left to right; the row above holds its sharps</dd>
           <dt>row starting at Q</dt><dd>the same shape, one octave higher; its sharps sit on the number row</dd>
           <dt>last key of each row</dt><dd>the octave above (C)</dd>
-          <dt>period, delete</dt><dd>clear the step, and on two steps as a note does</dd>
+          <dt>period, delete</dt><dd>clear the step, and on two steps as a note does. On a step in the middle of a held note it is that note that goes, hold and all</dd>
+          <dt>the two keys left of backspace</dt><dd>&minus; and + : the note sounding at the cursor, shorter or longer by one step. A held note rings on through the steps it covers instead of being struck again on each of them, and it may ring past the last step of the loop and into the repeat. With shift: as long as it will go here, or back to a plain sixteenth</dd>
+          <dt>&hellip; or simply keep the key down</dt><dd>the note goes on growing while you hold it, a step at a time, and stops where you let go. A tap is the sixteenth it always was</dd>
           <dt>the arrows</dt><dd>all four move the cursor by one step (wraps): up or left is back, down or right is forward. This is how a sixteenth is placed &mdash; step back one, and write</dd>
           <dt>home, end</dt><dd>step 1, step 16</dd>
           <dt>page up, page down</dt><dd>the two rows of note keys, an octave higher or lower, so that the whole of C2&ndash;C6 is under the hands. The header says which octave they are in</dd>
@@ -1039,6 +1074,7 @@
           <dt>&hellip; shift + up, down</dt><dd>move the chosen quest up or down the list, and it stays where you put it. A quest moves among its own &mdash; the ones kept to hand, or the rest &mdash; and never crosses the hairline by being nudged</dd>
         </dl>
         <p>Notes are entered by position, not by letter, so the layout is the same on any keyboard. Entering a note advances the cursor two steps, and so does clearing one: a step is a sixteenth, sixteen of them are a bar, and eighths are what most of this is thought in &mdash; so writing straight ahead lays notes on 1, 3, 5, 7 and counts nothing. A sixteenth is one deliberate movement away: step back with an arrow and write there. Nothing is snapped to a grid; it is two steps on from wherever the cursor is, and it wraps around the page as the arrows do.</p>
+        <p>A note may also last longer than the step it begins on. Every note is written as a sixteenth, as it always was, and is made longer afterwards &mdash; with &minus; and +, or by keeping down whatever wrote it &mdash; whereupon it goes on sounding across the steps it covers rather than being struck again on each one: one note, one ending. On the page the steps it covers carry no writing of their own but a single stroke down the column, from the note to a small foot where it stops; in the drawing the note is simply one longer bar. A note cannot ring through another note of its own voice &mdash; a line is one line &mdash; so a note written into the middle of a hold shortens it for as long as it is there, and taking that note away gives the hold its full length back. Nothing is ever rewritten behind you. A note may ring past the last step of the loop, in which case it comes round with the loop and is drawn again at the head of the page: the seam is a place a note can sound across rather than a wall. Where the two voices sound together the interval is named as before, and a note that is merely ringing counts as sounding &mdash; so a voice moving under a held one is written where it moves, which is the whole shape of a suspension. A page written before any of this opens exactly as it always did, every note one step long, and a page with nothing held in it is saved exactly as it always was.</p>
         <p>The page holds two voices &mdash; a lead and a bass &mdash; and they play together, from the one clock. They are written one at a time: the strip above the page names both and marks the one in hand, the column gives each a place of its own beside the step number, and in the roll they are drawn in the same field, the voice you are not in a shade back. Tab changes hands. Everything else &mdash; the key, the tempo, the loop, the whole page &mdash; the two share; only the notes and the timbre are their own. The bass is rounder and darker, so a bass written up in the melody's octave still sounds like the bass. Solo (O) and mute (P) act on the voice you are in; solo, if any voice has it, is what decides, and a change is heard on the next step without a restart. What each voice is doing is written under its name on that strip and nowhere else &mdash; solo, muted, or silent under the other's solo &mdash; so there is one place to look, and the header has stopped saying it twice. A page written before there were two voices opens exactly as it always did, with a silent bass under it.</p>
         <p>The drawing names what it draws, in its margin rather than on top of itself. The home note of the page &mdash; the tonic of its key &mdash; is ruled across the roll at every octave in view and named once, at the side of its line, with the word home under the name: in C major those rules are the Cs, in G major the Gs, in A minor the As, and they move the moment the key does. Home is therefore a line you can see, and how far a note sits from it is how far it is from home. The octave is numbered the international way, so that C4 is middle C and the page runs from C2 to C6. Place a note, or move one, and a line of its own is drawn at that note's pitch, parallel to those rules and named beside them; it holds for a moment and then fades, so the pitch is said when you ask for it and the drawing is left alone the rest of the time. The column has always named its notes in the same alphabet, a dash standing in where there is no sharp, so that the two columns line up. Where both voices sound on the same step the roll also writes the interval between them, on a hairline tie drawn from the one bar to the other, so that the name belongs to that pair of notes and to nothing else however far apart the voices are. Below the octave the short names are the usual ones &mdash; P1, m2, M2, m3, M3, P4, TT, P5, m6, M6, m7, M7, P8 &mdash; and wider than an octave the compound name is used: the simple number plus seven for every octave crossed, so a minor third and an octave is m10, a fifth and an octave is P12, two octaves is P15. The tritone keeps its name and takes the compound number with it: TT, then TT11, then TT18. Only the distance is named, never the direction, so it reads the same whichever voice is on top. Nothing here judges: no interval is coloured, ranked, or marked as wanting anything. The page says what the two notes are; what they are worth is for the ear. K puts the whole lot away and brings it back.</p>
         <p>The key and the tempo both belong to the page you are on, and so to the workspace it lives in: each quest keeps its own, free play keeps its own, and changing one changes nothing anywhere else. Either may be changed while the loop runs; the change is heard at the next step, without a restart. A quest's page arrives already tuned &mdash; its own key and its own tempo, chosen to suit its constraint &mdash; so there is nothing to decide before writing; change them here whenever you like, and the change stays with that quest. Free play always begins in C major at 112.</p>
@@ -1068,6 +1104,9 @@
           <dt>&hellip; what is not there</dt><dd>the key page (F1, and R3 off it), the quest log (F3), the view (R3, F2), and the names on the drawing (K). None of them has a slot: all eight are spoken for</dd>
           <dt>d&#8209;pad, bare</dt><dd>&#8593;&#8595; move the cursor one step; hold to repeat. One step back, then a note, is how a sixteenth is placed. &#8592;&#8594; nudge the note under the cursor a step of the key, without advancing. In the roll the drawing decides and the pairs trade places: &#8592;&#8594; are time, &#8593;&#8595; are the nudge</dd>
           <dt>&hellip; L2 and R2 together</dt><dd>take the nudge out of the key too, a semitone at a time, exactly as they take &#9651; and &#10005;</dd>
+          <dt>&hellip; hold L2 (LT) alone</dt><dd>&#8592; and &#8594; move the *start* of the note under the cursor: the note itself moves, and its far end stays where it was. Hold to repeat</dd>
+          <dt>&hellip; hold R2 (RT) alone</dt><dd>the same pair moves its *end*: the note stays where it is and stops sooner or later. The two ends of a note are two decisions, and this is one modifier each. Under a face button those same triggers are still the leap &mdash; the leap is a button pressed, the edge is a direction held, and neither takes the other's input</dd>
+          <dt>keep the button down</dt><dd>whatever wrote the note &mdash; &#9651;, &#10005; or &#9675; &mdash; goes on growing it while it is held, a step at a time, and stops where you let go. A tap is the sixteenth it always was</dd>
           <dt>left stick</dt><dd>the same as the d&#8209;pad, up and down only; in the roll, both axes</dd>
           <dt>right stick</dt><dd>the cursor by fours, beat to beat</dd>
           <dt>here, d&#8209;pad &#8592;&#8594;</dt><dd>the tonic; &#9651; or &#10005; (Y, A) make the key major or minor</dd>
@@ -1076,8 +1115,10 @@
           <dt>on the key page</dt><dd>R3 closes it, as it closes the quest log</dd>
         </dl>
         <p>The pad writes shapes, not pitches: you give the move &mdash; up, down, again, rest &mdash; and the page keeps ordinary notes, as always. A move is one step of the key shown in the header, counted from the last note that sounds before the cursor; rests are stepped over, and the search wraps around the loop. An empty page begins on the tonic. A note that lies outside the key moves first to the nearest note of the key in the direction you asked, and that counts as the step. Set the key on this page.</p>
+        <p>Length is asked for the same way it is on the keyboard, and then one way more. Keep down whatever wrote the note &mdash; &#9651;, &#10005; or &#9675; &mdash; and it goes on growing while you hold it, a step at a time, stopping where you let go; a tap is the sixteenth it always was. Or take the note's two ends apart: hold L2 and the d&#8209;pad's &#8592; and &#8594; move its *start*, carrying the note and leaving its far end where it was; hold R2 and the same pair moves its *end*, leaving the note where it is and stopping it sooner or later. Neither edge may run over another note of the same voice, and neither may leave a note shorter than the step it begins on.</p>
+        <p>The two triggers therefore say three things, and never have to ask which was meant. Under a face button they are the leap they always were &mdash; L2 a third, R2 a fifth, the two together a semitone out of the key. Under the d&#8209;pad's &#8592;&#8594;, one of them is an edge and both of them together are the nudge taken out of the key, which is what the pair has always meant together. The leap listens for a face button being pressed and the edge listens for a direction being held, so neither can swallow the other; and nothing on the pad waits for a trigger to be let go in order to find out what the hand meant, so holding one to shape a note can never go off as a leap, nor a leap as an edge.</p>
         <p>There was a second way once: hold a trigger and the eight slots became eight rising semitones, twenty&#8209;four of them across three trigger states &mdash; the cross hotbar borrowed whole. It is gone. Naming a pitch is what the keyboard is for, and it was never what the pad was reached for; nothing has to be switched between before writing, and every pitch the crossbar could reach is still on the two rows of the keyboard, by position.</p>
-        <p>The four shoulders were sorted by the hand rather than by the history when it went. A trigger is made to be leaned on, so the triggers are the modifiers: held, they widen a move, and they do nothing else. A bumper is made to be tapped, so the bumpers are the voice: L1 back a line, R1 on a line, no mode raised first. Neither pair does two jobs, so nothing has to work out whether a press was a tap or a hold &mdash; which is what the bumpers used to have to do, and the one place on the pad where the same button could surprise you. The base octave the bumpers used to carry is nowhere on the pad and is not a command any more: the pad writes contours, counted from the note before, and an octave setting has nothing to say to that. It survives as what it always was &mdash; which pair of octaves the keyboard's note rows are, on page up and page down.</p>
+        <p>The four shoulders were sorted by the hand rather than by the history when it went. A trigger is made to be leaned on, so the triggers are the modifiers: held, they widen a move, and since Lesson 3 they also hold one end of a note still while the d&#8209;pad moves the other. They write nothing on their own and are never tapped. A bumper is made to be tapped, so the bumpers are the voice: L1 back a line, R1 on a line, no mode raised first. Neither pair does two jobs, so nothing has to work out whether a press was a tap or a hold &mdash; which is what the bumpers used to have to do, and the one place on the pad where the same button could surprise you. The base octave the bumpers used to carry is nowhere on the pad and is not a command any more: the pad writes contours, counted from the note before, and an octave setting has nothing to say to that. It survives as what it always was &mdash; which pair of octaves the keyboard's note rows are, on page up and page down.</p>
         <p>A DualSense and an Xbox pad report the same positions. A browser notices a pad only after you press one of its buttons: press start if nothing answers &mdash; the settings crossbar coming up is the pad saying hello. Sound may wait for one keyboard touch.</p>
       </div>
     </div>
@@ -1169,6 +1210,24 @@
   var VOICE_NAMES = ["lead", "bass"];
   var VOICE_FIELD = ["steps", "bass"];
 
+  /* ---- the held note, from Lesson 3 on ----
+     A step is still a sixteenth and a note still begins on one. What is new
+     is that it may go on ringing over the steps after it instead of stopping
+     at the end of its own: a length, in steps, beside each note.
+
+     It is a field of its own — one array per voice, parallel to that voice's
+     steps — and never a change to what a step *is*. That matters twice over.
+     A page written before Lesson 3 has no length array at all and every note
+     in it is one step long, which is precisely what it always was; and an
+     older build handed a page with lengths reads the notes exactly as it
+     always did and simply does not see the lengths. Had the length been put
+     *inside* the step — a note become an object — that same older build would
+     have rejected the whole page as unreadable. So it is beside, not inside.
+
+     A length of 1 is the plain sixteenth and is never written out: a log from
+     a board on which nothing is held is byte for byte the log it always was. */
+  var VOICE_HOLD = ["hold", "basshold"];
+
   /* a page: the whole document. Every workspace holds one of these. */
   function defaultDoc(){
     return {
@@ -1179,6 +1238,8 @@
       key: DEFAULT_KEY,      /* the key of the piece: relative entry counts in it */
       steps: new Array(STEPS).fill(null),   /* the lead */
       bass: new Array(STEPS).fill(null),    /* the second voice */
+      hold: new Array(STEPS).fill(1),       /* how long each lead note rings */
+      basshold: new Array(STEPS).fill(1),   /* and each bass note */
       mute: [false, false],
       solo: [false, false]
     };
@@ -1199,6 +1260,97 @@
   function docSteps(d, v){
     var a = d && d[VOICE_FIELD[v || 0]];
     return Array.isArray(a) ? a : null;
+  }
+  /* the lengths of one voice, made on first touch exactly as its steps are */
+  function vhold(v){
+    var f = VOICE_HOLD[v || 0];
+    if (!Array.isArray(doc[f])) doc[f] = new Array(STEPS).fill(1);
+    return doc[f];
+  }
+  function docHold(d, v){
+    var a = d && d[VOICE_HOLD[v || 0]];
+    return Array.isArray(a) ? a : null;
+  }
+  /* what is *written* at a step: the length the page holds, whatever else is
+     on the page around it */
+  function writtenLen(d, v, i){
+    var s = docSteps(d, v);
+    if (!s || !s[i]) return 0;
+    var h = docHold(d, v), n = h ? h[i] : 1;
+    if (typeof n !== "number" || !isFinite(n)) n = 1;
+    n = Math.round(n);
+    return Math.max(1, Math.min(STEPS, n));
+  }
+  /* ---- and what is *heard* ----
+     A voice is one line: it cannot hold a note through another note of its
+     own. So the sounding length of a note is its written length or the
+     distance to the next note of that voice, whichever is shorter — counted
+     round the loop, because a note begun inside the loop goes on ringing
+     across the seam and into the repeat, which is the whole point of the
+     thing. A note written past the loop is never played and never wraps; it
+     simply stops at the end of the page.
+
+     Written and heard are kept apart rather than reconciled, so that writing
+     a note into the middle of a hold shortens the hold for as long as it is
+     there and no longer: take the new note away again and the hold rings its
+     full written length once more. Nothing is ever quietly rewritten. */
+  function spanOf(d, v, i){
+    var s = docSteps(d, v);
+    if (!s || !s[i]) return 0;
+    var want = writtenLen(d, v, i);
+    var loop = (d && d.loop) || STEPS;
+    var wrap = i < loop, lim = wrap ? loop : STEPS - i, k, j;
+    for (k = 1; k < lim; k++){
+      j = wrap ? (i + k) % loop : i + k;
+      if (s[j]) break;
+    }
+    return Math.max(1, Math.min(want, k));
+  }
+  /* every step a note occupies, its own first: one run, wrapped at the seam
+     where it wraps */
+  function spanSteps(d, v, i){
+    var n = spanOf(d, v, i), loop = (d && d.loop) || STEPS;
+    var wrap = i < loop, out = [], k;
+    for (k = 0; k < n; k++) out.push(wrap ? (i + k) % loop : i + k);
+    return out;
+  }
+  /* which note of a voice is sounding at each step: the index it began on,
+     or −1 where the voice is silent */
+  function sounding(d, v){
+    var s = docSteps(d, v), out = new Array(STEPS), i, k, run;
+    for (i = 0; i < STEPS; i++) out[i] = -1;
+    if (!s) return out;
+    for (i = 0; i < STEPS; i++){
+      if (!s[i]) continue;
+      run = spanSteps(d, v, i);
+      for (k = 0; k < run.length; k++) if (out[run[k]] < 0) out[run[k]] = i;
+    }
+    return out;
+  }
+  /* the last step each held note is still sounding on: where its stroke ends
+     on the page, and where the release actually happens */
+  function ringEnds(d, v){
+    var s = docSteps(d, v), out = new Array(STEPS), i, run;
+    for (i = 0; i < STEPS; i++) out[i] = false;
+    if (!s) return out;
+    for (i = 0; i < STEPS; i++){
+      if (!s[i]) continue;
+      run = spanSteps(d, v, i);
+      if (run.length > 1) out[run[run.length - 1]] = true;
+    }
+    return out;
+  }
+  /* the longest this note could be made without swallowing another of its own */
+  function roomAt(d, v, i){
+    var s = docSteps(d, v);
+    if (!s || !s[i]) return 0;
+    var loop = (d && d.loop) || STEPS;
+    var wrap = i < loop, lim = wrap ? loop : STEPS - i, k, j;
+    for (k = 1; k < lim; k++){
+      j = wrap ? (i + k) % loop : i + k;
+      if (s[j]) break;
+    }
+    return k;
   }
   function flag(kind, v){ var a = doc[kind]; return !!(a && a[v]); }
   function setFlag(kind, v, on){
@@ -1594,6 +1746,13 @@
   var octlines = [];
   var bars = [], bars2 = [], baseCells = [];
   var vbars = [bars, bars2];
+  /* ---- the seam bar ----
+     A note held past the last step of the loop comes back in at the first,
+     and the drawing has to show both halves of it or the one thing Lesson 3
+     is for — a note that rings across the seam — would be drawn as a bar
+     running off the edge of the page into nothing. Only one note per voice
+     can cross the seam, so one spare bar each is all it can ever need. */
+  var seamBars = [];
   /* one per step: the interval between the voices, written where both sound —
      the label itself, and the tie that hangs it between the two bars */
   var ivls = [], ivlTies = [];
@@ -1624,6 +1783,7 @@
     rollbase.appendChild(cell);
     baseCells.push(cell);
   }
+  for (i = 0; i < VOICES; i++) mkBar(seamBars);
 
   function midiOf(s){ var p = parseNote(s); return p ? (p.oct + 1) * 12 + p.pc : null; }
 
@@ -1680,17 +1840,36 @@
 
     for (v = 0; v < VOICES; v++){
       s = vsteps(v);
+      seamBars[v].style.display = "none";
       for (i = 0; i < STEPS; i++){
         var n = s[i], b = vbars[v][i];
         if (!n){ b.style.display = "none"; continue; }
         m = midiOf(n);
+        /* one bar per note, as wide as the note is long: a held note is one
+           long stadium of colour, never a row of repeated dabs. The gap
+           between neighbours is the gap it always was, so a run of plain
+           sixteenths is drawn exactly as it was drawn before. */
+        var len = spanOf(doc, v, i), loop = doc.loop;
+        var head = (i < loop) ? Math.min(len, loop - i) : len;
         b.style.display = "block";
         b.style.left = (i * 6.25 + 0.7) + "%";
-        b.style.width = "4.85%";
+        b.style.width = (head * 6.25 - 1.4) + "%";
         b.style.top = ((hi - m) / span * 100) + "%";
         b.style.height = (100 / span) + "%";
         b.style.backgroundColor = PC_COLOR[parseNote(n).pc];
         b.classList.toggle("back", v !== voice);
+        /* and the rest of it, come round again at the head of the page */
+        if (len > head){
+          var sb = seamBars[v];
+          sb.style.display = "block";
+          sb.style.left = "0.7%";
+          sb.style.width = ((len - head) * 6.25 - 1.4) + "%";
+          sb.style.top = b.style.top;
+          sb.style.height = b.style.height;
+          sb.style.backgroundColor = b.style.backgroundColor;
+          sb.classList.toggle("back", v !== voice);
+          sb.classList.remove("outside");
+        }
       }
     }
     rollIntervals(hi, span);
@@ -1702,15 +1881,30 @@
      names. The tie hangs down that length and the name rides its middle, so
      the label reads as belonging to those two notes however far apart the
      voices are. */
+  /* ---- and what counts as sounding ----
+     A held note is sounding for every step it rings, not only the one it was
+     struck on: that is the whole of the suspension, where one voice holds
+     still and the other moves under it and the distance between them changes
+     without anything being struck twice. So the interval is read off what is
+     *ringing* at that step in each voice, held notes included.
+
+     It is written where the pair actually changes — on a step where at least
+     one of the two voices strikes — and not on every step of a long ringing
+     pair, which would be the same name repeated down the page for something
+     that happened once. A page with nothing held is untouched by any of this:
+     there, every sounding step is a struck step. */
   function rollIntervals(hi, span){
-    var lead = vsteps(0), bass = vsteps(1), i, a, z, ma, mz, el, top, d;
+    var lead = vsteps(0), bass = vsteps(1), i, ma, mz, el, top, d;
+    var sl = sounding(doc, 0), sz = sounding(doc, 1), hl, hz;
     for (i = 0; i < STEPS; i++){
       el = ivls[i];
-      a = lead[i]; z = bass[i];
-      ma = a ? midiOf(a) : null;
-      mz = z ? midiOf(z) : null;
-      /* only where both voices sound; a rest in either is nothing to name */
-      if (ma === null || mz === null){ el.classList.remove("on"); continue; }
+      hl = sl[i]; hz = sz[i];
+      ma = (hl >= 0) ? midiOf(lead[hl]) : null;
+      mz = (hz >= 0) ? midiOf(bass[hz]) : null;
+      /* only where both voices sound, and only where one of them moved */
+      if (ma === null || mz === null || (hl !== i && hz !== i)){
+        el.classList.remove("on"); continue;
+      }
       el.firstChild.textContent = intervalName(ma - mz);
       el.classList.add("on");
       el.style.left = (i * 6.25) + "%";
@@ -1814,9 +2008,18 @@
   function renderNotes(){
     for (var v = 0; v < VOICES; v++){
       var s = vsteps(v), back = (v === voice) ? "" : " dim";
+      /* which note is ringing where, so that a step covered by a hold is
+         neither a note (it was not struck) nor a rest (it is sounding) */
+      var snd = sounding(doc, v), ends = ringEnds(doc, v);
       for (var i = 0; i < STEPS; i++){
         var n = s[i], el = rows[i].notes[v];
         if (n){ el.textContent = display(n); el.className = "note" + back; }
+        else if (snd[i] >= 0){
+          /* the tail of a held note: no writing at all, only the stroke,
+             with its foot on the last step the note is still sounding */
+          el.textContent = "";
+          el.className = "note hold" + (ends[i] ? " last" : "") + back;
+        }
         else  { el.textContent = "·";        el.className = "note empty" + back; }
       }
     }
@@ -1905,10 +2108,13 @@
        keyboard names pitches by position, the pad names moves. The shoulders
        are named too — the four buttons nothing on the page ever said out
        loud, which is exactly how they came to be a puzzle rather than a
-       control: the bumpers change hands, the triggers widen a move. */
+       control: the bumpers change hands, the triggers widen a move. And the
+       length is named, because Lesson 3 is the whole reason a note is not
+       always a sixteenth any more; the rest of the strip stays on its diet. */
     return [["z…m q…i","notes"],["△ ✕ ○ □","the shape"],
             ["L2 R2","third, fifth"],
-            ["← →","step"],["period","clear"],["space","play"],
+            ["← →","step"],["− +","shorter, longer"],
+            ["period","clear"],["space","play"],
             ["tab · L1 R1","voice"],["L","loop"],
             ["F2", viz === "roll" ? "the column" : "the roll"],
             ["F3","quests"],["F1","the key"]];
@@ -1964,6 +2170,38 @@
     return out;
   }
   function silence(){ return new Array(STEPS).fill(null); }
+  /* the lengths beside one voice, read as permissively as the key is: absent,
+     short, long, junk, a length where there is no note — all of it means the
+     plain sixteenth at that step, and none of it can cost the page its notes */
+  function readHolds(a, steps){
+    var out = [], i, n;
+    for (i = 0; i < STEPS; i++){
+      n = (Array.isArray(a) && typeof a[i] === "number" && isFinite(a[i]))
+            ? Math.round(a[i]) : 1;
+      if (!(n > 1)) n = 1;
+      if (n > STEPS) n = STEPS;
+      out.push(steps[i] ? n : 1);
+    }
+    return out;
+  }
+  /* nothing is held here: the array says only what the absence of it says */
+  function allPlain(a){
+    if (!Array.isArray(a)) return true;
+    for (var i = 0; i < a.length; i++) if (a[i] !== 1) return false;
+    return true;
+  }
+  /* a page on its way out of the app — a file, the autosave, the quest log.
+     The lengths are written only where something is actually held, so a page
+     with no holds in it is the page it always was, to the byte, and an older
+     build reads what it wrote. */
+  function docOut(d){
+    if (!d || typeof d !== "object") return d;
+    var out = {}, k, v;
+    for (k in d) if (Object.prototype.hasOwnProperty.call(d, k)) out[k] = d[k];
+    for (v = 0; v < VOICES; v++)
+      if (allPlain(out[VOICE_HOLD[v]])) delete out[VOICE_HOLD[v]];
+    return out;
+  }
   function readFlags(a){
     var out = [];
     for (var i = 0; i < VOICES; i++) out.push(!!(Array.isArray(a) && a[i]));
@@ -1989,6 +2227,8 @@
     var key = normalizeKey(obj.key);
     return { version: 1, title: title, tempo: tempo, loop: loop, key: key,
              steps: steps, bass: bass,
+             hold: readHolds(obj.hold, steps),
+             basshold: readHolds(obj.basshold, bass),
              mute: readFlags(obj.mute), solo: readFlags(obj.solo) };
   }
   /* The autosave is now the autosave of a workspace. Every modification runs
@@ -2002,7 +2242,7 @@
     stash();
     try {
       localStorage.setItem(QUEST_KEY, JSON.stringify(stateToJSON()));
-      localStorage.setItem(STORE_KEY, JSON.stringify(doc));
+      localStorage.setItem(STORE_KEY, JSON.stringify(docOut(doc)));
     }
     catch (e){ storageOK = false; say("autosave unavailable in this window"); }
     renderRails();
@@ -2024,7 +2264,7 @@
 
   function exportFile(){
     var name = doc.title.replace(/[^A-Za-z0-9 _-]/g, "").trim() || "untitled folio";
-    var blob = new Blob([JSON.stringify(doc, null, 2)], { type: "application/json" });
+    var blob = new Blob([JSON.stringify(docOut(doc), null, 2)], { type: "application/json" });
     var url = URL.createObjectURL(blob);
     var a = document.createElement("a");
     a.href = url; a.download = name + ".folio.json";
@@ -2094,19 +2334,32 @@
      lowpass, bright enough to carry a tune. The bass is rounder and darker on
      purpose — a sine, a low cutoff, a slower attack and a longer release — so
      that the two lines separate by colour as well as by pitch, and a bass
-     written up in the melody's octave still reads as the bass. */
+     written up in the melody's octave still reads as the bass.
+
+     From Lesson 3 each also carries the release it uses when a note is *held*
+     rather than struck: a note that has been ringing for half a second does
+     not stop the way a sixteenth does, and a longer taper is both what the
+     ear expects of it and what keeps the end of a long note from clicking.
+     The shape is otherwise identical — the same attack, the same level, the
+     same silence at both ends — only the sustain in the middle is longer. */
   var TONE = [
-    { type:"triangle", cut:2500, q:0.7, level:LEVEL, attack:ATTACK, release:RELEASE },
-    { type:"sine",     cut:820,  q:0.9, level:0.30,  attack:0.014, release:0.070 }
+    { type:"triangle", cut:2500, q:0.7, level:LEVEL, attack:ATTACK,
+      release:RELEASE, hold:0.10 },
+    { type:"sine",     cut:820,  q:0.9, level:0.30,  attack:0.014,
+      release:0.070,   hold:0.17 }
   ];
 
   /* One note: oscillator -> lowpass -> gain envelope. Gain starts at 0 and
      ends at 0, so nothing ever switches on or off abruptly. Release finishes
      TAIL seconds before the next step begins. */
-  function playNote(name, at, dur, v){
+  function playNote(name, at, dur, v, held){
     var f = noteToFreq(name);
     if (!f) return;
     var t = TONE[v || 0] || TONE[0];
+    /* one note, however long: a held note is not a run of struck ones, so
+       nothing is retriggered inside `dur` — the envelope simply stays up. The
+       release is the only part that knows the difference. */
+    var rel = held ? t.hold : t.release;
     var osc = ctx.createOscillator();
     osc.type = t.type;
     osc.frequency.setValueAtTime(f, at);
@@ -2118,7 +2371,7 @@
 
     var g = ctx.createGain();
     var relEnd = at + dur - TAIL;
-    var relStart = Math.max(at + t.attack + 0.001, relEnd - t.release);
+    var relStart = Math.max(at + t.attack + 0.001, relEnd - rel);
     g.gain.setValueAtTime(0, at);
     g.gain.linearRampToValueAtTime(t.level, at + t.attack);
     g.gain.setValueAtTime(t.level, relStart);
@@ -2150,7 +2403,15 @@
       for (var v = 0; v < VOICES; v++){
         if (!audible(v)) continue;
         var n = vsteps(v)[schedStep];
-        if (n) playNote(n, nextStepTime, dur, v);
+        /* a note is scheduled once, for as long as it is written to last; the
+           steps it covers hold no note of their own and so retrigger nothing.
+           A note that runs past the last step of the loop is simply longer
+           than the run to the seam — it goes on sounding while the playhead
+           comes round, which is what ringing across the seam is. */
+        if (n){
+          var len = spanOf(doc, v, schedStep);
+          playNote(n, nextStepTime, dur * len, v, len > 1);
+        }
       }
       queue.push({ step: schedStep, time: nextStepTime });
       nextStepTime += dur;
@@ -2194,7 +2455,7 @@
 
   /* audition a note as it is entered, over playback too — writing into a
      running loop should be heard as it happens */
-  function audition(name){
+  function audition(name, len){
     audio();
     /* still suspended: the gesture that unlocks audio has not happened yet;
        scheduling now would pile notes onto a frozen currentTime */
@@ -2204,7 +2465,12 @@
     }
     /* auditioned in the voice being written into, so the ear is told which
        line it just changed even before it hears it in the loop */
-    playNote(name, ctx.currentTime + 0.01, stepDur() * 1.6, voice);
+    /* a struck note is auditioned as the short thing it is; a note whose
+       length has just been changed is auditioned at that length, so that
+       lengthening one is heard as lengthening rather than described */
+    var n = (typeof len === "number" && len > 1) ? len : 1.6;
+    playNote(name, ctx.currentTime + 0.01,
+             Math.min(stepDur() * n, 1.6), voice, n > 1.6);
   }
 
   /* Playhead UI is driven by the audio clock: a step lights when its
@@ -2215,6 +2481,7 @@
       while (queue.length && queue[0].time <= now){ step = queue.shift().step; }
       if (step !== shownPlayhead) renderPlayhead(step);
     }
+    growTick();                      /* a note still under the finger goes on growing */
     pollPads();                      /* additive input layer; never touches audio timing */
     requestAnimationFrame(frame);
   }
@@ -2233,8 +2500,151 @@
      by hand is untouched, and still one step at a time. */
   var ADVANCE = 2;
   function advance(){ cursor = (cursor + ADVANCE) % STEPS; renderCursor(); }
-  /* every edit lands in the voice the hands are in, and nowhere else */
-  function setStep(i, v){ vsteps(voice)[i] = v; renderNotes(); save(); }
+  /* every edit lands in the voice the hands are in, and nowhere else.
+     A step written into is a step struck afresh: unless a length is handed in
+     (the nudge keeps the one the note already had), it is the plain sixteenth
+     the folio has always written, so nothing about writing a note changed at
+     Lesson 3 — the hold is always something asked for afterwards, or asked
+     for by keeping hold of the key. */
+  function setStep(i, v, len){
+    vsteps(voice)[i] = v;
+    vhold(voice)[i] = (v && typeof len === "number") ? Math.max(1, len) : 1;
+    renderNotes(); save();
+  }
+
+  /* ================= the held note =================
+     Length is edited on whatever note is *sounding* at the cursor, not only
+     on one that begins there: with a four-step note under the hand, every one
+     of those four steps is that note as far as the ear is concerned, so all
+     four are it as far as the hands are concerned too. */
+  function headAt(v, i){
+    var s = vsteps(v);
+    if (s[i]) return i;
+    var snd = sounding(doc, v);
+    return snd[i];
+  }
+  /* the length that can be asked for here: never past the next note of the
+     same voice, and never longer than one turn of the loop */
+  function roomHere(v, i){ return roomAt(doc, v, i); }
+  function setLen(v, i, n, quiet){
+    var s = vsteps(v);
+    if (!s[i]) return false;
+    var cap = roomHere(v, i);
+    var was = writtenLen(doc, v, i);
+    n = Math.max(1, Math.min(cap, n));
+    if (n === was){
+      if (!quiet)
+        say(display(s[i]) + " at step " + (i + 1) + " · " +
+            (n === 1 ? "one step" : n + " steps") +
+            (n === cap ? " · as long as it will go here" : ""));
+      return false;
+    }
+    vhold(v)[i] = n;
+    renderNotes(); save();
+    if (!quiet){
+      showGuide(midiOf(s[i]));
+      audition(s[i], n);
+      say(display(s[i]) + " at step " + (i + 1) + " · " +
+          (n === 1 ? "one step" : n + " steps") +
+          (n < was ? " · shorter" : " · ringing on"));
+    }
+    return true;
+  }
+  /* ---- holding it down ----
+     The fast way is not a second key at all: keep hold of whatever wrote the
+     note and the note goes on growing, a step at a time, for as long as you
+     hold it — the key on the board, or the face button on the pad, which is
+     now the only thing on the pad that writes. Let go and it stops where it
+     is. A tap is
+     shorter than the first delay, so writing at speed is exactly what it
+     always was and nothing grows by accident.
+
+     The cursor keeps out of the way: while the note is growing past the
+     eighth the cursor rides just past its end, so letting go and writing
+     again puts the next note where the last one stopped. */
+  var GROW_DELAY = 300;                /* held this long before it starts */
+  var grow = null;                     /* {v, i, next, code, btn} */
+
+  /* and then a step every step: the note grows in the page's own time, so
+     holding a key through one beat writes one beat. Kept inside sane bounds
+     at the ends of the tempo range, where a step is very short or very long. */
+  function growStep(){
+    return Math.max(70, Math.min(400, stepDur() * 1000));
+  }
+
+  function nowMs(){
+    return (window.performance && performance.now) ? performance.now() : Date.now();
+  }
+  function growStart(v, i, code, btn){
+    grow = { v:v, i:i, next: nowMs() + GROW_DELAY, code:code, btn:btn };
+  }
+  function growStop(){ grow = null; }
+  function growTick(){
+    if (!grow) return;
+    if (anyPage()){ growStop(); return; }   /* a page came up under the finger */
+    var now = nowMs();
+    if (now < grow.next) return;
+    grow.next = now + growStep();
+    var v = grow.v, i = grow.i, s = vsteps(v);
+    if (!s[i]){ growStop(); return; }             /* it went away underneath us */
+    var n = writtenLen(doc, v, i) + 1;
+    if (n > roomHere(v, i)) return;               /* at the wall: hold there */
+    vhold(v)[i] = n;
+    renderNotes(); save();
+    if (n > ADVANCE){ cursor = (i + n) % STEPS; renderCursor(); }
+    say(display(s[i]) + " at step " + (i + 1) + " · " + n + " steps");
+  }
+
+  /* ---- the two ends of a note, moved one at a time ----
+     A note has two edges and they are not the same decision. Moving its
+     *end* leaves it where it is and changes how long it rings — the release,
+     made later or sooner. Moving its *start* carries the note itself, and
+     leaves the far end exactly where it was — the attack, made earlier or
+     later, against an ending that is already decided. Both matter at Lesson
+     3 and the pad gives each its own modifier, so that a phrase can be
+     shaped from either end without ever thinking in numbers.
+
+     Neither edge may run over another note of the same voice, and neither
+     may leave a note with less than the step it begins on. */
+  function moveEdge(end, d){
+    var i = headAt(voice, cursor);
+    if (i < 0){ say("step " + (cursor + 1) + " is empty — no note to move"); return; }
+    if (end){ setLen(voice, i, writtenLen(doc, voice, i) + d); return; }
+    var s = vsteps(voice), h = vhold(voice), len = writtenLen(doc, voice, i);
+    var j = i + d;
+    if (j < 0 || j >= STEPS){
+      say("that note is already at the " + (d < 0 ? "head" : "foot") + " of the page");
+      return;
+    }
+    if (s[j]){ say("step " + (j + 1) + " is taken"); return; }
+    if (len - d < 1){
+      say(display(s[i]) + " is one step long — its start cannot pass its end");
+      return;
+    }
+    var name = s[i], n = Math.min(STEPS, len - d);
+    s[i] = null; h[i] = 1;
+    s[j] = name; h[j] = n;
+    renderNotes();
+    /* the cursor stays on the note it was on, wherever the note has got to */
+    if (headAt(voice, cursor) !== j){ cursor = j; renderCursor(); }
+    save();
+    showGuide(midiOf(name));
+    audition(name, n);
+    say(display(name) + " begins at step " + (j + 1) + " · " +
+        (n === 1 ? "one step" : n + " steps"));
+  }
+
+  /* − and +, and the same pair with shift: a step at a time, or the whole
+     room there is and back to a plain sixteenth */
+  function stretch(d, whole){
+    var i = headAt(voice, cursor);
+    if (i < 0){
+      say("step " + (cursor + 1) + " is empty — nothing to hold");
+      return;
+    }
+    var want = whole ? (d > 0 ? STEPS : 1) : writtenLen(doc, voice, i) + d;
+    setLen(voice, i, want);
+  }
 
   function writeNote(name, tail){
     var at = cursor + 1;
@@ -2297,15 +2707,19 @@
      half-step as it is a note about to be written, and correcting one should
      not cost the constraint the whole page is under. */
   function nudge(n, chromatic){
-    var v = vsteps(voice)[cursor];
-    if (!v){ say("step " + (cursor + 1) + " is empty — nothing to nudge"); return; }
+    /* the note under the cursor is whichever note is sounding there, so a
+       held note can be leant on from any step it covers; its length is its
+       own and is not spent by moving it */
+    var at = headAt(voice, cursor);
+    if (at < 0){ say("step " + (cursor + 1) + " is empty — nothing to nudge"); return; }
+    var v = vsteps(voice)[at];
     var from = clampMidi(midiOf(v));
     var m = clampMidi(chromatic ? from + n : moveDegrees(from, n));
     var name = nameOfMidi(m);
-    setStep(cursor, name);
+    setStep(at, name, writtenLen(doc, voice, at));
     showGuide(m);                    /* the note moved: the line moves with it */
     audition(name);
-    say(display(name) + " at step " + (cursor + 1));
+    say(display(name) + " at step " + (at + 1));
   }
 
   /* ---- choosing a voice, and taking one away ----
@@ -2388,15 +2802,28 @@
   function setLoop(n){
     doc.loop = n;
     if (schedStep >= n) schedStep = 0;   /* mid-playback shortening snaps home */
-    renderLoop(); renderMeta(); save();
+    /* the loop is where a held note wraps, so the page has to be drawn again
+       and not merely re-shaded: a note that rang across the old seam may ring
+       across a different one now, or stop at the end of the page instead */
+    renderNotes(); renderLoop(); renderMeta(); save();
     say(n === STEPS ? "loop · the whole page" : "loop · first " + n + " steps");
   }
   function cycleLoop(){ setLoop(doc.loop === STEPS ? 8 : doc.loop === 8 ? 4 : STEPS); }
 
   function clearStep(){
-    var at = cursor + 1;
-    setStep(cursor, null);
-    say("cleared step " + at);
+    /* clearing takes away whatever is sounding here, which for a step in the
+       middle of a hold is the held note itself: the ear hears one note there
+       and one note is what goes */
+    var at = headAt(voice, cursor);
+    if (at < 0){
+      setStep(cursor, null);
+      say("cleared step " + (cursor + 1));
+      advance();
+      return;
+    }
+    var held = writtenLen(doc, voice, at) > 1;
+    setStep(at, null);
+    say("cleared step " + (at + 1) + (held ? " · and the hold with it" : ""));
     advance();
   }
   function moveCursor(d){
@@ -2854,13 +3281,14 @@
   /* ---- the shape of the whole state, in storage and on disk alike ---- */
   function stateToJSON(){
     stash();
-    var out = { folio:"quest-log", version:2, active:qActive, free:wsFree, quests:{} };
+    var out = { folio:"quest-log", version:2, active:qActive,
+                free:wsFree ? docOut(wsFree) : wsFree, quests:{} };
     var i, id, s, d;
     for (i = 0; i < ALL.length; i++){
       id = ALL[i].id; s = qState[id]; d = wsDoc[id];
       var fav = !!(s && s.fav), ord = (s && typeof s.order === "number") ? s.order : null;
       if (!d && !(s && s.done) && !fav && ord === null) continue;
-      out.quests[id] = { done: !!(s && s.done), pattern: d || null };
+      out.quests[id] = { done: !!(s && s.done), pattern: d ? docOut(d) : null };
       /* the two marks are written only where they were made, so a log from a
          board nobody has arranged is byte for byte the log it always was */
       if (fav) out.quests[id].fav = true;
@@ -3496,9 +3924,12 @@
         n = s ? s[i] : null;
         if (!n){ dab.style.display = "none"; continue; }
         m = midiOf(n);
+        /* the contour speaks the roll's language, so it says length the same
+           way: a held note is one longer dab, never several */
+        var dl = Math.min(spanOf(d, v, i), STEPS - i);
         dab.style.display = "block";
         dab.style.left = (i * 6.25 + 1.1) + "%";
-        dab.style.width = "4%";
+        dab.style.width = (dl * 6.25 - 2.25) + "%";
         dab.style.height = "0.34rem";
         dab.style.top = "calc(" + ((hi - m) / span * 100) + "% - 0.17rem)";
         dab.style.backgroundColor = PC_COLOR[parseNote(n).pc];
@@ -3668,6 +4099,8 @@
   document.addEventListener("keydown", function(e){
     if (e.repeat && e.code.indexOf("Arrow") !== 0) return;
     var code = e.code;
+    /* anything but the key that is growing a note ends the growing */
+    if (grow && grow.code !== code) growStop();
 
     if (e.ctrlKey || e.metaKey){
       /* on the quest page these two act on the quest log instead */
@@ -3753,10 +4186,23 @@
     }
 
     if (Object.prototype.hasOwnProperty.call(NOTE_KEYS, code)){
-      e.preventDefault(); enterNote(NOTE_KEYS[code]); return;
+      e.preventDefault();
+      var wrote = cursor;                 /* where the note lands, before the advance */
+      enterNote(NOTE_KEYS[code]);
+      growStart(voice, wrote, code, undefined);
+      return;
     }
 
     switch (code){
+      /* the two keys left of backspace: the note sounding at the cursor,
+         shorter or longer by a step. They are the tempo on the key page and
+         the length here — the same pair, the same − and +, on whichever page
+         has something to make more or less of. Shift takes it the whole way:
+         as long as it will go, or back to a plain sixteenth. */
+      case "Minus": case "NumpadSubtract":
+        e.preventDefault(); stretch(-1, e.shiftKey); return;
+      case "Equal": case "NumpadAdd":
+        e.preventDefault(); stretch(1, e.shiftKey); return;
       case "Period": case "NumpadDecimal": case "Delete": case "Backspace":
         e.preventDefault(); clearStep(); return;
       /* both arrow pairs walk the cursor: up/left back, down/right forward —
@@ -3788,6 +4234,13 @@
         return;
     }
   });
+
+  /* letting go of the key stops the note growing; so does the window losing
+     the hands altogether, which is the one way a key-up can go missing */
+  document.addEventListener("keyup", function(e){
+    if (grow && grow.code === e.code) growStop();
+  });
+  window.addEventListener("blur", function(){ growStop(); });
 
   picker.addEventListener("change", function(){
     if (picker.files && picker.files[0]) importFile(picker.files[0]);
@@ -3876,6 +4329,12 @@
      they say on △ and ✕ — both of them held takes the move out of the key, a
      semitone at a time — instead of the hatch answering only the face
      buttons. */
+  /* the two edges, as the pad asks for them: one trigger says which edge and
+     the d-pad's ← and → move it. They go through gpNav like every other
+     direction on this pad, so holding one repeats. */
+  function padStart(n){ moveEdge(false, n); }
+  function padEnd(n){ moveEdge(true, n); }
+
   function padNudge(n){
     if (l2Down && r2Down){ nudge(n, true); return; }
     nudge(n);
@@ -3910,6 +4369,10 @@
          a pull; digital pads report value 0 and are taken at their word */
       cur[i] = !!b && (b.value > GP_THRESHOLD || (b.pressed && !b.value));
     }
+
+    /* a note grows while the button that wrote it is held down; letting go of
+       that button is what stops it, wherever the rest of the pad has got to */
+    if (grow && grow.btn !== undefined && !cur[grow.btn]) growStop();
 
     /* select is the transport, everywhere and always: play or stop, whatever
        page is up. It is the one button that does not care where you are. */
@@ -4008,20 +4471,59 @@
     var wide = (lead === 1) ? 2 : (lead === 2) ? 4 : 1;      /* third, fifth, step */
     if (gpEdge(cur, GP_TRIANGLE) || gpEdge(cur, GP_CROSS)){
       var dir = gpEdge(cur, GP_TRIANGLE) ? 1 : -1;
+      var moveAt = cursor;                  /* where it lands, before the advance */
       if (lead === 3) relStep(dir, true);                    /* a semitone out of key */
       else relStep(dir * wide, false);
+      /* the shape is given, and the length with it: keep the button down and
+         the note just written goes on ringing, exactly as keeping the key
+         down does on the board */
+      growStart(voice, moveAt, undefined, dir > 0 ? GP_TRIANGLE : GP_CROSS);
     }
-    if (gpEdge(cur, GP_CIRCLE)) relRepeat();
+    if (gpEdge(cur, GP_CIRCLE)){
+      var againAt = cursor;
+      relRepeat();
+      growStart(voice, againAt, undefined, GP_CIRCLE);
+    }
     if (gpEdge(cur, GP_SQUARE)) clearStep();                 /* a rest, and on */
-    /* up and down are time, as everywhere; left and right nudge the note
-       under the cursor a scale step without advancing. In the roll the page
-       is drawn — time runs right, height is pitch — so the pairs trade
-       places, and the left stick follows the d-pad on both axes. Whichever
-       pair it lands on, the nudge goes through padNudge, so both bumpers held
-       take it out of the key here as they do on △ and ✕. */
+
+    /* ---- the d-pad, and what the triggers make of it ----
+       Bare, up and down are time and left and right nudge the note under the
+       cursor a scale step without advancing; in the roll the page is drawn —
+       time runs right, height is pitch — so the pairs trade places, and the
+       left stick follows the d-pad on both axes.
+
+       One trigger held, ← and → are the note's two *edges* instead: L2 holds
+       its start, R2 holds its end, and the pair moves whichever is held, one
+       step at a time, holding to repeat as every other direction here does.
+       The two ends of a note are two decisions — the attack against an ending
+       already made, the release against a beginning already made — and this is
+       one modifier each.
+
+       Both triggers held, ← and → are the nudge again and out of the key, a
+       semitone at a time, which is what the pair has always meant together, on
+       the d-pad exactly as on △ and ✕. So the same two triggers say three
+       things and never have to ask which: one of them under the d-pad is an
+       edge, both of them are the hatch out of the key, either of them under a
+       face button is a leap. The leap reads button edges and the edge-edit
+       reads the d-pad, so neither can swallow the other; and a trigger is
+       never spent by being held, because nothing on this pad waits on a
+       trigger's release to find out what the hand meant. */
+    var edge = (lead === 1) ? padStart : (lead === 2) ? padEnd : null;
     ax = (gp.axes && gp.axes.length > 0) ? gp.axes[0] : 0;
     ay = (gp.axes && gp.axes.length > 1) ? gp.axes[1] : 0;    /* left stick Y, +1 = down */
-    if (viz === "roll"){
+    if (edge){
+      /* the edge is the whole of the gesture on this pair: the stick is not a
+         second copy of it, and up and down keep whatever the view gives them */
+      gpNav(cur[GP_DL], "left",  -1, now, edge);
+      gpNav(cur[GP_DR], "right",  1, now, edge);
+      if (viz === "roll"){
+        gpNav(cur[GP_DU] || ay <= -STICK_DEAD, "up",    1, now, padNudge);
+        gpNav(cur[GP_DD] || ay >=  STICK_DEAD, "down", -1, now, padNudge);
+      } else {
+        gpNav(cur[GP_DU] || ay <= -STICK_DEAD, "up",   -1, now);
+        gpNav(cur[GP_DD] || ay >=  STICK_DEAD, "down",  1, now);
+      }
+    } else if (viz === "roll"){
       gpNav(cur[GP_DL] || ax <= -STICK_DEAD, "left",  -1, now);
       gpNav(cur[GP_DR] || ax >=  STICK_DEAD, "right",  1, now);
       gpNav(cur[GP_DU] || ay <= -STICK_DEAD, "up",    1, now, padNudge);
