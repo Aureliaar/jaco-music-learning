@@ -8,8 +8,14 @@ const net = require("net");
 const { launch } = require("./cdp.js");
 
 const REPO = require("path").resolve(__dirname, "..").split("\\").join("/");
-const LOG  = REPO + "/quests/quest-log.json";
-const BACK = __dirname + "/quest-log.drillbackup.json";
+/* ---- the log this run drives is never the player's ----
+   Two earlier runs of these harnesses clobbered quests/quest-log.json — one
+   timed out and left its test seed sitting in the player's workspaces. The
+   file in quests/ is their music. So the server is pointed (FOLIO_LOG) at a
+   log in a temp directory that this process makes and removes, and the
+   tracked file is neither read nor written by anything below. */
+const TMP  = require("fs").mkdtempSync(require("path").join(require("os").tmpdir(), "folio-test-"));
+const LOG  = require("path").join(TMP, "quest-log.json");
 
 let pass = 0, fail = 0;
 function ok(name, cond, extra){
@@ -44,7 +50,6 @@ const SEAM = { id:"drill-seam", name:"the seam drill",
 (async function(){
   const port = Number(process.env.PORT) || await freePort(4200);
   const BASE = "http://localhost:" + port;
-  if (fs.existsSync(LOG)) fs.copyFileSync(LOG, BACK);
 
   /* a log the user has been working in, with one drill already delivered */
   const seeded = {
@@ -61,7 +66,7 @@ const SEAM = { id:"drill-seam", name:"the seam drill",
 
   const srv = spawn(process.execPath, [REPO + "/server.mjs"],
     { cwd: REPO, stdio:["ignore","pipe","pipe"],
-      env: Object.assign({}, process.env, { PORT: String(port) }) });
+      env: Object.assign({}, process.env, { PORT: String(port), FOLIO_LOG: LOG }) });
   let srvlog = "";
   srv.stdout.on("data", d => { srvlog += d; });
   srv.stderr.on("data", d => { srvlog += d; });
@@ -99,21 +104,40 @@ const SEAM = { id:"drill-seam", name:"the seam drill",
   const railText = () => b.eval("document.getElementById('railquests').textContent");
   const listText = () => b.eval("document.getElementById('qlist').textContent");
 
+  const tabText = () => b.eval("document.getElementById('qtabs').textContent");
+  const RIGHT = { key:"ArrowRight", vk:39 };
   await b.key("F3", { key:"F3", vk:114 });
   await wait(200);
-  ok("the delivered drill is in the quest list", /the itch drill/.test(await listText()));
-  ok("under a labelled hairline",
+  /* the board is read one lesson at a time now: the eight are the first tab
+     and the delivered drill is the last one */
+  ok("the log opens on the lesson", /L1/.test(await tabText()), await tabText());
+  ok("with a tab for the drills beside it", /drills/.test(await tabText()), await tabText());
+  ok("the eight built-ins are the lesson's tab",
+     (await b.eval("document.querySelectorAll('#qlist .quest').length")) === 8);
+  ok("and no divider is drawn inside a tab",
+     (await b.eval("document.querySelectorAll('#qlist .qhair').length")) === 0);
+  await b.key("ArrowRight", RIGHT);
+  await wait(120);
+  ok("the delivered drill is in the drills tab", /the itch drill/.test(await listText()));
+  ok("alone", (await b.eval("document.querySelectorAll('#qlist .quest').length")) === 1);
+  /* the margin reads the same tab the board does, so turning to the drills
+     turned the margin to them as well — it is one lesson deep now, with no
+     labelled dividers left to draw. The tab is left on the drills, which is
+     where a delivered drill lands and so where it has to be seen arriving. */
+  ok("and in the left rail, which turned with the board",
+     /the itch drill/.test(await railText()));
+  ok("the margin draws no dividers at all now",
+     (await b.eval("document.querySelectorAll('#railquests .rhair').length")) === 0);
+  ok("its own tag says which tab it is showing",
      /drills/.test(await b.eval(
-       "(document.querySelector('#qlist .qhair')||{}).textContent||''")));
-  ok("exactly one divider",
-     (await b.eval("document.querySelectorAll('#qlist .qhair').length")) === 1);
-  ok("and in the left rail", /the itch drill/.test(await railText()));
-  ok("the eight built-ins are still above it",
-     (await b.eval("document.querySelectorAll('#qlist .quest').length")) === 9);
+       "(document.querySelector('#rtabs .rtab.on')||{}).textContent||''")),
+     await b.eval("(document.querySelector('#rtabs .rtab.on')||{}).textContent||''"));
   await b.key("F3", { key:"F3", vk:114 });
+  await wait(200);                        /* the log is a page: let it close */
 
   /* the user does some work, which is autosaved through a PUT */
   await b.key("ArrowDown", { key:"ArrowDown", vk:40 });
+  await wait(60);
   await b.key("KeyX", { key:"x", vk:88 });     /* D4 into free play, step 2 */
   await wait(2600);
   const afterWork = readLog();
@@ -138,24 +162,24 @@ const SEAM = { id:"drill-seam", name:"the seam drill",
   if (!seen) console.log("SERVER LOG: " + srvlog.replace(/\n/g, " | ") +
     "  FILE NOW: " + JSON.stringify((readLog().drills || []).map(d => d.id)));
   ok("it appears in the rail with no reload", seen);
-  ok("and in the quest list", /the seam drill/.test(await listText()));
   ok("announced quietly in the footer",
      /a drill arrived: the seam drill/.test(
        await b.eval("document.getElementById('footer').textContent")),
      await b.eval("document.getElementById('footer').textContent"));
-  ok("still only one divider",
-     (await b.eval("document.querySelectorAll('#qlist .qhair').length")) === 1);
+  ok("and still no dividers in the margin",
+     (await b.eval("document.querySelectorAll('#railquests .rhair').length")) === 0);
   ok("the work already on the page is untouched",
      /D-4/.test(await b.eval("document.querySelectorAll('#column .row')[1].textContent")),
      await b.eval("document.querySelectorAll('#column .row')[1].textContent"));
 
   /* enter it: the seed is what the page arrives holding */
   await b.key("F3", { key:"F3", vk:114 });
-  await wait(200);
+  await wait(200);                             /* already on the drills tab */
+  ok("and in the drills tab beside the first", /the seam drill/.test(await listText()));
   const idx = await b.eval(
     "(function(){var r=document.querySelectorAll('#qlist .quest');for(var i=0;i<r.length;i++)" +
     "if(/the seam drill/.test(r[i].textContent))return i;return -1;})()");
-  ok("it is selectable", idx === 9, idx);
+  ok("it is selectable", idx === 1, idx);
   for (let i = 0; i < idx; i++) await b.key("ArrowDown", { key:"ArrowDown", vk:40 });
   ok("the detail shows its constraint",
      /end on the fifth/.test(await b.eval("document.getElementById('qdtext').textContent")));
@@ -164,7 +188,7 @@ const SEAM = { id:"drill-seam", name:"the seam drill",
   await wait(300);
   const meta = await b.eval("document.getElementById('metatext').textContent");
   ok("entering it lands in its seeded key", /D minor/.test(meta), meta);
-  ok("at its tempo", / · 92 · /.test(meta), meta);
+  ok("at its tempo, which the meta line now leads with", /^92 · /.test(meta), meta);
   const col = await b.eval("document.getElementById('column').textContent");
   ok("with its pattern on the page", /D-4/.test(col) && /F-4/.test(col) && /A-4/.test(col), col);
   ok("the right rail carries its summary",
@@ -219,7 +243,7 @@ const SEAM = { id:"drill-seam", name:"the seam drill",
   clearInterval(drain);
   b.close(); srv.kill();
   await wait(400);
-  if (fs.existsSync(BACK)) fs.copyFileSync(BACK, LOG);
+  try { fs.rmSync(TMP, { recursive:true, force:true }); } catch (e){}
   console.log("\n" + pass + " passed, " + fail + " failed\n");
   process.exit(fail ? 1 : 0);
 })().catch(e => { console.log("harness crashed: " + (e && e.stack || e)); process.exit(1); });

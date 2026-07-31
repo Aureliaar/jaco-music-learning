@@ -9,8 +9,9 @@ node_modules/
 .claude/
 tmp/
 
-# What the harnesses leave behind: browser profiles, screenshots, and the
-# backups they take of the quest log before driving it.
+# What the harnesses leave behind: browser profiles and screenshots. They no
+# longer back the quest log up, because they no longer touch it: a run drives
+# a log of its own in a temp directory (FOLIO_LOG).
 tests/prof-*/
 tests/*.png
-tests/quest-log.*backup.json
+tests/tmp/

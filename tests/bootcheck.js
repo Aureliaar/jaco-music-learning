@@ -6,14 +6,45 @@ const net = require("net");
 const { launch } = require("./cdp.js");
 
 const REPO = require("path").resolve(__dirname, "..").split("\\").join("/");
-const LOG  = REPO + "/quests/quest-log.json";
-const BACK = __dirname + "/quest-log.bootbackup.json";
+/* ---- the log this run drives is never the player's ----
+   Two earlier runs of these harnesses clobbered quests/quest-log.json — one
+   timed out and left its test seed sitting in the player's workspaces. The
+   file in quests/ is their music. So the server is pointed (FOLIO_LOG) at a
+   log in a temp directory that this process makes and removes, and the
+   tracked file is neither read nor written by anything below. */
+const TMP  = require("fs").mkdtempSync(require("path").join(require("os").tmpdir(), "folio-test-"));
+const LOG  = require("path").join(TMP, "quest-log.json");
+
+/* ---- and it is seeded, rather than borrowed ----
+   This harness used to read whatever happened to be in the player's log,
+   which made it a test of their composing as much as of the folio: the tabs
+   it walks, the workspace it enters and the picture it expects were all
+   whatever they had last written. The fixture is here now, in the file, and
+   says exactly what the checks below need — two lessons and a drills tab, and
+   a workspace with a still of its own. */
+const SILENCE = new Array(16).fill(null);
+const SEED = {
+  folio:"quest-log", version:2, active:null,
+  free:{ version:1, title:"untitled folio", tempo:112, loop:16, key:"C major",
+         steps: SILENCE.slice() },
+  quests:{},
+  drills:[
+    { id:"shadow", name:"⚔ The Shadow", lesson:2,
+      summary:"the second voice shadows the first a third below",
+      teaches:"two lines that are one line",
+      pattern:{ version:1, title:"shadow", tempo:104, loop:16, key:"D minor",
+                steps: SILENCE.slice() } },
+    { id:"drill-pull", name:"the pull drill", summary:"an étude, not a quest",
+      teaches:"tendency", pattern:null }
+  ]
+};
 
 let pass = 0, fail = 0;
 function ok(name, cond, extra){
   if (cond){ pass++; console.log("  ok   " + name); }
   else { fail++; console.log("  FAIL " + name + (extra !== undefined ? "  -> " + JSON.stringify(extra).slice(0,500) : "")); }
 }
+function eq2(name, a, b){ ok(name, JSON.stringify(a) === JSON.stringify(b), { got:a, want:b }); }
 const wait = ms => new Promise(r => setTimeout(r, ms));
 
 function freePort(start){
@@ -28,10 +59,10 @@ function freePort(start){
 (async function(){
   const port = Number(process.env.PORT) || await freePort(4173);
   const BASE = "http://localhost:" + port;
-  if (fs.existsSync(LOG)) fs.copyFileSync(LOG, BACK);
 
+  fs.writeFileSync(LOG, JSON.stringify(SEED, null, 2));
   const srv = spawn(process.execPath, [REPO + "/server.mjs"],
-    { cwd: REPO, stdio: ["ignore","pipe","pipe"], env: Object.assign({}, process.env, { PORT: String(port) }) });
+    { cwd: REPO, stdio: ["ignore","pipe","pipe"], env: Object.assign({}, process.env, { PORT: String(port), FOLIO_LOG: LOG }) });
   let srvlog = "";
   srv.stdout.on("data", d => { srvlog += d; });
   srv.stderr.on("data", d => { srvlog += d; });
@@ -68,10 +99,10 @@ function freePort(start){
   /* the tempo control, from the keyboard, on the F1 page */
   await b.key("F1", { key:"F1", vk:112 });
   ok("the key page opened", await b.eval("document.getElementById('keyref').classList.contains('on')"));
-  const before = await b.eval("Number(document.getElementById('metatext').textContent.split(' · ')[1])");
+  const before = await b.eval("Number(document.getElementById('metatext').textContent.split(' · ')[0])");
   await b.key("Equal", { key:"=", vk:187 });
   await b.key("Equal", { key:"=", vk:187 });
-  const after = await b.eval("Number(document.getElementById('metatext').textContent.split(' · ')[1])");
+  const after = await b.eval("Number(document.getElementById('metatext').textContent.split(' · ')[0])");
   ok("two presses raise the tempo by eight", after === before + 8, { before, after });
   ok("and the footer said so",
      /tempo · /.test(await b.eval("document.getElementById('footer').textContent")),
@@ -79,28 +110,46 @@ function freePort(start){
   await b.key("Minus", { key:"-", vk:189 });
   await b.key("Minus", { key:"-", vk:189 });
   ok("and two more put it back",
-     (await b.eval("Number(document.getElementById('metatext').textContent.split(' · ')[1])")) === before);
+     (await b.eval("Number(document.getElementById('metatext').textContent.split(' · ')[0])")) === before);
   ok("the key page documents the tempo",
      /the two keys left of backspace/.test(await b.eval("document.getElementById('keyref').textContent")));
   ok("and says the quests come pre-tuned",
      /arrives already tuned/.test(await b.eval("document.getElementById('keyref').textContent")));
   await b.key("F1", { key:"F1", vk:112 });
 
-  /* a fresh quest workspace arrives seeded — 'stray' has no page in the log */
-  await b.key("F3", { key:"F3", vk:114 });
-  await wait(120);
-  const idx = await b.eval(
+  /* a fresh quest workspace arrives seeded — 'stray' has no page in the log.
+     The board is read one lesson at a time now, so walk the tabs to it. */
+  const rowIndex = name => b.eval(
     "(function(){var r=document.querySelectorAll('#qlist .quest');for(var i=0;i<r.length;i++)" +
-    "if(/stray/i.test(r[i].textContent))return i;return -1;})()");
+    "if(/" + name + "/i.test(r[i].textContent))return i;return -1;})()");
+  /* the boot GET may still be in flight, and applying the server's state puts
+     the caret (and so the tab) back where the work is: settle first, then walk */
+  await wait(600);
+  await b.key("F3", { key:"F3", vk:114 });
+  await wait(200);
+  let idx = await rowIndex("stray");
+  for (let t = 0; t < 12 && idx < 0; t++){
+    await b.key("ArrowRight", { key:"ArrowRight", vk:39 });
+    await wait(150);
+    idx = await rowIndex("stray");
+  }
   ok("the stray quest is on the list", idx >= 0, idx);
-  for (let i = 0; i < idx; i++) await b.key("ArrowDown", { key:"ArrowDown", vk:40 });
+  /* the log opens on the lesson the work is in, so the caret starts on the
+     workspace in hand rather than at the head: walk from where it is */
+  const caretRow = () => b.eval(
+    "(function(){var r=document.querySelectorAll('#qlist .quest');" +
+    "for(var i=0;i<r.length;i++) if(r[i].classList.contains('sel')) return i; return 0;})()");
+  let at0 = await caretRow();
+  for (let i = at0; i < idx; i++) await b.key("ArrowDown", { key:"ArrowDown", vk:40 });
+  for (let i = at0; i > idx; i--) await b.key("ArrowUp", { key:"ArrowUp", vk:38 });
   await b.key("Enter", { key:"Enter", vk:13 });
   await b.key("F3", { key:"F3", vk:114 });
   await wait(150);
   const meta = await b.eval("document.getElementById('metatext').textContent");
   ok("entering it lands in its seeded key", /E minor/.test(meta), meta);
-  ok("and its seeded tempo", / · 96 · /.test(meta), meta);
-  ok("with the quest named on the meta line", /⚔/.test(meta), meta);
+  ok("and its seeded tempo", /^96 · /.test(meta), meta);
+  /* both margins name the quest already; the line is the three settings */
+  ok("with the quest left off the meta line", !/⚔/.test(meta), meta);
   ok("and the right rail carries its constraint",
      /outside the key/.test(await b.eval("document.getElementById('railtext').textContent")));
   ok("no prompt holds note entry — nothing rite-shaped on the page",
@@ -133,8 +182,12 @@ function freePort(start){
 
   await b.tap(GP.START);
   ok("start raises the settings crossbar", await on("settings"));
-  ok("and the pattern stands down", !(await on("roll")) &&
-     (await b.eval("document.getElementById('column').style.display")) === "none");
+  /* item 7 of the pre-L3 pass: the crossbar is raised OVER the folio now,
+     not in place of it — the music stays in view while settings are turned */
+  ok("and the folio stays in view under it",
+     (await on("roll")) ||
+     (await b.eval("document.getElementById('column').style.display")) === "flex",
+     await b.eval("document.getElementById('column').style.display"));
   ok("the crossbar is drawn as eight slots",
      (await b.eval("document.querySelectorAll('#settings .xslot').length")) === 8);
   ok("the workspace heads the list",
@@ -194,24 +247,56 @@ function freePort(start){
   await b.tap(GP.DU);
   ok("and up walks back to where it started", (await where()) === here0, [here0, await where()]);
 
-  /* ← and → are the voice, a ring */
+  /* ← and → turn the lesson the margin is showing — it reads one at a time,
+     the one the board is on, so the four directions are the whole board with
+     no page opened. The base octave, here one pass, is not a command now. */
   const meta1 = () => b.eval("document.getElementById('metatext').textContent");
-  const v0 = await meta1();
+  const railTabOn = () => b.eval(
+    "(document.querySelector('#rtabs .rtab.on')||{}).textContent||''");
+  const railList = () => b.eval(
+    "[].map.call(document.querySelectorAll('#railquests .rline .rn'), function(e){return e.textContent;})");
+  ok("the margin has a tag per lesson, and one of them in hand",
+     (await b.eval("document.querySelectorAll('#rtabs .rtab').length")) >= 2 &&
+     (await b.eval("document.querySelectorAll('#rtabs .rtab.on').length")) === 1);
+  const oct0 = await meta1(), tab0 = await railTabOn(), list0 = await railList();
   await b.tap(GP.DR);
-  ok("→ changes hands", (await meta1()) !== v0, [v0, await meta1()]);
-  await b.tap(GP.DR);
-  ok("→ again comes round the ring", (await meta1()) === v0, [v0, await meta1()]);
+  await wait(120);
+  ok("→ turns the margin to another lesson", (await railTabOn()) !== tab0,
+     [tab0, await railTabOn()]);
+  ok("and the margin shows that lesson's workspaces instead",
+     JSON.stringify(await railList()) !== JSON.stringify(list0), [list0, await railList()]);
+  ok("and raised no octave — that is not a command any more",
+     (await meta1()) === oct0, [oct0, await meta1()]);
   await b.tap(GP.DL);
-  ok("← walks it the other way", (await meta1()) !== v0);
-  await b.tap(GP.DL);
-  ok("and back", (await meta1()) === v0);
+  await wait(120);
+  ok("← turns it back", (await railTabOn()) === tab0, [tab0, await railTabOn()]);
+  eq2("and the margin comes back with it", await railList(), list0);
+  /* the voice, on the bumpers, from the page itself */
+  await b.tap(GP.START);
+  const vb = () => b.eval("document.getElementById('vname1').className");
+  const vb0 = await vb();
+  await b.tap(GP.R1);
+  ok("R1 changes hands on the page", (await vb()) !== vb0, [vb0, await vb()]);
+  await b.tap(GP.L1);
+  ok("and L1 walks the ring back", (await vb()) === vb0, [vb0, await vb()]);
+  await b.tap(GP.START);
 
-  const meth0 = await meta1();
+  /* no scene is put up until its picture is fetched and decoded, so the
+     ground answers a moment after the button, holding what it had until then */
+  const scene = () => b.eval("document.body.getAttribute('data-scenery')");
+  const sceneSettles = async (want) => {
+    for (let i = 0; i < 60; i++){
+      if (want ? (await scene()) === want : (await scene()) !== scene0) return await scene();
+      await wait(150);
+    }
+    return await scene();
+  };
+  const scene0 = await scene();
   await b.tap(GP.X);
-  ok("✕ changes the entry method", /relative/.test(await meta1()), meth0);
+  ok("✕ walks the background", (await sceneSettles(null)) !== scene0, scene0);
   ok("and the crossbar stays up for the next item", await on("settings"));
-  await b.tap(GP.X);
-  ok("and ✕ again puts it back", !/relative/.test(await meta1()), await meta1());
+  await b.tap(GP.X); await b.tap(GP.X); await b.tap(GP.X);
+  ok("and four presses is the whole ring", (await sceneSettles(scene0)) === scene0, scene0);
   await b.tap(GP.B);
   ok("○ closes it", !(await on("settings")));
   ok("and the rail wash goes with it",
@@ -256,7 +341,6 @@ function freePort(start){
   await b.key("F3", { key:"F3", vk:114 });
   await wait(150);
 
-  ok("the header names the voice in hand", / · lead/.test(await meta2()), await meta2());
   ok("the strip above the page names both",
      /lead/.test(await b.eval("document.getElementById('voices').textContent")) &&
      /bass/.test(await b.eval("document.getElementById('voices').textContent")));
@@ -287,7 +371,9 @@ function freePort(start){
   ok("a note goes into the lead", /C-4/.test(await rowText(0)), await rowText(0));
   await b.key("Tab", { key:"Tab", vk:9 });
   await wait(80);
-  ok("tab changes hands", / · bass/.test(await meta2()), await meta2());
+  ok("tab changes hands, and the strip is what says so",
+     (await b.eval("document.getElementById('vname1').className")).indexOf("on") >= 0 &&
+     (await b.eval("document.getElementById('vname0').className")).indexOf("on") < 0);
   await b.key("Home", { key:"Home", vk:36 });
   await b.key("PageDown", { key:"PageDown", vk:34 });
   await b.key("PageDown", { key:"PageDown", vk:34 });
@@ -310,18 +396,20 @@ function freePort(start){
   /* solo and mute, from the keyboard */
   await b.key("KeyO", { key:"o", vk:79 });
   await wait(80);
-  ok("O solos the voice in hand", /bass \(solo\)/.test(await meta2()), await meta2());
-  ok("and the other is marked as under it",
-     /silent under the solo/.test(
-       await b.eval("document.getElementById('vmark0').textContent")) ||
-     /—/.test(await b.eval("document.getElementById('vmark0').textContent")),
+  /* the strip is the one home for this, and the header has stopped repeating it */
+  ok("O solos the voice in hand, on its own line of the strip",
+     /solo/.test(await b.eval("document.getElementById('vmark1').textContent")),
+     await b.eval("document.getElementById('vmark1').textContent"));
+  ok("and the other is marked as silent under it",
+     /silent/.test(await b.eval("document.getElementById('vmark0').textContent")),
      await b.eval("document.getElementById('vmark0').textContent"));
+  ok("with the header out of it entirely", !/solo/.test(await meta2()), await meta2());
   await b.key("KeyO", { key:"o", vk:79 });
   await b.key("KeyP", { key:"p", vk:80 });
   await wait(80);
-  ok("P mutes it", /bass \(muted\)/.test(await meta2()), await meta2());
-  ok("and the strip says so",
+  ok("P mutes it, and the strip says so",
      /muted/.test(await b.eval("document.getElementById('vmark1').textContent")));
+  ok("and the header still does not", !/muted/.test(await meta2()), await meta2());
   await b.key("KeyP", { key:"p", vk:80 });
 
   /* the transport really runs with both voices in it */
@@ -332,25 +420,33 @@ function freePort(start){
   ok("with no runtime error from the second voice", errors.length === 0, errors);
   await b.key("Space", { key:" ", vk:32 });
 
-  /* the pad: bare triangle changes hands in absolute entry */
+  /* the pad: the bumpers change hands, △ is a move and never the voice */
   await b.key("Tab", { key:"Tab", vk:9 });      /* back to the lead */
   await wait(60);
-  await b.tap(GP.TR);
-  ok("bare △ changes hands on the pad", / · bass/.test(await meta2()), await meta2());
-  await b.tap(GP.TR);
-  ok("and back", / · lead/.test(await meta2()), await meta2());
+  const inHand = () => b.eval(
+    "document.getElementById('vname0').className.indexOf('on') >= 0 ? 'lead' : 'bass'");
+  await b.tap(GP.R1);
+  ok("R1 changes hands on the pad", (await inHand()) === "bass", await inHand());
+  await b.tap(GP.L1);
+  ok("and L1 walks the ring back", (await inHand()) === "lead", await inHand());
   /* and the crossbar carries the voice, solo and mute */
   await b.tap(GP.START);
   const slots = await b.eval(
     "Array.prototype.map.call(document.querySelectorAll('#settings .xslot')," +
     "function(e){return e.textContent;})");
-  ok("the crossbar's → is the voice", /the voice/.test(slots[2]), slots[2]);
+  ok("the crossbar's → is the lesson", /the lesson/.test(slots[2]), slots[2]);
   ok("its ↓ is the workspace", /the workspace/.test(slots[3]), slots[3]);
-  ok("and ✕ is the entry method", /entry method/.test(slots[7]), slots[7]);
+  ok("and no slot of it is the base octave any more",
+     slots.every(s => !/octave/.test(s)), slots);
+  ok("and ✕ is the background", /the background/.test(slots[7]), slots[7]);
+  ok("and no slot of it is the voice any more",
+     slots.every(s => !/the voice/.test(s)), slots);
   ok("□ is solo", /solo/.test(slots[4]), slots[4]);
   ok("△ is mute", /mute/.test(slots[5]), slots[5]);
   await b.tap(GP.SQ);
-  ok("□ really solos the voice in hand", /lead \(solo\)/.test(await meta2()), await meta2());
+  ok("□ really solos the voice in hand, marked on the strip",
+     /solo/.test(await b.eval("document.getElementById('vmark0').textContent")),
+     await b.eval("document.getElementById('vmark0').textContent"));
   await b.tap(GP.SQ);
   await b.shot(__dirname + "/two-voices-settings.png");
   await b.tap(GP.START);
@@ -384,9 +480,10 @@ function freePort(start){
      nothing has shipped from this repo before. */
   console.log("\n== the names on the drawing ==");
   const K = { key:"k", vk:75 };
+  /* which voice the hands are in is read off the strip that names them */
   async function toLead(){
     for (let i = 0; i < 3; i++){
-      if (/ · lead/.test(await meta2())) return;
+      if ((await b.eval("document.getElementById('vname0').className")).indexOf("on") >= 0) return;
       await b.key("Tab", { key:"Tab", vk:9 });
     }
   }
@@ -777,8 +874,10 @@ function freePort(start){
   await b.key("KeyZ", { key:"z", vk:90 });
   ok("entry wraps past step 16", (await at()) === 1, await at());
   await b.key("KeyL", { key:"l", vk:76 });
-  ok("the loop is eight", /loop 8/.test(await b.eval(
-     "document.getElementById('metatext').textContent")));
+  /* the page draws the loop, which is why the meta line stopped saying it */
+  ok("the loop is eight, and the page is what says so",
+     (await b.eval("document.querySelectorAll('#column .row.outside').length")) === 8,
+     await b.eval("document.querySelectorAll('#column .row.outside').length"));
   await b.key("End", { key:"End", vk:35 });
   await b.key("KeyZ", { key:"z", vk:90 });
   ok("and wraps the same way under a short loop", (await at()) === 1, await at());
@@ -795,18 +894,19 @@ function freePort(start){
   await b.key("Period", { key:".", vk:190 });
   ok("clearing a step advances two as well", (await at()) === 2, await at());
   await b.key("Home", { key:"Home", vk:36 });
+  /* the absolute crossbar is gone: a trigger with a d-pad slot names no pitch.
+     The d-pad still does its own bare work under it (time, or the nudge, as
+     the view decides) — what must never happen again is a pitch appearing. */
   await b.tap(GP.L2, GP.DL);
-  ok("crossbar entry on the pad advances two", (await at()) === 2, await at());
-  ok("and wrote the absolute pitch it names", /C-4/.test(await stepText(0)), await stepText(0));
-  await b.key("F4", { key:"F4", vk:115 });          /* relative (contour) entry */
-  ok("the pad is in relative entry", /relative/.test(await b.eval(
-     "document.getElementById('metatext').textContent")));
+  ok("a trigger and the old slot 1 write no pitch",
+     !/[A-G]/.test(await stepText(0)), await stepText(0));
+  await b.key("Home", { key:"Home", vk:36 });
+  await b.key("KeyZ", { key:"z", vk:90 });          /* an anchor to move from */
+  await b.key("Home", { key:"Home", vk:36 });
   await b.tap(GP.TR);
-  ok("a relative note advances two", (await at()) === 4, await at());
-  ok("and it wrote a step of the key above the anchor",
-     /D-4/.test(await stepText(2)), await stepText(2));
+  ok("a contour note advances two", (await at()) === 2, await at());
   await b.tap(GP.SQ);
-  ok("a rest on the pad advances two, as a note does", (await at()) === 6, await at());
+  ok("a rest on the pad advances two, as a note does", (await at()) === 4, await at());
 
   /* ---- the chromatic escape hatch, on a real pad ----
      L1 and R1 held together mean one thing in relative entry: out of the key,
@@ -832,13 +932,13 @@ function freePort(start){
   const UP = inRoll ? GP.DU : GP.DR, DOWN = inRoll ? GP.DD : GP.DL;
   const hatchBefore = await noteAt(0);
   ok("there is a note under the cursor to nudge", hatchBefore !== null, await stepText(0));
-  await b.tap(GP.L1, GP.R1, UP);
+  await b.tap(GP.L2, GP.R2, UP);
   const hatchAfter = await noteAt(0);
-  ok("both bumpers held, the d-pad nudges by a semitone",
+  ok("both triggers held, the d-pad nudges by a semitone",
      hatchBefore && hatchAfter && MIDI(hatchAfter) === MIDI(hatchBefore) + 1, [hatchBefore, hatchAfter]);
   ok("and the nudge did not advance the cursor", (await at()) === 0, await at());
-  ok("nor did the bumpers double as the octave", / octave 4 /.test(await metaLine()), await metaLine());
-  await b.tap(GP.L1, GP.R1, DOWN);
+  ok("nor did the triggers touch the octave or the voice", / octave 4 /.test(await metaLine()), await metaLine());
+  await b.tap(GP.L2, GP.R2, DOWN);
   ok("and the other way is a semitone back", (await noteAt(0)) === hatchBefore,
      [hatchBefore, await noteAt(0)]);
   await b.tap(UP);
@@ -848,15 +948,304 @@ function freePort(start){
      [hatchBefore, hatchBare]);
   ok("and the escape hatch raised no runtime error", errors.length === 0, errors);
 
-  await b.key("F4", { key:"F4", vk:115 });          /* back to absolute */
   ok("no runtime errors from any of the eighth-note work", errors.length === 0, errors);
 
   await b.shot(__dirname + "/boot-seeded.png");
+
+  /* ================= the board, the hint, and the workspace's scenery ====
+     All of this is layout, so none of it is checked by reading the source:
+     it is measured in the browser that draws it, and photographed. */
+  console.log("\n== the board, read one lesson at a time ==");
+  const KEY = { F3:{ key:"F3", vk:114 }, F1:{ key:"F1", vk:112 },
+                RIGHT:{ key:"ArrowRight", vk:39 }, LEFT:{ key:"ArrowLeft", vk:37 },
+                DOWN:{ key:"ArrowDown", vk:40 }, UP:{ key:"ArrowUp", vk:38 } };
+  const rowNames = () => b.eval(
+    "[].map.call(document.querySelectorAll('#qlist .quest .qname'), function(e){return e.textContent;})");
+  const tabNames = () => b.eval(
+    "[].map.call(document.querySelectorAll('#qtabs .qtab'), function(e){return e.textContent;})");
+  const railNames = () => b.eval(
+    "[].map.call(document.querySelectorAll('#railquests .rline .rn'), function(e){return e.textContent;})");
+  const boxOf = sel => b.eval(
+    "(function(){var r=document.querySelector('" + sel + "').getBoundingClientRect();" +
+    "return {w:Math.round(r.width),h:Math.round(r.height),t:Math.round(r.top)};})()");
+  const hairText = sel => b.eval("(document.querySelector('" + sel + "')||{}).textContent||''");
+
+  await b.key("F3", KEY.F3); await wait(150);
+  const tabs = await tabNames();
+  ok("the log has a tab per lesson on the board", tabs.length >= 2, tabs);
+  ok("the first is Lesson 1", /^L1/.test(tabs[0]), tabs);
+  ok("the drills are the last", /drills/.test(tabs[tabs.length - 1]), tabs);
+  ok("each tab says how many are in it", tabs.every(t => /\d/.test(t)), tabs);
+  ok("exactly one tab is in hand",
+     (await b.eval("document.querySelectorAll('#qtabs .qtab.on').length")) === 1);
+  const l1rows = await rowNames();
+  ok("the list shows that tab and no more", l1rows.length >= 1 && l1rows.length <= 12, l1rows.length);
+  await b.key("ArrowRight", KEY.RIGHT); await wait(120);
+  const l2rows = await rowNames();
+  ok("turning the tab changes the list",
+     JSON.stringify(l1rows) !== JSON.stringify(l2rows), [l1rows[0], l2rows[0]]);
+  ok("and the caret is on a quest that is actually on the page",
+     (await b.eval("document.querySelectorAll('#qlist .quest.sel').length")) === 1);
+  ok("nothing outside the tab is left in the list",
+     (await b.eval("document.querySelectorAll('#qlist .quest').length")) === l2rows.length);
+  await b.key("ArrowLeft", KEY.LEFT); await wait(120);
+  ok("and back again", JSON.stringify(await rowNames()) === JSON.stringify(l1rows));
+  await b.shot(__dirname + "/boot-tabs.png");
+
+  console.log("\n== kept to hand, and moved by hand ==");
+  await b.key("ArrowDown", KEY.DOWN); await b.key("ArrowDown", KEY.DOWN);
+  await wait(100);
+  const chosen = await b.eval("document.querySelector('#qlist .quest.sel .qname').textContent");
+  await b.key("KeyF", { key:"f", vk:70 }); await wait(150);
+  ok("F marks it on its row",
+     (await b.eval("document.querySelector('#qlist .quest.sel .qfav').textContent")) === "\u2726");
+  eq2("and takes it to the head of the lesson", (await rowNames())[0], chosen);
+  ok("with a labelled hairline under it", /L1/.test(await hairText("#qlist .qhair")),
+     await hairText("#qlist .qhair"));
+  const rail = await railNames();
+  ok("the margin puts it straight under free play",
+     rail[1].toLowerCase() === chosen.toLowerCase(), [rail[1], chosen]);
+  ok("marked there as it is on its row",
+     (await b.eval(
+       "document.querySelectorAll('#railquests .rline')[1].querySelector('.rf').textContent"))
+     === "\u2726");
+  /* the margin is one lesson deep now, and its tags say which lesson */
+  ok("and the margin draws no dividers at all",
+     (await b.eval("document.querySelectorAll('#railquests .rhair').length")) === 0);
+  ok("its tag says which lesson it is showing",
+     /L1/.test(await b.eval("(document.querySelector('#rtabs .rtab.on')||{}).textContent||''")),
+     await b.eval("(document.querySelector('#rtabs .rtab.on')||{}).textContent||''"));
+  await b.shot(__dirname + "/boot-favourite.png");
+  await b.key("KeyF", { key:"f", vk:70 }); await wait(150);
+  ok("F again lets it go",
+     (await b.eval("document.querySelector('#qlist .quest.sel .qfav').textContent")) === "");
+
+  const wasOrder = await rowNames();
+  await b.key("ArrowUp", KEY.UP); await wait(80);
+  await b.key("ArrowUp", KEY.UP); await wait(80);
+  await b.key("ArrowDown", Object.assign({ shift:true }, KEY.DOWN)); await wait(150);
+  const nowOrder = await rowNames();
+  ok("shift and down move the quest itself",
+     nowOrder[0] === wasOrder[1] && nowOrder[1] === wasOrder[0], [wasOrder.slice(0,2), nowOrder.slice(0,2)]);
+  ok("and the caret went with it",
+     (await b.eval("document.querySelector('#qlist .quest.sel .qname').textContent")) === wasOrder[0]);
+  await b.key("ArrowUp", Object.assign({ shift:true }, KEY.UP)); await wait(150);
+  ok("shift and up put it back",
+     JSON.stringify(await rowNames()) === JSON.stringify(wasOrder), await rowNames());
+  await b.key("F3", KEY.F3); await wait(120);
+
+  console.log("\n== the standing hint, and nothing moving because of it ==");
+  const hint = () => b.eval("document.getElementById('hints').textContent");
+  const pageHint = await hint();
+  ok("the hint is under the footer and not empty", pageHint.length > 10, pageHint);
+  ok("it names what writes a note", /notes|up, down, again/.test(pageHint), pageHint);
+  const hb = await boxOf("#hints");
+  ok("it has a height of its own", hb.h > 6, hb);
+  ok("and does not run off the measure", hb.w <= (await b.eval("window.innerWidth")), hb);
+  const mainA = await boxOf("main");
+  await b.key("F3", KEY.F3); await wait(150);
+  const questHint = await hint();
+  ok("in the quest log it names the lesson keys", /lesson/.test(questHint), questHint);
+  ok("and the two marks", /keep to hand/.test(questHint) && /move it/.test(questHint), questHint);
+  const mainB = await boxOf("main");
+  await b.key("F3", KEY.F3); await b.key("F1", KEY.F1); await wait(150);
+  const keyHint = await hint();
+  ok("on the key page it names the key and the tempo",
+     /tonic/.test(keyHint) && /tempo/.test(keyHint), keyHint);
+  const mainC = await boxOf("main");
+  await b.key("F1", KEY.F1); await wait(150);
+  /* the pages have always been of different lengths — the key page is a wall
+     of prose and always was — so what is checked is that the hint costs the
+     same on all of them: it is the same strip, at the same height, wherever
+     it is, and it is the last thing on the page in each case */
+  const hintOn = async () => {
+    const r = await boxOf("#hints");
+    return r.h;
+  };
+  const hA = await hintOn();
+  await b.key("F3", KEY.F3); await wait(150);
+  const hB = await hintOn();
+  await b.key("F3", KEY.F3); await b.key("F1", KEY.F1); await wait(150);
+  const hC = await hintOn();
+  await b.key("F1", KEY.F1); await wait(150);
+  ok("the hint is the same height on every page", hA === hB && hB === hC, [hA, hB, hC]);
+  ok("and it is not what pushed the pattern page off the screen",
+     mainA.h <= (await b.eval("window.innerHeight")),
+     [mainA.h, await b.eval("window.innerHeight")]);
+  /* the tabs were the point: the log used to be a column of every quest there
+     is — 1427px of it in a 905px window — and no tab of it may overflow now */
+  await b.key("F3", KEY.F3); await wait(150);
+  const tabHeights = [];
+  for (let t = 0; t < 4; t++){
+    tabHeights.push((await boxOf("main")).h);
+    await b.key("ArrowRight", KEY.RIGHT); await wait(160);
+  }
+  await b.key("F3", KEY.F3); await wait(120);
+  const winFit = await b.eval("window.innerHeight");
+  ok("every tab of the log fits the window",
+     tabHeights.every(h => h <= winFit), [tabHeights, winFit]);
+  ok("however long a lesson gets, the list itself is bounded",
+     /#qlist\{[\s\S]*?max-height/.test(fs.readFileSync(REPO + "/folio.css", "utf8")));
+  const bodyH = mainC.h;                       /* the key page, the tallest */
+  const winH = await b.eval("window.innerHeight");
+  ok("the page still never offers a scrollbar",
+     (await b.eval("getComputedStyle(document.body).overflow")) === "hidden",
+     [bodyH, winH]);
+  ok("nothing scrolls sideways either",
+     (await b.eval("document.documentElement.scrollWidth")) <=
+     (await b.eval("window.innerWidth")) + 2);
+  await b.shot(__dirname + "/boot-hints.png");
+
+  /* ---- the page of the key, read to its end ----
+     It is the longest thing in the app — about 5900px of prose in a 905px
+     window — and the body does not scroll, so for a long time roughly six
+     sevenths of it could not be reached at all. Measured here rather than
+     inspected: the proof is that the last line of it lands on the screen. */
+  console.log("\n== the key page can be read to its end ==");
+  await b.key("F1", KEY.F1); await wait(200);
+  const kr = () => b.eval("(function(){var e=document.getElementById('keyref');" +
+    "return {top:Math.round(e.scrollTop),room:Math.round(e.scrollHeight-e.clientHeight)," +
+    "client:Math.round(e.clientHeight),full:Math.round(e.scrollHeight)," +
+    "overflow:getComputedStyle(e).overflowY};})()");
+  const k0 = await kr();
+  ok("the page is much longer than the window it is in", k0.full > k0.client * 3, k0);
+  ok("but it has a bottom of its own, and can be walked to it", k0.room > 0, k0);
+  ok("it is the page that scrolls, never the body",
+     k0.overflow === "auto" &&
+     (await b.eval("getComputedStyle(document.body).overflow")) === "hidden", k0);
+  ok("it fits the window", k0.client <= (await b.eval("window.innerHeight")), k0);
+  ok("and it opens at its head", k0.top === 0, k0);
+  await b.key("PageDown", { key:"PageDown", vk:34 }); await wait(120);
+  const k1 = await kr();
+  ok("page down turns it a screenful", k1.top > 0 && k1.top <= k0.client, [k0.client, k1.top]);
+  ok("keeping the last line read on the screen", k1.top < k0.client, k1);
+  ok("and the footer says how far down", /page \d+ of \d+/.test(await footer()), await footer());
+  for (let i = 0; i < 3; i++){ await b.key("PageDown", { key:"PageDown", vk:34 }); await wait(60); }
+  const kMid = await kr();
+  ok("four turns are well into it", kMid.top > k0.client * 3, kMid);
+  await b.shot(__dirname + "/keyref-middle.png");
+  const krLen = await b.eval("document.getElementById('keyref').textContent.length");
+  await b.key("End", { key:"End", vk:35 }); await wait(150);
+  const k2 = await kr();
+  ok("end goes to the foot", k2.top === k2.room, k2);
+  ok("and the footer says so", / · the foot/.test(await footer()), await footer());
+  /* the proof: the very last thing written on the page is on the screen */
+  /* the page is two columns, so the last thing on it in document order is not
+     the last thing on it: what must be reachable is whichever paragraph ends
+     furthest down, which is the one the old overflow buried deepest */
+  const lastSeen = await b.eval("(function(){" +
+    "var e = document.getElementById('keyref');" +
+    "var box = e.getBoundingClientRect(), deep = null, at = -1e9;" +
+    "[].forEach.call(e.querySelectorAll('p,dd'), function(el){" +
+    "  var r = el.getBoundingClientRect();" +
+    "  if (r.bottom > at){ at = r.bottom; deep = el; } });" +
+    "return { bottom: Math.round(at), boxBottom: Math.round(box.bottom)," +
+    "         inside: at <= box.bottom + 2 && at > box.top," +
+    "         text: deep.textContent.slice(-40) };})()");
+  ok("the last words on the page are on the screen", lastSeen.inside, lastSeen);
+  ok("and there really is that much of it", krLen > 8000, krLen);
+  await b.shot(__dirname + "/keyref-end.png");
+  await b.key("Home", { key:"Home", vk:36 }); await wait(120);
+  ok("home comes back to the head", (await kr()).top === 0);
+  ok("and the footer says that too", / · the head/.test(await footer()), await footer());
+  await b.key("PageUp", { key:"PageUp", vk:33 }); await wait(100);
+  ok("page up at the head goes nowhere", (await kr()).top === 0);
+  /* reading the page never took the arrows away from the key */
+  const keyWas = await b.eval("document.getElementById('metatext').textContent");
+  await b.key("ArrowRight", KEY.RIGHT); await wait(100);
+  ok("the arrows are still the tonic, not the scroll",
+     (await b.eval("document.getElementById('metatext').textContent")) !== keyWas &&
+     (await kr()).top === 0);
+  await b.key("ArrowLeft", KEY.LEFT); await wait(100);
+  ok("the page itself says how to read it",
+     /page up and page down/.test(await b.eval("document.getElementById('keyref').textContent")));
+  ok("and the hint strip names it first",
+     /read on/.test(await b.eval("document.getElementById('hints').textContent")),
+     await b.eval("document.getElementById('hints').textContent"));
+  await b.key("End", { key:"End", vk:35 }); await wait(120);
+  await b.key("F1", KEY.F1); await wait(150);
+  await b.key("F1", KEY.F1); await wait(150);
+  ok("re-opening it opens it at the head again", (await kr()).top === 0);
+  await b.key("F1", KEY.F1); await wait(120);
+  ok("no runtime error from reading it", errors.length === 0, errors);
+
+  console.log("\n== the workspace wears its own scene ==");
+  await b.key("F3", KEY.F3); await wait(150);
+  let found = await rowIndex("shadow");
+  for (let t = 0; t < 6 && found < 0; t++){
+    await b.key("ArrowRight", KEY.RIGHT); await wait(80);
+    found = await rowIndex("shadow");
+  }
+  ok("the shadow is on the board", found >= 0, found);
+  const selNow = await b.eval(
+    "(function(){var r=document.querySelectorAll('#qlist .quest');" +
+    "for(var i=0;i<r.length;i++) if(r[i].classList.contains('sel')) return i; return 0;})()");
+  for (let i = selNow; i < found; i++){ await b.key("ArrowDown", KEY.DOWN); await wait(40); }
+  for (let i = selNow; i > found; i--){ await b.key("ArrowUp", KEY.UP); await wait(40); }
+  await b.key("Enter", { key:"Enter", vk:13 });
+  await b.key("F3", KEY.F3); await wait(200);
+  ok("and it is the workspace in hand — the margin is what says so",
+     /shadow/i.test(await b.eval("document.getElementById('railtitle').textContent")),
+     await b.eval("document.getElementById('railtitle').textContent"));
+  eq2("the page starts on paper", await scene(), "paper");
+  for (let i = 0; i < 3; i++){ await b.key("KeyB", { key:"B", vk:66, shift:true }); await wait(150); }
+  for (let i = 0; i < 40 && (await scene()) !== "quest"; i++) await wait(150);
+  eq2("three turns of shift+B lands on the workspace's own", await scene(), "quest");
+  const bg = await b.eval("getComputedStyle(document.body).backgroundImage");
+  ok("and the picture behind the sheet is that workspace's",
+     bg.indexOf("quest-backgrounds/shadow.png") >= 0, bg.slice(0, 220));
+  ok("veiled, as the other scenes are", /linear-gradient/.test(bg), bg.slice(0, 120));
+  /* ---- and the ground never changed to a picture that was not there yet ----
+     The scene used to go up the moment it was asked for and the picture be
+     fetched afterwards, so the sheet sat on bare parchment for a few frames.
+     A decoded image is one the browser hands back complete on the spot. */
+  ok("the picture was already fetched and drawn before the ground changed",
+     await b.eval("(function(){var i=new Image();" +
+       "i.src='quest-backgrounds/shadow.png';return i.complete;})()"));
+  ok("and one scene giving way to another has a layer to do it on",
+     (await b.eval("!!document.getElementById('scenefade')")) &&
+     /\.scenefade\{[\s\S]*?transition:opacity/.test(fs.readFileSync(REPO + "/folio.css", "utf8")));
+  ok("the torn sheet is under the work",
+     (await b.eval("getComputedStyle(document.querySelector('.field'),'::before').backgroundImage"))
+       .indexOf("folio-paper.png") >= 0);
+  ok("the title keeps its darkening breath over the picture",
+     /^radial-gradient/.test(await b.eval(
+       "getComputedStyle(document.querySelector('header'),'::before').backgroundImage")));
+  ok("and so do the footer and the hint under it",
+     /^radial-gradient/.test(await b.eval(
+       "getComputedStyle(document.querySelector('.foot'),'::before').backgroundImage")));
+  ok("the margins too",
+     /^radial-gradient/.test(await b.eval(
+       "getComputedStyle(document.getElementById('raill'),'::before').backgroundImage")));
+  ok("the hint is pale ink over the scene, not the page's brown",
+     (await b.eval("getComputedStyle(document.getElementById('hints')).color"))
+       !== "rgb(169, 156, 130)",
+     await b.eval("getComputedStyle(document.getElementById('hints')).color"));
+  await b.shot(__dirname + "/boot-quest-scenery.png");
+  await b.key("F3", KEY.F3); await wait(200);
+  await b.shot(__dirname + "/boot-quest-scenery-log.png");
+  await b.key("F3", KEY.F3); await wait(100);
+
+  const mainScene = await boxOf("main");
+  await b.eval("document.querySelectorAll('#railquests .rline')[0].click()");
+  await wait(300);
+  eq2("free play falls back to paper", await scene(), "paper");
+  const mainFree = await boxOf("main");
+  /* the scene costs the page what forest and sea have always cost it — the
+     title and the footer step off the sheet — and nothing more: the measure
+     is the same, and the page is still centred */
+  ok("and the fall costs the measure nothing",
+     mainScene.w === mainFree.w, [mainScene, mainFree]);
+  ok("the page is still centred either way",
+     Math.abs((mainScene.t * 2 + mainScene.h) - (mainFree.t * 2 + mainFree.h)) <= 4,
+     [mainScene, mainFree]);
+  await b.key("KeyB", { key:"B", vk:66, shift:true }); await wait(150);
+  ok("still no runtime error from any of it", errors.length === 0, errors);
   clearInterval(drain);
   b.close();
   srv.kill();
   await wait(400);
-  if (fs.existsSync(BACK)) fs.copyFileSync(BACK, LOG);
+  try { fs.rmSync(TMP, { recursive:true, force:true }); } catch (e){}
   console.log("\n" + pass + " passed, " + fail + " failed\n");
   process.exit(fail ? 1 : 0);
 })().catch(e => { console.log("harness crashed: " + (e && e.stack || e)); process.exit(1); });

@@ -1,0 +1,1034 @@
+/* Folio — folio.css : the whole look of the page.
+   Lesson 0's palette is fixed; see SPEC-LESSON-0.md. The house rules:
+   no grids and no stripes, no extreme contrast, nothing blinks, and what
+   moves moves calmly. Texture and gradient are allowed and used. */
+  /* ---- Folio, Lesson 0. Palette is fixed; see SPEC-LESSON-0.md ---- */
+  :root{
+    --ground:#EAE0CC;
+    --ink:#3B2F1E;
+    --faded:#A99C82;
+    --rule:#C9BCA0;
+    --gilt:#9C7A28;
+    --wash:#E0D2B4;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  }
+  html{
+    font-size:clamp(13px,1.7vh,19px);
+    height:100%;
+  }
+  body{
+    height:100%;
+    margin:0;
+    overflow:hidden;                 /* single screen, never scrolls */
+    background-color:var(--ground);
+    /* the one permitted vignette: 3% ink at the far corners, nothing else */
+    background-image:radial-gradient(ellipse 120% 110% at 50% 45%,
+      rgba(59,47,30,0) 45%, rgba(59,47,30,0.03) 100%);
+    background-repeat:no-repeat;
+    color:var(--ink);
+    font-family:var(--serif);
+    font-size:1rem;
+    font-variant-numeric:tabular-nums lining-nums;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* A still landscape may sit behind the folio.  Paper remains the default;
+     both scenic choices are deliberately veiled here as a second, code-level
+     guard against glare and busy detail. */
+  body[data-scenery="forest"]{
+    background-image:
+      linear-gradient(rgba(18,31,27,0.30),rgba(18,31,27,0.42)),
+      url("folio-forest.png");
+    background-size:cover;
+    background-position:center;
+  }
+  body[data-scenery="sea"]{
+    background-image:
+      linear-gradient(rgba(30,42,55,0.24),rgba(30,42,55,0.35)),
+      url("folio-sea.png");
+    background-size:cover;
+    background-position:center;
+  }
+  /* The third scene is not one picture but whichever picture belongs to the
+     workspace you are in: quest-backgrounds/<id>.png, named after the quest.
+     The url arrives on the body as a custom property, so the rule itself
+     never has to know any of the names; a workspace with no picture of its
+     own never reaches this selector at all — the body stays on paper, which
+     is the graceful fall. The veil is a shade deeper than the two standing
+     scenes: these are illustrations rather than photographs and carry more
+     incident, and the sheet has to stay the brightest thing on the screen. */
+  body[data-scenery="quest"]{
+    background-image:
+      linear-gradient(rgba(20,26,24,0.34),rgba(20,26,24,0.48)),
+      var(--questbg);
+    background-size:cover;
+    background-position:center;
+  }
+  /* ---- one scene giving way to another ----
+     A picture is never put on the body until it has been fetched *and*
+     decoded, so the ground can no longer change to an image that is not there
+     yet — which is what showed the bare parchment for a handful of frames and
+     read as a flash. Once it is decoded the swap itself is free, and this
+     layer is what makes it calm: it holds the scene being left, over the one
+     arriving, and dissolves. It is only ever used between two pictures. Paper
+     has no picture to dissolve, so the two edges of the ring are a single
+     clean step rather than a wash of parchment over a photograph.
+     It is a fade of one still image into another and nothing moves. */
+  .scenefade{
+    position:fixed;
+    inset:0;
+    z-index:-1;
+    background-size:cover;
+    background-position:center;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 0.55s ease-out;
+  }
+  /* No animation anywhere. This block is belt-and-braces. */
+  *,*::before,*::after{animation:none !important;}
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{transition:none !important;animation:none !important;}
+  }
+
+  main{
+    width:min(46rem,92vw);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    position:relative;
+    z-index:1;
+    isolation:isolate;
+  }
+  /* the working field: everything that is written in or read off the page.
+     On paper it is nothing at all — a transparent wrapper that changes no
+     spacing. On scenery it is what the torn sheet covers, the title and the
+     footer having stepped off it into the scene. */
+  .field{
+    width:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    position:relative;
+    isolation:isolate;
+    /* above the title's and the footer's breath, which are free to run under
+       the sheet's edge: the paper covers what it overlaps */
+    z-index:1;
+  }
+  /* ---- the sheet ----
+     On scenery the folio lies on the scene as a physical page: folio-paper.png
+     is the ground colour with a deckled boundary torn by noise (a mottled
+     cloud for the wander of the tear, a fibrous sheet for the fray itself,
+     baked by scripts/bake-paper.mjs). The image is only referenced inside the
+     scenery selector, so plain paper never fetches it. */
+  .field::before{
+    content:"";
+    position:absolute;
+    inset:-2.6rem -3.6rem;
+    z-index:-1;
+    background:none;
+    opacity:0;
+    pointer-events:none;
+  }
+  /* the baked sheet's ground is one dab below the plain page's #EAE0CC, so
+     the flat wash that marks the playhead row (and the chosen quest, and the
+     head of a crossbar) steps down with it — the same distance under the
+     paper it lies on, or it stops being visible at all */
+  body:not([data-scenery="paper"]) .field{--wash:#D9C9A8;}
+  body:not([data-scenery="paper"]) .field::before{
+    opacity:1;
+    background-image:url("folio-paper.png");
+    background-size:100% 100%;
+    /* the shadow follows the torn contour, not a rectangle */
+    filter:drop-shadow(0 0.4rem 1.4rem rgba(12,17,15,0.38));
+  }
+
+  /* ---- header ---- */
+  header{width:100%;text-align:center;}
+  h1{
+    margin:0;
+    font-weight:400;
+    font-variant:small-caps;
+    letter-spacing:0.42em;
+    text-indent:0.42em;             /* balance the trailing letter-space */
+    font-size:2.1rem;
+    color:var(--ink);
+  }
+  /* the single permitted decorative flourish */
+  .flourish{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:0.7em;
+    margin:0.5rem 0 0.6rem;
+    color:var(--gilt);
+    font-size:1rem;
+    line-height:1;
+  }
+  .flourish i{display:block;width:5.5rem;height:1px;background:var(--gilt);opacity:0.55;}
+  .flourish span{opacity:0.8;}
+
+  .meta{
+    margin:0;
+    color:var(--faded);
+    font-size:0.92rem;
+    letter-spacing:0.06em;
+  }
+  .divider{
+    width:100%;
+    height:1px;
+    background:var(--rule);
+    margin:0.9rem 0 0.9rem;
+  }
+
+  /* ---- the column ---- */
+  .column{
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+    width:17.4rem;
+  }
+  .row{
+    display:grid;
+    /* fleuron, caret, step number, then a column for each voice */
+    grid-template-columns:1.5em 1.1em 2.3em 3.7em 3.7em;
+    column-gap:0.7em;
+    align-items:center;
+    height:2.35em;                   /* > 2.2 em, generously spaced */
+    border-top:1px solid rgba(201,188,160,0.45);
+    padding:0 0.5em;
+  }
+  .row.beat{border-top-color:var(--rule);}
+  .row:first-child{border-top-color:var(--rule);}
+  .row.play{background-color:var(--wash);}   /* flat wash, no glow, no trail */
+
+  .fleuron{color:var(--gilt);text-align:center;font-size:1em;line-height:1;}
+  .caret{color:var(--ink);text-align:center;font-size:1.05em;line-height:1;}
+  .num{color:var(--faded);text-align:right;font-size:0.9em;}
+  .note{position:relative;color:var(--ink);text-align:left;letter-spacing:0.04em;}
+  .note.empty{color:var(--faded);}
+  /* ---- the held note, written ----
+     A note that rings on does not become more notes: the steps it covers are
+     not marked one by one but joined, by a single ink hairline running down
+     the column under the name, from the note to where it stops. It is drawn
+     as a pseudo-element so that the run of rows carries no text of its own —
+     one continuous stroke, not a stack of glyphs — and it overshoots each row
+     a little at both ends so that the row's own hairline does not cut it.
+     Sixteen of these could never add up to a grid: there is at most one per
+     voice per note, it is vertical only, and it is quieter than the writing.
+     Where it ends it turns a short foot, because the end of a held note is a
+     decision and the page should say where it was made. */
+  .note.hold::after{
+    content:"";
+    position:absolute;
+    left:0.22em;
+    top:-0.62em;bottom:-0.62em;
+    width:1px;
+    background:rgba(59,47,30,0.34);
+  }
+  .note.hold.dim::after{background:rgba(59,47,30,0.20);}
+  .note.hold.last::before{
+    content:"";
+    position:absolute;
+    left:0.22em;
+    bottom:-0.62em;
+    width:0.46em;height:1px;
+    background:rgba(59,47,30,0.34);
+  }
+  .note.hold.last.dim::before{background:rgba(59,47,30,0.20);}
+  /* past the loop the writing is quieter; its stroke goes with it */
+  .row.outside .note.hold::after,.row.outside .note.hold.last::before{
+    background:rgba(59,47,30,0.16);
+  }
+  /* the voice not being written into: present, readable, a shade back */
+  .note.dim{color:var(--faded);}
+  .row.cursor .note{font-weight:700;}         /* the only bold in the app */
+  .row.cursor .note.dim{font-weight:400;}     /* and only on the voice in hand */
+
+  /* ---- the two voices, named above the page ----
+     Which line the hands are in, and what each is doing. Quiet: the one in
+     hand is in ink over a gilt hairline, the other is faded. Nothing moves. */
+  .voices{
+    display:flex;
+    justify-content:center;
+    align-items:baseline;
+    gap:2.4rem;
+    margin:0 0 0.55rem;
+    font-variant:small-caps;
+    letter-spacing:0.14em;
+    font-size:0.86rem;
+    color:var(--faded);
+  }
+  .voices.off{display:none;}
+  .vname{
+    display:block;
+    padding:0 0.2em 0.22rem;
+    border-bottom:1px solid transparent;
+    cursor:pointer;
+  }
+  .vname.on{color:var(--ink);border-bottom-color:var(--gilt);}
+  /* ---- what each voice is doing, on the strip that names them ----
+     Solo and mute used to be said twice: here, and again in the header's meta
+     line. The strip is the one indicator of where the hands are, so it is
+     where the state of the hands belongs, and the meta line has stopped
+     repeating it. A voice with nothing to say leaves an empty line of its own
+     height, so the strip never changes size and nothing on the page moves
+     when a voice is taken away or given back. */
+  .vmark{
+    display:block;
+    text-align:center;
+    font-variant:normal;
+    letter-spacing:0.04em;
+    font-size:0.8rem;
+    color:var(--faded);
+    min-height:1.2em;
+    cursor:pointer;
+  }
+  .vmark.solo{color:var(--gilt);}
+  /* steps beyond the loop length: present, editable, quieter on the page */
+  .row.outside .num,.row.outside .note{color:var(--faded);}
+
+  /* ---- the roll: the same page drawn — time runs right, height is pitch ---- */
+  .roll{
+    display:none;
+    width:100%;
+    box-sizing:border-box;
+    /* the margin the drawing keeps for its names: the home rules are named
+       at the side of the line, off the drawing rather than on top of it */
+    padding-left:2.7rem;
+    flex-direction:column;
+  }
+  .roll.on{display:flex;}
+  .rollfield{
+    position:relative;
+    height:36.9rem;                  /* with the base strip, the column's height: nothing shifts */
+  }
+  /* one hairline per home note — the tonic of the key, at every octave in
+     view: a sparse ruling, a quiet staff, never a grid. The tint is in the
+     colour rather than in `opacity`, so that the name the line carries is not
+     faded along with it. */
+  .octline{position:absolute;left:0;right:0;height:1px;background:rgba(201,188,160,0.55);}
+  /* and one per beat — the 4ths, upright, as quiet as the home rules */
+  .beatline{position:absolute;top:0;bottom:0;width:1px;background:var(--rule);opacity:0.55;}
+  .rollwash{position:absolute;top:0;bottom:0;background-color:var(--wash);display:none;}
+  /* the cursor column, bracketed: two upright ink hairlines, full height —
+     steady, unfilled, unmistakable; the caret below names the same column */
+  .rollcur{
+    position:absolute;top:0;bottom:0;
+    border-left:1px solid rgba(59,47,30,0.5);
+    border-right:1px solid rgba(59,47,30,0.5);
+  }
+  .bar{
+    position:absolute;
+    border-radius:999px;
+  }
+  .bar.outside{opacity:0.4;}
+  /* the voice not in hand: a shade back, and a shade further past the loop */
+  .bar.back{opacity:0.45;}
+  .bar.back.outside{opacity:0.2;}
+  .bar.cur{box-shadow:0 0 0 1px var(--ink);}   /* the roll's answer to bold */
+  /* ---- the names on the drawing ----
+     The roll says pitch with height and colour, which is quick to read and
+     impossible to name. It is not made readable by writing a note on every
+     bar — that is sixteen labels for a shape one is trying to see. So the
+     drawing is named the way a chart is: the home rules carry their pitch
+     once each, in the margin at the side of the line; a note being placed or
+     moved raises one more line of its own, at its own pitch, named in the
+     same margin and then let go of; and where both voices sound at once the
+     interval between them is written on a tie drawn between the two bars, so
+     that the name belongs to that pair and to nothing else. All of it is
+     description and nothing else: no interval is coloured, ranked or warned
+     about — the ear decides, the page only says what it is. */
+  .octname,.gname{
+    position:absolute;
+    right:100%;
+    top:50%;
+    transform:translateY(-50%);
+    padding-right:0.55rem;
+    text-align:right;
+    font-size:0.62rem;
+    line-height:1;
+    letter-spacing:0.03em;
+    color:var(--faded);
+    white-space:nowrap;
+    pointer-events:none;
+  }
+  /* the home rule says two things, stacked in the same margin: which pitch it
+     is — the tool does the naming — and that this is the note the piece comes
+     home to. The word is the page's own gilt, small-capped and small: quiet
+     enough that four of them down a margin are still marginalia. K takes the
+     pair away together, as it always took the name. */
+  .octname .opn{display:block;}
+  .octname .ohome{
+    display:block;
+    margin-top:0.14em;
+    font-variant:small-caps;
+    letter-spacing:0.1em;
+    font-size:0.9em;
+    line-height:1;
+    color:var(--gilt);
+    opacity:0.72;
+  }
+  /* ---- the pitch in hand ----
+     While a note is placed or moved, one more hairline is drawn across the
+     roll at that note's pitch, parallel to the home rules and named beside
+     them. It is not a state and it is not a cursor: it arrives gently, waits,
+     and fades out over a second of its own accord. Nothing blinks. */
+  .rollguide{
+    position:absolute;left:0;right:0;height:1px;
+    background:rgba(59,47,30,0.32);
+    opacity:0;
+    transition:opacity 1.1s ease-out;
+    pointer-events:none;
+  }
+  .rollguide.on{opacity:1;transition:opacity 0.22s ease-out;}
+  .rollguide .gname{color:var(--ink);}
+  /* the interval: the slot is drawn from the centre of the upper bar to the
+     centre of the lower one, so it is the pair, not a place on the page */
+  .ivl{
+    position:absolute;
+    display:none;                    /* shown by a class, so K can overrule it */
+    color:var(--ink);
+    pointer-events:none;
+  }
+  /* the tie: a stroke of ink down the middle of the pair, faded away to
+     nothing at both ends so that it meets neither bar and is never a ruled
+     line — sixteen of these must not add up to anything like a grid */
+  .ivl i{
+    position:absolute;
+    left:50%;top:0;bottom:0;width:1px;margin-left:-0.5px;
+    background:linear-gradient(to bottom,
+      rgba(59,47,30,0) 0%, rgba(59,47,30,0.26) 32%,
+      rgba(59,47,30,0.26) 68%, rgba(59,47,30,0) 100%);
+  }
+  /* and the name rides the middle of it, as a small rounded dab of the page's
+     own wash with the ruling colour for a rim: the shape of the notes it sits
+     between, in the page's colours instead of theirs */
+  .ivl span{
+    position:absolute;
+    left:50%;top:50%;
+    transform:translate(-50%,-50%);
+    z-index:1;                       /* over the tie it hangs on */
+    background-color:var(--wash);
+    box-shadow:0 0 0 1px rgba(201,188,160,0.8);
+    padding:0.08rem 0.36rem 0.12rem;
+    border-radius:999px;
+    font-size:0.62rem;
+    line-height:1.1;
+    letter-spacing:0.03em;
+    white-space:nowrap;
+  }
+  .ivl.on{display:block;}
+  .ivl.outside{opacity:0.4;}
+  /* K puts the names away — the rules', the guide's and the intervals' — and
+     the drawing underneath is the same drawing */
+  .roll.nonames .octname,.roll.nonames .gname,.roll.nonames .ivl{display:none;}
+  .rollbase{
+    display:grid;
+    grid-template-columns:repeat(16,1fr);
+    height:1.7rem;
+    align-items:center;
+  }
+  .rollbase span{text-align:center;color:var(--faded);font-size:0.85em;}
+  .rollbase span.cur{color:var(--ink);font-size:1.05em;}
+
+  /* ---- key reference (replaces the column, no overlay, no dimming) ----
+     It is the longest thing in the app by a long way — two columns of prose
+     about every binding there is — and the body never scrolls, so for a long
+     time about a sixth of it was on the screen and the rest was nowhere at
+     all. It has its own bottom now, one window deep, and reads on from there:
+     page up and page down a screenful at a time, home and end to its two
+     ends, and the wheel for a pointer. The bar is the ruling colour on
+     nothing, as the quest list's is — furniture, not a feature — and it is
+     only there when there is more page than room. */
+  .keyref{
+    display:none;
+    width:100%;
+    max-width:44rem;
+    /* the column's height, or the window's, whichever is less: the two agree
+       on any window this app is usable in, and where they do not it is the
+       window that decides — a page taller than the screen is what this rule
+       exists to prevent */
+    min-height:min(38.6rem, calc(100vh - 14rem));
+    max-height:calc(100vh - 14rem);
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    scrollbar-width:thin;
+    scrollbar-color:rgba(201,188,160,0.9) transparent;
+    padding-right:0.7rem;            /* the bar rides beside the words, never on them */
+    box-sizing:border-box;
+    color:var(--ink);
+    font-size:0.92rem;
+    line-height:1.66;
+  }
+  .keyref.on{display:block;}
+  .keyref h2{
+    margin:0 0 0.7rem;
+    font-weight:400;
+    font-variant:small-caps;
+    letter-spacing:0.14em;
+    font-size:1.05rem;
+    color:var(--ink);
+  }
+  .keyref h2+h2,.keyref .cols h2{margin-top:0;}
+  .keyref .cols{display:grid;grid-template-columns:1fr 1fr;column-gap:2.2rem;row-gap:1.4rem;}
+  .keyref dl{display:grid;grid-template-columns:8.4rem 1fr;margin:0;column-gap:1rem;}
+  .keyref dt{color:var(--faded);}
+  .keyref dd{margin:0;}
+  .keyref p{margin:0.9rem 0 0;color:var(--faded);font-size:0.88rem;line-height:1.6;}
+  @media (max-width:44rem){ .keyref .cols{grid-template-columns:1fr;} }
+
+  /* ---- the settings crossbar (raised over the page, never instead of it) ----
+     Start raises it, as start raises the system menu in the game, and while
+     it is up the eight crossbar slots are items rather than notes. It does
+     not take the folio away: the page stays exactly where it was, drawn and
+     readable, and the crossbar is laid over the head of the screen — where
+     the title stands — on a soft borderless breath. Turning a setting and
+     watching what it does to the music are the same movement, so the music
+     has to stay in view while it is done.
+
+     Drawn the way the hand holds them: two clusters, each a diamond — the
+     d-pad on the left, the face buttons on the right. Diamonds, deliberately,
+     so that nothing here is a grid. */
+  .settings{
+    display:none;
+    position:fixed;
+    top:0.9rem;
+    left:50%;
+    transform:translateX(-50%);
+    z-index:6;
+    width:min(35rem,96vw);
+    color:var(--ink);
+    font-size:0.84rem;
+    line-height:1.35;
+    pointer-events:none;             /* only the eight slots answer the mouse */
+  }
+  .settings.on{display:block;}
+  /* what the crossbar stands on: the page's own ground, gathered under the
+     words and gone at its own edges. A breath, not a panel — no border, no
+     rule, and nothing rectangular about it. */
+  .settings::before{
+    content:"";
+    position:absolute;
+    inset:-1.3rem -2.8rem;
+    z-index:-1;
+    pointer-events:none;
+    background:radial-gradient(ellipse closest-side at center,
+      rgba(234,224,204,0.97) 0%,
+      rgba(234,224,204,0.94) 46%,
+      rgba(234,224,204,0.78) 68%,
+      rgba(234,224,204,0.42) 84%,
+      rgba(234,224,204,0.14) 94%,
+      rgba(234,224,204,0) 100%);
+  }
+  /* on scenery it takes the marginalia's treatment instead: pale ink over the
+     same darkening breath the rails and the title already stand on */
+  body:not([data-scenery="paper"]) .settings{
+    --ink:#EDE5D2;
+    --faded:rgba(236,229,212,0.68);
+    --rule:rgba(236,229,212,0.30);
+    --gilt:#D9BA6E;
+    --wash:rgba(236,229,212,0.16);
+  }
+  body:not([data-scenery="paper"]) .settings::before{
+    background:radial-gradient(ellipse closest-side at center,
+      rgba(13,18,16,0.60) 0%,
+      rgba(13,18,16,0.56) 44%,
+      rgba(13,18,16,0.44) 64%,
+      rgba(13,18,16,0.26) 80%,
+      rgba(13,18,16,0.10) 92%,
+      rgba(13,18,16,0) 100%);
+  }
+  /* the title gives way while the crossbar stands over it, and comes back
+     when it goes: one slow settling of the ink, nothing that blinks, and the
+     folio underneath is not touched at all. It goes all the way out rather
+     than merely dim — a half-faded meta line showing through the slots is two
+     lines of small type in one place, which reads as a fault rather than as
+     depth. Nothing moves: the header keeps its box, and everything it was
+     saying is either on the crossbar itself or on the voice strip below. */
+  header{transition:opacity 0.3s ease-out;}
+  body[data-settings] header{opacity:0;}
+  .xbars{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:1.4rem;
+    flex-wrap:wrap;
+    margin:0;
+  }
+  .xbar{
+    position:relative;
+    width:16.4rem;
+    height:7.6rem;
+  }
+  .xslot{
+    position:absolute;
+    width:7.6rem;
+    margin-left:-3.8rem;
+    text-align:center;
+    padding:0.2rem 0.25rem;
+    border-radius:0.5rem;
+    cursor:pointer;
+    pointer-events:auto;
+  }
+  /* the slots the mode is chiefly for — the workspace, up and down — marked
+     as the playhead row is: a flat wash, no glow */
+  .xslot.head{background-color:var(--wash);}
+  /* the glyph sits on the line with the name rather than over it: two lines
+     to a slot instead of three, which is what lets the whole crossbar stand
+     in the head of the page without reaching the folio */
+  .xslot .xg{color:var(--gilt);font-size:1.05em;margin-right:0.35em;}
+  .xslot .xl{letter-spacing:0.04em;}
+  .xslot .xv{
+    display:block;color:var(--faded);font-size:0.86em;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .xslot.none .xl{color:var(--faded);}
+  .xslot.none .xg{opacity:0.45;}
+  .xbar .xhub{
+    position:absolute;left:50%;top:50%;
+    width:2.6rem;height:1px;margin:0 0 0 -1.3rem;
+    background:var(--rule);opacity:0.6;
+  }
+  @media (max-width:44rem){
+    .xbars{gap:0.6rem;}
+    .xbar{width:14.2rem;}
+    .xslot{width:6.8rem;margin-left:-3.4rem;}
+  }
+
+  /* ---- quest log (also a page: replaces the column, no overlay) ---- */
+  .quests{
+    display:none;
+    width:100%;
+    max-width:44rem;                 /* same measure as the key: nothing shifts */
+    min-height:38.6rem;
+    color:var(--ink);
+    font-size:0.92rem;
+    line-height:1.4;
+  }
+  .quests.on{display:block;}
+  .quests h2{
+    margin:0 0 0.6rem;
+    font-weight:400;
+    font-variant:small-caps;
+    letter-spacing:0.14em;
+    font-size:1.05rem;
+    color:var(--ink);
+  }
+  /* ---- the tabs ----
+     The board outgrew a single list at Lesson 2 and will outgrow it again, so
+     the log is read one lesson at a time. A row of underlined words was the
+     first try and it was not enough: it read as a heading that happened to be
+     several words long, and nothing about it said that the words could be
+     pressed. So each lesson is a card — a sealed tag with a hairline rim, the
+     shape a paper tab actually is — and the one in hand is the one filled
+     with the page's own wash and rimmed in gilt, in ink instead of faded.
+     Two things say which is which, fill and rim, and neither of them is a
+     contrast the eye has to work at. They sit in a single row on a rule; a
+     row of a handful of rounded tags is not a grid and not a stripe. A lesson
+     that does not exist yet has no tab; the moment a quest belonging to it is
+     in the log, its tab is simply there. */
+  .qtabs{
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:0.45em;
+    margin:0.7rem 0 0.2rem;
+    padding:0 0.4em 0.5rem;
+    border-bottom:1px solid var(--rule);
+    font-variant:small-caps;
+    letter-spacing:0.14em;
+    font-size:0.84rem;
+    color:var(--faded);
+  }
+  .qtab{
+    display:block;
+    padding:0.24em 0.85em 0.3em;
+    border:1px solid var(--rule);
+    border-radius:0.55rem;
+    background-color:transparent;
+    color:var(--faded);
+    cursor:pointer;
+  }
+  .qtab.on{
+    color:var(--ink);
+    border-color:var(--gilt);
+    background-color:var(--wash);
+  }
+  .qtab .qtn{color:var(--faded);font-variant:normal;letter-spacing:0.02em;font-size:0.86em;}
+  /* the count on the tab in hand is not louder than the tab */
+  .qtab.on .qtn{color:var(--faded);}
+  /* The list is bounded. A lesson may arrive with twenty quests in it and the
+     page must not grow off the bottom of the screen to hold them: the tab
+     shows what fits and the caret brings the rest into view as it walks.
+     The bar is the ruling colour on nothing, so it is furniture rather than
+     a feature, and it is only there when there is more list than room. */
+  #qlist{
+    max-height:17rem;
+    overflow-y:auto;
+    scrollbar-width:thin;
+    scrollbar-color:rgba(201,188,160,0.9) transparent;
+  }
+  /* nothing in this tab yet: a line of plain marginalia, never an empty box */
+  .qempty{
+    padding:0.9em 0.5em;
+    color:var(--faded);
+    font-style:italic;
+  }
+  .quest{
+    display:grid;
+    /* caret, sword, name, the state of the work, and whether it is to hand */
+    grid-template-columns:1.2em 1.2em 1fr 1.4em 1.2em;
+    column-gap:0.4em;
+    align-items:baseline;
+    padding:0.42em 0.5em;
+    border-top:1px solid rgba(201,188,160,0.45);
+    cursor:pointer;
+  }
+  .quest:first-child{border-top-color:var(--rule);}
+  .quest.sel{background-color:var(--wash);}   /* flat wash, as the playhead row */
+  .qcaret{color:var(--ink);text-align:center;line-height:1;}
+  .qsigil{color:var(--gilt);text-align:center;line-height:1;}
+  .qname{letter-spacing:0.04em;}
+  .qstat{text-align:center;line-height:1;}
+  .qstat.done{color:var(--gilt);}
+  .qstat.bound{color:var(--faded);}
+  /* the favourite: the page's own gilt, and a mark rather than a button.
+     It is the last thing on the row, so the three sigils that describe the
+     work — complete, written-in, where you are — keep the places they had. */
+  .qfav{text-align:center;line-height:1;color:var(--gilt);opacity:0.85;cursor:pointer;}
+  /* the free-play workspace: named above the list, never navigated to
+     directly — the active quest, chosen again, comes back here */
+  .qfree{
+    display:grid;
+    grid-template-columns:1.2em 1.2em 1fr 1.4em 1.2em;
+    column-gap:0.4em;
+    align-items:baseline;
+    padding:0.42em 0.5em;
+    color:var(--faded);
+    cursor:pointer;
+  }
+  .qfree.act{color:var(--ink);}
+  /* the quiet hairline that separates the eight standing quests from the
+     drills — short études delivered into the log */
+  .qhair{
+    display:flex;
+    align-items:center;
+    gap:0.7em;
+    margin:0.9rem 0 0.1rem;
+    padding:0 0.5em;
+    color:var(--faded);
+    font-variant:small-caps;
+    letter-spacing:0.16em;
+    font-size:0.82rem;
+  }
+  .qhair i{display:block;height:1px;background:var(--rule);opacity:0.7;flex:1;}
+  /* the selected quest, read in full: constraint, what it teaches, and the
+     shape of whatever is saved in its workspace */
+  .qdetail{margin:1rem 0 0;padding:0.9rem 0.5em 0;border-top:1px solid var(--rule);}
+  .qdname{letter-spacing:0.04em;margin-bottom:0.35rem;}
+  .qdtext{color:var(--ink);line-height:1.62;max-width:38rem;white-space:pre-line;}
+  .qdteach{color:var(--faded);font-style:italic;margin-top:0.35rem;line-height:1.6;}
+  .qdstate{color:var(--faded);font-size:0.88rem;margin-top:0.5rem;}
+  /* the contour: the roll's language, shrunk — coloured dabs, no rules at all */
+  .qpreview{position:relative;height:3.4rem;margin-top:0.7rem;width:22rem;max-width:100%;}
+  .qdab{position:absolute;border-radius:999px;}
+  .quests p{margin:0.9rem 0 0;color:var(--faded);font-size:0.88rem;line-height:1.6;}
+
+  /* ---- the side rails: the margins put to work ----
+     Left: where every workspace is, and which one you are in. Right: the
+     constraint you are working under, in view while you noodle. Both are
+     quiet — faded ink, hairlines, nothing that moves. */
+  .rail{
+    position:fixed;
+    top:0;bottom:0;
+    width:15rem;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    padding:0 2rem;
+    color:var(--faded);
+    font-size:0.84rem;
+    line-height:1.6;
+    pointer-events:none;             /* keyboard-first; only the workspace lines answer the mouse */
+  }
+  .rail.left{left:0;}
+  .rail.right{right:0;text-align:right;}
+  .rail h3{
+    margin:0 0 0.5rem;
+    font-weight:400;
+    font-variant:small-caps;
+    letter-spacing:0.16em;
+    font-size:0.86rem;
+    color:var(--faded);
+  }
+  .rail .hair{height:1px;background:var(--rule);opacity:0.7;margin:0 0 0.7rem;}
+  /* ---- the margin's own tabs ----
+     The left margin used to list every workspace there is — the favourites,
+     every lesson, the drills — each run under a labelled hairline. That was the whole
+     board printed down the side of the page while you were trying to write,
+     and it only got longer. It shows one lesson now, the same lesson the log
+     is on, and the strip above it says which — the log's tags, smaller,
+     because they are the same thing and the hand should not have to learn
+     them twice. The crossbar's ← and → turn them. */
+  .rtabs{
+    display:flex;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:0.35em;
+    margin:0 0 0.55rem;
+    font-variant:small-caps;
+    letter-spacing:0.12em;
+    font-size:0.76rem;
+  }
+  .rtab{
+    display:block;
+    padding:0.16em 0.6em 0.2em;
+    border:1px solid var(--rule);
+    border-radius:0.5rem;
+    color:var(--faded);
+    cursor:pointer;
+    pointer-events:auto;             /* back on, under the rail's blanket none */
+  }
+  .rtab.on{color:var(--ink);border-color:var(--gilt);background-color:var(--wash);}
+  /* the same divider in the margin, labelled once */
+  .rhair{
+    display:flex;
+    align-items:center;
+    gap:0.6em;
+    margin:0.55rem 0 0.35rem;
+    color:var(--faded);
+    font-variant:small-caps;
+    letter-spacing:0.16em;
+    font-size:0.78rem;
+  }
+  .rhair i{display:block;height:1px;background:var(--rule);opacity:0.7;flex:1;}
+  .rline{
+    display:flex;
+    align-items:baseline;
+    gap:0.5em;
+    padding:0.16rem 0;
+    cursor:pointer;
+    pointer-events:auto;             /* back on, under the rail's blanket none */
+  }
+  .rail.right .rline{justify-content:flex-end;}
+  .rline .rn{color:var(--faded);}
+  .rline.act .rn{color:var(--ink);}
+  /* the pad, walking the rail while start is held up: the line you are on
+     takes the same flat wash the playhead row takes. It moves with the thumb
+     and it never blinks — a wash, not a cursor. */
+  .rline.nav{background-color:var(--wash);border-radius:0.3rem;}
+  .rline .rg{color:var(--gilt);width:1em;text-align:center;flex:none;}
+  .rline .rf{color:var(--gilt);opacity:0.8;flex:none;font-size:0.9em;}
+  .rail .rtext{color:var(--ink);margin-top:0.2rem;line-height:1.62;white-space:pre-line;}
+  /* headers mirror on the right rail; running text stays readable left-to-left */
+  .rail.right .rtext{text-align:left;}
+  .rail .rteach{margin-top:0.6rem;font-style:italic;}
+  .rail .rstate{margin-top:0.8rem;}
+  /* a narrow window keeps the column and drops the rails whole, rather
+     than squeezing the page */
+  @media (max-width:80rem){ .rail{display:none;} }
+
+  /* On scenery the margins do not get paper of their own: one sheet on the
+     scene is a folio, three sheets are a pinboard. The marginalia instead
+     live in the scene itself — the ink turns pale, and a soft darkening
+     breath behind the words (a scrim, not a panel: borderless, elliptical,
+     gone at its own edges) buys the contrast back from the photograph. */
+  body:not([data-scenery="paper"]) .rail{
+    --ink:#EDE5D2;
+    --faded:rgba(236,229,212,0.66);
+    --rule:rgba(236,229,212,0.30);
+    --gilt:#D9BA6E;
+    --wash:rgba(236,229,212,0.16);
+    top:50%;
+    bottom:auto;
+    width:16.5rem;
+    max-height:calc(100vh - 2rem);
+    box-sizing:border-box;
+    transform:translateY(-50%);
+    padding:1.35rem 1.3rem;
+    overflow:visible;
+    isolation:isolate;
+    background:transparent;
+  }
+  body:not([data-scenery="paper"]) .rail::before{
+    content:"";
+    position:absolute;
+    inset:-3rem -3.2rem;
+    z-index:-1;
+    background:radial-gradient(ellipse closest-side at center,
+      rgba(13,18,16,0.42) 0%,
+      rgba(13,18,16,0.36) 40%,
+      rgba(13,18,16,0.24) 64%,
+      rgba(13,18,16,0.12) 82%,
+      rgba(13,18,16,0.04) 93%,
+      rgba(13,18,16,0) 100%);
+    pointer-events:none;
+  }
+  body:not([data-scenery="paper"]) .rail.left{left:0.6rem;}
+  body:not([data-scenery="paper"]) .rail.right{right:0.6rem;}
+
+  /* The title and the footer take the marginalia's treatment rather than the
+     page's: on scenery they step off the sheet and stand in the scene, pale
+     ink over the same soft borderless breath, so that the torn sheet covers
+     exactly what is worked in and nothing else.
+
+     The scrim is the rails' gradient on a much wider, flatter ellipse — this
+     copy is a broad short band rather than a tall narrow one, so the dense
+     middle is wide and the fade has a long run before it meets the scenery.
+     It is denser than the rails': the rails sit halfway down, where both
+     scenes are dark anyway, while the title stands against the sea's bright
+     sky — the one place a pale ink can be lost. The ellipse is centred on the
+     copy rather than fitted to it, so that the last line of the meta is still
+     well inside the dense middle and not out on the fade. Where the breath
+     runs under the sheet, the sheet simply covers it. */
+  body:not([data-scenery="paper"]) header,
+  body:not([data-scenery="paper"]) .foot{
+    --ink:#F4EEE1;
+    --faded:rgba(242,236,223,0.86);
+    --rule:rgba(242,236,223,0.30);
+    --gilt:#DCC077;
+    color:var(--faded);
+    position:relative;
+    isolation:isolate;
+  }
+  body:not([data-scenery="paper"]) header::before,
+  body:not([data-scenery="paper"]) .foot::before{
+    content:"";
+    position:absolute;
+    inset:-3.6rem -6rem;
+    z-index:-1;
+    pointer-events:none;
+    background:radial-gradient(ellipse closest-side at center,
+      rgba(13,18,16,0.58) 0%,
+      rgba(13,18,16,0.56) 34%,
+      rgba(13,18,16,0.50) 55%,
+      rgba(13,18,16,0.37) 70%,
+      rgba(13,18,16,0.21) 82%,
+      rgba(13,18,16,0.08) 92%,
+      rgba(13,18,16,0) 100%);
+  }
+  body:not([data-scenery="paper"]) header{margin-bottom:3.2rem;}
+  body:not([data-scenery="paper"]) .foot{margin-top:3.2rem;}
+  /* the two rules that fenced the title and the footer off from the work:
+     the sheet's own torn edges are that fence now */
+  body:not([data-scenery="paper"]) .divider{display:none;}
+
+  /* Scenery is outside the pad crossbar: all eight of its slots keep their
+     musical meanings.  This small, still control answers pointer users;
+     Shift+B gives the keyboard the same three-way cycle. */
+  .scenery{
+    position:fixed;
+    top:0.9rem;
+    right:1rem;
+    z-index:4;
+    display:flex;
+    align-items:center;
+    gap:0.15rem;
+    margin:0;
+    padding:0.28rem 0.34rem;
+    border:0;
+    background:transparent;
+    color:var(--faded);
+    font:inherit;
+    font-size:0.72rem;
+  }
+  /* on scenery the control takes the margins' treatment: pale ink over a
+     small darkening breath of its own, never a panel */
+  body:not([data-scenery="paper"]) .scenery{
+    --ink:#EDE5D2;
+    --faded:rgba(236,229,212,0.62);
+    --gilt:#D9BA6E;
+  }
+  body:not([data-scenery="paper"]) .scenery::before{
+    content:"";
+    position:absolute;
+    inset:-1.3rem -1.7rem;
+    z-index:-1;
+    background:radial-gradient(ellipse closest-side at center,
+      rgba(13,18,16,0.40) 0%,
+      rgba(13,18,16,0.33) 44%,
+      rgba(13,18,16,0.20) 68%,
+      rgba(13,18,16,0.09) 85%,
+      rgba(13,18,16,0) 100%);
+    pointer-events:none;
+  }
+  .scenery span{
+    padding:0 0.36rem 0 0.28rem;
+    font-variant:small-caps;
+    letter-spacing:0.12em;
+  }
+  .scenery button{
+    appearance:none;
+    border:0;
+    border-radius:999px;
+    background:transparent;
+    color:var(--faded);
+    padding:0.24rem 0.48rem 0.3rem;
+    font:inherit;
+    cursor:pointer;
+  }
+  .scenery button[aria-pressed="true"]{
+    background:transparent;
+    color:var(--ink);
+  }
+  .scenery button:focus-visible{outline:1px solid var(--gilt);outline-offset:2px;}
+  @media (max-width:44rem){
+    /* the deckle bites about 2rem in at its deepest: the sheet may narrow on
+       a small screen, but never so far that the tear reaches the words */
+    .field::before{inset:-2.2rem -1.2rem;}
+    /* the breath must end inside the window, or its floor reads as a band
+       along the edge of the screen */
+    body:not([data-scenery="paper"]) header::before,
+    body:not([data-scenery="paper"]) .foot::before{inset:-2.8rem -2.6rem;}
+    body:not([data-scenery="paper"]) header{margin-bottom:2.6rem;}
+    body:not([data-scenery="paper"]) .foot{margin-top:2.6rem;}
+    .scenery{top:0.45rem;right:0.45rem;}
+    .scenery span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}
+  }
+
+  /* ---- footer ---- */
+  footer{
+    width:100%;
+    text-align:center;
+    color:var(--faded);
+    font-size:0.9rem;
+    letter-spacing:0.05em;
+    min-height:1.4em;
+  }
+  /* ---- the standing hint ----
+     F1 is a destination, and one does not walk to a destination to remember
+     which key steps back. So the keys that matter *here* are written under
+     the footer, always, in one line: what the hands can do on the page or the
+     panel in front of them, and nothing else. It holds its height whether it
+     has three hints or six, so nothing on the page ever moves because of it,
+     and it is a shade quieter than the footer above it — marginalia under
+     marginalia. It never announces, never changes size, and never blinks. */
+  .hints{
+    width:100%;
+    text-align:center;
+    margin-top:0.3rem;
+    color:var(--faded);
+    opacity:0.78;
+    font-size:0.76rem;
+    letter-spacing:0.05em;
+    line-height:1.35;
+    /* two lines' worth, always, whether it needs them or not. It used to be
+       one line that ran off the end into an ellipsis, and what fell off the
+       end was F1 — the way to the page that explains everything else, which
+       is precisely the hint one cannot afford to lose. Reserving the second
+       line costs a little height once and means the strip never has to choose
+       what to drop, and still never moves anything: the box is the same
+       height whether it holds three hints or eleven. */
+    min-height:2.7em;
+  }
+  .hints b{font-weight:400;color:var(--ink);opacity:0.82;}
+  .hints .hint{white-space:nowrap;}
+  /* the footer and the hint under it are one piece of marginalia, and take
+     the scene's darkening breath together rather than one each */
+  .foot{width:100%;position:relative;isolation:isolate;}
+  /* a narrow window may need a third line; it is allowed to have one rather
+     than to hide the end of the sentence */
+  @media (max-width:44rem){ .hints{min-height:4.05em;} }
+  .hidden-input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;left:-9999px;}

@@ -4,6 +4,8 @@
    what leaves the repository. This copies that short list into ./dist:
 
      folio.html              -> dist/index.html
+     folio.css               -> dist/folio.css               (the whole look)
+     js/*.js                 -> dist/js/*.js                 (the app itself)
      auditor.html            -> dist/auditor.html            (the blind lineup)
      quests/quest-log.json   -> dist/quests/quest-log.json   (the seed)
      folio-forest.png        -> dist/folio-forest.png        (quiet scenery)
@@ -24,6 +26,16 @@ const DIST = path.join(ROOT, "dist");
 
 const FILES = [
   ["folio.html", "index.html"],
+  /* the instrument is seven plain scripts and one stylesheet since the split;
+     folio.html names them, and they travel with it or it does nothing */
+  ["folio.css", "folio.css"],
+  ["js/state.js", "js/state.js"],
+  ["js/views.js", "js/views.js"],
+  ["js/audio.js", "js/audio.js"],
+  ["js/edit.js", "js/edit.js"],
+  ["js/quests.js", "js/quests.js"],
+  ["js/entry.js", "js/entry.js"],
+  ["js/boot.js", "js/boot.js"],
   ["auditor.html", "auditor.html"],
   ["folio-forest.png", "folio-forest.png"],
   ["folio-sea.png", "folio-sea.png"],
@@ -55,6 +67,22 @@ for (const [from, to] of FILES){
   await fs.mkdir(path.dirname(dst), { recursive: true });
   await fs.copyFile(src, dst);
   console.log("  " + from + " -> dist/" + to);
+}
+
+/* The per-workspace scenery: quest-backgrounds/<id>.png, one per quest or
+   drill that has one. The page never holds a list of these names — it asks
+   for the file and falls back to paper if it is not there — so the whole
+   folder travels, and an id with no picture is simply an id with no picture
+   on the shared copy too. */
+const BG = "quest-backgrounds";
+try {
+  const names = (await fs.readdir(path.join(ROOT, BG))).filter(n => n.endsWith(".png")).sort();
+  await fs.mkdir(path.join(DIST, BG), { recursive: true });
+  for (const n of names)
+    await fs.copyFile(path.join(ROOT, BG, n), path.join(DIST, BG, n));
+  console.log("  " + BG + "/ -> dist/" + BG + "/ (" + names.length + " stills)");
+} catch {
+  console.log("  (skipped " + BG + "/ — not present)");
 }
 
 const sharedLogPath = path.join(DIST, "quests", "quest-log.json");

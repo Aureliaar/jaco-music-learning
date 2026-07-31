@@ -5,8 +5,11 @@ manuscript page: one voice, sixteen steps, no mouse. It is the Lesson 0
 instrument of the curriculum in `CURRICULUM.md`; the contract it answers to
 is `SPEC-LESSON-0.md`.
 
-The whole app is `folio.html` — inline CSS and JS, no dependencies, no build
-step.
+The whole app is `folio.html`, `folio.css` and seven plain scripts in `js/`
+— no dependencies, no bundler, no build step. They are ordinary
+`<script src>` tags rather than modules, so opening `folio.html` straight
+off the disk still works, offline, with no server. `folio.html` carries a
+map at its head saying what lives in which file.
 
 ## Running it
 
@@ -49,11 +52,13 @@ able to hear the pieces and play with the instrument without installing
 anything.
 
 That copy is a Cloudflare Worker serving static assets — the same shape as
-`magic-proximity-proto`. `scripts/build.mjs` puts exactly three files in
-`dist/`:
+`magic-proximity-proto`. `scripts/build.mjs` puts exactly the app, the
+lineup page and the seed in `dist/`:
 
 ```
 folio.html            -> dist/index.html
+folio.css             -> dist/folio.css
+js/*.js               -> dist/js/*.js
 auditor.html          -> dist/auditor.html
 quests/quest-log.json -> dist/quests/quest-log.json
 ```
@@ -98,7 +103,8 @@ which, for after the verdict.
 
 | | |
 |---|---|
-| `folio.html` | the whole app |
+| `folio.html` | the markup, the F1 key page, and the map of the rest |
+| `folio.css`, `js/*.js` | the app: one stylesheet and seven plain scripts |
 | `auditor.html` | the blind lineup, for family verdicts |
 | `server.mjs` | the local server: static files + `GET`/`PUT /api/quest-log` |
 | `folio.cmd` | one-click start for the above |

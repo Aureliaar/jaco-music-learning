@@ -27,7 +27,8 @@ function freePort(start){
 }
 
 const MIME = { ".html":"text/html; charset=utf-8", ".json":"application/json; charset=utf-8",
-               ".png":"image/png" };
+               ".png":"image/png", ".css":"text/css; charset=utf-8",
+               ".js":"text/javascript; charset=utf-8" };
 const seen = [];
 
 (async function(){
@@ -37,11 +38,31 @@ const seen = [];
   (function walk(d, p){ for (const e of fs.readdirSync(d, { withFileTypes:true }))
     e.isDirectory() ? walk(path.join(d, e.name), p + e.name + "/") : listed.push(p + e.name); })(DIST, "");
   listed.sort();
-  /* the auditor page joined the deploy after this harness was written: the
-     instrument, the blind lineup page, and the seed — and nothing else */
-  ok("dist holds the pages and the seed and nothing else",
-     JSON.stringify(listed) === JSON.stringify(
-       ["auditor.html","folio-forest.png","folio-paper.png","folio-sea.png","index.html","quests/quest-log.json"]), listed);
+  /* the auditor page joined the deploy after this harness was written, and
+     the per-workspace stills after that: the instrument, the blind lineup
+     page, the seed, and the pictures — and nothing else */
+  const stills = listed.filter(n => n.indexOf("quest-backgrounds/") === 0);
+  const rest = listed.filter(n => n.indexOf("quest-backgrounds/") !== 0);
+  ok("dist holds the pages, the app, the seed and nothing else",
+     JSON.stringify(rest) === JSON.stringify(
+       ["auditor.html","folio-forest.png","folio-paper.png","folio-sea.png",
+        "folio.css","index.html",
+        "js/audio.js","js/boot.js","js/edit.js","js/entry.js","js/quests.js",
+        "js/state.js","js/views.js",
+        "quests/quest-log.json"]), rest);
+  /* the split is only safe if every script the page names actually travels */
+  const named = (fs.readFileSync(DIST + "/index.html", "utf8")
+                   .match(/<script src="([^"]+)"/g) || [])
+                  .map(t => t.slice(13, -1));
+  ok("and every script index.html names is one of them",
+     named.length === 7 && named.every(n => listed.includes(n)), named);
+  ok("with the stylesheet it names beside them",
+     /<link[^>]+href="folio\.css"/.test(fs.readFileSync(DIST + "/index.html", "utf8")));
+  ok("and the workspaces' own stills travel with them",
+     stills.length === fs.readdirSync(REPO + "/quest-backgrounds").filter(n => n.endsWith(".png")).length &&
+     stills.length > 0, stills.length);
+  ok("each still is named after a workspace and nothing else",
+     stills.every(n => /^quest-backgrounds\/[A-Za-z0-9._-]+\.png$/.test(n)), stills.slice(0, 3));
   for (const secret of ["BUDGET.md","CURRICULUM.md","QUESTS.md","SPEC-LESSON-0.md","server.mjs"])
     ok("the deploy leaves " + secret + " at home", !listed.includes(secret));
 
@@ -130,7 +151,9 @@ const seen = [];
      the scene, pale ink over the same borderless breath */
   const ends = await b.eval(`(function(){
     var out = {};
-    ['header','footer'].forEach(function(sel){
+    /* the footer and the standing hint under it are one piece of marginalia
+       now, and take one scrim between them: .foot is what wears it */
+    ['header','.foot'].forEach(function(sel){
       var el = document.querySelector(sel), s = getComputedStyle(el),
           p = getComputedStyle(el, '::before'),
           f = document.querySelector('.field').getBoundingClientRect(),
@@ -147,11 +170,11 @@ const seen = [];
     return out;
   })()`);
   ok("the title and the footer stand in the scene, on no sheet and no panel",
-     ['header','footer'].every(k => ends[k].background === "rgba(0, 0, 0, 0)" &&
+     ['header','.foot'].every(k => ends[k].background === "rgba(0, 0, 0, 0)" &&
        ends[k].image === "none" && ends[k].shadow === "none" &&
        ends[k].border === "0px" && ends[k].clear), ends);
   ok("each breathes the same borderless darkening the margins do",
-     ['header','footer'].every(k => /^radial-gradient/.test(ends[k].scrim) &&
+     ['header','.foot'].every(k => /^radial-gradient/.test(ends[k].scrim) &&
        ends[k].scrim.indexOf("closest-side") >= 0 &&
        /rgba\(13, 18, 16, 0\)/.test(ends[k].scrim)), ends);
   ok("the rules that fenced them off are the torn edges now",
@@ -192,21 +215,27 @@ const seen = [];
   ok("and says which choice is pressed",
      (await b.eval("document.querySelector('button[data-scene=sea]').getAttribute('aria-pressed')")) === "true");
 
-  const disk = JSON.parse(fs.readFileSync(REPO + "/quests/quest-log.json", "utf8"));
   const sharedDisk = JSON.parse(fs.readFileSync(DIST + "/quests/quest-log.json", "utf8"));
   const inPage = await b.eval("JSON.parse(localStorage.getItem('folio.quests.v2'))");
   ok("the committed quests are what the page holds",
      JSON.stringify(Object.keys(inPage.quests || {}).sort()) ===
      JSON.stringify(Object.keys(sharedDisk.quests || {}).sort()),
      [Object.keys(inPage.quests||{}), Object.keys(sharedDisk.quests||{})]);
-  ok("the shared snapshot marks all eleven documented completions",
-     Object.values(inPage.quests || {}).filter(q => q.done).length === 11,
-     Object.entries(inPage.quests || {}).filter(([,q]) => q.done).map(([id]) => id));
-  const firstQuest = Object.keys(disk.quests || {})[0];
+  /* The build marks the completions QUESTS.md records; whatever that list is
+     on the day, the page must hold exactly what the snapshot holds. What is
+     deliberately *not* asserted here is any particular count or any
+     particular melody: quests/quest-log.json is the player's live workspace,
+     and a harness that reads its contents is a harness that goes red every
+     time they write something. */
+  const doneInPage = Object.keys(inPage.quests || {}).filter(id => inPage.quests[id].done).sort();
+  const doneInSnap = Object.keys(sharedDisk.quests || {}).filter(id => sharedDisk.quests[id].done).sort();
+  ok("the completions the snapshot marks are the completions the page shows",
+     JSON.stringify(doneInPage) === JSON.stringify(doneInSnap), [doneInPage, doneInSnap]);
+  const firstQuest = Object.keys(sharedDisk.quests || {})[0];
   if (firstQuest){
-    const a = JSON.stringify((disk.quests[firstQuest].pattern || disk.quests[firstQuest].motif || {}).steps);
+    const a = JSON.stringify((sharedDisk.quests[firstQuest].pattern || {}).steps);
     const c = JSON.stringify((inPage.quests[firstQuest].pattern || {}).steps);
-    ok("and his melody came through note for note (" + firstQuest + ")", a === c, [a, c]);
+    ok("and the melody in it came through note for note (" + firstQuest + ")", a === c, [a, c]);
   }
 
   await b.key("F3", { key:"F3", vk:114 });
