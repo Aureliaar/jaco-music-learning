@@ -433,12 +433,31 @@
   .rollbase span{text-align:center;color:var(--faded);font-size:0.85em;}
   .rollbase span.cur{color:var(--ink);font-size:1.05em;}
 
-  /* ---- key reference (replaces the column, no overlay, no dimming) ---- */
+  /* ---- key reference (replaces the column, no overlay, no dimming) ----
+     It is the longest thing in the app by a long way — two columns of prose
+     about every binding there is — and the body never scrolls, so for a long
+     time about a sixth of it was on the screen and the rest was nowhere at
+     all. It has its own bottom now, one window deep, and reads on from there:
+     page up and page down a screenful at a time, home and end to its two
+     ends, and the wheel for a pointer. The bar is the ruling colour on
+     nothing, as the quest list's is — furniture, not a feature — and it is
+     only there when there is more page than room. */
   .keyref{
     display:none;
     width:100%;
     max-width:44rem;
-    min-height:38.6rem;              /* same height as the column: nothing shifts */
+    /* the column's height, or the window's, whichever is less: the two agree
+       on any window this app is usable in, and where they do not it is the
+       window that decides — a page taller than the screen is what this rule
+       exists to prevent */
+    min-height:min(38.6rem, calc(100vh - 14rem));
+    max-height:calc(100vh - 14rem);
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    scrollbar-width:thin;
+    scrollbar-color:rgba(201,188,160,0.9) transparent;
+    padding-right:0.7rem;            /* the bar rides beside the words, never on them */
+    box-sizing:border-box;
     color:var(--ink);
     font-size:0.92rem;
     line-height:1.66;

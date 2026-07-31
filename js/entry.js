@@ -81,10 +81,22 @@ document.addEventListener("keydown", function(e){
   /* the key page carries the two settings of the piece: its key and its
      tempo. The arrows were already spoken for by the key, so the tempo
      takes the two keys left of backspace — free on this page, and adjacent
-     by position on any layout. Shift makes the step fine. */
+     by position on any layout. Shift makes the step fine.
+
+     And the page is read here as well. It is much longer than the window and
+     the body does not scroll, so page up and page down turn it a screenful
+     at a time and home and end go to its two ends — four keys that did
+     nothing at all on this page before, and that mean on any other page
+     exactly what they mean here. The arrows are not taken from the key to do
+     it: what the piece is set to and how far down the page you are reading
+     are two different things and do not share a hand. */
   if (keyref.classList.contains("on")){
     switch (code){
       case "Escape":     toggleKeyref(); return;
+      case "PageUp":     e.preventDefault(); keyrefScroll(-0.86); return;
+      case "PageDown":   e.preventDefault(); keyrefScroll(0.86);  return;
+      case "Home":       e.preventDefault(); keyrefEnd(false);    return;
+      case "End":        e.preventDefault(); keyrefEnd(true);     return;
       case "ArrowLeft":  e.preventDefault(); shiftTonic(-1);   return;
       case "ArrowRight": e.preventDefault(); shiftTonic(1);    return;
       case "ArrowUp": case "ArrowDown":

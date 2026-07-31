@@ -233,12 +233,6 @@ function boot(opts){
     get xslots(){ return _g("xslots"); },
     renderQuests: _g("renderQuests"),
     saveQuests: _g("saveQuests"), loadQuests: _g("loadQuests"),
-    questsToJSON: _g("stateToJSON"), railSections: _g("railSections"),
-    /* gone with the absolute crossbar; read by name so a harness that still
-       asks after them says so rather than crashing */
-    get relative(){ return _g("relative"); },
-    setRelative: _g("setRelative"), toggleRelative: _g("toggleRelative"),
-    ENTRY_KEY: _g("ENTRY_KEY"),
     isQuestLog: _g("isQuestLog"), exportQuests: _g("exportQuests"),
     applyState: _g("applyState"), loadState: _g("loadState"), stateToJSON: _g("stateToJSON"),
     switchWorkspace: _g("switchWorkspace"), chooseWorkspace: _g("chooseWorkspace"),

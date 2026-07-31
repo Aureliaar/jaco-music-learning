@@ -365,6 +365,7 @@ function toggleKeyref(){
   keyref.classList.toggle("on", on);
   if (on){ questsEl.classList.remove("on"); settingsEl.classList.remove("on"); markSettings(false); }
   applyViz();
+  if (on) keyrefTop();             /* it always opens at its head */
   renderRails();                   /* the pad's wash goes with the mode */
   say(on ? "the key, by position" : "‸ cursor row");
 }

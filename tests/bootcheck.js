@@ -1096,6 +1096,79 @@ function freePort(start){
      (await b.eval("window.innerWidth")) + 2);
   await b.shot(__dirname + "/boot-hints.png");
 
+  /* ---- the page of the key, read to its end ----
+     It is the longest thing in the app — about 5900px of prose in a 905px
+     window — and the body does not scroll, so for a long time roughly six
+     sevenths of it could not be reached at all. Measured here rather than
+     inspected: the proof is that the last line of it lands on the screen. */
+  console.log("\n== the key page can be read to its end ==");
+  await b.key("F1", KEY.F1); await wait(200);
+  const kr = () => b.eval("(function(){var e=document.getElementById('keyref');" +
+    "return {top:Math.round(e.scrollTop),room:Math.round(e.scrollHeight-e.clientHeight)," +
+    "client:Math.round(e.clientHeight),full:Math.round(e.scrollHeight)," +
+    "overflow:getComputedStyle(e).overflowY};})()");
+  const k0 = await kr();
+  ok("the page is much longer than the window it is in", k0.full > k0.client * 3, k0);
+  ok("but it has a bottom of its own, and can be walked to it", k0.room > 0, k0);
+  ok("it is the page that scrolls, never the body",
+     k0.overflow === "auto" &&
+     (await b.eval("getComputedStyle(document.body).overflow")) === "hidden", k0);
+  ok("it fits the window", k0.client <= (await b.eval("window.innerHeight")), k0);
+  ok("and it opens at its head", k0.top === 0, k0);
+  await b.key("PageDown", { key:"PageDown", vk:34 }); await wait(120);
+  const k1 = await kr();
+  ok("page down turns it a screenful", k1.top > 0 && k1.top <= k0.client, [k0.client, k1.top]);
+  ok("keeping the last line read on the screen", k1.top < k0.client, k1);
+  ok("and the footer says how far down", /page \d+ of \d+/.test(await footer()), await footer());
+  for (let i = 0; i < 3; i++){ await b.key("PageDown", { key:"PageDown", vk:34 }); await wait(60); }
+  const kMid = await kr();
+  ok("four turns are well into it", kMid.top > k0.client * 3, kMid);
+  await b.shot(__dirname + "/keyref-middle.png");
+  const krLen = await b.eval("document.getElementById('keyref').textContent.length");
+  await b.key("End", { key:"End", vk:35 }); await wait(150);
+  const k2 = await kr();
+  ok("end goes to the foot", k2.top === k2.room, k2);
+  ok("and the footer says so", / · the foot/.test(await footer()), await footer());
+  /* the proof: the very last thing written on the page is on the screen */
+  /* the page is two columns, so the last thing on it in document order is not
+     the last thing on it: what must be reachable is whichever paragraph ends
+     furthest down, which is the one the old overflow buried deepest */
+  const lastSeen = await b.eval("(function(){" +
+    "var e = document.getElementById('keyref');" +
+    "var box = e.getBoundingClientRect(), deep = null, at = -1e9;" +
+    "[].forEach.call(e.querySelectorAll('p,dd'), function(el){" +
+    "  var r = el.getBoundingClientRect();" +
+    "  if (r.bottom > at){ at = r.bottom; deep = el; } });" +
+    "return { bottom: Math.round(at), boxBottom: Math.round(box.bottom)," +
+    "         inside: at <= box.bottom + 2 && at > box.top," +
+    "         text: deep.textContent.slice(-40) };})()");
+  ok("the last words on the page are on the screen", lastSeen.inside, lastSeen);
+  ok("and there really is that much of it", krLen > 8000, krLen);
+  await b.shot(__dirname + "/keyref-end.png");
+  await b.key("Home", { key:"Home", vk:36 }); await wait(120);
+  ok("home comes back to the head", (await kr()).top === 0);
+  ok("and the footer says that too", / · the head/.test(await footer()), await footer());
+  await b.key("PageUp", { key:"PageUp", vk:33 }); await wait(100);
+  ok("page up at the head goes nowhere", (await kr()).top === 0);
+  /* reading the page never took the arrows away from the key */
+  const keyWas = await b.eval("document.getElementById('metatext').textContent");
+  await b.key("ArrowRight", KEY.RIGHT); await wait(100);
+  ok("the arrows are still the tonic, not the scroll",
+     (await b.eval("document.getElementById('metatext').textContent")) !== keyWas &&
+     (await kr()).top === 0);
+  await b.key("ArrowLeft", KEY.LEFT); await wait(100);
+  ok("the page itself says how to read it",
+     /page up and page down/.test(await b.eval("document.getElementById('keyref').textContent")));
+  ok("and the hint strip names it first",
+     /read on/.test(await b.eval("document.getElementById('hints').textContent")),
+     await b.eval("document.getElementById('hints').textContent"));
+  await b.key("End", { key:"End", vk:35 }); await wait(120);
+  await b.key("F1", KEY.F1); await wait(150);
+  await b.key("F1", KEY.F1); await wait(150);
+  ok("re-opening it opens it at the head again", (await kr()).top === 0);
+  await b.key("F1", KEY.F1); await wait(120);
+  ok("no runtime error from reading it", errors.length === 0, errors);
+
   console.log("\n== the workspace wears its own scene ==");
   await b.key("F3", KEY.F3); await wait(150);
   let found = await rowIndex("shadow");

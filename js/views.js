@@ -494,6 +494,43 @@ function applyViz(){
   roll.classList.toggle("on", !page && viz === "roll");
   voicesEl.classList.toggle("off", page);   /* the strip belongs to the page */
 }
+
+/* ---- reading the key page to its end ----
+   The page of the key is far longer than any window, and the body does not
+   scroll and must not start: a scrolling body would take the folio itself
+   with it. So the page has a bottom of its own and is walked inside it —
+   page up and page down a screenful at a time, home and end to the ends,
+   and the wheel for a pointer. It is a movement, not an animation: the
+   scroll is instant and nothing on the page moves but the words.
+
+   Where it has got to is said in the footer rather than drawn, because a
+   position indicator on the page would be a second thing to look at on a
+   page that is already dense. `keyrefWhere` is what the footer says. */
+function keyrefRoom(){ return Math.max(0, keyref.scrollHeight - keyref.clientHeight); }
+function keyrefWhere(){
+  var room = keyrefRoom(), at = keyref.scrollTop, of, on;
+  if (room <= 2) return "the key, by position";
+  if (at <= 2) return "the key, by position · the head";
+  if (at >= room - 2) return "the key, by position · the foot";
+  of = Math.max(2, Math.ceil(keyref.scrollHeight / Math.max(1, keyref.clientHeight)));
+  on = Math.min(of, Math.floor(at / Math.max(1, keyref.clientHeight)) + 2);
+  return "the key, by position · page " + on + " of " + of;
+}
+/* f is in screenfuls: a shade under one, so that the last line read stays on
+   the screen as the first line of the next — which is how a page is turned */
+function keyrefScroll(f){
+  var room = keyrefRoom();
+  if (!room) return;
+  keyref.scrollTop = Math.max(0, Math.min(room, keyref.scrollTop + f * keyref.clientHeight));
+  say(keyrefWhere());
+}
+function keyrefEnd(bottom){
+  if (!keyrefRoom()) return;
+  keyref.scrollTop = bottom ? keyrefRoom() : 0;
+  say(keyrefWhere());
+}
+/* opening it always opens it at the top, whatever was last read */
+function keyrefTop(){ keyref.scrollTop = 0; }
 /* ---- the names, put away and brought back ----
    They are on by default: the drawing was mute about pitch and that was the
    one thing it could not say. K is beside L by position, and takes them all
@@ -621,8 +658,11 @@ function hintsNow(){
   if (questsEl.classList.contains("on"))
     return [["↑ ↓","quest"],["← →","lesson"],["enter","work here"],
             ["F","keep to hand"],["shift + ↑ ↓","move it"],["C","complete"],["F3","close"]];
+  /* the page of the key is longer than the window, so the first thing named
+     on it is how to read the rest of it */
   if (keyref.classList.contains("on"))
-    return [["← →","the tonic"],["↑ ↓","major, minor"],["− +","tempo"],["F1","close"]];
+    return [["page up, down","read on"],["home, end","its ends"],
+            ["← →","the tonic"],["↑ ↓","major, minor"],["− +","tempo"],["F1","close"]];
   /* both hands are named, because there is only one story to tell now: the
      keyboard names pitches by position, the pad names moves. The shoulders
      are named too — the four buttons nothing on the page ever said out
