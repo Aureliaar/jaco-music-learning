@@ -26,6 +26,11 @@ const ROOT     = path.dirname(fileURLToPath(import.meta.url));
    in quests/ is their work, and a harness must never touch it. */
 const LOG_FILE = process.env.FOLIO_LOG || path.join(ROOT, "quests", "quest-log.json");
 const LOG_DIR  = path.dirname(LOG_FILE);
+/* The kits the scriptorium curates: one folder per kit, the samples in it and
+   a manifest.md beside them. FOLIO_KITS moves the shelf the same way FOLIO_LOG
+   moves the log, and for the same reason — a harness writes its own kits in a
+   temp directory and never the player's. */
+const KITS_DIR = process.env.FOLIO_KITS || path.join(ROOT, "kits");
 
 const args = process.argv.slice(2);
 const LAN  = args.includes("--lan");
@@ -34,6 +39,13 @@ const HOST = LAN ? "0.0.0.0" : "127.0.0.1";
 
 const INDEX = "folio.html";
 const MAX_BODY = 4 * 1024 * 1024;         /* a quest log is kilobytes; this is generous */
+/* A whole kit is meant to fit in 64KB. One file is capped four times higher —
+   generous enough that a sample can be saved before it has been cut down, mean
+   enough that nothing ruinous can be pushed through the endpoint by accident. */
+const MAX_KIT_FILE = 256 * 1024;
+const KIT_BUDGET   = 64 * 1024;           /* the honour-system budget, stated plainly */
+const KIT_NAME = /^[a-z0-9][a-z0-9 _-]{0,31}$/i;
+const KIT_LEAF = /^[a-z0-9][a-z0-9 ._-]{0,47}\.(wav|md)$/i;
 
 /* Only these are served, and only from the repo root or from one of the
    named folders below it: js/, which is the app itself since folio.html was
@@ -107,6 +119,144 @@ function readBody(req){
     req.on("end",   () => resolve(Buffer.concat(chunks).toString("utf8")));
     req.on("error", reject);
   });
+}
+
+/* ---- the kits ----
+
+   `kits/<kit>/` holds the samples of one kit and the manifest.md that says
+   what each of them is. They are served and written through /api/kits rather
+   than as static files: a kit folder is two levels deep, which the static
+   server deliberately cannot reach, and writing needs a door of its own
+   anyway. Both halves of every path are checked against a whitelist pattern
+   before anything touches the disk — a name that is not plainly a kit name or
+   plainly a sample name is refused, not sanitised into something else. */
+function badKitPath(kit, leaf){
+  if (!KIT_NAME.test(kit || "")) return true;
+  if (leaf === undefined) return false;
+  if (!KIT_LEAF.test(leaf || "")) return true;
+  return leaf.indexOf("..") >= 0;
+}
+function kitFile(kit, leaf){ return path.join(KITS_DIR, kit, leaf); }
+
+/* what is on the shelf: every kit, its samples, their sizes, its manifest.
+   The manifest is not counted against the budget — the budget is sample RAM,
+   and the manifest is the label on the drawer. */
+async function getKits(req, res){
+  const kits = [];
+  let entries = [];
+  try { entries = await fs.readdir(KITS_DIR, { withFileTypes: true }); } catch { entries = []; }
+  for (const d of entries){
+    if (!d.isDirectory() || !KIT_NAME.test(d.name)) continue;
+    const dir = path.join(KITS_DIR, d.name);
+    const files = [];
+    let bytes = 0, manifest = "";
+    let leaves = [];
+    try { leaves = await fs.readdir(dir); } catch { leaves = []; }
+    for (const leaf of leaves.sort()){
+      if (badKitPath(d.name, leaf)) continue;
+      let st;
+      try { st = await fs.stat(path.join(dir, leaf)); } catch { continue; }
+      if (!st.isFile()) continue;
+      if (leaf.toLowerCase() === "manifest.md"){
+        try { manifest = await fs.readFile(path.join(dir, leaf), "utf8"); } catch {}
+        continue;
+      }
+      files.push({ name: leaf, bytes: st.size });
+      bytes += st.size;
+    }
+    kits.push({ name: d.name, bytes, files, manifest });
+  }
+  kits.sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
+  send(req, res, 200,
+       JSON.stringify({ folio: "kits", budget: KIT_BUDGET, kits }, null, 2) + "\n",
+       MIME[".json"]);
+}
+
+async function getKitFile(req, res, kit, leaf){
+  let buf;
+  try { buf = await fs.readFile(kitFile(kit, leaf)); }
+  catch { send(req, res, 404, "not found"); return; }
+  send(req, res, 200, buf,
+       leaf.toLowerCase().endsWith(".wav") ? "audio/wav" : "text/markdown; charset=utf-8");
+}
+
+/* Reading a body that is too big is answered, not hung up on: the socket is
+   let run to its end (discarding everything, and giving up entirely well past
+   the cap) so that the browser reads the 413 instead of a broken connection.
+   `null` is the answer meaning "too large". */
+function readRaw(req, cap){
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    let size = 0, over = false;
+    req.on("data", c => {
+      size += c.length;
+      if (size > cap){
+        over = true;
+        chunks.length = 0;
+        if (size > cap * 8) req.destroy();       /* that is not a sample at all */
+        return;
+      }
+      chunks.push(c);
+    });
+    req.on("end",   () => resolve(over ? null : Buffer.concat(chunks)));
+    req.on("error", reject);
+  });
+}
+
+async function putKitFile(req, res, kit, leaf){
+  let buf;
+  try { buf = await readRaw(req, MAX_KIT_FILE); }
+  catch { send(req, res, 413, "too large"); return; }
+  if (!buf){ send(req, res, 413, "too large"); return; }
+  /* a sample is a RIFF/WAVE file or it is not a sample; the scriptorium writes
+     nothing else, and neither does anything else get to */
+  if (leaf.toLowerCase().endsWith(".wav") &&
+      (buf.length < 44 || buf.toString("latin1", 0, 4) !== "RIFF" ||
+       buf.toString("latin1", 8, 12) !== "WAVE")){
+    send(req, res, 400, "not a WAVE file");
+    return;
+  }
+  const file = kitFile(kit, leaf);
+  const tmp  = file + "." + process.pid + "." + Date.now() + ".tmp";
+  try {
+    await fs.mkdir(path.dirname(file), { recursive: true });
+    await fs.writeFile(tmp, buf);       /* beside it, then rename: never half a sample */
+    await fs.rename(tmp, file);
+  } catch (e){
+    try { await fs.unlink(tmp); } catch {}
+    send(req, res, 500, "could not write the sample: " + e.message);
+    return;
+  }
+  res.writeHead(204, { "x-folio-bytes": String(buf.length) }).end();
+  log(req, 204);
+}
+
+async function deleteKitFile(req, res, kit, leaf){
+  try { await fs.unlink(kitFile(kit, leaf)); }
+  catch { send(req, res, 404, "not found"); return; }
+  res.writeHead(204).end();
+  log(req, 204);
+}
+
+function kits(req, res, pathname){
+  if (pathname === "/api/kits" || pathname === "/api/kits/"){
+    if (req.method === "GET" || req.method === "HEAD"){ getKits(req, res); return; }
+    res.setHeader("allow", "GET");
+    send(req, res, 405, "method not allowed");
+    return;
+  }
+  let rest;
+  try { rest = decodeURIComponent(pathname.slice("/api/kits/".length)); }
+  catch { send(req, res, 400, "bad path"); return; }
+  const cut = rest.indexOf("/");
+  const kit = cut < 0 ? rest : rest.slice(0, cut);
+  const leaf = cut < 0 ? undefined : rest.slice(cut + 1);
+  if (leaf === undefined || badKitPath(kit, leaf)){ send(req, res, 403, "no"); return; }
+  if (req.method === "GET" || req.method === "HEAD"){ getKitFile(req, res, kit, leaf); return; }
+  if (req.method === "PUT"){ putKitFile(req, res, kit, leaf); return; }
+  if (req.method === "DELETE"){ deleteKitFile(req, res, kit, leaf); return; }
+  res.setHeader("allow", "GET, PUT, DELETE");
+  send(req, res, 405, "method not allowed");
 }
 
 async function putLog(req, res){
@@ -212,6 +362,9 @@ const server = http.createServer((req, res) => {
     send(req, res, 405, "method not allowed");
     return;
   }
+  if (pathname === "/api/kits" || pathname.indexOf("/api/kits/") === 0){
+    kits(req, res, pathname); return;
+  }
   if (req.method === "GET" || req.method === "HEAD"){ serveStatic(req, res, pathname); return; }
   send(req, res, 405, "method not allowed");
 });
@@ -245,5 +398,6 @@ server.listen(PORT, HOST, () => {
     console.log("  " + (url || "(no LAN address found)") + "   ← on this network");
   }
   console.log("The quest log is " + LOG_FILE);
+  console.log("The kits are in " + KITS_DIR);
   console.log("Ctrl+C to stop.");
 });
