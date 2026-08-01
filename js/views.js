@@ -13,7 +13,6 @@
 var column = document.getElementById("column");
 var footer = document.getElementById("footer");
 var meta   = document.getElementById("metatext");
-var keyref = document.getElementById("keyref");
 var questsEl = document.getElementById("quests");
 var settingsEl = document.getElementById("settings");
 var xbarPad = document.getElementById("xbarpad");
@@ -483,54 +482,18 @@ function rollLoop(){
   }
 }
 
-/* the pages (key, quest log) are exclusive; whichever is open, both views
-   of the pattern stand down. The settings crossbar is not one of them: it
-   is raised *over* the page rather than in place of it, so the folio, the
-   voice strip and everything else stay exactly where they were while the
-   thumb turns a setting. */
+/* the quest log is a page: while it is open, both views of the pattern
+   stand down. The settings crossbar is not one of them: it is raised *over*
+   the page rather than in place of it, so the folio, the voice strip and
+   everything else stay exactly where they were while the thumb turns a
+   setting. */
 function applyViz(){
-  var page = keyref.classList.contains("on") || questsEl.classList.contains("on");
+  var page = questsEl.classList.contains("on");
   column.style.display = (!page && viz === "column") ? "flex" : "none";
   roll.classList.toggle("on", !page && viz === "roll");
   voicesEl.classList.toggle("off", page);   /* the strip belongs to the page */
 }
 
-/* ---- reading the key page to its end ----
-   The page of the key is far longer than any window, and the body does not
-   scroll and must not start: a scrolling body would take the folio itself
-   with it. So the page has a bottom of its own and is walked inside it —
-   page up and page down a screenful at a time, home and end to the ends,
-   and the wheel for a pointer. It is a movement, not an animation: the
-   scroll is instant and nothing on the page moves but the words.
-
-   Where it has got to is said in the footer rather than drawn, because a
-   position indicator on the page would be a second thing to look at on a
-   page that is already dense. `keyrefWhere` is what the footer says. */
-function keyrefRoom(){ return Math.max(0, keyref.scrollHeight - keyref.clientHeight); }
-function keyrefWhere(){
-  var room = keyrefRoom(), at = keyref.scrollTop, of, on;
-  if (room <= 2) return "the key, by position";
-  if (at <= 2) return "the key, by position · the head";
-  if (at >= room - 2) return "the key, by position · the foot";
-  of = Math.max(2, Math.ceil(keyref.scrollHeight / Math.max(1, keyref.clientHeight)));
-  on = Math.min(of, Math.floor(at / Math.max(1, keyref.clientHeight)) + 2);
-  return "the key, by position · page " + on + " of " + of;
-}
-/* f is in screenfuls: a shade under one, so that the last line read stays on
-   the screen as the first line of the next — which is how a page is turned */
-function keyrefScroll(f){
-  var room = keyrefRoom();
-  if (!room) return;
-  keyref.scrollTop = Math.max(0, Math.min(room, keyref.scrollTop + f * keyref.clientHeight));
-  say(keyrefWhere());
-}
-function keyrefEnd(bottom){
-  if (!keyrefRoom()) return;
-  keyref.scrollTop = bottom ? keyrefRoom() : 0;
-  say(keyrefWhere());
-}
-/* opening it always opens it at the top, whatever was last read */
-function keyrefTop(){ keyref.scrollTop = 0; }
 /* ---- the names, put away and brought back ----
    They are on by default: the drawing was mute about pitch and that was the
    one thing it could not say. K is beside L by position, and takes them all
@@ -595,8 +558,7 @@ function renderVoices(){
                           : st ? "silent" : "";
     vmarks[v].className = "vmark" + (st === "solo" ? " solo" : "");
   }
-  voicesEl.classList.toggle("off",
-    keyref.classList.contains("on") || questsEl.classList.contains("on"));
+  voicesEl.classList.toggle("off", questsEl.classList.contains("on"));
 }
 function renderCursor(){
   for (var i = 0; i < STEPS; i++){
@@ -643,9 +605,11 @@ function renderLoop(){
   rollLoop();
 }
 /* ================= the standing hint =================
-   The key page is a destination, and nobody walks to a destination to
-   remember which key steps back a sixteenth. So the keys that matter where
-   the hands actually are stay under the footer, always — a handful at most,
+   There was a page of the key once, a destination, and nobody walks to a
+   destination to remember which key steps back a sixteenth; it went stale
+   faster than the bindings it described, and it is gone. This strip is the
+   key help now: the keys that matter where the hands actually are, under
+   the footer, always — a handful at most,
    the same handful for the same situation, changing only when the situation
    does. It holds its height whatever it says, so the page never moves
    because of it; it is quieter than the footer above it; and it announces
@@ -658,11 +622,6 @@ function hintsNow(){
   if (questsEl.classList.contains("on"))
     return [["↑ ↓","quest"],["← →","lesson"],["enter","work here"],
             ["F","keep to hand"],["shift + ↑ ↓","move it"],["C","complete"],["F3","close"]];
-  /* the page of the key is longer than the window, so the first thing named
-     on it is how to read the rest of it */
-  if (keyref.classList.contains("on"))
-    return [["page up, down","read on"],["home, end","its ends"],
-            ["← →","the tonic"],["↑ ↓","major, minor"],["− +","tempo"],["F1","close"]];
   /* both hands are named, because there is only one story to tell now: the
      keyboard names pitches by position, the pad names moves. The shoulders
      are named too — the four buttons nothing on the page ever said out
@@ -676,7 +635,7 @@ function hintsNow(){
           ["period","clear"],["space","play"],
           ["tab · L1 R1","voice"],["L","loop"],
           ["F2", viz === "roll" ? "the column" : "the roll"],
-          ["F3","quests"],["F1","the key"]];
+          ["F3","quests"]];
 }
 function renderHints(){
   if (!hintsEl) return;
@@ -705,9 +664,7 @@ function say(msg){
   lastSaid = msg;
   renderHints();
   footer.textContent = msg + (
-    keyref.classList.contains("on")     ? " · F1 to close" :
     questsEl.classList.contains("on")   ? " · F3 to close" + syncNote() :
-    settingsEl.classList.contains("on") ? " · start, or ○, to close" :
-                                          " · F1 for the key");
+    settingsEl.classList.contains("on") ? " · start, or ○, to close" : "");
 }
 function renderAll(){ renderNotes(); renderCursor(); renderMeta(); renderLoop(); }

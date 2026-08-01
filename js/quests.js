@@ -31,9 +31,8 @@
    which pair of octaves the two rows of note keys are, not a setting — and
    the header still says which octave those rows are in.
 
-   The key page is not here at all: it is F1, and R3 off it. The quest log
-   is not here either: it is F3, and the margin has already replaced what
-   one would have come here to do. There is no second quest log on the pad:
+   The quest log is not here: it is F3, and the margin has already replaced
+   what one would have come here to do. There is no second quest log on the pad:
    there is the margin, which was always there, and start hands it over.
 
    ✕ used to be the entry method, and there is no longer an entry method to
@@ -119,8 +118,7 @@ function runSetting(i){
   s.run();
 }
 function anyPage(){
-  return keyref.classList.contains("on") || questsEl.classList.contains("on") ||
-         settingsEl.classList.contains("on");
+  return questsEl.classList.contains("on") || settingsEl.classList.contains("on");
 }
 /* the body carries the mode so that the title can step back behind the
    crossbar standing over it; the folio itself is never touched */
@@ -140,7 +138,7 @@ function toggleSettings(){
   var on = !settingsEl.classList.contains("on");
   settingsEl.classList.toggle("on", on);
   markSettings(on);
-  if (on){ keyref.classList.remove("on"); questsEl.classList.remove("on"); }
+  if (on) questsEl.classList.remove("on");
   applyViz();
   if (on) renderSettings();
   renderRails();

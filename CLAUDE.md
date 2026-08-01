@@ -21,10 +21,12 @@ board + rules), `BUDGET.md` (HUD budget ledger) before proposing anything.
 ## Architecture (all zero-dependency)
 
 THE CODE IS THE SOURCE OF TRUTH: many sessions/agents have modified it;
-always read it (and the F1 key page) for current bindings — do not trust
-docs or memory for keymaps.
+always read it for current bindings — do not trust docs or memory for
+keymaps. The F1 key page is DELETED (2026-08-01, "too rot prone"): the
+truth about bindings is `js/entry.js` and the contextual hint strip under
+the footer, which is the living key help.
 
-- `folio.html` — the markup, the F1 key page, and the list of scripts. It
+- `folio.html` — the markup and the list of scripts. It
   carries a MAP comment at the head saying what lives where. **Read the map
   and one file**, not everything.
 - `folio.css` — every rule the page is drawn by.
@@ -178,7 +180,5 @@ Housekeeping done 2026-08-01 (needs no repeating):
   and of prose scans; `cdp.mjs` gone; test LOC 6269 → 5017 against 5027 of
   app.
 - `folio.html` split into `folio.css` + `js/*.js` (see Architecture).
-- The F1 key page scrolls (page up/down, home/end) — it was ~5900px in a
-  905px window with no way to reach any of it.
 - The harnesses no longer touch `quests/quest-log.json`: they seed their
   own log in a temp dir via `FOLIO_LOG`.

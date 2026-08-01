@@ -90,7 +90,7 @@ function mkEl(tag){
 }
 
 const ELEMENT_IDS =
-  ["column","footer","metatext","keyref","picker","quests","qlist","qtabs","hints",
+  ["column","footer","metatext","picker","quests","qlist","qtabs","hints",
    "roll","rollfield","rollbase",
    "qfree","qfreesigil","qdname","qdtext","qdteach","qdstate","qpreview",
    "railquests","rtabs","railtitle","railtext","railteach","railstate",
@@ -224,7 +224,7 @@ function boot(opts){
     get qActive(){return qActive;}, set qActive(v){qActive=v;},
     get qState(){return qState;},
     get wsFree(){return wsFree;}, get wsDoc(){return wsDoc;},
-    toggleQuests: _g("toggleQuests"), toggleKeyref: _g("toggleKeyref"),
+    toggleQuests: _g("toggleQuests"),
     toggleSettings: _g("toggleSettings"), closeSettings: _g("closeSettings"),
     runSetting: _g("runSetting"), renderSettings: _g("renderSettings"),
     railStep: _g("railStep"), railOrder: _g("railOrder"),

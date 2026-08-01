@@ -56,7 +56,6 @@ function ruleHomes(){ return T.octlines.map(l => l.firstChild.children[1].textCo
 /* the pages are exclusive and none of them may be left open behind a check */
 function closePages(){
   if (ids.quests.classList.contains("on")) T.toggleQuests();
-  if (ids.keyref.classList.contains("on")) T.toggleKeyref();
 }
 /* a clean board: no pages up, no drills, no workspaces, no sync */
 function qreset(){
@@ -190,38 +189,26 @@ ok("nor is the title, which never said anything",
    ids.metatext.textContent.indexOf("untitled") < 0, ids.metatext.textContent);
 reset();
 
-console.log("\n== setting the key on the key page ==");
+/* The page of the key is gone — it went stale faster than the bindings it
+   described — and with it went the only way in to the tonic and the tempo
+   from either hand. The arithmetic behind both is still here and still the
+   piece's own, so it is driven straight, from the model. */
+console.log("\n== the key of the piece ==");
 reset();
-key("F1"); ok("F1 opens the key page", ids.keyref.classList.contains("on"));
-key("ArrowRight"); eq("right moves the tonic up a semitone", T.doc.key, "C# major");
-key("ArrowLeft"); key("ArrowLeft"); eq("left moves it down", T.doc.key, "B major");
+T.shiftTonic(1);  eq("the tonic goes up a semitone", T.doc.key, "C# major");
+T.shiftTonic(-1); T.shiftTonic(-1); eq("and down", T.doc.key, "B major");
 eq("the tonic wraps", T.keyOf().pc, 11);
-key("ArrowUp"); eq("up makes it minor", T.doc.key, "B minor");
-key("ArrowDown"); eq("down makes it major again", T.doc.key, "B major");
+T.toggleKeyMode(); eq("the mode turns minor", T.doc.key, "B minor");
+T.toggleKeyMode(); eq("and major again", T.doc.key, "B major");
 ok("the footer says so", /the key · B major/.test(ids.footer.textContent), ids.footer.textContent);
-key("KeyZ"); eq("note keys are still inert on the key page", T.doc.steps.filter(Boolean).length, 0);
 ok("the key is autosaved", JSON.parse(store["folio.v1"]).key === "B major",
    JSON.parse(store["folio.v1"]).key);
-key("Escape"); ok("escape closes the page", !ids.keyref.classList.contains("on"));
-/* the pad reaches the same setting on the key page itself. Start no longer
-   leads there: the key has no slot in the settings crossbar at all, and F1
-   (with R3 to leave) is the whole of the way in and out. */
-reset();
+/* the settings crossbar never carried the key and still does not */
 press(GP.START); ok("start raises the settings crossbar", ids.settings.classList.contains("on"));
-ok("no slot of it is the key page any more",
+ok("no slot of it is the key",
    T.SETTINGS.every(s => !/^the key$/.test(s.label)), T.SETTINGS.map(s => s.label));
-ok("and nothing it does opens one", !ids.keyref.classList.contains("on"));
 press(GP.START);
 ok("start put it down again", !ids.settings.classList.contains("on"));
-key("F1"); ok("F1 is the way to the key page", ids.keyref.classList.contains("on"));
-press(GP.DR); eq("d-pad right moves the tonic up", T.doc.key, "C# major");
-press(GP.DL); press(GP.DL); eq("d-pad left moves it down", T.doc.key, "B major");
-press(GP.TR); eq("triangle makes it minor", T.doc.key, "B minor");
-press(GP.X); eq("cross makes it major", T.doc.key, "B major");
-eq("the pattern cursor never moved", T.cursor, 0);
-press(GP.R3);
-ok("R3 is the way out of the key page", !ids.keyref.classList.contains("on"));
-ok("and it did not flip the view on the way", T.viz, "column");
 
 console.log("\n== relative moves from an anchor ==");
 function rel(setup, buttons, opts){
@@ -525,9 +512,7 @@ reset(); page({15:"C4"});
 hold(GP.L2, GP.B);
 eq("○ ignores the triggers", T.doc.steps[0], "C4");
 /* the bumpers are inert on every page that has its own use for them */
-reset(); key("F1");
-press(GP.R1); eq("the bumpers do not change hands on the key page", T.voice, 0);
-key("F1");
+reset();
 press(GP.START);
 press(GP.R1); eq("nor inside the settings crossbar", T.voice, 0);
 key("Escape");
@@ -651,9 +636,6 @@ reset();
 key("F3"); key("Tab");
 eq("tab is inert in the quest log", T.voice, 0);
 key("F3");
-key("F1"); key("Tab");
-eq("and on the key page", T.voice, 0);
-key("F1");
 press(GP.START); key("Tab");
 eq("and inside the settings crossbar", T.voice, 0);
 key("Escape");
@@ -797,11 +779,9 @@ key("F3"); key("Escape"); ok("escape closes it", !ids.quests.classList.contains(
 key("F3"); press(GP.R3); ok("R3 closes it too", !ids.quests.classList.contains("on"));
 eq("and R3 did not flip the view instead", T.viz, "column");
 qreset();
-key("F1"); key("F3");
-ok("opening the quest log closes the key", !ids.keyref.classList.contains("on"));
-key("F1");
-ok("opening the key closes the quest log", !ids.quests.classList.contains("on"));
-key("F1");
+key("F3"); press(GP.START);
+ok("the crossbar closes the quest log", !ids.quests.classList.contains("on"));
+key("Escape");
 eq("closing the last page restores the column", ids.column.style.display, "flex");
 
 console.log("\n== selection, and nothing else reaching the pattern ==");
@@ -1053,70 +1033,41 @@ eq("and its workspace is then an ordinary empty page",
 eq("in C major", T.workspaceDoc("drill-bare").key, "C major");
 
 /* ================= 5. the documentation ================= */
-console.log("\n== the tempo, set on the key page (keyboard) ==");
+console.log("\n== the tempo of the piece ==");
 qreset();
 eq("112 is still where a fresh page starts", T.doc.tempo, 112);
 eq("the range is 60 to 180", [T.TEMPO_MIN, T.TEMPO_MAX], [60, 180]);
 eq("the coarse step is four, the fine step one", [T.TEMPO_STEP, T.TEMPO_FINE], [4, 1]);
-ok("the tempo does nothing off the key page",
-   (function(){ key("Equal"); key("Minus"); return T.doc.tempo; })() === 112, T.doc.tempo);
-key("F1");
-key("Equal"); eq("the key right of the minus key raises it by four", T.doc.tempo, 116);
-key("Minus"); eq("and its neighbour lowers it by four", T.doc.tempo, 112);
-key("Equal", { shiftKey:true }); eq("with shift, by one", T.doc.tempo, 113);
-key("Minus", { shiftKey:true }); eq("and down by one", T.doc.tempo, 112);
-key("NumpadAdd"); eq("the numpad agrees", T.doc.tempo, 116);
-key("NumpadSubtract"); eq("both ways", T.doc.tempo, 112);
+/* − and + on the page are the note's length and nothing else now that the
+   page of the key is gone; the tempo is not on them anywhere */
+key("Equal"); key("Minus");
+eq("the two keys left of backspace never reach the tempo", T.doc.tempo, 112);
+T.shiftTempo(T.TEMPO_STEP);  eq("the coarse step raises it by four", T.doc.tempo, 116);
+T.shiftTempo(-T.TEMPO_STEP); eq("and lowers it by four", T.doc.tempo, 112);
+T.shiftTempo(T.TEMPO_FINE);  eq("the fine step, by one", T.doc.tempo, 113);
+T.shiftTempo(-T.TEMPO_FINE); eq("and down by one", T.doc.tempo, 112);
 ok("the footer says the new tempo", /tempo · 112/.test(ids.footer.textContent), ids.footer.textContent);
 ok("the header meta leads with it", /^112 · /.test(ids.metatext.textContent), ids.metatext.textContent);
-for (let i = 0; i < 40; i++) key("Equal");
+for (let i = 0; i < 40; i++) T.shiftTempo(T.TEMPO_STEP);
 eq("it clamps at 180", T.doc.tempo, 180);
 ok("and says so", /the end of the range/.test(ids.footer.textContent), ids.footer.textContent);
-key("Equal", { shiftKey:true }); eq("the fine step clamps too", T.doc.tempo, 180);
-for (let i = 0; i < 40; i++) key("Minus");
+T.shiftTempo(T.TEMPO_FINE); eq("the fine step clamps too", T.doc.tempo, 180);
+for (let i = 0; i < 40; i++) T.shiftTempo(-T.TEMPO_STEP);
 eq("and at 60 the other way", T.doc.tempo, 60);
-key("Minus", { shiftKey:true }); eq("finely too", T.doc.tempo, 60);
-key("Equal", { shiftKey:true }); eq("one off the floor", T.doc.tempo, 61);
+T.shiftTempo(-T.TEMPO_FINE); eq("finely too", T.doc.tempo, 60);
+T.shiftTempo(T.TEMPO_FINE);  eq("one off the floor", T.doc.tempo, 61);
 ok("the tempo is autosaved like everything else",
    JSON.parse(store["folio.v1"]).tempo === 61, store["folio.v1"]);
-/* the key bindings that were already there are untouched */
-key("ArrowLeft"); eq("the arrows are still the key", T.doc.key, "B major");
-key("ArrowRight"); eq("both ways", T.doc.key, "C major");
-key("ArrowUp"); eq("and the mode", T.doc.key, "C minor");
-key("ArrowDown"); eq("back again", T.doc.key, "C major");
+T.shiftTonic(-1); T.shiftTonic(1);
 eq("moving the key left the tempo alone", T.doc.tempo, 61);
-key("F1");
-
-console.log("\n== the tempo, on the pad, without a keyboard ==");
-qreset();
-key("F1");
-frame([GP.DU]); frame([]);
-eq("d-pad up raises the tempo by four", T.doc.tempo, 116);
-frame([GP.DD]); frame([]);
-eq("d-pad down lowers it", T.doc.tempo, 112);
-frame([GP.L2, GP.DU]); frame([]);
-eq("a trigger makes the step fine", T.doc.tempo, 113);
-frame([GP.R2, GP.DD]); frame([]);
-eq("either trigger", T.doc.tempo, 112);
-frame([GP.DL]); frame([]);
-eq("the d-pad sideways is still the tonic", T.doc.key, "B major");
-frame([GP.DR]); frame([]);
-eq("and back", T.doc.key, "C major");
-press(GP.TR); eq("triangle is still the mode", T.doc.key, "C minor");
-press(GP.X); eq("and cross", T.doc.key, "C major");
-eq("none of that moved the tempo", T.doc.tempo, 112);
-/* the hold repeat works here as it does everywhere */
-frame([GP.DU]); clock.pad += 400; frame([GP.DU]); frame([]);
-ok("a held direction repeats", T.doc.tempo > 116, T.doc.tempo);
-key("F1");
 
 console.log("\n== the tempo belongs to the workspace ==");
 qreset();
-key("F1"); key("Equal"); key("Equal"); key("F1"); /* free play: 120 */
+T.shiftTempo(T.TEMPO_STEP); T.shiftTempo(T.TEMPO_STEP); /* free play: 120 */
 eq("free play took the change", T.doc.tempo, 120);
 key("F3"); key("Enter"); key("F3"); /* into quest A (ladder) */
 eq("the quest arrived at its own tempo", T.doc.tempo, 120);
-key("F1"); for (let i = 0; i < 5; i++) key("Equal"); key("F1");
+for (let i = 0; i < 5; i++) T.shiftTempo(T.TEMPO_STEP);
 eq("and takes its own change", T.doc.tempo, 140);
 key("F3"); key("ArrowDown"); key("Enter"); key("F3"); /* into quest B (whitespace) */
 eq("quest B is not carrying quest A's tempo", T.doc.tempo, 88);
@@ -1228,8 +1179,8 @@ ok("the pattern file gains no seed field",
 console.log("\n== the seed is a starting value, not a rule ==");
 qreset(); key("F3"); key("Enter"); key("F3"); /* ladder: G major 120 */
 eq("seeded", [T.doc.key, T.doc.tempo], ["G major", 120]);
-key("F1"); key("ArrowRight"); key("Minus"); key("Minus"); key("F1");
-eq("the key page overrides the seeded key", T.doc.key, "G# major");
+T.shiftTonic(1); T.shiftTempo(-T.TEMPO_STEP); T.shiftTempo(-T.TEMPO_STEP);
+eq("a change overrides the seeded key", T.doc.key, "G# major");
 eq("and the seeded tempo", T.doc.tempo, 112);
 key("F3"); key("ArrowDown"); key("Enter"); key("F3");
 key("F3"); key("ArrowUp"); key("Enter"); key("F3");
@@ -1512,10 +1463,6 @@ eq("the length belongs to the voice in hand", T.writtenLen(T.doc, 0, 0), 1);
 T.setVoice(0);
 
 reset();
-const tempo0 = T.doc.tempo;
-key("F1"); key("Equal"); key("F1");
-eq("the same pair is still the tempo on the key page", T.doc.tempo, tempo0 + T.TEMPO_STEP);
-eq("and held nothing", T.vhold(0).filter(n => n !== 1).length, 0);
 
 console.log("\n== keeping the key down ==");
 reset();

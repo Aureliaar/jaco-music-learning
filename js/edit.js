@@ -360,19 +360,10 @@ function shiftOctave(d){
   if (n === baseOctave){ say("octave " + baseOctave + " — end of the range"); return; }
   baseOctave = n; renderMeta(); say("octave " + baseOctave);
 }
-function toggleKeyref(){
-  var on = !keyref.classList.contains("on");
-  keyref.classList.toggle("on", on);
-  if (on){ questsEl.classList.remove("on"); settingsEl.classList.remove("on"); markSettings(false); }
-  applyViz();
-  if (on) keyrefTop();             /* it always opens at its head */
-  renderRails();                   /* the pad's wash goes with the mode */
-  say(on ? "the key, by position" : "‸ cursor row");
-}
 function toggleQuests(){
   var on = !questsEl.classList.contains("on");
   questsEl.classList.toggle("on", on);
-  if (on){ keyref.classList.remove("on"); settingsEl.classList.remove("on"); markSettings(false); }
+  if (on){ settingsEl.classList.remove("on"); markSettings(false); }
   applyViz();
   renderRails();
   if (on) renderQuests();
