@@ -55,10 +55,14 @@ window.addEventListener("keydown", unlockAudio, true);
    whatever the waveform. The bass dies slower than the lead on purpose,
    the way longer strings do. */
 var TONE = [
+  /* decay is the struck shape, measured off the piano kit's own C4: a fast
+     first fall (tau), a knee (when), and the long quiet tail after it
+     (tail tau) — it loses most of itself inside a second and then sings
+     small, which is what a hold sounds like when something real was hit */
   { type:"triangle", cut:2500, q:0.7, level:LEVEL, attack:ATTACK,
-    release:RELEASE, hold:0.10, decay:1.6 },
+    release:RELEASE, hold:0.10, decay:[0.37, 1.0, 3.0] },
   { type:"sine",     cut:820,  q:0.9, level:0.30,  attack:0.014,
-    release:0.070,   hold:0.17, decay:2.4 }
+    release:0.070,   hold:0.17, decay:[0.60, 1.4, 4.0] }
 ];
 
 /* One note: oscillator -> lowpass -> gain envelope. Gain starts at 0 and
@@ -93,13 +97,19 @@ function playNote(name, at, dur, v, held){
   g.gain.setValueAtTime(0, at);
   g.gain.linearRampToValueAtTime(t.level, at + t.attack);
   if (held){
-    /* a held tone speaks and then dies away, all the way: one exponential
-       decay at the timbre's own rate, like a struck string. A hold is how
-       long the note is allowed to ring, not how long it is propped up. The
-       release still starts from wherever the decay has got to, so a note
-       let go early is at its own height when it is let go. */
-    var atRel = t.level * Math.exp(-(relStart - at) / t.decay);
-    g.gain.exponentialRampToValueAtTime(Math.max(0.0001, atRel), relStart);
+    /* a held tone dies the way the piano does: fast to the knee, then a
+       long quiet tail. The release starts from wherever the decay has got
+       to, so a note let go early is at its own height when it is let go. */
+    var d = t.decay, knee = at + d[1];
+    var vKnee = t.level * Math.exp(-d[1] / d[0]);
+    if (relStart <= knee + 0.001){
+      g.gain.exponentialRampToValueAtTime(
+        Math.max(0.0001, t.level * Math.exp(-(relStart - at) / d[0])), relStart);
+    } else {
+      g.gain.exponentialRampToValueAtTime(Math.max(0.0001, vKnee), knee);
+      g.gain.exponentialRampToValueAtTime(
+        Math.max(0.0001, vKnee * Math.exp(-(relStart - knee) / d[2])), relStart);
+    }
   } else {
     g.gain.setValueAtTime(t.level, relStart);
   }
