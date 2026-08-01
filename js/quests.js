@@ -60,8 +60,12 @@ var SETTINGS = [
 /* the diamond each cluster is drawn as: left, up, right, down. The points
    sit further out than the sides do, because the sides are wide and the
    points are not: a diamond of four boxes only reads as a diamond while no
-   two of them touch. */
-var XPOS = [["26%","50%"],["50%","12%"],["74%","50%"],["50%","88%"]];
+   two of them touch — and at 26 and 74 the two points did touch. A slot is
+   as wide as it is *plus its padding*, which is half a rem the arithmetic
+   had not counted, so ← and → overlapped by a few pixels and the lesson's
+   name ran into itself. They stand at 22 and 78 now, a rem clear of each
+   other on the widest board and still clear on the narrow one. */
+var XPOS = [["22%","50%"],["50%","12%"],["78%","50%"],["50%","88%"]];
 var xslots = [];
 function buildSettings(){
   var i, host, p, el, g, l, v;
