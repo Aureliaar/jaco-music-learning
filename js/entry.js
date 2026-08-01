@@ -28,7 +28,13 @@ document.addEventListener("keydown", function(e){
   }
   if (e.altKey) return;
 
-  if (code === "F1"){ e.preventDefault(); toggleKeyref(); return; }
+  /* F1 was the page of the key: two columns of prose about every binding
+     there is, which went stale faster than the bindings did. It is gone and
+     the hint strip under the footer is the key help. The press is still
+     swallowed, and does nothing at all: left to the browser, F1 opens its
+     own help window and takes the folio out of focus, which is a worse
+     answer to an old habit than silence. */
+  if (code === "F1"){ e.preventDefault(); return; }
   if (code === "F3"){ e.preventDefault(); toggleQuests(); return; }
   if (e.shiftKey && code === "KeyB"){
     e.preventDefault(); cycleScenery(); return;
@@ -38,8 +44,8 @@ document.addEventListener("keydown", function(e){
      are in, and with shift the one before instead of the one after, so the
      ring is walked both ways and a third voice is still one press from
      either of its neighbours. It is swallowed either way, so focus never
-     wanders off the page, and it is inert while a page (the key, the quest
-     log, the crossbar) is up, exactly as note entry is. */
+     wanders off the page, and it is inert while a page (the quest log, the
+     crossbar) is up, exactly as note entry is. */
   if (code === "Tab"){
     e.preventDefault();
     if (!anyPage()){ if (e.shiftKey) prevVoice(); else nextVoice(); }
@@ -78,39 +84,6 @@ document.addEventListener("keydown", function(e){
     return;
   }
 
-  /* the key page carries the two settings of the piece: its key and its
-     tempo. The arrows were already spoken for by the key, so the tempo
-     takes the two keys left of backspace — free on this page, and adjacent
-     by position on any layout. Shift makes the step fine.
-
-     And the page is read here as well. It is much longer than the window and
-     the body does not scroll, so page up and page down turn it a screenful
-     at a time and home and end go to its two ends — four keys that did
-     nothing at all on this page before, and that mean on any other page
-     exactly what they mean here. The arrows are not taken from the key to do
-     it: what the piece is set to and how far down the page you are reading
-     are two different things and do not share a hand. */
-  if (keyref.classList.contains("on")){
-    switch (code){
-      case "Escape":     toggleKeyref(); return;
-      case "PageUp":     e.preventDefault(); keyrefScroll(-0.86); return;
-      case "PageDown":   e.preventDefault(); keyrefScroll(0.86);  return;
-      case "Home":       e.preventDefault(); keyrefEnd(false);    return;
-      case "End":        e.preventDefault(); keyrefEnd(true);     return;
-      case "ArrowLeft":  e.preventDefault(); shiftTonic(-1);   return;
-      case "ArrowRight": e.preventDefault(); shiftTonic(1);    return;
-      case "ArrowUp": case "ArrowDown":
-                         e.preventDefault(); toggleKeyMode();  return;
-      case "Minus": case "NumpadSubtract":
-                         e.preventDefault();
-                         shiftTempo(e.shiftKey ? -TEMPO_FINE : -TEMPO_STEP); return;
-      case "Equal": case "NumpadAdd":
-                         e.preventDefault();
-                         shiftTempo(e.shiftKey ?  TEMPO_FINE :  TEMPO_STEP); return;
-    }
-    return;                        /* otherwise a page, not a mode with keys */
-  }
-
   if (Object.prototype.hasOwnProperty.call(NOTE_KEYS, code)){
     e.preventDefault();
     var wrote = cursor;                 /* where the note lands, before the advance */
@@ -121,10 +94,9 @@ document.addEventListener("keydown", function(e){
 
   switch (code){
     /* the two keys left of backspace: the note sounding at the cursor,
-       shorter or longer by a step. They are the tempo on the key page and
-       the length here — the same pair, the same − and +, on whichever page
-       has something to make more or less of. Shift takes it the whole way:
-       as long as it will go, or back to a plain sixteenth. */
+       shorter or longer by a step — free on this page and adjacent by
+       position on any layout. Shift takes it the whole way: as long as it
+       will go, or back to a plain sixteenth. */
     case "Minus": case "NumpadSubtract":
       e.preventDefault(); stretch(-1, e.shiftKey); return;
     case "Equal": case "NumpadAdd":
@@ -188,21 +160,16 @@ window.addEventListener("drop", function(e){
     12 d-up    13 d-down   14 d-left   15 d-right
 
    The pad writes contours: the bare face buttons are the move — up, down,
-   again, rest — and everything else is navigation. It named absolute
-   pitches once, on a crossbar of twenty-four semitones raised by holding a
-   trigger; that went in the pass before Lesson 3, unused. The crossbar idea
-   survives where it earns its keep — start still raises the settings
-   crossbar, and its eight slots are still read left, up, right, down, the
+   again, rest — and everything else is navigation. Start raises the
+   settings crossbar, whose eight slots are read left, up, right, down, the
    d-pad cluster then the face cluster.
 
-   What the triggers left behind was sorted by the hand rather than by the
-   history: the two triggers are the *modifiers*, held, because a trigger is
-   an analogue thing made to be leaned on, and the two bumpers are the
-   *voice*, tapped, because changing hands is a discrete movement made very
-   often. So L2 widens a move to a third and R2 to a fifth, both together
-   take it out of the key; L1 steps back a voice and R1 steps on. Neither
-   pair does two jobs any more, which is why none of this needs to arbitrate
-   between a tap and a hold the way the bumpers once did. */
+   The four shoulders are sorted by the hand. A trigger is an analogue thing
+   made to be leaned on, so the two triggers are the *modifiers*, held: L2
+   widens a move to a third, R2 to a fifth, both together take it out of the
+   key. A bumper is made to be tapped, so the two bumpers are the *voice*:
+   L1 back a line, R1 on a line. Neither pair does two jobs, so nothing here
+   has to arbitrate between a tap and a hold. */
 var GP_SLOTS = [14, 12, 15, 13, 2, 3, 1, 0];   /* ←↑→↓ then □△○✕ */
 var GP_CROSS = 0, GP_CIRCLE = 1, GP_SQUARE = 2, GP_TRIANGLE = 3;  /* face buttons */
 var GP_L1 = 4, GP_R1 = 5, GP_L2 = 6, GP_R2 = 7,
@@ -328,33 +295,15 @@ function pollPads(){
      is forgotten first — the first step of the rail should be a step */
   if (gpEdge(cur, GP_START)){ toggleSettings(); navReset(); gpPrev = cur; return; }
 
-  /* the key page holds the piece's two settings, both reachable without a
-     keyboard: d-pad left and right move the tonic, △ or ✕ make it major or
-     minor, and d-pad up and down are the tempo — by four, or by one with a
-     bumper held. */
-  if (keyref.classList.contains("on")){
-    if (gpEdge(cur, GP_R3)){ toggleKeyref(); gpPrev = cur; return; }   /* the way out */
-    if (gpEdge(cur, GP_TRIANGLE) || gpEdge(cur, GP_CROSS)) toggleKeyMode();
-    /* a trigger is the modifier everywhere it is one, here included */
-    var fine = (cur[GP_L2] || cur[GP_R2]) ? TEMPO_FINE : TEMPO_STEP;
-    gpNav(cur[GP_DL], "left",  -1, now, shiftTonic);
-    gpNav(cur[GP_DR], "right",  1, now, shiftTonic);
-    gpNav(cur[GP_DU], "up",    fine, now, shiftTempo);
-    gpNav(cur[GP_DD], "down", -fine, now, shiftTempo);
-    gpPrev = cur; return;
-  }
   if (questsEl.classList.contains("on")){
     /* The log is a keyboard page that the pad can read over your shoulder:
        d-pad up and down walk the caret, ✕ enters the quest's page (or comes
        back to free play), ○ marks it complete, R3 closes it as escape does.
-       Nothing more. A pass that gave the pad its own tabs, its own
-       favourite button and its own carry gesture in here was building a
-       second quest log for the thumb, when the pad already has the whole
-       board where the thumb actually is — the left margin, under start,
-       where turning a lesson and walking into a workspace are two
+       Nothing more: the pad's way round the board is the left margin under
+       start, where turning a lesson and walking into a workspace are two
        directions of one stick. Keeping a quest to hand and moving it up the
-       list are arrangements made once and then lived with; they are F and
-       shift on the keyboard, and that is enough for them. */
+       list are arrangements made once and lived with, and they are F and
+       shift on the keyboard. */
     if (gpEdge(cur, GP_CROSS))    chooseWorkspace();
     if (gpEdge(cur, GP_CIRCLE))   toggleComplete();
     if (gpEdge(cur, GP_R3))       toggleQuests();

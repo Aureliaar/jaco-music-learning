@@ -21,10 +21,12 @@ board + rules), `BUDGET.md` (HUD budget ledger) before proposing anything.
 ## Architecture (all zero-dependency)
 
 THE CODE IS THE SOURCE OF TRUTH: many sessions/agents have modified it;
-always read it (and the F1 key page) for current bindings — do not trust
-docs or memory for keymaps.
+always read it for current bindings — do not trust docs or memory for
+keymaps. The F1 key page is DELETED (2026-08-01, "too rot prone"): the
+truth about bindings is `js/entry.js` and the contextual hint strip under
+the footer, which is the living key help.
 
-- `folio.html` — the markup, the F1 key page, and the list of scripts. It
+- `folio.html` — the markup and the list of scripts. It
   carries a MAP comment at the head saying what lives where. **Read the map
   and one file**, not everything.
 - `folio.css` — every rule the page is drawn by.
@@ -49,17 +51,18 @@ docs or memory for keymaps.
   patterns + `drills` array). The single file to READ to see the player's
   music. **No test may read or write it.**
 - `auditor.html` — blind lineup listening; `?ids=a,b,c` picks entries.
-- `tests/` — restructured 2026-08-01. `tier1.js` (247 checks) is data
-  integrity only: a page out and back, the quest log's v2 schema,
-  server.mjs driven for real, a boot onto an existing log. **It is
+- `tests/` — restructured 2026-08-01, pared 2026-08-01. `tier1.js` (247
+  checks) is data integrity only: a page out and back, the quest log's v2
+  schema, server.mjs driven for real, a boot onto an existing log. **It is
   always-green, no exceptions: run it first and last, every time.** Then
-  `reltest.js` (759, the instrument's input semantics), `leaptest.js`
-  (105, multi-frame pad leaps), `bootcheck.js` (255, real-Chrome boot,
-  layout and data flows), `drilltest.js` (40, live drill delivery),
-  `statictest.js` (44, the deploy artifact and the read-only copy).
-  `rig.js` is the shared bench for the fake-DOM harnesses and loads the
-  app from whatever `folio.html` actually names; `cdp.js` is the one CDP
-  driver. Total test LOC is kept **at or under app LOC** — extend by
+  `reltest.js` (688, the instrument's input semantics, including the
+  multi-frame pad section that used to be leaptest.js — that file is gone),
+  `bootcheck.js` (197, real-Chrome boot and layout: only what a browser can
+  prove), `drilltest.js` (40, live drill delivery), `statictest.js` (44,
+  the deploy artifact and the read-only copy). `rig.js` is the shared bench
+  for the fake-DOM harnesses and loads the app from whatever `folio.html`
+  actually names; `cdp.js` is the one CDP driver. Test LOC 4449 against
+  4760 of app. Total test LOC is kept **at or under app LOC** — extend by
   deleting something first.
 
 ## Critical rules learned the hard way
@@ -178,7 +181,5 @@ Housekeeping done 2026-08-01 (needs no repeating):
   and of prose scans; `cdp.mjs` gone; test LOC 6269 → 5017 against 5027 of
   app.
 - `folio.html` split into `folio.css` + `js/*.js` (see Architecture).
-- The F1 key page scrolls (page up/down, home/end) — it was ~5900px in a
-  905px window with no way to reach any of it.
 - The harnesses no longer touch `quests/quest-log.json`: they seed their
   own log in a temp dir via `FOLIO_LOG`.

@@ -1,6 +1,6 @@
 /* tests/rig.js — the bench the fake-DOM harnesses stand on.
 
-   reltest.js and leaptest.js each carried their own copy of this: the same
+   reltest.js and tier1.js each carried their own copy of this: the same
    fake document, the same fake Web Audio, the same fake pad, the same loader
    and very nearly the same hook. Two copies of a fake DOM is two places for
    the fake DOM to drift from the real one, which is the one thing a fake DOM
@@ -90,7 +90,7 @@ function mkEl(tag){
 }
 
 const ELEMENT_IDS =
-  ["column","footer","metatext","keyref","picker","quests","qlist","qtabs","hints",
+  ["column","footer","metatext","picker","quests","qlist","qtabs","hints",
    "roll","rollfield","rollbase",
    "qfree","qfreesigil","qdname","qdtext","qdteach","qdstate","qpreview",
    "railquests","rtabs","railtitle","railtext","railteach","railstate",
@@ -224,7 +224,7 @@ function boot(opts){
     get qActive(){return qActive;}, set qActive(v){qActive=v;},
     get qState(){return qState;},
     get wsFree(){return wsFree;}, get wsDoc(){return wsDoc;},
-    toggleQuests: _g("toggleQuests"), toggleKeyref: _g("toggleKeyref"),
+    toggleQuests: _g("toggleQuests"),
     toggleSettings: _g("toggleSettings"), closeSettings: _g("closeSettings"),
     runSetting: _g("runSetting"), renderSettings: _g("renderSettings"),
     railStep: _g("railStep"), railOrder: _g("railOrder"),

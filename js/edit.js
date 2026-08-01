@@ -187,13 +187,8 @@ function enterNote(off){
    for a direction and writes whatever pitch that direction lands on,
    counted in scale steps of the current key.
 
-   There was a second method once — a crossbar of twenty-four absolute
-   semitones raised by holding a trigger, borrowed whole from the game's
-   cross hotbar. It went, in the pass before Lesson 3, because it was never
-   used: naming pitches is what the keyboard is for, and the pad is for
-   shapes. Nothing chooses between methods any more, so there is no method
-   to choose, no F4, no preference to store, and the two triggers it lived
-   on are free — they change hands now.
+   There is no other method and nothing to choose between: naming pitches
+   is what the keyboard is for, and the pad is for shapes.
 
    The anchor is the previous sounding note, scanned backwards from the
    cursor. Rests do not break the chain, and the scan wraps — around the
@@ -360,19 +355,10 @@ function shiftOctave(d){
   if (n === baseOctave){ say("octave " + baseOctave + " — end of the range"); return; }
   baseOctave = n; renderMeta(); say("octave " + baseOctave);
 }
-function toggleKeyref(){
-  var on = !keyref.classList.contains("on");
-  keyref.classList.toggle("on", on);
-  if (on){ questsEl.classList.remove("on"); settingsEl.classList.remove("on"); markSettings(false); }
-  applyViz();
-  if (on) keyrefTop();             /* it always opens at its head */
-  renderRails();                   /* the pad's wash goes with the mode */
-  say(on ? "the key, by position" : "‸ cursor row");
-}
 function toggleQuests(){
   var on = !questsEl.classList.contains("on");
   questsEl.classList.toggle("on", on);
-  if (on){ keyref.classList.remove("on"); settingsEl.classList.remove("on"); markSettings(false); }
+  if (on){ settingsEl.classList.remove("on"); markSettings(false); }
   applyViz();
   renderRails();
   if (on) renderQuests();

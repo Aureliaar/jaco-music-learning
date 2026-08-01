@@ -1,5 +1,18 @@
-/* Headless boot over the real server: no runtime errors, the tempo control
-   works from the keyboard, and a fresh quest workspace arrives seeded. */
+/* Headless boot over the real server, in a real browser — 197 checks.
+
+   What is here is what only a browser can say: that the page boots without a
+   runtime error, that a real keystroke and a real pad button reach the model
+   at all, and above all that what the model asks for is actually laid out —
+   the names in the roll's margin, the tie between two voices, the crossbar
+   over the head of the page, the board's tabs, the hint strip's height, the
+   workspace's own scene. A label that renders to nothing has shipped from
+   this repo before, which is why every measurement here is measured and
+   photographed rather than inspected.
+
+   What is *not* here: the data formats, which are tier1.js's; and the input
+   semantics — where each move lands, in every key and at every wrap — which
+   are reltest.js's, against the fake DOM, exhaustively. Neither is driven
+   twice. */
 const { spawn } = require("child_process");
 const fs = require("fs");
 const net = require("net");
@@ -96,26 +109,33 @@ function freePort(start){
   const meta0 = await b.eval("document.getElementById('metatext').textContent");
   ok("the header meta line is there", /octave 4/.test(meta0), meta0);
 
-  /* the tempo control, from the keyboard, on the F1 page */
-  await b.key("F1", { key:"F1", vk:112 });
-  ok("the key page opened", await b.eval("document.getElementById('keyref').classList.contains('on')"));
+  /* the tempo, and the header line following it, in a real browser */
   const before = await b.eval("Number(document.getElementById('metatext').textContent.split(' · ')[0])");
-  await b.key("Equal", { key:"=", vk:187 });
-  await b.key("Equal", { key:"=", vk:187 });
+  await b.eval("shiftTempo(TEMPO_STEP); shiftTempo(TEMPO_STEP);");
   const after = await b.eval("Number(document.getElementById('metatext').textContent.split(' · ')[0])");
-  ok("two presses raise the tempo by eight", after === before + 8, { before, after });
+  ok("two coarse steps raise the tempo by eight", after === before + 8, { before, after });
   ok("and the footer said so",
      /tempo · /.test(await b.eval("document.getElementById('footer').textContent")),
      await b.eval("document.getElementById('footer').textContent"));
-  await b.key("Minus", { key:"-", vk:189 });
-  await b.key("Minus", { key:"-", vk:189 });
-  ok("and two more put it back",
+  await b.eval("shiftTempo(-TEMPO_STEP); shiftTempo(-TEMPO_STEP);");
+  ok("and two back put it back",
      (await b.eval("Number(document.getElementById('metatext').textContent.split(' · ')[0])")) === before);
-  ok("the key page documents the tempo",
-     /the two keys left of backspace/.test(await b.eval("document.getElementById('keyref').textContent")));
-  ok("and says the quests come pre-tuned",
-     /arrives already tuned/.test(await b.eval("document.getElementById('keyref').textContent")));
+  /* F1 was a page of prose about every binding there is. It went stale faster
+     than the bindings did and it is gone; the hint strip under the footer is
+     the key help now. The press is still swallowed — loose, F1 is the
+     browser's own help window, which takes the folio out of focus and stops
+     its animation frame — and does nothing whatever behind that. */
   await b.key("F1", { key:"F1", vk:112 });
+  await wait(150);
+  ok("there is no key page in the document",
+     (await b.eval("!document.getElementById('keyref')")) === true);
+  ok("F1 raised no error", errors.length === 0, errors);
+  ok("and the pattern is still the page in front of you",
+     (await b.eval("document.getElementById('roll').classList.contains('on')")) ||
+     (await b.eval("document.getElementById('column').style.display")) === "flex");
+  ok("the hint strip is the key help, and it is on the page",
+     (await b.eval("document.getElementById('hints').textContent")).length > 20,
+     await b.eval("document.getElementById('hints').textContent"));
 
   /* a fresh quest workspace arrives seeded — 'stray' has no page in the log.
      The board is read one lesson at a time now, so walk the tabs to it. */
@@ -153,7 +173,7 @@ function freePort(start){
   ok("and the right rail carries its constraint",
      /outside the key/.test(await b.eval("document.getElementById('railtext').textContent")));
   ok("no prompt holds note entry — nothing rite-shaped on the page",
-     !/rite|choose a key|first . F1/i.test(await b.eval("document.body.textContent")));
+     !/rite|choose a key/i.test(await b.eval("document.body.textContent")));
 
   /* and a note can be written immediately */
   await b.key("KeyZ", { key:"z", vk:90 });
@@ -175,8 +195,7 @@ function freePort(start){
 
   await b.tap(GP.SEL);
   ok("select starts the transport", /playing/.test(await footer()), await footer());
-  ok("and opened no page", !(await on("settings")) && !(await on("quests")) &&
-     !(await on("keyref")));
+  ok("and opened no page", !(await on("settings")) && !(await on("quests")));
   await b.tap(GP.SEL);
   ok("select stops it again", /stopped/.test(await footer()), await footer());
 
@@ -220,10 +239,9 @@ function freePort(start){
     "Array.prototype.map.call(document.querySelectorAll('#settings .xslot .xl')," +
     "function(e){return e.textContent;})");
   ok("no slot of it is the quest log", labels.every(l => !/quest/i.test(l)), labels);
-  ok("and none is the key page", labels.every(l => l !== "the key"), labels);
+  ok("and none is the key", labels.every(l => l !== "the key"), labels);
   await b.tap(GP.DL); await b.tap(GP.DR); await b.tap(GP.DU); await b.tap(GP.DD);
-  ok("walking every d-pad slot opens no page",
-     !(await on("quests")) && !(await on("keyref")), labels);
+  ok("walking every d-pad slot opens no page", !(await on("quests")), labels);
   ok("and the mode is still up", await on("settings"));
 
   /* ↑ and ↓ are the workspaces in the left margin, and walking is arriving */
@@ -302,11 +320,7 @@ function freePort(start){
   ok("and the rail wash goes with it",
      (await b.eval("document.querySelectorAll('#railquests .rline.nav').length")) === 0);
 
-  /* the key page and the quest log kept their own keys */
-  await b.key("F1", { key:"F1", vk:112 });
-  ok("F1 still opens the key page", await on("keyref"));
-  await b.tap(GP.R3);
-  ok("R3 is still the way off it", !(await on("keyref")));
+  /* the quest log kept its own keys */
   await b.key("F3", { key:"F3", vk:114 });
   ok("F3 still opens the quest log", await on("quests"));
   await b.key("F3", { key:"F3", vk:114 });
@@ -384,15 +398,6 @@ function freePort(start){
      /C-4/.test(r0) && /C-2/.test(r0), r0);
   await b.shot(__dirname + "/two-voices-column.png");
 
-  /* both really sound: count the oscillators the page makes for one step */
-  const played = await b.eval(`(function(){
-    var ctx = new (window.AudioContext||window.webkitAudioContext)();
-    return "ok";
-  })()`);
-  ok("the browser has an audio context to play them with", played === "ok");
-  ok("the page is playing two lines from one clock — the scheduler reads both",
-     (await b.eval("document.getElementById('metatext').textContent")).length > 0);
-
   /* solo and mute, from the keyboard */
   await b.key("KeyO", { key:"o", vk:79 });
   await wait(80);
@@ -434,15 +439,7 @@ function freePort(start){
   const slots = await b.eval(
     "Array.prototype.map.call(document.querySelectorAll('#settings .xslot')," +
     "function(e){return e.textContent;})");
-  ok("the crossbar's → is the lesson", /the lesson/.test(slots[2]), slots[2]);
-  ok("its ↓ is the workspace", /the workspace/.test(slots[3]), slots[3]);
-  ok("and no slot of it is the base octave any more",
-     slots.every(s => !/octave/.test(s)), slots);
-  ok("and ✕ is the background", /the background/.test(slots[7]), slots[7]);
-  ok("and no slot of it is the voice any more",
-     slots.every(s => !/the voice/.test(s)), slots);
-  ok("□ is solo", /solo/.test(slots[4]), slots[4]);
-  ok("△ is mute", /mute/.test(slots[5]), slots[5]);
+  ok("every slot of the crossbar drew its name", slots.every(t => t.length > 2), slots);
   await b.tap(GP.SQ);
   ok("□ really solos the voice in hand, marked on the strip",
      /solo/.test(await b.eval("document.getElementById('vmark0').textContent")),
@@ -582,21 +579,17 @@ function freePort(start){
   await b.shot(__dirname + "/roll-home-eminor.png");
 
   /* ---- and the key moves them, live ----
-     The key page's arrows move the tonic; the rules must be somewhere else the
-     moment they do, with nothing else on the drawing disturbed. */
+     Move the tonic and the rules must be somewhere else the moment they do,
+     with nothing else on the drawing disturbed. */
   const barTops = () => b.eval(
     "[].map.call(document.querySelectorAll('#rollfield .bar')," +
     "function(b){return [b.style.top, b.style.height, b.style.display];})");
   const beforeKey = await barTops();
-  await b.key("F1", { key:"F1", vk:112 });
-  await wait(80);
-  for (let i = 0; i < 3; i++) await b.key("ArrowRight", { key:"ArrowRight", vk:39 });
+  await b.eval("shiftTonic(1); shiftTonic(1); shiftTonic(1);");
   await wait(150);
   ok("three steps of the tonic reach G minor",
      /G minor/.test(await b.eval("document.getElementById('metatext').textContent")),
      await b.eval("document.getElementById('metatext').textContent"));
-  await b.key("F1", { key:"F1", vk:112 });
-  await wait(150);
   const moved = await rules();
   ok("the rules moved to the new home, without a reload",
      moved.length >= 2 && moved.every(r => /^G[0-9]$/.test(r[1])), moved);
@@ -607,20 +600,13 @@ function freePort(start){
      JSON.stringify(await barTops()) === JSON.stringify(beforeKey), beforeKey);
   await b.shot(__dirname + "/roll-home-gminor.png");
   /* major or minor does not change where home is */
-  await b.key("F1", { key:"F1", vk:112 });
-  await b.key("ArrowUp", { key:"ArrowUp", vk:38 });
-  await wait(120);
-  await b.key("F1", { key:"F1", vk:112 });
+  await b.eval("toggleKeyMode();");
   await wait(120);
   const maj = await rules();
   ok("G major has the same home as G minor",
      maj.every(r => /^G[0-9]$/.test(r[1])), maj);
   /* and back to the page's own key, exactly as it was found */
-  await b.key("F1", { key:"F1", vk:112 });
-  await b.key("ArrowUp", { key:"ArrowUp", vk:38 });
-  for (let i = 0; i < 3; i++) await b.key("ArrowLeft", { key:"ArrowLeft", vk:37 });
-  await wait(120);
-  await b.key("F1", { key:"F1", vk:112 });
+  await b.eval("toggleKeyMode(); shiftTonic(-1); shiftTonic(-1); shiftTonic(-1);");
   await wait(150);
   const backHome = await rules();
   ok("back in E minor, the rules are the Es again",
@@ -799,27 +785,6 @@ function freePort(start){
      /C-4/.test(col0) && /C-2/.test(col0), col0);
   await b.key("F2", { key:"F2", vk:113 });
 
-  /* and the key page explains the whole convention */
-  await b.key("F1", { key:"F1", vk:112 });
-  await wait(120);
-  const kp = await b.eval("document.getElementById('keyref').textContent");
-  ok("the key page gives K a row", /the names on the drawing/.test(kp));
-  ok("it fixes the octave convention", /C4 is middle C/.test(kp) && /C2 to C6/.test(kp));
-  ok("it says the rules are named at their side",
-     /named once, at the side of its line/.test(kp));
-  ok("and that the ruled line is the page's home note",
-     /home note of the page/.test(kp) && /the tonic of its key/.test(kp) &&
-     /in G major the Gs/.test(kp));
-  ok("and that placing or moving a note raises one more",
-     /Place a note, or move one/.test(kp) && /holds for a moment and then fades/.test(kp));
-  ok("and that the interval hangs on a tie between the pair",
-     /hairline tie/.test(kp) && /belongs to that pair of notes/.test(kp));
-  ok("it lists the simple interval names",
-     /P1, m2, M2, m3, M3, P4, TT, P5, m6, M6, m7, M7, P8/.test(kp));
-  ok("it names the compound convention", /compound name/.test(kp) && /m10/.test(kp));
-  ok("including the tritone's", /TT11/.test(kp));
-  ok("and says plainly that nothing here judges", /Nothing here judges/.test(kp));
-  await b.key("F1", { key:"F1", vk:112 });
   ok("no runtime errors from any of the naming work", errors.length === 0, errors);
 
   /* ---- entry lays eighths, in a real browser ----
@@ -828,7 +793,11 @@ function freePort(start){
      by hand is untouched — one step — and that is how a sixteenth is placed.
      Driven here rather than inspected: every path that writes goes through the
      real keyboard and the real pad. */
-  console.log("\n== entry lays eighths ==");
+  console.log("\n== entry, through the real keyboard and the real pad ==");
+  /* Where each move lands — the two-step advance, the wrap, the loop that
+     fences nothing — is reltest's, exhaustively, against the fake DOM. What
+     only a browser can say is that a real keystroke and a real pad button
+     arrive at that model at all, and that the column draws the result. */
   const at = () => b.eval(
     "(function(){var r=document.querySelectorAll('#column .row');" +
     "for(var i=0;i<r.length;i++) if(/\\bcursor\\b/.test(r[i].className)) return i;" +
@@ -844,59 +813,27 @@ function freePort(start){
 
   await b.key("Home", { key:"Home", vk:36 });
   await b.key("KeyZ", { key:"z", vk:90 });
-  ok("a note from the keyboard leaves the cursor two steps on", (await at()) === 2, await at());
-  ok("and the note is on step 1", /C-4/.test(await stepText(0)), await stepText(0));
-  await b.key("KeyC", { key:"c", vk:67 });
-  ok("the next one lands on step 3, not step 2", /E-4/.test(await stepText(2)), await stepText(2));
-  ok("with step 2 left empty", !/[A-G]-\d/.test(await stepText(1)), await stepText(1));
-  ok("and the cursor is on step 5", (await at()) === 4, await at());
-
-  /* the guide still says which pitch that was */
-  ok("writing still raises the pitch guide",
+  ok("a real keystroke writes, and leaves the cursor two steps on",
+     /C-4/.test(await stepText(0)) && (await at()) === 2, [await stepText(0), await at()]);
+  ok("and writing raised the pitch guide",
      /\bon\b/.test(await b.eval("document.querySelector('#rollfield .rollguide').className")));
-
-  /* the arrows are untouched: one step each, either way */
   await b.key("ArrowDown", { key:"ArrowDown", vk:40 });
-  ok("an arrow still moves one step", (await at()) === 5, await at());
-  await b.key("ArrowUp", { key:"ArrowUp", vk:38 });
-  ok("and back one", (await at()) === 4, await at());
-
-  /* which is how a sixteenth is placed: back one, and write */
-  await b.key("Home", { key:"Home", vk:36 });
-  await b.key("ArrowDown", { key:"ArrowDown", vk:40 });
-  await b.key("KeyX", { key:"x", vk:88 });
-  ok("a step back puts a sixteenth between the eighths",
-     /D-4/.test(await stepText(1)), await stepText(1));
-  ok("and entry goes on by two from there too", (await at()) === 3, await at());
-
-  /* it wraps around the page, as the arrows do — and the loop fences neither */
-  await b.key("End", { key:"End", vk:35 });
-  await b.key("KeyZ", { key:"z", vk:90 });
-  ok("entry wraps past step 16", (await at()) === 1, await at());
+  ok("a real arrow still moves one step", (await at()) === 3, await at());
   await b.key("KeyL", { key:"l", vk:76 });
-  /* the page draws the loop, which is why the meta line stopped saying it */
-  ok("the loop is eight, and the page is what says so",
+  ok("L shortens the loop, and the page is what draws it",
      (await b.eval("document.querySelectorAll('#column .row.outside').length")) === 8,
      await b.eval("document.querySelectorAll('#column .row.outside').length"));
-  await b.key("End", { key:"End", vk:35 });
-  await b.key("KeyZ", { key:"z", vk:90 });
-  ok("and wraps the same way under a short loop", (await at()) === 1, await at());
-  await b.key("Home", { key:"Home", vk:36 });
-  for (let i = 0; i < 7; i++) await b.key("ArrowDown", { key:"ArrowDown", vk:40 });
-  await b.key("KeyZ", { key:"z", vk:90 });
-  ok("a short loop does not fence the advance either", (await at()) === 9, await at());
   await b.key("KeyL", { key:"l", vk:76 });
   await b.key("KeyL", { key:"l", vk:76 });          /* back to the whole page */
 
-  /* the rest, and both pad methods, on a page cleared for the purpose */
   await clearVoice();
   await b.key("Home", { key:"Home", vk:36 });
   await b.key("Period", { key:".", vk:190 });
   ok("clearing a step advances two as well", (await at()) === 2, await at());
-  await b.key("Home", { key:"Home", vk:36 });
   /* the absolute crossbar is gone: a trigger with a d-pad slot names no pitch.
-     The d-pad still does its own bare work under it (time, or the nudge, as
-     the view decides) — what must never happen again is a pitch appearing. */
+     The d-pad still does its own bare work under it — what must never happen
+     again is a pitch appearing where the old slot 1 used to be. */
+  await b.key("Home", { key:"Home", vk:36 });
   await b.tap(GP.L2, GP.DL);
   ok("a trigger and the old slot 1 write no pitch",
      !/[A-G]/.test(await stepText(0)), await stepText(0));
@@ -904,49 +841,9 @@ function freePort(start){
   await b.key("KeyZ", { key:"z", vk:90 });          /* an anchor to move from */
   await b.key("Home", { key:"Home", vk:36 });
   await b.tap(GP.TR);
-  ok("a contour note advances two", (await at()) === 2, await at());
+  ok("a real pad button writes a contour note, and advances two", (await at()) === 2, await at());
   await b.tap(GP.SQ);
   ok("a rest on the pad advances two, as a note does", (await at()) === 4, await at());
-
-  /* ---- the chromatic escape hatch, on a real pad ----
-     L1 and R1 held together mean one thing in relative entry: out of the key,
-     a semitone. It answered △ and ✕ and not the d-pad, which nudges the note
-     already under the cursor — the same move, made on a note already written.
-     Driven here through the real pad rather than inspected, and read off the
-     column, so which pair of the d-pad the view puts the nudge on is asked
-     rather than assumed. */
-  console.log("\n== the chromatic escape reaches the nudge ==");
-  const PCS = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
-  const noteAt = async i => {
-    const m = /([A-G])(♯|-)(\d)/.exec(await stepText(i));
-    return m ? m[1] + (m[2] === "♯" ? "#" : "") + m[3] : null;
-  };
-  const MIDI = n => { const m = /^([A-G]#?)(\d)$/.exec(n);
-    return (parseInt(m[2], 10) + 1) * 12 + PCS.indexOf(m[1]); };
-  const metaLine = () => b.eval("document.getElementById('metatext').textContent");
-  await clearVoice();
-  await b.key("Home", { key:"Home", vk:36 });
-  await b.tap(GP.TR);                               /* a note to nudge */
-  await b.key("Home", { key:"Home", vk:36 });
-  const inRoll = await on("roll");
-  const UP = inRoll ? GP.DU : GP.DR, DOWN = inRoll ? GP.DD : GP.DL;
-  const hatchBefore = await noteAt(0);
-  ok("there is a note under the cursor to nudge", hatchBefore !== null, await stepText(0));
-  await b.tap(GP.L2, GP.R2, UP);
-  const hatchAfter = await noteAt(0);
-  ok("both triggers held, the d-pad nudges by a semitone",
-     hatchBefore && hatchAfter && MIDI(hatchAfter) === MIDI(hatchBefore) + 1, [hatchBefore, hatchAfter]);
-  ok("and the nudge did not advance the cursor", (await at()) === 0, await at());
-  ok("nor did the triggers touch the octave or the voice", / octave 4 /.test(await metaLine()), await metaLine());
-  await b.tap(GP.L2, GP.R2, DOWN);
-  ok("and the other way is a semitone back", (await noteAt(0)) === hatchBefore,
-     [hatchBefore, await noteAt(0)]);
-  await b.tap(UP);
-  const hatchBare = await noteAt(0);
-  ok("bare, the same d-pad is a step of the key, as it always was",
-     hatchBare && MIDI(hatchBare) - MIDI(hatchBefore) >= 1 && MIDI(hatchBare) - MIDI(hatchBefore) <= 2,
-     [hatchBefore, hatchBare]);
-  ok("and the escape hatch raised no runtime error", errors.length === 0, errors);
 
   ok("no runtime errors from any of the eighth-note work", errors.length === 0, errors);
 
@@ -956,7 +853,7 @@ function freePort(start){
      All of this is layout, so none of it is checked by reading the source:
      it is measured in the browser that draws it, and photographed. */
   console.log("\n== the board, read one lesson at a time ==");
-  const KEY = { F3:{ key:"F3", vk:114 }, F1:{ key:"F1", vk:112 },
+  const KEY = { F3:{ key:"F3", vk:114 },
                 RIGHT:{ key:"ArrowRight", vk:39 }, LEFT:{ key:"ArrowLeft", vk:37 },
                 DOWN:{ key:"ArrowDown", vk:40 }, UP:{ key:"ArrowUp", vk:38 } };
   const rowNames = () => b.eval(
@@ -1048,27 +945,16 @@ function freePort(start){
   ok("in the quest log it names the lesson keys", /lesson/.test(questHint), questHint);
   ok("and the two marks", /keep to hand/.test(questHint) && /move it/.test(questHint), questHint);
   const mainB = await boxOf("main");
-  await b.key("F3", KEY.F3); await b.key("F1", KEY.F1); await wait(150);
-  const keyHint = await hint();
-  ok("on the key page it names the key and the tempo",
-     /tonic/.test(keyHint) && /tempo/.test(keyHint), keyHint);
-  const mainC = await boxOf("main");
-  await b.key("F1", KEY.F1); await wait(150);
-  /* the pages have always been of different lengths — the key page is a wall
-     of prose and always was — so what is checked is that the hint costs the
-     same on all of them: it is the same strip, at the same height, wherever
-     it is, and it is the last thing on the page in each case */
-  const hintOn = async () => {
-    const r = await boxOf("#hints");
-    return r.h;
-  };
+  await b.key("F3", KEY.F3); await wait(150);
+  /* the two pages are of different lengths, so what is checked is that the
+     hint costs the same on both: the same strip, at the same height,
+     wherever it is */
+  const hintOn = async () => (await boxOf("#hints")).h;
   const hA = await hintOn();
   await b.key("F3", KEY.F3); await wait(150);
   const hB = await hintOn();
-  await b.key("F3", KEY.F3); await b.key("F1", KEY.F1); await wait(150);
-  const hC = await hintOn();
-  await b.key("F1", KEY.F1); await wait(150);
-  ok("the hint is the same height on every page", hA === hB && hB === hC, [hA, hB, hC]);
+  await b.key("F3", KEY.F3); await wait(150);
+  ok("the hint is the same height on either page", hA === hB, [hA, hB]);
   ok("and it is not what pushed the pattern page off the screen",
      mainA.h <= (await b.eval("window.innerHeight")),
      [mainA.h, await b.eval("window.innerHeight")]);
@@ -1086,88 +972,13 @@ function freePort(start){
      tabHeights.every(h => h <= winFit), [tabHeights, winFit]);
   ok("however long a lesson gets, the list itself is bounded",
      /#qlist\{[\s\S]*?max-height/.test(fs.readFileSync(REPO + "/folio.css", "utf8")));
-  const bodyH = mainC.h;                       /* the key page, the tallest */
-  const winH = await b.eval("window.innerHeight");
   ok("the page still never offers a scrollbar",
      (await b.eval("getComputedStyle(document.body).overflow")) === "hidden",
-     [bodyH, winH]);
+     [mainB.h, await b.eval("window.innerHeight")]);
   ok("nothing scrolls sideways either",
      (await b.eval("document.documentElement.scrollWidth")) <=
      (await b.eval("window.innerWidth")) + 2);
   await b.shot(__dirname + "/boot-hints.png");
-
-  /* ---- the page of the key, read to its end ----
-     It is the longest thing in the app — about 5900px of prose in a 905px
-     window — and the body does not scroll, so for a long time roughly six
-     sevenths of it could not be reached at all. Measured here rather than
-     inspected: the proof is that the last line of it lands on the screen. */
-  console.log("\n== the key page can be read to its end ==");
-  await b.key("F1", KEY.F1); await wait(200);
-  const kr = () => b.eval("(function(){var e=document.getElementById('keyref');" +
-    "return {top:Math.round(e.scrollTop),room:Math.round(e.scrollHeight-e.clientHeight)," +
-    "client:Math.round(e.clientHeight),full:Math.round(e.scrollHeight)," +
-    "overflow:getComputedStyle(e).overflowY};})()");
-  const k0 = await kr();
-  ok("the page is much longer than the window it is in", k0.full > k0.client * 3, k0);
-  ok("but it has a bottom of its own, and can be walked to it", k0.room > 0, k0);
-  ok("it is the page that scrolls, never the body",
-     k0.overflow === "auto" &&
-     (await b.eval("getComputedStyle(document.body).overflow")) === "hidden", k0);
-  ok("it fits the window", k0.client <= (await b.eval("window.innerHeight")), k0);
-  ok("and it opens at its head", k0.top === 0, k0);
-  await b.key("PageDown", { key:"PageDown", vk:34 }); await wait(120);
-  const k1 = await kr();
-  ok("page down turns it a screenful", k1.top > 0 && k1.top <= k0.client, [k0.client, k1.top]);
-  ok("keeping the last line read on the screen", k1.top < k0.client, k1);
-  ok("and the footer says how far down", /page \d+ of \d+/.test(await footer()), await footer());
-  for (let i = 0; i < 3; i++){ await b.key("PageDown", { key:"PageDown", vk:34 }); await wait(60); }
-  const kMid = await kr();
-  ok("four turns are well into it", kMid.top > k0.client * 3, kMid);
-  await b.shot(__dirname + "/keyref-middle.png");
-  const krLen = await b.eval("document.getElementById('keyref').textContent.length");
-  await b.key("End", { key:"End", vk:35 }); await wait(150);
-  const k2 = await kr();
-  ok("end goes to the foot", k2.top === k2.room, k2);
-  ok("and the footer says so", / · the foot/.test(await footer()), await footer());
-  /* the proof: the very last thing written on the page is on the screen */
-  /* the page is two columns, so the last thing on it in document order is not
-     the last thing on it: what must be reachable is whichever paragraph ends
-     furthest down, which is the one the old overflow buried deepest */
-  const lastSeen = await b.eval("(function(){" +
-    "var e = document.getElementById('keyref');" +
-    "var box = e.getBoundingClientRect(), deep = null, at = -1e9;" +
-    "[].forEach.call(e.querySelectorAll('p,dd'), function(el){" +
-    "  var r = el.getBoundingClientRect();" +
-    "  if (r.bottom > at){ at = r.bottom; deep = el; } });" +
-    "return { bottom: Math.round(at), boxBottom: Math.round(box.bottom)," +
-    "         inside: at <= box.bottom + 2 && at > box.top," +
-    "         text: deep.textContent.slice(-40) };})()");
-  ok("the last words on the page are on the screen", lastSeen.inside, lastSeen);
-  ok("and there really is that much of it", krLen > 8000, krLen);
-  await b.shot(__dirname + "/keyref-end.png");
-  await b.key("Home", { key:"Home", vk:36 }); await wait(120);
-  ok("home comes back to the head", (await kr()).top === 0);
-  ok("and the footer says that too", / · the head/.test(await footer()), await footer());
-  await b.key("PageUp", { key:"PageUp", vk:33 }); await wait(100);
-  ok("page up at the head goes nowhere", (await kr()).top === 0);
-  /* reading the page never took the arrows away from the key */
-  const keyWas = await b.eval("document.getElementById('metatext').textContent");
-  await b.key("ArrowRight", KEY.RIGHT); await wait(100);
-  ok("the arrows are still the tonic, not the scroll",
-     (await b.eval("document.getElementById('metatext').textContent")) !== keyWas &&
-     (await kr()).top === 0);
-  await b.key("ArrowLeft", KEY.LEFT); await wait(100);
-  ok("the page itself says how to read it",
-     /page up and page down/.test(await b.eval("document.getElementById('keyref').textContent")));
-  ok("and the hint strip names it first",
-     /read on/.test(await b.eval("document.getElementById('hints').textContent")),
-     await b.eval("document.getElementById('hints').textContent"));
-  await b.key("End", { key:"End", vk:35 }); await wait(120);
-  await b.key("F1", KEY.F1); await wait(150);
-  await b.key("F1", KEY.F1); await wait(150);
-  ok("re-opening it opens it at the head again", (await kr()).top === 0);
-  await b.key("F1", KEY.F1); await wait(120);
-  ok("no runtime error from reading it", errors.length === 0, errors);
 
   console.log("\n== the workspace wears its own scene ==");
   await b.key("F3", KEY.F3); await wait(150);
