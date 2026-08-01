@@ -156,7 +156,10 @@ as you do it.
 **References:** Uematsu — *To Zanarkand* (right hand — the held-note melody
 that was explicitly out of reach in L1); *Terra's Theme* (melody: where
 holds do the breathing rests used to do); *Aerith's Theme* (melody line
-only — sustain as emotional load-bearing).
+only — sustain as emotional load-bearing). Toby Fox — *Undertale* (the
+title track: a held-note melody carrying a whole scene by itself); *Home*
+(holds and releases as the entire affect — player-added reference,
+2026-08-01).
 
 **Deliverables:**
 - **3.1:** one original one-voice loop whose phrasing depends on holds —

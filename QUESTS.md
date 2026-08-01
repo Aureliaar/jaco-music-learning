@@ -240,8 +240,11 @@ may hear a scale.
 *Authored 2026-08-01 at unlock, per QUEST-COPY.md. Delivered as drills
 (`lesson: 3`) with empty seeded pages — key and tempo chosen per quest.
 One voice only: the pare-down rule. The bass shelf stays empty until 3.2,
-where ⚔ The Suspension (the latecomer's rematch) and the honest drone
-live.*
+where ⚔ The Suspension (the latecomer's rematch), the honest drone, and
+the pedal-under-motion idea live — all three need the second voice to be
+scored honestly (deferral rule), so they are parked, not goal-ified.
+Eight quests, the size of the L1 board; L2 reprises are not possible in
+a one-voice phase, so 3.1 carries its own full spread.*
 
 ### ⚔ The Long Note *(seed: A minor, 92)*
 - exactly one note of four steps or more
@@ -263,6 +266,23 @@ live.*
 - exactly two notes of three steps or more
 *Teaches: a rest and a hold are different breaths; learn which one the
 phrase wants.*
+
+### ⚔ Steal the Beat *(seed: E minor, 100)*
+- no strike on steps 5, 9, 13
+- a held note sounds on each
+*Teaches: syncopation by sustain — the weight lands before the beat.*
+
+### ⚔ Three Against Four *(seed: A minor, 132)*
+- every note exactly three steps long
+- at least five notes
+*Teaches: cross-rhythm — a three-grain against a four-grid; the seam
+settles the argument.*
+
+### ⚔ Daylight *(seed: D major, 96)*
+- steps 1–8: every note rings into the next
+- steps 9–16: every note cut short before the next
+*Teaches: articulation — legato and detached are the same notes with
+different endings.*
 
 ### ⚔ The Apprentice's Hand *(seed: C major, 128 — returns from L1)*
 - transcribe 16 steps of a Uematsu line, recording playing

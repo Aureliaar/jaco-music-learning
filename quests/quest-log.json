@@ -1523,6 +1523,180 @@
      false
     ]
    }
+  },
+  {
+   "id": "steal-beat",
+   "name": "steal the beat",
+   "summary": "- no strike on steps 5, 9, 13\n- a held note sounds on each",
+   "teaches": "syncopation by sustain — the weight lands before the beat.",
+   "lesson": 3,
+   "pattern": {
+    "version": 1,
+    "title": "steal the beat",
+    "tempo": 100,
+    "loop": 16,
+    "key": "E minor",
+    "steps": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "bass": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "mute": [
+     false,
+     false
+    ],
+    "solo": [
+     false,
+     false
+    ]
+   }
+  },
+  {
+   "id": "three-four",
+   "name": "three against four",
+   "summary": "- every note exactly three steps long\n- at least five notes",
+   "teaches": "cross-rhythm — a three-grain against a four-grid; the seam settles the argument.",
+   "lesson": 3,
+   "pattern": {
+    "version": 1,
+    "title": "three against four",
+    "tempo": 132,
+    "loop": 16,
+    "key": "A minor",
+    "steps": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "bass": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "mute": [
+     false,
+     false
+    ],
+    "solo": [
+     false,
+     false
+    ]
+   }
+  },
+  {
+   "id": "daylight",
+   "name": "daylight",
+   "summary": "- steps 1–8: every note rings into the next\n- steps 9–16: every note cut short before the next",
+   "teaches": "articulation — legato and detached are the same notes with different endings.",
+   "lesson": 3,
+   "pattern": {
+    "version": 1,
+    "title": "daylight",
+    "tempo": 96,
+    "loop": 16,
+    "key": "D major",
+    "steps": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "bass": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "mute": [
+     false,
+     false
+    ],
+    "solo": [
+     false,
+     false
+    ]
+   }
   }
  ]
 }
