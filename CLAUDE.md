@@ -38,8 +38,8 @@ controls, laid over the folio (the hint strip it replaced is gone).
   transport) · `edit.js` (writing, length, contour, voices, key, tempo,
   loop, the pages) · `quests.js` (workspaces, drills, the log on disk and
   its sync, tabs, rails) · `entry.js` (keyboard by `e.code`, gamepad) ·
-  `scriptorium.js` (the kit room: foundry, WAV both ways, curation ops,
-  the sampled voice — F4 raises it, W wears the active kit inside it) ·
+  `tones.js` (what the voices sound like: the WAV read, the kits off the
+  shelf, the sampled voice — no room, no F4) ·
   `boot.js` (the order it happens in, once).
   **Plain `<script src>`, NOT ES modules** — file:// has no CORS for
   classic scripts, so `folio.html` opened straight off the disk still
@@ -53,27 +53,35 @@ controls, laid over the folio (the hint strip it replaced is gone).
   `FOLIO_KITS` moves the kit shelf — that is how the harnesses avoid the
   player's own data.
 - `kits/<name>/` — sample kits: WAVs + `manifest.md` (one line per
-  sample: root, rate, bytes, loop, decay, source). 64KB honor budget,
-  stated by the tool. `kits/piano/` is the starter (Iowa MIS, curated
-  through the tool's own ops).
+  sample: root, rate, bytes, loop, decay, source). The 64KB honor budget
+  is WAIVED by player ruling (2026-08-02) where it costs quality or adds
+  complexity. `kits/piano/` is Salamander Grand (9 roots, 5 s, no loops).
+  `music-box/`, `pluck/`, `pluck-bass/`, `sub/` are BAKED by the
+  checked-in zero-dependency `kits/bake.mjs` — arithmetic only, nothing
+  sampled from anywhere; re-bake with `node kits/bake.mjs`.
 - `quests/quest-log.json` — all workspaces (v2 schema: free + per-quest
   patterns + `drills` array). The single file to READ to see the player's
   music. **No test may read or write it.**
 - `auditor.html` — blind lineup listening; `?ids=a,b,c` picks entries.
-- `tests/` — restructured 2026-08-01, pared 2026-08-01. `tier1.js` (315
-  checks) is data integrity only: a page out and back, the quest log's v2
-  schema, the WAV round-trip and the kit API, server.mjs driven for real,
-  a boot onto an existing log. **It is
+- `tests/` — restructured 2026-08-01, pared 2026-08-01. `tier1.js` (342
+  checks) is data integrity only: a page out and back (including `tones`),
+  the quest log's v2 schema, the WAV round-trip, the checked-in kits read
+  as the page reads them, the kit API, server.mjs driven for real, a boot
+  onto an existing log. **It is
   always-green, no exceptions: run it first and last, every time.** Then
-  `reltest.js` (706, the instrument's input semantics, including the
+  `reltest.js` (726, the instrument's input semantics, including the
   multi-frame pad section that used to be leaptest.js — that file is gone),
-  `bootcheck.js` (189, real-Chrome boot and layout: only what a browser can
-  prove), `drilltest.js` (40, live drill delivery), `statictest.js` (44,
+  `bootcheck.js` (207, real-Chrome boot and layout: only what a browser can
+  prove), `drilltest.js` (40, live drill delivery), `statictest.js` (50,
   the deploy artifact and the read-only copy). `rig.js` is the shared bench
   for the fake-DOM harnesses and loads the app from whatever `folio.html`
-  actually names; `cdp.js` is the one CDP driver. Test LOC 4449 against
-  4760 of app. Total test LOC is kept **at or under app LOC** — extend by
-  deleting something first.
+  actually names; `cdp.js` is the one CDP driver. Test LOC 4876 against
+  5779 of app (folio.html + folio.css + js/*.js + server.mjs). Total test
+  LOC is kept **at or under app LOC** — extend by deleting something first.
+  NOTE: bootcheck has two timing-sensitive clusters (the pitch guide's
+  1300 ms fade, and pad taps that need the animation frame) that flake on a
+  loaded machine; a clean re-run with `rm -rf tests/prof-boot` first is the
+  check, and the profile is NOT wiped between runs by the harness itself.
 
 ## Critical rules learned the hard way
 
@@ -163,14 +171,21 @@ L5–L8.
    crossbar-chip overlap fixed (warranty).
 2. `briefs/duplicate-workspace.md` — duplicate/promote a workspace
    (quest → "II", free play → "To Be Named"); 1 small feature.
-The **Scriptorium toolset is MERGED** (2026-08-01, curriculum build,
-free): F4 raises the kit room — foundry (local synthesis, file drop,
-mic), curation ops (trim, downsample, loop-splice, decay), kits over
-`/api/kits`, and the sampled voice (nearest root, playbackRate, loop +
-imposed decay for holds — the piano trick). W inside the room wears the
-active kit on the lead; the bass keeps its tone. Starter kit
-`kits/piano/`. Left for L6: multi-sample zones, drum lanes, the 8-voice
-steal cap, tool-enforced budget.
+The **basic Scriptorium is MERGED** (2026-08-02, the 2 banked small
+features spent together; the F4 room's demolition was warranty). Every
+workspace says what its two voices sound like: the page doc carries an
+optional `tones:[lead,bass]` (null = the voice's own synth tone, else a
+kit name), read permissively and written only where a voice wears one.
+The crossbar's **scriptorium** drawing (L1/R1 turn to it) walks two
+rails — d-pad ↑↓ the lead, ←→ the bass — and walking is arriving,
+autosaved with the page. Lead rail: own tone · piano · music box ·
+pluck. Bass rail: own tone · pluck bass · sub. Kits are fetched on
+demand (never at boot — the piano is 2 MB), over `/api/kits` where
+there is one and off plain `kits/<name>/manifest.md` where there is not,
+which is how the deployed static copy gets them. **The F4 room, the
+foundry, the bench, the mic and the shelf UI are DELETED** — do not
+rebuild them; the kits are baked by `kits/bake.mjs`. Left for L6:
+multi-sample zones, drum lanes, the 8-voice steal cap.
 Player-gated, unscheduled: voice management anticipating 3 voices
 (L3.2/L4 horizon — waits on the player's UX direction); the L7
 structure-view idea (pattern placement + variation, noted 2026-08-01 —

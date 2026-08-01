@@ -125,6 +125,9 @@ function toneStep(v, d){
   if (!Array.isArray(doc.tones)) doc.tones = [null, null];
   doc.tones[v] = next;
   save();                             /* the page changed; the page is written */
+  /* a kit is fetched the first time it is stepped onto, not at boot: they are
+     no longer all small, and the piano alone is two megabytes */
+  loadKit(next, refreshTones);
   renderSettings();
   say(VOICE_NAMES[v] + " · " + toneLabel(next) +
       (toneHere(next) ? "" : " · not on this folio's shelf — its own tone plays"));

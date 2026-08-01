@@ -13,7 +13,8 @@
      the WAV, encoded and decoded — PCM16 mono, the format the kits are in
      the manifest, read — one line per sample: root, rate, loop, decay
      the shelf — the kits over /api/kits, or off plain files where a host
-       serves no API at all, decoded once at boot and kept
+       serves no API at all, each fetched and decoded the first time a page
+       asks for it and kept from then on
      the sampled voice — one buffer per note, pitched by playbackRate off
        the nearest root, with the loop and the imposed decay a struck sound
        needs to go on ringing while it is held
@@ -25,7 +26,6 @@
    meant when it travels back somewhere the kit exists. */
 "use strict";
 
-var KIT_BUDGET = 65536;               /* the honour-system budget, stated plainly */
 var KIT_API  = "api/kits";
 var KIT_DIR  = "kits";                /* where a plain file host keeps them */
 var KIT_LEVEL = 0.34;                 /* samples are peak-normalised, so one level does */
@@ -47,7 +47,7 @@ function toneLabel(t){ return t ? String(t).replace(/-/g, " ") : "own tone"; }
 /* ================= the WAV, both ways =================
    PCM16 mono and nothing else is ever read or written: it is what the era
    wrote, it is trivially correct, and the size of a kit is then simply two
-   bytes a frame — which is the number the budget is about.
+   bytes a frame.
 
    The encoder is here for the decoder's sake. Nothing in the page writes a
    WAV any more — kits/bake.mjs does, and has its own copy, because a page
@@ -143,13 +143,15 @@ function midiFreq(m){ return 440 * Math.pow(2, (m - 69) / 12); }
 
 /* ================= the shelf =================
    Two ways in, decided by what answers. The little local server has an API
-   that lists the kits and their bytes, which is what the budget is stated
-   from. A dumb static host has no API at all and only files — so the fallback
-   asks each kit on the rails for its manifest.md by name and believes it.
-   Either way a kit is fetched once, decoded once, and kept. */
+   that lists what is on the shelf and what each kit weighs. A dumb static
+   host has no API at all and only files — so the fallback asks a kit for its
+   manifest.md by name and believes what it says. Either way a kit is fetched
+   once, decoded once, and kept, and no kit is fetched until a page names it:
+   they are not all small any more. */
 var shelf = [];                    /* [{name, bytes, files, manifest}] — API only */
 var kitBank = {};                  /* name -> [samples], decoded */
 var kitTried = {};                 /* name -> true once it has been asked for */
+var shelfAsked = false;            /* has the listing come back yet */
 
 function served(){ return typeof httpOrigin === "function" && httpOrigin(); }
 function canFetch(){ return served() && typeof fetch === "function"; }
@@ -163,9 +165,9 @@ function fetchShelf(then){
     return r.ok ? r.json() : null;
   }).then(function(o){
     shelf = (o && o.folio === "kits" && Array.isArray(o.kits)) ? o.kits : [];
-    if (o && o.budget) KIT_BUDGET = o.budget;
+    shelfAsked = true;
     if (then) then(shelf.length > 0);
-  }, function(){ shelf = []; if (then) then(false); });
+  }, function(){ shelf = []; shelfAsked = true; if (then) then(false); });
 }
 /* where one kit's files are asked for: through the API where there is one,
    and off the disk where the host only knows files */
@@ -217,9 +219,16 @@ function readSamples(name, meta, files, then){
 }
 /* every sample of one kit, fetched and decoded once. A kit is 64KB; there is
    nothing here worth being lazy about. */
+/* Once, and once only. The guard is on having *asked* rather than on having
+   the samples, because the ask is what is slow: voiceSamples calls in here
+   from inside the scheduler, and a kit still in flight must not be fetched
+   again on the next note. */
 function loadKit(name, then){
-  if (!name || kitBank[name]){ if (then) then(); return; }
-  if (!canFetch()){ if (then) then(); return; }
+  if (!name || kitTried[name] || !canFetch()){ if (then) then(); return; }
+  /* the listing decides which of the two roads this kit is on, so nothing is
+     asked for until it is back: a fetch begun early would take the plain-file
+     road on a host that has an API, be refused, and mark the kit missing */
+  if (!shelfAsked){ if (then) then(); return; }
   kitTried[name] = true;
   var k = kitOf(name);
   if (k){
@@ -245,18 +254,28 @@ function docTone(d, v){
   return (Array.isArray(a) && typeof a[v] === "string" && a[v]) ? a[v] : null;
 }
 /* the samples this voice should be playing, or null for its own tone —
-   which is also the answer where the kit is named but is not here */
+   which is also the answer while the kit is still coming, and where it is
+   not here at all. A named kit nobody has asked for yet is fetched from
+   here, once: that is the whole of the loading policy, and it means a page
+   opened onto a kit finds it without anything having to remember to ask. */
 function voiceSamples(v){
   var t = docTone(doc, v || 0);
   if (!t) return null;
   var s = kitBank[t];
-  return (s && s.length) ? s : null;
+  if (!s){ loadKit(t); return null; }
+  return s.length ? s : null;
 }
-/* is a name on this folio's shelf at all — what the rail says out loud */
+/* is a name on this folio's shelf — what the rail says out loud. Only a
+   thing actually disproved reads "not here": no shelf to read at all, or a
+   listing that does not have it, or a fetch that came back with nothing. A
+   kit still on its way is not called missing. */
 function toneHere(name){
   if (!name) return true;                       /* one's own tone is always here */
+  if (!canFetch()) return false;                /* file://: there is no shelf */
   var s = kitBank[name];
-  return !!(s && s.length);
+  if (s) return s.length > 0;
+  if (shelf.length) return !!kitOf(name);
+  return true;                                  /* no listing; nothing disproved */
 }
 
 /* ================= the sampled voice =================
@@ -341,20 +360,23 @@ function samplePlay(freq, at, dur, v, held){
 }
 
 /* ---- boot ----
-   Every kit either rail can name, fetched once. All of them together are a
-   few hundred kilobytes, they never change, and the alternative is a voice
-   that plays its own tone for the first bar of every switch. Over file://
-   nothing is fetched and every rail reads "not here". */
+   The shelf is read, so the rails can say what is on it, and then only what
+   the page in hand actually wears is fetched. Loading every kit either rail
+   can name was the first shape of this, and it was wrong the moment a kit
+   stopped being small: the recut piano alone is two megabytes, and pulling
+   it in at boot is two megabytes and a decode nobody asked for. Everything
+   else arrives the first time a voice wants it — from voiceSamples, or from
+   the rail as it is walked. Over file:// nothing is fetched and every rail
+   reads "not here". */
 function toneBoot(){
   if (!canFetch()) return;
   fetchShelf(function(){
-    for (var v = 0; v < TONE_RAIL.length; v++){
-      for (var i = 0; i < TONE_RAIL[v].length; i++){
-        var n = TONE_RAIL[v][i];
-        if (n) loadKit(n, function(){
-          if (settingsEl && settingsEl.classList.contains("on")) renderSettings();
-        });
-      }
-    }
+    for (var v = 0; v < VOICES; v++) loadKit(docTone(doc, v), refreshTones);
+    refreshTones();
   });
+}
+/* a kit arriving changes what the rails say, and nothing else on the page */
+function refreshTones(){
+  if (typeof settingsEl !== "undefined" && settingsEl &&
+      settingsEl.classList.contains("on")) renderSettings();
 }

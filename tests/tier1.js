@@ -443,18 +443,18 @@ eq("prose around it is not a sample", Object.keys(T.parseManifest("just a senten
 
 /* The kits are checked in, so what is on the shelf is a data format like any
    other: the label has to name files that are there, at the rate and the roots
-   it claims, and the drawer has to fit the budget the tool states. Baked by
-   kits/bake.mjs; read here exactly as the page reads them. */
+   it claims, and every sample on disk has to be on the label. Size is not
+   checked — the 64KB honour budget was waived by player ruling on 2026-08-02,
+   and the recut piano is deliberately far past it. Read here exactly as the
+   page reads them. */
 console.log("\n== the kits on the shelf, as the page will read them ==");
 for (const kit of fs.readdirSync(REPO + "/kits", { withFileTypes:true })
                     .filter(e => e.isDirectory()).map(e => e.name).sort()){
   const dir = REPO + "/kits/" + kit;
   const meta = T.parseManifest(fs.readFileSync(dir + "/manifest.md", "utf8"));
   const names = Object.keys(meta), bad = [];
-  let bytes = 0;
   for (const n of names){
     if (!fs.existsSync(dir + "/" + n)){ bad.push(n + ": not on disk"); continue; }
-    bytes += fs.statSync(dir + "/" + n).size;
     const w = T.decodeWAV(new Uint8Array(fs.readFileSync(dir + "/" + n)));
     if (!w) bad.push(n + ": will not decode");
     else if (w.rate !== meta[n].rate) bad.push(n + ": rate " + w.rate + " not " + meta[n].rate);
@@ -464,9 +464,8 @@ for (const kit of fs.readdirSync(REPO + "/kits", { withFileTypes:true })
   }
   ok(kit + ": its label names samples, and every one of them holds up",
      names.length > 0 && bad.length === 0, bad);
-  ok(kit + ": every sample on disk is on the label",
+  ok(kit + ": and every sample on disk is on the label",
      fs.readdirSync(dir).filter(n => n.endsWith(".wav")).every(n => names.includes(n)));
-  ok(kit + ": and the drawer fits the 64KB budget", bytes <= 65536, bytes);
 }
 
 console.log("\n== the sampled voice, per voice, and what it refuses ==");

@@ -1,4 +1,4 @@
-/* Headless boot over the real server, in a real browser — 212 checks.
+/* Headless boot over the real server, in a real browser — 207 checks.
 
    What is here is what only a browser can say: that the page boots without a
    runtime error, that a real keystroke and a real pad button reach the model
@@ -383,16 +383,17 @@ function freePort(start){
      oscillator. Nothing here listens; it counts what was built. */
   console.log("\n== a voice wearing a kit plays the kit ==");
   await b.eval("audio()");
+  /* naming it is what fetches it: kits are pulled in on demand, never at boot */
+  await b.eval("doc.tones = ['piano', null]; voiceSamples(0);");
   let bank = 0;
   for (let i = 0; i < 60; i++){
     bank = await b.eval("(kitBank.piano||[]).length");
     if (bank > 0) break;
     await wait(200);
   }
-  ok("the piano kit came off the shelf, decoded", bank > 0, bank);
+  ok("naming a kit is what fetches it, and it came off the shelf decoded", bank > 0, bank);
   ok("its samples carry the roots the manifest named",
      (await b.eval("kitBank.piano.every(function(s){return s.root>=24&&s.root<=96;})")) === true);
-  await b.eval("doc.tones = ['piano', null];");
   ok("the lead's samples are the kit's", (await b.eval("voiceSamples(0)!==null")) === true);
   ok("and the bass has none", (await b.eval("voiceSamples(1)===null")) === true);
   await b.eval("(function(){window.__b=0;window.__o=0;" +

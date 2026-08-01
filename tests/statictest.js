@@ -128,17 +128,18 @@ const seen = [];
 
   /* and the fallback is not decoration: with no API to list the shelf, the
      page must still have the kits its rails name, off plain files */
+  await b.eval("doc.tones = [null, 'sub']; voiceSamples(1);");
   let bank = 0;
   for (let i = 0; i < 40; i++){
-    bank = await b.eval("(kitBank.piano||[]).length");
+    bank = await b.eval("(kitBank.sub||[]).length");
     if (bank > 0) break;
     await wait(200);
   }
-  ok("a dumb host still gives the page its kits", bank > 0, bank);
-  ok("asked for by name, off the disk",
-     seen.some(t => t === "GET /kits/piano/manifest.md"), seen.filter(t => /kits/.test(t)));
+  ok("a dumb host still gives the page the kit its page names", bank > 0, bank);
+  ok("asked for by name, off the disk — there is no shelf to list",
+     seen.some(t => t === "GET /kits/sub/manifest.md"), seen.filter(t => /kits/.test(t)));
   ok("and the samples the label named came with it",
-     seen.some(t => t.indexOf("GET /kits/piano/") === 0 && /[.]wav$/.test(t)));
+     seen.some(t => t.indexOf("GET /kits/sub/") === 0 && /[.]wav$/.test(t)));
 
   console.log("\n== quiet scenery ==");
   ok("paper is the calm default",

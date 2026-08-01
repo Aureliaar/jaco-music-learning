@@ -29,8 +29,12 @@
    js/tones.js: the WAV read, the shelf, and the sampled voice.
 
    Every kit is PCM16 mono at 11025 Hz — what the era wrote, and what makes
-   the budget arithmetic trivial: two bytes a frame. The honour budget is
-   64KB of samples a kit, and the script says what it spent. */
+   the arithmetic trivial: two bytes a frame. The old 64KB honour budget is
+   waived by player ruling (2026-08-02) where it would cost quality or add
+   complexity — the recut piano is far over it and is the better kit for it.
+   These four are small anyway, because they are arithmetic and looped, so
+   the number is still printed: it is a fact about the kit now, not a law
+   over it. */
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -38,7 +42,7 @@ import { fileURLToPath } from "node:url";
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const RATE = 11025;                  /* what is written */
 const WORK = 44100;                  /* what is rendered, before the cut */
-const BUDGET = 65536;
+const GUIDE = 65536;                 /* the old honour budget, now a guide */
 
 /* ================= the WAV, written =================
    PCM16 mono and nothing else, the same forty-four byte header the app
@@ -133,13 +137,14 @@ function autoLoop(data, rate, midi){
    that had already died by its loop point would be inaudible when held. */
 function genBell(midi, len, rate){
   const f = midiFreq(midi), n = Math.round(rate * len);
-  const parts = [[1, 1, 1.1], [2.01, 0.42, 2.6], [3.02, 0.22, 4.4], [4.96, 0.09, 7.0]];
+  const parts = [[1, 1, 1.1], [2.01, 0.30, 2.9], [3.02, 0.11, 5.2], [4.96, 0.035, 8.0]];
   const data = new Float32Array(n);
   for (const [ratio, amp, fall] of parts){
     const w = 2 * Math.PI * f * ratio / rate;
     for (let i = 0; i < n; i++)
       data[i] += amp * Math.sin(w * i) * Math.exp(-(i / rate) * fall);
   }
+  lowpass(data, rate, 2600);          /* soft: the glassy top taken off */
   return normalize(data);
 }
 /* ---- Karplus-Strong ----
@@ -203,20 +208,20 @@ function down(data){
 const KITS = {
   "music-box": {
     voice: "lead",
-    note: "a struck bell: sine and three quiet inharmonic partials, the high ones first to go",
+    note: "a struck bell, voiced soft: a sine and three quiet inharmonic partials, the high ones first to go, the glassy top filtered away",
     samples: [48, 60, 72].map(root => ({
       root, decay: 3.4, len: 0.55,
-      source: "the foundry · bell partials 1 · 2.01 · 3.02 · 4.96",
+      source: "the foundry · bell partials 1 · 2.01 · 3.02 · 4.96, lowpassed at 2600 Hz",
       make(){ return down(genBell(root, 0.55, WORK)); }
     }))
   },
   "pluck": {
     voice: "lead",
-    note: "Karplus-Strong: a noise burst round a delay line, bright and short",
+    note: "Karplus-Strong: a noise burst round a delay line, voiced soft rather than bright",
     samples: [48, 60, 72].map((root, i) => ({
       root, decay: 2.2, len: 0.5,
-      source: "the foundry · Karplus-Strong · damp 0.497",
-      make(){ return down(genPluck(root, 0.5, WORK, 5200, 0.497, 20260802 + i)); }
+      source: "the foundry · Karplus-Strong · damp 0.497 · burst filtered at 1900 Hz",
+      make(){ return down(genPluck(root, 0.5, WORK, 1900, 0.497, 20260802 + i)); }
     }))
   },
   "pluck-bass": {
@@ -224,8 +229,8 @@ const KITS = {
     note: "the same string, longer and darker, at bass roots",
     samples: [28, 36, 45].map((root, i) => ({
       root, decay: 2.8, len: 0.62,
-      source: "the foundry · Karplus-Strong · damp 0.4985 · dark",
-      make(){ return down(genPluck(root, 0.62, WORK, 1400, 0.4985, 8802 + i)); }
+      source: "the foundry · Karplus-Strong · damp 0.4985 · burst filtered at 700 Hz",
+      make(){ return down(genPluck(root, 0.62, WORK, 700, 0.4985, 8802 + i)); }
     }))
   },
   "sub": {
@@ -259,8 +264,7 @@ function manifestText(kit, spec, rows){
   const out = ["# kit: " + kit, "",
                spec.note + ". The " + spec.voice + "'s rail offers it.", "",
                "Baked by `kits/bake.mjs` — arithmetic only, nothing sampled from",
-               "anywhere. One line per sample. The budget is 64KB of samples; this",
-               "file is the label on the drawer and is not counted against it.", ""];
+               "anywhere. One line per sample. This file is the label on the drawer.", ""];
   for (const r of rows) out.push(manifestLine(r));
   return out.join("\n") + "\n";
 }
@@ -289,16 +293,14 @@ function bake(name){
   }
   rows.sort((a, b) => a.root - b.root);
   fs.writeFileSync(path.join(dir, "manifest.md"), manifestText(name, spec, rows), "utf8");
-  const over = used > BUDGET;
   console.log(name.padEnd(11) + " " + String(rows.length) + " samples · " +
-              String(used).padStart(6) + " B of " + BUDGET +
-              (over ? "  ** OVER THE BUDGET **" : ""));
+              String(used).padStart(6) + " B" +
+              (used > GUIDE ? "  (past the old 64KB guide)" : ""));
   for (const r of rows)
     console.log("            " + r.file + " · root " + nameOfMidi(r.root) +
                 " · " + (r.frames / r.rate).toFixed(2) + " s · " + r.bytes + " B" +
                 (r.loopEnd > r.loopStart ? " · loop " + r.loopStart + "–" + r.loopEnd : "") +
                 (r.decay ? " · decay " + r.decay.toFixed(1) + " s" : " · no decay"));
-  return over ? 1 : 0;
 }
 
 const want = process.argv.slice(2);
@@ -306,6 +308,6 @@ const list = want.length ? want : Object.keys(KITS);
 let bad = 0;
 for (const n of list){
   if (!KITS[n]){ console.log("no such kit: " + n); bad = 1; continue; }
-  bad |= bake(n);
+  bake(n);
 }
 process.exit(bad);
