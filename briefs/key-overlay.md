@@ -41,6 +41,12 @@ affordance in the **top-right corner**.
    text survive somewhere minimal, or die with the strip? Ask.
 3. Gamepad toggle: should some pad chord open it too? Ask.
 
+## Warranty rider (free, do while in this CSS anyway)
+
+The settings crossbar's ← and → chips ("the lesson") overlap each other
+slightly (player screenshot, 2026-08-01). Fix the spacing while
+restyling nothing else about them.
+
 ## Constraints (house law — the brief-reader reads CLAUDE.md first)
 
 - Read folio.html's MAP comment, then only the files named there.
