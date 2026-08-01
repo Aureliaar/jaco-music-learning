@@ -23,22 +23,14 @@
    open first and nothing to confirm, so no slot opens a page of any kind:
    the four directions are the margin, entire, and that is the mode.
 
-   ← and → were the base octave for one pass, and the base octave is not a
-   command any more. It was a leftover from the days when the pad named
-   pitches; the pad writes contours now, counted from the note before, and
-   the octave has nothing to do with any of it. The keyboard, which does
-   name pitches, keeps it on page up and page down where it belongs — it is
-   which pair of octaves the two rows of note keys are, not a setting — and
-   the header still says which octave those rows are in.
+   The base octave is not here and is not a command: the pad writes
+   contours, counted from the note before, and the octave has nothing to say
+   to that. It lives on the keyboard's page up and page down, which is which
+   pair of octaves the two rows of note keys are.
 
-   The quest log is not here: it is F3, and the margin has already replaced
-   what one would have come here to do. There is no second quest log on the pad:
-   there is the margin, which was always there, and start hands it over.
-
-   ✕ used to be the entry method, and there is no longer an entry method to
-   choose: the pad writes contours and nothing else. The freed slot went to
-   the one preference the pad could not reach at all — the scene behind the
-   sheet, which is Shift+B on the keyboard and was nowhere on the pad. */
+   The quest log is not here either: it is F3, and the margin has already
+   replaced what one would have come here to do. ✕ is the scene behind the
+   sheet — Shift+B on the keyboard, and otherwise nowhere on the pad. */
 var SETTINGS = [
   { glyph:"←", label:"the lesson",
     value:function(){ return tabLabel(currentTab()); },
@@ -357,27 +349,35 @@ function switchWorkspace(id){
   save();
   renderAll(); renderQuests();
 }
+/* every way into a workspace ends the same way: put the caret on it, and
+   say where you have arrived. Enter, a click on a row or a margin line, and
+   the pad walking the margin all come through here, so they cannot drift
+   apart in what they select or in what the footer reads. */
+function selectById(id){
+  for (var i = 0; i < ALL.length; i++) if (ALL[i].id === id){ qsel = i; return; }
+}
+function sayWorkspace(id){
+  if (!id){ say("free play · no constraint"); return; }
+  var q = questById(id);
+  say(q.short + " · its own page" + (questHasContent(id) ? "" : ", empty"));
+}
 function chooseWorkspace(){
   var q = selQuest();
   if (!q) return;
-  if (qActive === q.id){ switchWorkspace(null); say("free play · no constraint"); return; }
-  switchWorkspace(q.id);
-  say(q.short + " · its own page" + (questHasContent(q.id) ? "" : ", empty"));
+  var id = (qActive === q.id) ? null : q.id;
+  switchWorkspace(id);
+  sayWorkspace(id);
 }
 /* the same switch, reached by mouse: a quest row or a rail line. Clicking
    the workspace you are in returns to free play, as enter does. */
 function clickWorkspace(id){
-  if (id !== null){
-    for (var i = 0; i < ALL.length; i++) if (ALL[i].id === id){ qsel = i; break; }
-  }
+  if (id !== null) selectById(id);
   if (qActive === id){
-    if (id === null) return;
-    switchWorkspace(null); say("free play · no constraint"); return;
+    if (id === null) return;       /* free play, clicked from free play */
+    switchWorkspace(null); sayWorkspace(null); return;
   }
   switchWorkspace(id);
-  if (id === null){ say("free play · no constraint"); return; }
-  var q = questById(id);
-  say(q.short + " · its own page" + (questHasContent(id) ? "" : ", empty"));
+  sayWorkspace(id);
 }
 /* ---- the left margin, walked by the pad ----
    Start gives the d-pad the workspace rail, in the order the rail draws it:
@@ -388,11 +388,10 @@ function clickWorkspace(id){
 /* ---- how the margin is arranged ----
    One lesson, the lesson the log is on: free play at the head, then that
    tab's quests in the order the tab reads them — the ones kept to hand
-   first, as they are on the board. It used to be every workspace there is,
-   in runs under labelled hairlines, which is the whole board printed down
-   the side of the page while you are trying to write. The pad walks exactly
-   this list, so what the thumb does and what the eye reads are the same
-   thing, and ← and → turn the page of it. */
+   first, as they are on the board — one lesson, not the whole board printed
+   down the side of the page while you are trying to write. The pad walks
+   exactly this list, so what the thumb does and what the eye reads are the
+   same thing, and ← and → turn the page of it. */
 function railSequence(){ return viewOf(currentTab()); }
 function railOrder(){
   var seq = railSequence(), out = [null], i;
@@ -404,16 +403,14 @@ function workspaceName(){
   return q ? q.short : "free play";
 }
 function railStep(d){
-  var order = railOrder(), n = order.length, i;
+  var order = railOrder(), n = order.length;
   var at = order.indexOf(qActive);
   if (at < 0) at = 0;
   var id = order[((at + d) % n + n) % n];
-  for (i = 0; i < ALL.length; i++) if (ALL[i].id === id){ qsel = i; break; }
+  selectById(id);
   switchWorkspace(id);
   if (settingsEl.classList.contains("on")) renderSettings();
-  if (!id){ say("free play · no constraint"); return; }
-  var q = questById(id);
-  say(q.short + " · its own page" + (questHasContent(id) ? "" : ", empty"));
+  sayWorkspace(id);
 }
 /* ← and → under the crossbar: the margin turns to another lesson, and the
    board turns with it — one tab, read in two places. Nothing is entered by
@@ -946,7 +943,6 @@ function moveInOrder(d){
    are on the page, and in what order, is the tab's business and is settled
    again on every render */
 var qrows = [];
-var qtabrows = [];
 var qempty = null;
 function hairline(cls, label){
   var el = document.createElement("div");
@@ -977,7 +973,7 @@ function buildQuestRows(){
     qf.addEventListener("click", (function(id){
       return function(ev){
         if (ev && ev.stopPropagation) ev.stopPropagation();
-        for (var k = 0; k < ALL.length; k++) if (ALL[k].id === id){ qsel = k; break; }
+        selectById(id);
         toggleFavourite();
       };
     })(ALL[qi].id));
@@ -1010,27 +1006,37 @@ function layoutQuestRows(){
   var sel = qrows[qsel] && qrows[qsel].el;
   if (sel && sel.scrollIntoView) sel.scrollIntoView({ block:"nearest", inline:"nearest" });
 }
-function renderTabs(){
-  var t = tabList(), cur = currentTab(), i;
-  while (qtabs.firstChild) qtabs.removeChild(qtabs.firstChild);
-  qtabrows.length = 0;
-  for (i = 0; i < t.length; i++) qtabs.appendChild(mkTab(t[i], cur));
+/* ---- the tabs, drawn twice ----
+   The board has them across the head of the list and the left margin has
+   the same ones at the margin's size; they are the same strip and they turn
+   together, so they are drawn by one function. The board's carry the count
+   of what is under them, the margin's do not — the margin is showing that
+   lesson already. */
+function drawTabs(host, cls, counts){
+  if (!host) return;
+  var t = tabList(), cur = currentTab(), i, el, lab, n;
+  while (host.firstChild) host.removeChild(host.firstChild);
+  for (i = 0; i < t.length; i++){
+    el = document.createElement("div");
+    el.className = cls + (t[i] === cur ? " on" : "");
+    el.setAttribute("role", "tab");
+    el.setAttribute("aria-selected", t[i] === cur ? "true" : "false");
+    lab = document.createElement("span");
+    lab.textContent = tabLabel(t[i]);
+    el.appendChild(lab);
+    if (counts){
+      n = document.createElement("span");
+      n.className = "qtn";
+      n.textContent = " " + viewOf(t[i]).length;
+      el.appendChild(n);
+    }
+    el.addEventListener("click", (function(g){
+      return function(){ setTab(g); };
+    })(t[i]));
+    host.appendChild(el);
+  }
 }
-function mkTab(g, cur){
-  var el = document.createElement("div");
-  el.className = "qtab" + (g === cur ? " on" : "");
-  el.setAttribute("role", "tab");
-  el.setAttribute("aria-selected", g === cur ? "true" : "false");
-  var lab = document.createElement("span");
-  lab.textContent = tabLabel(g);
-  var n = document.createElement("span");
-  n.className = "qtn";
-  n.textContent = " " + viewOf(g).length;
-  el.appendChild(lab); el.appendChild(n);
-  el.addEventListener("click", function(){ setTab(g); });
-  qtabrows.push(el);
-  return el;
-}
+function renderTabs(){ drawTabs(qtabs, "qtab", true); }
 buildQuestRows();
 qfree.addEventListener("click", function(){ clickWorkspace(null); });
 var qi;
@@ -1093,13 +1099,11 @@ function renderContour(id){
    flavour sword the names carry is not printed beside it */
 function plainName(q){ return q.name.replace(/^⚔\s*/, ""); }
 /* what the margin's first column says about a workspace: where you are, or
-   that there is something written in it. Complete used to outrank both and
-   take the column, which meant that finishing a quest hid the sword saying
-   you were standing in it — three states in one slot, and the two that
-   matter most while writing were the ones that lost. Complete has a mark of
-   its own at the other end of the line now, beside the favourite's, so a
-   quest can be finished, written-in, kept to hand and under your feet all
-   at once and say so. */
+   that there is something written in it. Complete is not here but at the
+   other end of the line, beside the favourite's mark, so that a quest can
+   be finished, written-in, kept to hand and under your feet all at once and
+   say so — three states in one slot lost the two that matter while
+   writing. */
 function questGlyph(id){
   if (id === qActive) return "⚔";
   return questHasContent(id) ? "•" : "";
@@ -1166,9 +1170,7 @@ function buildRailRows(){
     var n = document.createElement("span"); n.className = "rn"; n.textContent = name;
     /* two marks at the end of the line, and they mean different things:
        the work is finished, and the quest is kept to hand. A quest can be
-       both, so neither may be allowed to stand in for the other — which is
-       what one glyph slot for all of it used to do, hiding the sword that
-       says where you are behind the mark that says a thing is done. */
+       both, so neither may stand in for the other. */
     var dn = document.createElement("span"); dn.className = "rd";
     var f = document.createElement("span"); f.className = "rf";
     el.appendChild(g); el.appendChild(n); el.appendChild(dn); el.appendChild(f);
@@ -1201,25 +1203,7 @@ function layoutRailRows(){
 }
 /* the same tags the board wears, in the margin, at the margin's size: what
    the crossbar's ← and → are turning, said where it is being turned */
-var rtabrows = [];
-function renderRailTabs(){
-  if (!rtabs) return;
-  var t = tabList(), cur = currentTab(), i, el;
-  while (rtabs.firstChild) rtabs.removeChild(rtabs.firstChild);
-  rtabrows.length = 0;
-  for (i = 0; i < t.length; i++){
-    el = document.createElement("div");
-    el.className = "rtab" + (t[i] === cur ? " on" : "");
-    el.setAttribute("role", "tab");
-    el.setAttribute("aria-selected", t[i] === cur ? "true" : "false");
-    el.textContent = tabLabel(t[i]);
-    el.addEventListener("click", (function(g){
-      return function(){ setTab(g); };
-    })(t[i]));
-    rtabs.appendChild(el);
-    rtabrows.push(el);
-  }
-}
+function renderRailTabs(){ drawTabs(rtabs, "rtab", false); }
 buildRailRows();
 function renderRails(){
   /* while start is up the d-pad is walking this list, so the line it is on

@@ -746,18 +746,6 @@
     pointer-events:auto;             /* back on, under the rail's blanket none */
   }
   .rtab.on{color:var(--ink);border-color:var(--gilt);background-color:var(--wash);}
-  /* the same divider in the margin, labelled once */
-  .rhair{
-    display:flex;
-    align-items:center;
-    gap:0.6em;
-    margin:0.55rem 0 0.35rem;
-    color:var(--faded);
-    font-variant:small-caps;
-    letter-spacing:0.16em;
-    font-size:0.78rem;
-  }
-  .rhair i{display:block;height:1px;background:var(--rule);opacity:0.7;flex:1;}
   .rline{
     display:flex;
     align-items:baseline;

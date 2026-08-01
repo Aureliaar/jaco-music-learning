@@ -187,13 +187,8 @@ function enterNote(off){
    for a direction and writes whatever pitch that direction lands on,
    counted in scale steps of the current key.
 
-   There was a second method once — a crossbar of twenty-four absolute
-   semitones raised by holding a trigger, borrowed whole from the game's
-   cross hotbar. It went, in the pass before Lesson 3, because it was never
-   used: naming pitches is what the keyboard is for, and the pad is for
-   shapes. Nothing chooses between methods any more, so there is no method
-   to choose, no F4, no preference to store, and the two triggers it lived
-   on are free — they change hands now.
+   There is no other method and nothing to choose between: naming pitches
+   is what the keyboard is for, and the pad is for shapes.
 
    The anchor is the previous sounding note, scanned backwards from the
    cursor. Rests do not break the chain, and the scan wraps — around the

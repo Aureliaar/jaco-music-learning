@@ -160,21 +160,16 @@ window.addEventListener("drop", function(e){
     12 d-up    13 d-down   14 d-left   15 d-right
 
    The pad writes contours: the bare face buttons are the move — up, down,
-   again, rest — and everything else is navigation. It named absolute
-   pitches once, on a crossbar of twenty-four semitones raised by holding a
-   trigger; that went in the pass before Lesson 3, unused. The crossbar idea
-   survives where it earns its keep — start still raises the settings
-   crossbar, and its eight slots are still read left, up, right, down, the
+   again, rest — and everything else is navigation. Start raises the
+   settings crossbar, whose eight slots are read left, up, right, down, the
    d-pad cluster then the face cluster.
 
-   What the triggers left behind was sorted by the hand rather than by the
-   history: the two triggers are the *modifiers*, held, because a trigger is
-   an analogue thing made to be leaned on, and the two bumpers are the
-   *voice*, tapped, because changing hands is a discrete movement made very
-   often. So L2 widens a move to a third and R2 to a fifth, both together
-   take it out of the key; L1 steps back a voice and R1 steps on. Neither
-   pair does two jobs any more, which is why none of this needs to arbitrate
-   between a tap and a hold the way the bumpers once did. */
+   The four shoulders are sorted by the hand. A trigger is an analogue thing
+   made to be leaned on, so the two triggers are the *modifiers*, held: L2
+   widens a move to a third, R2 to a fifth, both together take it out of the
+   key. A bumper is made to be tapped, so the two bumpers are the *voice*:
+   L1 back a line, R1 on a line. Neither pair does two jobs, so nothing here
+   has to arbitrate between a tap and a hold. */
 var GP_SLOTS = [14, 12, 15, 13, 2, 3, 1, 0];   /* ←↑→↓ then □△○✕ */
 var GP_CROSS = 0, GP_CIRCLE = 1, GP_SQUARE = 2, GP_TRIANGLE = 3;  /* face buttons */
 var GP_L1 = 4, GP_R1 = 5, GP_L2 = 6, GP_R2 = 7,
@@ -304,14 +299,11 @@ function pollPads(){
     /* The log is a keyboard page that the pad can read over your shoulder:
        d-pad up and down walk the caret, ✕ enters the quest's page (or comes
        back to free play), ○ marks it complete, R3 closes it as escape does.
-       Nothing more. A pass that gave the pad its own tabs, its own
-       favourite button and its own carry gesture in here was building a
-       second quest log for the thumb, when the pad already has the whole
-       board where the thumb actually is — the left margin, under start,
-       where turning a lesson and walking into a workspace are two
+       Nothing more: the pad's way round the board is the left margin under
+       start, where turning a lesson and walking into a workspace are two
        directions of one stick. Keeping a quest to hand and moving it up the
-       list are arrangements made once and then lived with; they are F and
-       shift on the keyboard, and that is enough for them. */
+       list are arrangements made once and lived with, and they are F and
+       shift on the keyboard. */
     if (gpEdge(cur, GP_CROSS))    chooseWorkspace();
     if (gpEdge(cur, GP_CIRCLE))   toggleComplete();
     if (gpEdge(cur, GP_R3))       toggleQuests();
