@@ -1,13 +1,13 @@
-/* Headless boot over the real server, in a real browser — 197 checks.
+/* Headless boot over the real server, in a real browser — 189 checks.
 
    What is here is what only a browser can say: that the page boots without a
    runtime error, that a real keystroke and a real pad button reach the model
    at all, and above all that what the model asks for is actually laid out —
    the names in the roll's margin, the tie between two voices, the crossbar
-   over the head of the page, the board's tabs, the hint strip's height, the
-   workspace's own scene. A label that renders to nothing has shipped from
-   this repo before, which is why every measurement here is measured and
-   photographed rather than inspected.
+   over the head of the page, the board's tabs, the key overlay raised over
+   the folio, the workspace's own scene. A label that renders to nothing has
+   shipped from this repo before, which is why every measurement here is
+   measured and photographed rather than inspected.
 
    What is *not* here: the data formats, which are tier1.js's; and the input
    semantics — where each move lands, in every key and at every wrap — which
@@ -120,22 +120,22 @@ function freePort(start){
   await b.eval("shiftTempo(-TEMPO_STEP); shiftTempo(-TEMPO_STEP);");
   ok("and two back put it back",
      (await b.eval("Number(document.getElementById('metatext').textContent.split(' · ')[0])")) === before);
-  /* F1 was a page of prose about every binding there is. It went stale faster
-     than the bindings did and it is gone; the hint strip under the footer is
-     the key help now. The press is still swallowed — loose, F1 is the
-     browser's own help window, which takes the folio out of focus and stops
-     its animation frame — and does nothing whatever behind that. */
+  /* F1 was a page of prose about every binding there is, and then a strip of
+     it under the footer; it is the key overlay now, raised over the folio and
+     put down by the same press. The press is still swallowed whatever it
+     does — loose, F1 is the browser's own help window, which takes the folio
+     out of focus and stops its animation frame. */
   await b.key("F1", { key:"F1", vk:112 });
   await wait(150);
-  ok("there is no key page in the document",
-     (await b.eval("!document.getElementById('keyref')")) === true);
+  ok("F1 raises the key overlay", await b.eval(
+     "document.getElementById('keyhelp').classList.contains('on')"));
   ok("F1 raised no error", errors.length === 0, errors);
-  ok("and the pattern is still the page in front of you",
+  ok("and the pattern is still behind it, not replaced by it",
      (await b.eval("document.getElementById('roll').classList.contains('on')")) ||
      (await b.eval("document.getElementById('column').style.display")) === "flex");
-  ok("the hint strip is the key help, and it is on the page",
-     (await b.eval("document.getElementById('hints').textContent")).length > 20,
-     await b.eval("document.getElementById('hints').textContent"));
+  await b.key("F1", { key:"F1", vk:112 }); await wait(120);
+  ok("and F1 puts it down again",
+     !(await b.eval("document.getElementById('keyhelp').classList.contains('on')")));
 
   /* a fresh quest workspace arrives seeded — 'stray' has no page in the log.
      The board is read one lesson at a time now, so walk the tabs to it. */
@@ -852,7 +852,7 @@ function freePort(start){
 
   await b.shot(__dirname + "/boot-seeded.png");
 
-  /* ================= the board, the hint, and the workspace's scenery ====
+  /* ================= the board, and the workspace's scenery ==============
      All of this is layout, so none of it is checked by reading the source:
      it is measured in the browser that draws it, and photographed. */
   console.log("\n== the board, read one lesson at a time ==");
@@ -934,33 +934,10 @@ function freePort(start){
      JSON.stringify(await rowNames()) === JSON.stringify(wasOrder), await rowNames());
   await b.key("F3", KEY.F3); await wait(120);
 
-  console.log("\n== the standing hint, and nothing moving because of it ==");
-  const hint = () => b.eval("document.getElementById('hints').textContent");
-  const pageHint = await hint();
-  ok("the hint is under the footer and not empty", pageHint.length > 10, pageHint);
-  ok("it names what writes a note", /notes|up, down, again/.test(pageHint), pageHint);
-  const hb = await boxOf("#hints");
-  ok("it has a height of its own", hb.h > 6, hb);
-  ok("and does not run off the measure", hb.w <= (await b.eval("window.innerWidth")), hb);
-  const mainA = await boxOf("main");
+  console.log("\n== the log fits the window, whatever is in it ==");
   await b.key("F3", KEY.F3); await wait(150);
-  const questHint = await hint();
-  ok("in the quest log it names the lesson keys", /lesson/.test(questHint), questHint);
-  ok("and the two marks", /keep to hand/.test(questHint) && /move it/.test(questHint), questHint);
   const mainB = await boxOf("main");
   await b.key("F3", KEY.F3); await wait(150);
-  /* the two pages are of different lengths, so what is checked is that the
-     hint costs the same on both: the same strip, at the same height,
-     wherever it is */
-  const hintOn = async () => (await boxOf("#hints")).h;
-  const hA = await hintOn();
-  await b.key("F3", KEY.F3); await wait(150);
-  const hB = await hintOn();
-  await b.key("F3", KEY.F3); await wait(150);
-  ok("the hint is the same height on either page", hA === hB, [hA, hB]);
-  ok("and it is not what pushed the pattern page off the screen",
-     mainA.h <= (await b.eval("window.innerHeight")),
-     [mainA.h, await b.eval("window.innerHeight")]);
   /* the tabs were the point: the log used to be a column of every quest there
      is — 1427px of it in a 905px window — and no tab of it may overflow now */
   await b.key("F3", KEY.F3); await wait(150);
@@ -981,7 +958,7 @@ function freePort(start){
   ok("nothing scrolls sideways either",
      (await b.eval("document.documentElement.scrollWidth")) <=
      (await b.eval("window.innerWidth")) + 2);
-  await b.shot(__dirname + "/boot-hints.png");
+  await b.shot(__dirname + "/boot-log.png");
 
   console.log("\n== the workspace wears its own scene ==");
   await b.key("F3", KEY.F3); await wait(150);
@@ -1025,16 +1002,16 @@ function freePort(start){
   ok("the title keeps its darkening breath over the picture",
      /^radial-gradient/.test(await b.eval(
        "getComputedStyle(document.querySelector('header'),'::before').backgroundImage")));
-  ok("and so do the footer and the hint under it",
+  ok("and so does the footer",
      /^radial-gradient/.test(await b.eval(
        "getComputedStyle(document.querySelector('.foot'),'::before').backgroundImage")));
   ok("the margins too",
      /^radial-gradient/.test(await b.eval(
        "getComputedStyle(document.getElementById('raill'),'::before').backgroundImage")));
-  ok("the hint is pale ink over the scene, not the page's brown",
-     (await b.eval("getComputedStyle(document.getElementById('hints')).color"))
+  ok("the footer is pale ink over the scene, not the page's brown",
+     (await b.eval("getComputedStyle(document.getElementById('footer')).color"))
        !== "rgb(169, 156, 130)",
-     await b.eval("getComputedStyle(document.getElementById('hints')).color"));
+     await b.eval("getComputedStyle(document.getElementById('footer')).color"));
   await b.shot(__dirname + "/boot-quest-scenery.png");
   await b.key("F3", KEY.F3); await wait(200);
   await b.shot(__dirname + "/boot-quest-scenery-log.png");

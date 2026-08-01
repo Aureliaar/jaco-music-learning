@@ -1,5 +1,5 @@
 /* Headless regression harness for folio.html: the instrument's identity.
-   688 checks.
+   697 checks.
 
    What the hands do, and what the page does about it — plain entry by
    physical position, the contour moves the pad writes, the leaps and the
@@ -1250,8 +1250,8 @@ eq("nor at the octave", T.intervalName(-12), "P8");
    side of the line, and a note being placed or moved raises a line of its own
    there for a moment. The coverage below follows them; nothing was dropped. */
 /* ================= the board, read one lesson at a time =================
-   Tabs, favourites, the player's own order, and the standing hint under the
-   footer. Everything here is keyboard-first and everything persistent is an
+   Tabs, favourites and the player's own order.
+   Everything here is keyboard-first and everything persistent is an
    optional field on a log that reads exactly as it always did without it. */
 const L2A = { id:"l2-shadow-x", name:"⚔ a lesson two quest", lesson:2,
   summary:"declared, so it needs no table", teaches:"nothing",
@@ -1739,5 +1739,28 @@ ok("and each is as long as it is written",
    Math.abs((sounded[0].off - sounded[0].at) - (4 * dur1 - T.TAIL + 0.01)) < 1e-9 &&
    Math.abs((sounded[1].off - sounded[1].at) - (1 * dur1 - T.TAIL + 0.01)) < 1e-9,
    sounded.map(x => x.off - x.at));
+
+/* ================= the key overlay =================
+   Not what it looks like — a browser's question — but what the press does:
+   F1 raises it and puts it down, is never handed on (loose, F1 is Chrome's
+   help window and the folio loses the frame it animates on), and while it is
+   up the board is inert. */
+console.log("\n== the key overlay ==");
+reset(); let swallowed = false;
+const f1 = () => key("F1", { preventDefault(){ swallowed = true; } });
+f1();
+ok("F1 raises it, and the press never reaches the browser", T.keysOpen() && swallowed);
+const wasPage = T.docJSON(); key("KeyZ"); key("Period"); key("ArrowDown"); key("F3");
+eq("the board writes nothing at all while it is up", T.docJSON(), wasPage);
+ok("and no other page opens under it", !ids.quests.classList.contains("on"));
+eq("it names the mode it is describing", T.keysNow().where.indexOf("the folio"), 0);
+f1(); ok("F1 again puts it down", !T.keysOpen());
+key("KeyZ"); ok("and the board writes again", T.doc.steps[0] !== null);
+reset(); f1(); key("Escape");
+ok("escape puts it down too", !T.keysOpen());
+T.toggleQuests(); f1();
+ok("it opens over the quest log as well", T.keysOpen());
+eq("and says so there", T.keysNow().where, "the quest log");
+T.closeKeys(); T.toggleQuests(); reset();
 
 R.done();
