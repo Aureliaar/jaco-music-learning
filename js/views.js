@@ -488,7 +488,8 @@ function rollLoop(){
    everything else stay exactly where they were while the thumb turns a
    setting. */
 function applyViz(){
-  var page = questsEl.classList.contains("on");
+  var page = questsEl.classList.contains("on") ||
+             (typeof scriptOn === "function" && scriptOn());
   column.style.display = (!page && viz === "column") ? "flex" : "none";
   roll.classList.toggle("on", !page && viz === "roll");
   voicesEl.classList.toggle("off", page);   /* the strip belongs to the page */

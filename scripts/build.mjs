@@ -26,7 +26,7 @@ const DIST = path.join(ROOT, "dist");
 
 const FILES = [
   ["folio.html", "index.html"],
-  /* the instrument is seven plain scripts and one stylesheet since the split;
+  /* the instrument is eight plain scripts and one stylesheet since the split;
      folio.html names them, and they travel with it or it does nothing */
   ["folio.css", "folio.css"],
   ["js/state.js", "js/state.js"],
@@ -34,6 +34,9 @@ const FILES = [
   ["js/audio.js", "js/audio.js"],
   ["js/edit.js", "js/edit.js"],
   ["js/quests.js", "js/quests.js"],
+  /* the scriptorium travels; the kits themselves do not — a shared copy is
+     read-only and has no shelf to write to, so it falls back to the tone */
+  ["js/scriptorium.js", "js/scriptorium.js"],
   ["js/entry.js", "js/entry.js"],
   ["js/boot.js", "js/boot.js"],
   ["auditor.html", "auditor.html"],

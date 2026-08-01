@@ -36,6 +36,23 @@ document.addEventListener("keydown", function(e){
      answer to an old habit than silence. */
   if (code === "F1"){ e.preventDefault(); return; }
   if (code === "F3"){ e.preventDefault(); toggleQuests(); return; }
+  /* F4 raises the scriptorium, the room where the kits are made, and puts it
+     down again — the F-row is where the pages of the folio live. */
+  if (code === "F4"){ e.preventDefault(); toggleScriptorium(); return; }
+
+  /* the scriptorium is a page as well, and the one page with fields to type
+     in: while a field has the hands, every key belongs to it and none of them
+     reach here. Otherwise W is what the lead voice wears, escape is the way
+     out, and the transport still answers, so a kit can be heard in the loop
+     without leaving the room it was made in. */
+  if (typeof scriptOn === "function" && scriptOn()){
+    if (scriptTyping(e)) return;
+    e.preventDefault();
+    if (code === "Escape")   toggleScriptorium();
+    else if (code === "KeyW") toggleWear();
+    else if (code === "Space"){ if (playing) stop(); else play(); }
+    return;
+  }
   if (e.shiftKey && code === "KeyB"){
     e.preventDefault(); cycleScenery(); return;
   }
@@ -270,6 +287,10 @@ function pollPads(){
   /* select is the transport, everywhere and always: play or stop, whatever
      page is up. It is the one button that does not care where you are. */
   if (gpEdge(cur, GP_SELECT)){ if (playing) stop(); else play(); }
+
+  /* the scriptorium is worked with a pointer, not a thumb: while it is up the
+     pad keeps the transport above and reaches nothing else */
+  if (typeof scriptOn === "function" && scriptOn()){ gpPrev = cur; return; }
 
   /* start raises the settings crossbar, and puts it down again. While it is
      up the eight slots are items, read in the crossbar's own order, and

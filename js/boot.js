@@ -47,6 +47,7 @@ applyNames();
 renderAll();
 renderQuests();
 syncBoot();                         /* a static host always restores its showcase */
+scriptBoot();                       /* the shelf, and whatever the lead was wearing */
 if (!storageOK) say("autosave unavailable — export to keep your work");
 else if (restored)
   say("restored ‸ cursor row" + (activeQuest() ? " · ⚔ " + activeQuest().short : "") +
