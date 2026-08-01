@@ -38,6 +38,8 @@ controls, laid over the folio (the hint strip it replaced is gone).
   transport) · `edit.js` (writing, length, contour, voices, key, tempo,
   loop, the pages) · `quests.js` (workspaces, drills, the log on disk and
   its sync, tabs, rails) · `entry.js` (keyboard by `e.code`, gamepad) ·
+  `scriptorium.js` (the kit room: foundry, WAV both ways, curation ops,
+  the sampled voice — F4 raises it, W wears the active kit inside it) ·
   `boot.js` (the order it happens in, once).
   **Plain `<script src>`, NOT ES modules** — file:// has no CORS for
   classic scripts, so `folio.html` opened straight off the disk still
@@ -46,17 +48,24 @@ controls, laid over the folio (the hint strip it replaced is gone).
   an accident to be "fixed" with a bundler or a namespace object.
 - `server.mjs` — static serve (repo root + `js/` + `quest-backgrounds/`) +
   GET/PUT `/api/quest-log` (ETag, atomic writes, drill-preservation on
-  stale PUTs). `FOLIO_LOG` moves the log file and nothing else — that is
-  how the harnesses avoid the player's own log.
+  stale PUTs) + `/api/kits` (list, GET/PUT/DELETE per file; whitelisted
+  paths, RIFF-checked bodies, 256KB cap). `FOLIO_LOG` moves the log,
+  `FOLIO_KITS` moves the kit shelf — that is how the harnesses avoid the
+  player's own data.
+- `kits/<name>/` — sample kits: WAVs + `manifest.md` (one line per
+  sample: root, rate, bytes, loop, decay, source). 64KB honor budget,
+  stated by the tool. `kits/piano/` is the starter (Iowa MIS, curated
+  through the tool's own ops).
 - `quests/quest-log.json` — all workspaces (v2 schema: free + per-quest
   patterns + `drills` array). The single file to READ to see the player's
   music. **No test may read or write it.**
 - `auditor.html` — blind lineup listening; `?ids=a,b,c` picks entries.
-- `tests/` — restructured 2026-08-01, pared 2026-08-01. `tier1.js` (247
+- `tests/` — restructured 2026-08-01, pared 2026-08-01. `tier1.js` (315
   checks) is data integrity only: a page out and back, the quest log's v2
-  schema, server.mjs driven for real, a boot onto an existing log. **It is
+  schema, the WAV round-trip and the kit API, server.mjs driven for real,
+  a boot onto an existing log. **It is
   always-green, no exceptions: run it first and last, every time.** Then
-  `reltest.js` (697, the instrument's input semantics, including the
+  `reltest.js` (706, the instrument's input semantics, including the
   multi-frame pad section that used to be leaptest.js — that file is gone),
   `bootcheck.js` (189, real-Chrome boot and layout: only what a browser can
   prove), `drilltest.js` (40, live drill delivery), `statictest.js` (44,
@@ -154,10 +163,14 @@ L5–L8.
    crossbar-chip overlap fixed (warranty).
 2. `briefs/duplicate-workspace.md` — duplicate/promote a workspace
    (quest → "II", free play → "To Be Named"); 1 small feature.
-In flight: the **Scriptorium toolset** (curriculum build, free) in
-worktree `E:\experiments\daw-scriptorium` (branch `scriptorium`) —
-foundry + kit curation + minimal sampled voice + starter piano kit;
-merges after reconciliation with the overlay.
+The **Scriptorium toolset is MERGED** (2026-08-01, curriculum build,
+free): F4 raises the kit room — foundry (local synthesis, file drop,
+mic), curation ops (trim, downsample, loop-splice, decay), kits over
+`/api/kits`, and the sampled voice (nearest root, playbackRate, loop +
+imposed decay for holds — the piano trick). W inside the room wears the
+active kit on the lead; the bass keeps its tone. Starter kit
+`kits/piano/`. Left for L6: multi-sample zones, drum lanes, the 8-voice
+steal cap, tool-enforced budget.
 Player-gated, unscheduled: voice management anticipating 3 voices
 (L3.2/L4 horizon — waits on the player's UX direction); the L7
 structure-view idea (pattern placement + variation, noted 2026-08-01 —
