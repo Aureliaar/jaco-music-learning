@@ -56,9 +56,9 @@ controls, laid over the folio (the hint strip it replaced is gone).
   checks) is data integrity only: a page out and back, the quest log's v2
   schema, server.mjs driven for real, a boot onto an existing log. **It is
   always-green, no exceptions: run it first and last, every time.** Then
-  `reltest.js` (688, the instrument's input semantics, including the
+  `reltest.js` (697, the instrument's input semantics, including the
   multi-frame pad section that used to be leaptest.js — that file is gone),
-  `bootcheck.js` (197, real-Chrome boot and layout: only what a browser can
+  `bootcheck.js` (189, real-Chrome boot and layout: only what a browser can
   prove), `drilltest.js` (40, live drill delivery), `statictest.js` (44,
   the deploy artifact and the read-only copy). `rig.js` is the shared bench
   for the fake-DOM harnesses and loads the app from whatever `folio.html`
@@ -149,12 +149,15 @@ L5–L8.
 - The meta line is tempo and key only.
 
 **Queued builds, in order (briefs in `briefs/`, build serially):**
-1. ~~`briefs/key-overlay.md`~~ — BUILT, unmerged, in worktree
-   `E:\experiments\daw-overlay` (branch `key-overlay`), 1 feature credit:
-   the strip is gone, F1 raises the overlay, top-right mark, and the
-   crossbar-chip-overlap warranty rider is in it.
+1. ~~`briefs/key-overlay.md`~~ — MERGED 2026-08-01, 1 feature credit
+   spent: the strip is gone, F1 raises the overlay, top-right mark,
+   crossbar-chip overlap fixed (warranty).
 2. `briefs/duplicate-workspace.md` — duplicate/promote a workspace
    (quest → "II", free play → "To Be Named"); 1 small feature.
+In flight: the **Scriptorium toolset** (curriculum build, free) in
+worktree `E:\experiments\daw-scriptorium` (branch `scriptorium`) —
+foundry + kit curation + minimal sampled voice + starter piano kit;
+merges after reconciliation with the overlay.
 Player-gated, unscheduled: voice management anticipating 3 voices
 (L3.2/L4 horizon — waits on the player's UX direction); the L7
 structure-view idea (pattern placement + variation, noted 2026-08-01 —
