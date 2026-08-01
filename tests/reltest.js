@@ -1740,4 +1740,35 @@ ok("and each is as long as it is written",
    Math.abs((sounded[1].off - sounded[1].at) - (1 * dur1 - T.TAIL + 0.01)) < 1e-9,
    sounded.map(x => x.off - x.at));
 
+/* ================= the scriptorium, by key =================
+   F4 raises the room the kits are made in; inside it W is what the lead voice
+   wears and nothing at all reaches the pattern. Outside it W is a note like
+   any other, which is the only thing that could have gone wrong here. */
+console.log("\n== the scriptorium, raised and put down ==");
+page({}); T.cursor = 0;
+R.key("KeyW");
+ok("W outside the room is the note it has always been", T.doc.steps[0] !== null,
+   T.doc.steps[0]);
+page({}); T.cursor = 0;
+R.key("F4");
+ok("F4 raises the scriptorium", T.scriptOn() === true);
+R.key("KeyC");
+eq("a note key inside it writes nothing", T.doc.steps[0], null);
+R.key("KeyW");
+ok("W with no kit loaded wears nothing", T.kitWorn === false);
+T.kitSamples = [{ file:"a.wav", rate:8000, data:new Float32Array(8), frames:8,
+                  root:60, loopStart:0, loopEnd:0, decay:0, buf:null }];
+R.key("KeyW");
+ok("W with a kit loaded wears it", T.kitWorn === true);
+R.key("KeyW");
+ok("and W again takes it off", T.kitWorn === false);
+R.key("Escape");
+ok("escape puts the room down", T.scriptOn() === false);
+R.key("F4"); R.key("F4");
+ok("F4 twice leaves it down", T.scriptOn() === false);
+T.kitSamples = [];
+page({}); T.cursor = 0;
+R.key("KeyW");
+ok("and the board is the board again", T.doc.steps[0] !== null, T.doc.steps[0]);
+
 R.done();

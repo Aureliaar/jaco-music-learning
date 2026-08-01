@@ -95,7 +95,7 @@ const ELEMENT_IDS =
    "qfree","qfreesigil","qdname","qdtext","qdteach","qdstate","qpreview",
    "railquests","rtabs","railtitle","railtext","railteach","railstate",
    "settings","xbarpad","xbarface","voices","vname0","vname1","vmark0","vmark1",
-   "scenery","scenefade"];
+   "scenery","scenefade","scriptorium","wavpicker"];
 
 /* ---------- the fake pad ---------- */
 const GP = { X:0, B:1, SQ:2, TR:3, L1:4, R1:5, L2:6, R2:7, SEL:8, START:9,
@@ -302,6 +302,18 @@ function boot(opts){
     get grow(){ return _g("grow"); },
     GROW_DELAY: _g("GROW_DELAY"), growStep: _g("growStep"),
     get seamBars(){ return _g("seamBars"); },
+    /* ---- the scriptorium: the kits and the sampled voice ---- */
+    encodeWAV: _g("encodeWAV"), decodeWAV: _g("decodeWAV"),
+    parseManifest: _g("parseManifest"), manifestLine: _g("manifestLine"),
+    manifestText: _g("manifestText"), generate: _g("generate"),
+    truncate: _g("truncate"), resample: _g("resample"), autoLoop: _g("autoLoop"),
+    midiFreq: _g("midiFreq"), samplePlay: _g("samplePlay"),
+    nearestSample: _g("nearestSample"), scriptOn: _g("scriptOn"),
+    toggleScriptorium: _g("toggleScriptorium"), toggleWear: _g("toggleWear"),
+    KIT_KEY: _g("KIT_KEY"), WEAR_KEY: _g("WEAR_KEY"),
+    get kitWorn(){ return _g("kitWorn"); }, set kitWorn(v){ kitWorn = v; },
+    get kitSamples(){ return _g("kitSamples"); }, set kitSamples(v){ kitSamples = v; },
+    get benchNow(){ return _g("bench"); },
     STEPS: _g("STEPS"), STORE_KEY: _g("STORE_KEY"), LEGACY_KEY: _g("LEGACY_KEY"),
     defaultDoc: _g("defaultDoc"), NOTE_KEYS: _g("NOTE_KEYS") };
   window.__probe = function(n){ try { return eval(n); } catch(e){ return "__undefined__"; } };
