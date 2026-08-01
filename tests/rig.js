@@ -1,6 +1,6 @@
 /* tests/rig.js — the bench the fake-DOM harnesses stand on.
 
-   reltest.js and leaptest.js each carried their own copy of this: the same
+   reltest.js and tier1.js each carried their own copy of this: the same
    fake document, the same fake Web Audio, the same fake pad, the same loader
    and very nearly the same hook. Two copies of a fake DOM is two places for
    the fake DOM to drift from the real one, which is the one thing a fake DOM

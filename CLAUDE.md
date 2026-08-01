@@ -51,17 +51,18 @@ the footer, which is the living key help.
   patterns + `drills` array). The single file to READ to see the player's
   music. **No test may read or write it.**
 - `auditor.html` — blind lineup listening; `?ids=a,b,c` picks entries.
-- `tests/` — restructured 2026-08-01. `tier1.js` (247 checks) is data
-  integrity only: a page out and back, the quest log's v2 schema,
-  server.mjs driven for real, a boot onto an existing log. **It is
+- `tests/` — restructured 2026-08-01, pared 2026-08-01. `tier1.js` (247
+  checks) is data integrity only: a page out and back, the quest log's v2
+  schema, server.mjs driven for real, a boot onto an existing log. **It is
   always-green, no exceptions: run it first and last, every time.** Then
-  `reltest.js` (759, the instrument's input semantics), `leaptest.js`
-  (105, multi-frame pad leaps), `bootcheck.js` (255, real-Chrome boot,
-  layout and data flows), `drilltest.js` (40, live drill delivery),
-  `statictest.js` (44, the deploy artifact and the read-only copy).
-  `rig.js` is the shared bench for the fake-DOM harnesses and loads the
-  app from whatever `folio.html` actually names; `cdp.js` is the one CDP
-  driver. Total test LOC is kept **at or under app LOC** — extend by
+  `reltest.js` (688, the instrument's input semantics, including the
+  multi-frame pad section that used to be leaptest.js — that file is gone),
+  `bootcheck.js` (197, real-Chrome boot and layout: only what a browser can
+  prove), `drilltest.js` (40, live drill delivery), `statictest.js` (44,
+  the deploy artifact and the read-only copy). `rig.js` is the shared bench
+  for the fake-DOM harnesses and loads the app from whatever `folio.html`
+  actually names; `cdp.js` is the one CDP driver. Test LOC 4449 against
+  4760 of app. Total test LOC is kept **at or under app LOC** — extend by
   deleting something first.
 
 ## Critical rules learned the hard way

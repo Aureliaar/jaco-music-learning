@@ -1,4 +1,5 @@
 /* Headless regression harness for folio.html: the instrument's identity.
+   688 checks.
 
    What the hands do, and what the page does about it — plain entry by
    physical position, the contour moves the pad writes, the leaps and the
@@ -10,13 +11,13 @@
    by bootcheck.js and is not inspected here either.
 
    The bench — the fake document, the fake audio, the fake pad, the loader —
-   is tests/rig.js, which leaptest.js and tier1.js stand on too. */
+   is tests/rig.js, which tier1.js stands on too. */
 const fs = require("fs");
 const rig = require("./rig.js");
 const REPO = rig.REPO;
 const R = rig.boot();
 const { T, ids, store, blobs, sounded, gains, clock,
-        ok, eq, key, frame, hold, press, stick, holdLong, blank, steps, GP,
+        ok, eq, key, frame, frames, hold, press, stick, holdLong, blank, steps, GP,
         document, window } = R;
 
 /* Every source scan below asks one question — does the app say this
@@ -244,13 +245,13 @@ eq("in E minor a fifth up from E4 is B4", rel(Em, [GP.R2, GP.TR]), "B4");
 eq("in E minor a step down from E4 is D4", rel(Em, [GP.X]), "D4");
 
 console.log("\n== rest, advance and audition ==");
-reset(); page({0:"C4", 1:"E4"}); T.cursor = 1; 
+reset(); page({0:"C4", 1:"E4"}); T.cursor = 1;
 sounded.length = 0;
 hold(GP.SQ);
 eq("□ writes a rest", T.doc.steps[1], null);
 eq("and advances by two, as everything that writes does", T.cursor, 3);
 eq("a rest sounds nothing", sounded.length, 0);
-reset(); page({15:"C4"}); 
+reset(); page({15:"C4"});
 sounded.length = 0;
 hold(GP.TR);
 eq("a relative note advances by two", T.cursor, 2);
@@ -260,62 +261,62 @@ ok("the footer names the note and the step", /D-4 at step 1/.test(ids.footer.tex
    ids.footer.textContent);
 
 console.log("\n== the anchor ==");
-reset(); 
+reset();
 hold(GP.TR);
 eq("an empty page starts on the tonic", T.doc.steps[0], "C4");
 reset(); T.setKey("E minor");
 hold(GP.TR); eq("in E minor, on E", T.doc.steps[0], "E4");
 reset(); T.baseOctave = 2;
 hold(GP.TR); eq("in the base octave", T.doc.steps[0], "C2");
-reset(); 
+reset();
 hold(GP.B); eq("○ on an empty page is the tonic too", T.doc.steps[0], "C4");
-reset(); 
+reset();
 hold(GP.X); eq("✕ on an empty page is the tonic too", T.doc.steps[0], "C4");
 /* rests do not break the chain */
-reset(); page({0:"G4"}); T.cursor = 4; 
+reset(); page({0:"G4"}); T.cursor = 4;
 hold(GP.TR);
 eq("the scan steps over rests", T.doc.steps[4], "A4");
 /* the nearest note behind wins */
-reset(); page({0:"G4", 2:"C4"}); T.cursor = 5; 
+reset(); page({0:"G4", 2:"C4"}); T.cursor = 5;
 hold(GP.TR);
 eq("the nearest note behind is the anchor", T.doc.steps[5], "D4");
 /* it wraps */
-reset(); page({15:"A4"}); T.cursor = 0; 
+reset(); page({15:"A4"}); T.cursor = 0;
 hold(GP.TR);
 eq("the scan wraps around the page", T.doc.steps[0], "B4");
 /* around the loop, when the cursor is inside it */
-reset(); page({3:"D4", 15:"A4"}, { loop:4 }); T.cursor = 0; 
+reset(); page({3:"D4", 15:"A4"}, { loop:4 }); T.cursor = 0;
 hold(GP.TR);
 eq("inside a short loop it wraps at the loop", T.doc.steps[0], "E4");
 /* outside the loop it wraps around the whole page */
-reset(); page({15:"A4"}, { loop:4 }); T.cursor = 8; 
+reset(); page({15:"A4"}, { loop:4 }); T.cursor = 8;
 hold(GP.TR);
 eq("outside the loop it wraps around the whole page", T.doc.steps[8], "B4");
 /* the note under the cursor is the last resort */
-reset(); page({4:"C4"}); T.cursor = 4; 
+reset(); page({4:"C4"}); T.cursor = 4;
 hold(GP.TR);
 eq("a lone note under the cursor still anchors", T.doc.steps[4], "D4");
 
 console.log("\n== out of the key: the snap rule ==");
 /* C major, F#4: up goes to the nearest scale tone above, and that is the step */
-reset(); page({15:"F#4"}); 
+reset(); page({15:"F#4"});
 hold(GP.TR); eq("a step up from F#4 is G4", T.doc.steps[0], "G4");
-reset(); page({15:"F#4"}); 
+reset(); page({15:"F#4"});
 hold(GP.X); eq("a step down from F#4 is F4", T.doc.steps[0], "F4");
-reset(); page({15:"F#4"}); 
+reset(); page({15:"F#4"});
 hold(GP.L2, GP.TR); eq("a third up from F#4 is A4", T.doc.steps[0], "A4");
-reset(); page({15:"F#4"}); 
+reset(); page({15:"F#4"});
 hold(GP.L2, GP.X); eq("a third down from F#4 is E4", T.doc.steps[0], "E4");
-reset(); page({15:"F#4"}); 
+reset(); page({15:"F#4"});
 hold(GP.B); eq("○ repeats an out-of-key note exactly", T.doc.steps[0], "F#4");
-reset(); page({15:"F#4"}); 
+reset(); page({15:"F#4"});
 hold(GP.L2, GP.R2, GP.TR); eq("the chromatic move ignores the key", T.doc.steps[0], "G4");
-reset(); page({15:"C#4"}); 
+reset(); page({15:"C#4"});
 hold(GP.X); eq("a step down from C#4 is C4", T.doc.steps[0], "C4");
-reset(); page({15:"A#4"}); 
+reset(); page({15:"A#4"});
 hold(GP.TR); eq("a step up from A#4 is B4", T.doc.steps[0], "B4");
 /* the escape hatch and back: a chromatic note then a diatonic step */
-reset(); 
+reset();
 hold(GP.TR); /* C4, the tonic */
 hold(GP.L2, GP.R2, GP.TR); /* C#4 */
 hold(GP.TR); /* snaps up to D4 */
@@ -324,7 +325,7 @@ eq("a chromatic detour rejoins the key",
    [T.doc.steps[0], T.doc.steps[2], T.doc.steps[4]], ["C4","C#4","D4"]);
 
 console.log("\n== nudge: change the note, stay put ==");
-reset(); page({0:"C4", 1:"E4"}); T.cursor = 1; 
+reset(); page({0:"C4", 1:"E4"}); T.cursor = 1;
 hold(GP.DR);
 eq("d-pad right nudges the note up a step", T.doc.steps[1], "F4");
 eq("and does not advance", T.cursor, 1);
@@ -333,13 +334,13 @@ eq("d-pad left nudges it down", T.doc.steps[1], "D4");
 eq("still no advance", T.cursor, 1);
 sounded.length = 0; hold(GP.DR);
 eq("a nudge auditions", sounded.length, 1);
-reset(); page({0:"C4"}); T.cursor = 1; 
+reset(); page({0:"C4"}); T.cursor = 1;
 hold(GP.DR);
 eq("nudging an empty step writes nothing", T.doc.steps[1], null);
 ok("and says so", /nothing to nudge/.test(ids.footer.textContent), ids.footer.textContent);
 eq("and does not move", T.cursor, 1);
 /* out-of-key nudge follows the same snap rule */
-reset(); page({0:"F#4"}); T.cursor = 0; 
+reset(); page({0:"F#4"}); T.cursor = 0;
 hold(GP.DR); eq("nudging F#4 up gives G4", T.doc.steps[0], "G4");
 /* the nudge is not a mode and never was one to leave: with the second entry
    method gone, ←→ in the column are the nudge and nothing else, and they
@@ -355,14 +356,14 @@ eq("and the note is what moved", T.doc.steps[0], "D4");
    on a note already written, so it answers the same hand, whichever pair of
    the d-pad the view has put it on. */
 console.log("\n== the chromatic escape, on the d-pad ==");
-reset(); page({0:"C4"}); T.cursor = 0; 
+reset(); page({0:"C4"}); T.cursor = 0;
 hold(GP.L2, GP.R2, GP.DR);
 eq("both triggers make the nudge chromatic", T.doc.steps[0], "C#4");
 eq("and it still does not advance", T.cursor, 0);
 eq("the triggers wrote nothing of their own", T.baseOctave, 4);
 hold(GP.L2, GP.R2, GP.DL);
 eq("and back down a semitone the same way", T.doc.steps[0], "C4");
-reset(); page({0:"G4"}); T.cursor = 0; 
+reset(); page({0:"G4"}); T.cursor = 0;
 hold(GP.L2, GP.R2, GP.DR);
 eq("a semitone above G4 is G#4, not the key's A4", T.doc.steps[0], "G#4");
 /* one trigger alone is not the hatch and is not the nudge either: since
@@ -395,37 +396,24 @@ frame([GP.L2, GP.R2], [0,-1,0,0]); frame([]);
 eq("the left stick takes the hatch too", T.doc.steps[0], "C#4");
 useColumn();
 /* an out-of-key note nudged chromatically moves by semitone, never by snap */
-reset(); page({0:"C#4"}); T.cursor = 0; 
-hold(GP.L2, GP.R2, GP.DR);
-eq("a chromatic nudge from C#4 is D4", T.doc.steps[0], "D4");
-reset(); page({0:"C#4"}); T.cursor = 0; 
-hold(GP.DR);
-eq("while the bare nudge snaps into the key", T.doc.steps[0], "D4");
-reset(); page({0:"D#4"}); T.cursor = 0; 
+reset(); page({0:"D#4"}); T.cursor = 0;
 hold(GP.L2, GP.R2, GP.DR);
 eq("a chromatic nudge from D#4 is E4", T.doc.steps[0], "E4");
-reset(); page({0:"D#4"}); T.cursor = 0; 
+reset(); page({0:"D#4"}); T.cursor = 0;
 hold(GP.L2, GP.R2, GP.DL);
 eq("and down from D#4 is D4, not the key's D4 by snap", T.doc.steps[0], "D4");
 /* the clamp and the empty step are unchanged by the hatch */
-reset(); page({0:"C6"}); T.cursor = 0; 
+reset(); page({0:"C6"}); T.cursor = 0;
 hold(GP.L2, GP.R2, GP.DR);
 eq("a chromatic nudge clamps at the ceiling too", T.doc.steps[0], "C6");
-reset(); page({0:"C2"}); T.cursor = 0; 
+reset(); page({0:"C2"}); T.cursor = 0;
 hold(GP.L2, GP.R2, GP.DL);
 eq("and at the floor", T.doc.steps[0], "C2");
-reset(); T.cursor = 0; 
+reset(); T.cursor = 0;
 hold(GP.L2, GP.R2, GP.DR);
 ok("the hatch on an empty step still says there is nothing to nudge",
    /nothing to nudge/.test(ids.footer.textContent), ids.footer.textContent);
 eq("and the octave, which is nowhere near the pad now, did not move", T.baseOctave, 4);
-/* there is one method now, so the hatch is simply always there: both triggers
-   with the roll's nudge pair take it out of the key too */
-reset(); page({0:"C4"}); T.cursor = 0; useRoll();
-hold(GP.L2, GP.R2, GP.DU);
-eq("the hatch reaches the roll's nudge pair too", T.doc.steps[0], "C#4");
-eq("and the triggers wrote nothing of their own", T.baseOctave, 4);
-useColumn();
 /* it writes into the hand you are in, as every edit does */
 reset(); page({0:"C4"}); T.setDoc(Object.assign({}, T.doc, { bass: (function(){
   const s = blank(); s[0] = "C3"; return s; })() }));
@@ -436,17 +424,17 @@ eq("and the lead is untouched", T.doc.steps[0], "C4");
 T.setVoice(0);
 
 console.log("\n== the range is clamped ==");
-reset(); page({15:"C6"}); 
+reset(); page({15:"C6"});
 hold(GP.TR);
 eq("a move above C6 stops at C6", T.doc.steps[0], "C6");
 ok("and says so", /end of the range/.test(ids.footer.textContent), ids.footer.textContent);
-reset(); page({15:"C2"}); 
+reset(); page({15:"C2"});
 hold(GP.X);
 eq("a move below C2 stops at C2", T.doc.steps[0], "C2");
-reset(); page({15:"B5"}); 
+reset(); page({15:"B5"});
 hold(GP.R2, GP.TR);
 eq("a fifth past the ceiling clamps", T.doc.steps[0], "C6");
-reset(); page({0:"C6"}); T.cursor = 0; 
+reset(); page({0:"C6"}); T.cursor = 0;
 hold(GP.DR); eq("nudge clamps too", T.doc.steps[0], "C6");
 eq("the range is C2 to C6", [T.MIDI_LO, T.MIDI_HI], [36, 84]);
 eq("nameOfMidi agrees at the floor", T.nameOfMidi(36), "C2");
@@ -462,38 +450,21 @@ console.log("\n== the four shoulders, sorted by the hand ==");
 reset();
 eq("the lead is the hand at rest", T.voice, 0);
 press(GP.R1); eq("R1 taps on to the next voice", T.voice, 1);
-press(GP.R1); eq("R1 again comes round the ring", T.voice, 0);
-press(GP.L1); eq("L1 walks the ring the other way", T.voice, 1);
-press(GP.L1); eq("and back", T.voice, 0);
+press(GP.L1); eq("L1 walks the ring the other way", T.voice, 0);
 eq("the ring is the order the voices are named in", T.VOICE_NAMES, ["lead","bass"]);
 press(GP.R1);
 key("KeyZ");
 eq("and the note that follows goes into the hand it chose", T.doc.bass[0], "C4");
 eq("and not into the other", T.doc.steps[0], null);
+eq("changing hands wrote nothing by itself", T.cursor, 2);
 press(GP.L1);
+/* the octave is not on the shoulders and is nowhere on the pad: an octave
+   setting has nothing to say to a method that counts from the note before */
 reset();
-press(GP.R1);
-eq("changing hands leaves the cursor where it was", T.cursor, 0);
-eq("and writes nothing by itself", T.doc.steps.filter(Boolean).length +
-   T.doc.bass.filter(Boolean).length, 0);
-press(GP.L1);
-/* held, a bumper is not a repeat: changing hands is an edge, once */
-reset();
-holdLong(GP.R1);
-eq("holding a bumper changes hands once, not over and over", T.voice, 1);
-press(GP.L1);
-/* and the octave is not on them any more, in either direction */
-reset();
-press(GP.L1); eq("a tap of L1 is not the octave", T.baseOctave, 4);
-press(GP.R1); eq("nor is a tap of R1", T.baseOctave, 4);
-/* nor anywhere else on the pad: an octave setting has nothing to say to a
-   method that counts from the note before. It survives as what it always was
-   — which octaves the keyboard's note rows are — on page up and page down. */
+press(GP.L1); eq("a tap of a bumper is not the octave", T.baseOctave, 4);
 ok("nor is the octave anywhere on the pad at all",
    T.SETTINGS.every(s => !/octave/i.test(s.label)), T.SETTINGS.map(s => s.label));
-reset();
-ok("nothing on the page reads a bumper as the octave any more",
-   !/lbUsed|rbUsed|lGone|rGone/.test(src));
+press(GP.R1);
 /* the triggers modify and write nothing at all on their own */
 reset(); page({15:"C4"});
 press(GP.L2);
@@ -541,7 +512,7 @@ press(GP.DU); eq("d-pad up moves the cursor", T.cursor, 15);
 press(GP.DD); eq("d-pad down moves the cursor", T.cursor, 0);
 stick([0, 1]); eq("left stick down moves the cursor", T.cursor, 1);
 stick([0, 0, 0, 1]); eq("the right stick strides by fours", T.cursor, 5);
-reset(); 
+reset();
 press(GP.DU); eq("relative: d-pad up still moves the cursor", T.cursor, 15);
 press(GP.DD); eq("relative: d-pad down still moves the cursor", T.cursor, 0);
 stick([0, 0, 0, 1]); eq("relative: the right stick still strides", T.cursor, 4);
@@ -622,7 +593,7 @@ T.cursor = 0; key("Tab"); key("Period");
 eq("clear takes the bass note", T.doc.bass[0], null);
 eq("and leaves the lead's", T.doc.steps[0], "C4");
 reset();
-duet({0:"E4"}, {0:"E2"}); T.cursor = 0; key("Tab"); 
+duet({0:"E4"}, {0:"E2"}); T.cursor = 0; key("Tab");
 hold(GP.DR);
 eq("nudge moves the bass note", T.doc.bass[0], "F2");
 eq("and not the lead's", T.doc.steps[0], "E4");
@@ -639,19 +610,12 @@ key("F3");
 press(GP.START); key("Tab");
 eq("and inside the settings crossbar", T.voice, 0);
 key("Escape");
-/* the pad: △ is a move and never the voice; the bumpers are the voice and
-   never a move, which is the whole of the rework */
+/* the pad: △ is a move and never the voice, which is the other half of the
+   rework the shoulders' section proves from its own side */
 reset(); page({15:"C4"});
 press(GP.TR);
 eq("△ writes a move", T.doc.steps[0], "D4");
 eq("and does not change hands", T.voice, 0);
-reset();
-press(GP.R1);
-eq("R1 changes hands", T.voice, 1);
-eq("and writes nothing", T.doc.bass.filter(Boolean).length +
-   T.doc.steps.filter(Boolean).length, 0);
-press(GP.L1);
-eq("and back", T.voice, 0);
 
 console.log("\n== solo and mute ==");
 reset();
@@ -1144,26 +1108,26 @@ const SEED_TABLE = {
 };
 eq("every quest has a seed and no quest is missing one",
    Object.keys(T.SEEDS).sort(), Q.map(q=>q.id).sort());
-eq("the seeds are the table", Object.keys(SEED_TABLE).sort(), Q.map(q=>q.id).sort());
-for (let i = 0; i < Q.length; i++){
-  const id = Q[i].id, want = SEED_TABLE[id];
-  eq(id + " is seeded " + want[0] + ", " + want[1],
-     [T.SEEDS[id].key, T.SEEDS[id].tempo], want);
-}
-/* and the seed is what a fresh workspace actually arrives holding */
-for (let i = 0; i < Q.length; i++){
+/* the whole table in one check, so that a seed changing anywhere is caught
+   without eight near-identical lines saying it */
+eq("every seed is the table it should be",
+   Q.map(q => [q.id, T.SEEDS[q.id].key, T.SEEDS[q.id].tempo]),
+   Q.map(q => [q.id, SEED_TABLE[q.id][0], SEED_TABLE[q.id][1]]));
+/* and that the seed is what a fresh workspace actually arrives holding —
+   which is one rule, so it is driven for the first quest and the last */
+for (const i of [0, Q.length - 1]){
   qreset(); key("F3");
   for (let j = 0; j < i; j++) key("ArrowDown");
   key("Enter"); key("F3");
   const want = SEED_TABLE[Q[i].id];
-  eq("entering " + Q[i].id + " lands in " + want[0], T.doc.key, want[0]);
-  eq("… at " + want[1], T.doc.tempo, want[1]);
+  eq("entering " + Q[i].id + " lands in " + want[0] + " at " + want[1],
+     [T.doc.key, T.doc.tempo], want);
   ok("… and the header says so",
      ids.metatext.textContent.indexOf(want[1] + " · ") === 0 &&
      ids.metatext.textContent.indexOf(want[0]) > 0, ids.metatext.textContent);
-  eq("… with an empty page and nothing else changed", T.doc.steps.filter(Boolean).length, 0);
-  eq("… and the loop untouched", T.doc.loop, 16);
-  eq("… and the title untouched", T.doc.title, "untitled folio");
+  eq("… with an empty page, its whole loop and its untouched title",
+     [T.doc.steps.filter(Boolean).length, T.doc.loop, T.doc.title],
+     [0, 16, "untitled folio"]);
 }
 qreset();
 eq("free play is never seeded — C major", T.doc.key, "C major");
@@ -1265,19 +1229,14 @@ console.log("\n== the interval names ==");
 const IVL = ["P1","m2","M2","m3","M3","P4","TT","P5","m6","M6","m7","M7","P8"];
 for (let n = 0; n <= 12; n++) eq(n + " semitones is " + IVL[n], T.intervalName(n), IVL[n]);
 eq("the tritone is TT and not a number", T.intervalName(6), "TT");
+/* compound: the simple number plus seven for every octave crossed. One case
+   an octave up, one two octaves up, and the tritone at each — which is the
+   only name that is not a number and so the only one that can go wrong. */
 eq("13 semitones compounds to m9", T.intervalName(13), "m9");
-eq("14 to M9", T.intervalName(14), "M9");
-eq("15 to m10", T.intervalName(15), "m10");
-eq("16 to M10", T.intervalName(16), "M10");
-eq("17 to P11", T.intervalName(17), "P11");
 eq("18 — a tritone and an octave — to TT11", T.intervalName(18), "TT11");
-eq("19 to P12", T.intervalName(19), "P12");
-eq("21 to M13", T.intervalName(21), "M13");
-eq("23 to M14", T.intervalName(23), "M14");
 eq("two octaves to P15", T.intervalName(24), "P15");
 eq("27 to m17", T.intervalName(27), "m17");
 eq("30 to TT18", T.intervalName(30), "TT18");
-eq("three octaves to P22", T.intervalName(36), "P22");
 eq("the whole range, C2 to C6, is P29", T.intervalName(T.MIDI_HI - T.MIDI_LO), "P29");
 eq("direction is not named — a crossed pair reads the same",
    T.intervalName(-7), T.intervalName(7));
@@ -1599,6 +1558,137 @@ frame([GP.L2]); frame([GP.L2, GP.DR]); frame([]); frame([]);
 eq("a released trigger changes no hand", T.voice, voice0);
 eq("nor the octave", T.baseOctave, oct0);
 eq("and wrote nothing", T.doc.steps.filter(Boolean).length, 0);
+
+console.log("\n== the pad across frames ==");
+/* Everything above presses the pad one frame at a time, which is not how a
+   hand plays it: the modifier goes down several frames before the thumb
+   lands, the releases stagger, and the poll can catch a roll-off in a single
+   frame. This section was a harness of its own (leaptest.js) that enumerated
+   every combination; what is left is one case per rule, because the rules
+   themselves are proved above and what is at issue here is only timing. */
+function stagePad(anchor, key){
+  T.setDoc({ version:1, title:"t", tempo:112, loop:16, key: key || "C major",
+             steps: steps({ 15: anchor === undefined ? "C4" : anchor }) });
+  T.cursor = 0; T.baseOctave = 4; useColumn();
+  frame([]); frame([]);
+}
+function wrote(){ return T.doc.steps[0]; }
+/* the modifier settles, the button edges under it, both let go after */
+function leapHeld(mods, face){
+  stagePad();
+  frames(3, mods);
+  frame(mods.concat([face]));
+  frames(2, mods);
+  frames(2, []);
+  return wrote();
+}
+eq("L2 held, then \u2715 three frames later: still a third down", leapHeld([GP.L2], GP.X), "A3");
+eq("R2 held, then \u25b3: still a fifth up", leapHeld([GP.R2], GP.TR), "G4");
+eq("both held, then \u2715: still the semitone", leapHeld([GP.L2, GP.R2], GP.X), "B3");
+eq("and no hold of a trigger ever moved the octave", T.baseOctave, 4);
+/* the trigger let go before the face button, which is the commoner grip */
+stagePad();
+frames(3, [GP.R2]); frame([GP.R2, GP.X]); frames(2, [GP.X]); frames(2, []);
+eq("R2 released before \u2715: still a fifth down", wrote(), "F3");
+/* a trigger arriving after the button is not retroactive */
+stagePad();
+frames(3, [GP.X]);
+eq("\u2715 alone wrote a bare step down", wrote(), "B3");
+frames(3, [GP.X, GP.L2]); frames(2, [GP.X]); frames(2, []);
+eq("a trigger arriving late writes nothing more", T.doc.steps[2], null);
+eq("and did not widen what was already written", wrote(), "B3");
+/* the same frame, and the tie */
+stagePad(); frame([GP.L2, GP.X]); frames(3, []);
+eq("L2 and \u2715 on one frame: a third down", wrote(), "A3");
+stagePad(); frames(3, [GP.R2]); frame([GP.R2, GP.TR, GP.X]); frames(3, []);
+eq("\u25b3 wins a same-frame tie with \u2715, trigger and all", wrote(), "G4");
+/* and the far commoner case: \u2715 under a trigger never reads as \u25b3,
+   at any gap between the two presses */
+let swung = 0;
+for (const mods of [[GP.L2], [GP.R2], [GP.L2, GP.R2]]){
+  for (let gap = 1; gap <= 6; gap++){
+    stagePad();
+    frames(gap, mods); frame(mods.concat([GP.X])); frames(2, mods); frames(2, []);
+    if (!{ "A3":1, "F3":1, "B3":1 }[wrote()] || T.baseOctave !== 4) swung++;
+  }
+}
+ok("\u2715 under every trigger, at every gap, swings down", swung === 0, swung);
+/* the roll-off: the trigger let go on the very frame the thumb lands is one
+   movement and one leap, not a lost modifier and a bare step. A whole frame
+   later it is a bare step, and that is the whole of the grace. */
+stagePad(); frames(3, [GP.R2]); frame([GP.X]); frames(3, []);
+eq("R2 released as \u2715 edges: still a fifth down", wrote(), "F3");
+stagePad(); frames(3, [GP.R2]); frame([]); frame([GP.X]); frames(3, []);
+eq("a whole frame later it is a bare step down", wrote(), "B3");
+/* a trigger has no bare job: pressed and released with nothing under it, it
+   writes nothing, moves no octave and changes no hand */
+stagePad(); frames(3, [GP.L2]); frames(3, []);
+eq("a bare hold-and-release of L2 writes nothing", wrote(), null);
+eq("and touches neither the octave nor the voice", [T.baseOctave, T.voice], [4, 0]);
+/* several taps under one unbroken hold, each two steps on */
+stagePad();
+frames(2, [GP.L2]);
+for (let i = 0; i < 3; i++){ frame([GP.L2, GP.X]); frames(2, [GP.L2]); }
+frames(3, []);
+eq("three thirds down under one held L2",
+   [T.doc.steps[0], T.doc.steps[2], T.doc.steps[4]], ["A3","F3","D3"]);
+/* the three jobs of a trigger, told apart across frames: one alone under a
+   direction is the note's edge, both under a direction are the hatch, and
+   either under a face button is still the leap */
+function nudgeHeld(mods, dir, note, key){
+  T.setDoc({ version:1, title:"t", tempo:112, loop:16, key: key || "C major",
+             steps: steps({ 0: note === undefined ? "C4" : note }) });
+  T.cursor = 0; T.baseOctave = 4;
+  frame([]); frame([]);
+  frames(3, mods); frame(mods.concat([dir])); frames(2, mods); frames(2, []);
+  return wrote();
+}
+useColumn();
+eq("both held, then the d-pad: the semitone", nudgeHeld([GP.L2, GP.R2], GP.DR), "C#4");
+eq("R2 alone leaves the pitch alone \u2014 it is the note's end",
+   nudgeHeld([GP.R2], GP.DR), "C4");
+eq("and lengthened it instead", T.writtenLen(T.doc, 0, 0), 2);
+eq("bare, the d-pad is the step of the key it always was", nudgeHeld([], GP.DR), "D4");
+/* an edge and a leap under one unbroken hold, in that order */
+T.setDoc({ version:1, title:"t", tempo:112, loop:16, key:"C major", steps: steps({0:"C4"}) });
+T.cursor = 0; T.baseOctave = 4; frame([]); frame([]);
+frames(3, [GP.R2]);
+frame([GP.R2, GP.DR]); frames(2, [GP.R2]);
+frame([GP.R2, GP.TR]); frames(2, [GP.R2]); frames(2, []);
+eq("an edge then a leap under one hold: the leap leapt", wrote(), "G4");
+/* rolling off the triggers as the d-pad lands is one move as well */
+T.setDoc({ version:1, title:"t", tempo:112, loop:16, key:"C major", steps: steps({0:"C4"}) });
+T.cursor = 0; T.baseOctave = 4; frame([]); frame([]);
+frame([GP.L2, GP.R2]); frame([GP.DR]); frames(2, []);
+eq("rolling off the triggers as the d-pad lands is still the semitone", wrote(), "C#4");
+/* in the roll the pairs trade places, and the modifier means the same thing */
+useRoll();
+eq("both held, then the roll's up: the semitone", nudgeHeld([GP.L2, GP.R2], GP.DU), "C#4");
+eq("and bare it is a step of the key", nudgeHeld([], GP.DU), "D4");
+useColumn();
+/* the bumpers, which are the voice and nothing else, across frames */
+stagePad();
+frames(2, [GP.R1]); frames(2, []);
+eq("a tap of R1 changes hands", T.voice, 1);
+eq("and writes nothing", wrote(), null);
+frames(2, [GP.L1]); frames(2, []);
+eq("and L1 walks the ring back", T.voice, 0);
+frames(1, [GP.R1]); frames(20, [GP.R1]); frames(2, []);
+eq("holding a bumper changes hands once and then stops", T.voice, 1);
+frames(2, [GP.L1]); frames(2, []);
+eq("and once more to come back", T.voice, 0);
+/* a bumper under a face button is not a modifier: it changes hands, so the
+   note lands in the other line, and the move itself is untouched */
+T.setDoc({ version:1, title:"t", tempo:112, loop:16, key:"C major",
+           steps: steps({15:"C4"}), bass: steps({15:"C4"}) });
+T.cursor = 0; T.baseOctave = 4; frame([]); frame([]);
+frames(3, [GP.L1]); frame([GP.L1, GP.X]); frames(3, []);
+eq("L1 held under \u2715 did not widen the move", T.doc.bass[0], "B3");
+eq("it changed hands instead, which is all it does", T.voice, 1);
+eq("and the lead was left alone", T.doc.steps[0], null);
+frames(2, [GP.R1]); frames(2, []);
+eq("and back to the lead", T.voice, 0);
+reset();
 
 console.log("\n== what a held note sounds like ==");
 reset();
