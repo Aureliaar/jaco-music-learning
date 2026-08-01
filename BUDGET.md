@@ -36,6 +36,7 @@ Post-transition ledger (quests earned → features spent):
 | 2026-07-31 | ⚔ hocket: the handoff closed (G major; 3-3-3-3 grain, 4 rests under the amended letter — ruling in QUESTS.md; ten-loop passed) | 5 quest credits = 2 small features + 1 credit banked, + the any-size |
 | 2026-08-01 | **Pre-L3 UX pass merged (decfaf3)** — items 1,2,3,4,5,6,7,9 as ONE feature of size, priced against the L2 any-size grant. Warranty (free): crossfade fix, meta-line diet, solo/mute indicator, Start-mode dead-air, F1 scroll, done marks. L3 holds toolset + housekeeping: curriculum/infra, free. | 2 small features + 1 credit banked |
 | 2026-08-01 | **Key overlay merged** — hint strip deleted, F1 raises the crossbar-idiom key drawing; priced 1 credit (player ruling). Free alongside: meta line to tempo·key (warranty), crossbar-chip overlap (warranty), F1-page deletion + pare-down (housekeeping), L3.1 board + Scriptorium toolset (curriculum). | 2 small features banked |
+| 2026-08-02 | **Basic Scriptorium merged (7a7005f)** — per-workspace tones (`doc.tones`), crossbar goes modal (L1/R1; scriptorium mode: ↑↓ lead, ←→ bass), 4 baked kits, F4 room demolished. Priced both banked smalls, spent together; demolition warranty. Free alongside: loop-seam crossfade, held-tone settle, piano retune → Salamander recut v1 and v2 (17 roots, denoised; 64KB budget waived by player ruling), zombie-Chrome test flake hunted. | **0 — tapped out** |
 
 The closed ledger below stands as history.
 
