@@ -630,11 +630,13 @@ function renderPlayhead(step){
    nothing. The quest is named twice over in the right margin and marked in
    the left. The voice in hand is the whole point of the strip directly
    below, and what it is doing is marked there too. The loop is drawn on the
-   page itself, in the steps that fall outside it. What is left is the three
-   settings of the piece that have no other home: how fast, how high, and in
-   what. That is what the line is for. */
+   page itself, in the steps that fall outside it. The base octave went too
+   (2026-08-01): entry is relative and the roll shows where you are, so the
+   number informed nothing. What is left is the two settings of the piece
+   that have no other home: how fast, and in what. That is what the line is
+   for. */
 function renderMeta(){
-  meta.textContent = doc.tempo + " · octave " + baseOctave + " · " + doc.key;
+  meta.textContent = doc.tempo + " · " + doc.key;
 }
 function renderLoop(){
   for (var i = 0; i < STEPS; i++){

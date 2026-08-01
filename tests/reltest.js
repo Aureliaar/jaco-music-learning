@@ -174,18 +174,19 @@ eq("natural minor scale", T.SCALES.minor, [0,2,3,5,7,8,10]);
 
 console.log("\n== the key is shown in the header ==");
 reset();
-/* Seven things, of which four were said better elsewhere: the title (which
-   meant nothing), the quest (both margins), the voice and its state (the
-   strip below), the loop (the page draws it). Three settings are left. */
-eq("the meta line is the tempo, the octave and the key", ids.metatext.textContent,
-   "112 \u00b7 octave 4 \u00b7 C major");
+/* Seven things, of which five were said better elsewhere or said nothing:
+   the title, the quest (both margins), the voice and its state (the strip
+   below), the loop (the page draws it), the base octave (entry is relative;
+   the roll shows where you are). Two settings are left. */
+eq("the meta line is the tempo and the key", ids.metatext.textContent,
+   "112 \u00b7 C major");
 T.setKey("E minor");
 eq("and follows the key", ids.metatext.textContent,
-   "112 \u00b7 octave 4 \u00b7 E minor");
+   "112 \u00b7 E minor");
 reset();
 key("KeyL");
 eq("the loop is not repeated there \u2014 the page draws it", ids.metatext.textContent,
-   "112 \u00b7 octave 4 \u00b7 C major");
+   "112 \u00b7 C major");
 ok("nor is the title, which never said anything",
    ids.metatext.textContent.indexOf("untitled") < 0, ids.metatext.textContent);
 reset();
@@ -845,7 +846,7 @@ key("F3");
 ok("the meta line does not name the quest — both margins already do",
    ids.metatext.textContent.indexOf("summit") < 0, ids.metatext.textContent);
 ok("it carries that workspace's own tempo and key instead",
-   /^112 · octave 4 · D major$/.test(ids.metatext.textContent),
+   /^112 · D major$/.test(ids.metatext.textContent),
    ids.metatext.textContent);
 eq("and the margin is where the quest is named", ids.railtitle.textContent, "The Summit");
 eq("stored as the id", JSON.parse(store[T.QUEST_KEY]).active, Q[2].id);
