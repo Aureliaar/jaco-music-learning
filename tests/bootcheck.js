@@ -107,7 +107,7 @@ function freePort(start){
   ok("the page booted with no runtime error", errors.length === 0, errors);
   ok("the title rendered", (await b.eval("document.querySelector('h1').textContent")) === "Folio");
   const meta0 = await b.eval("document.getElementById('metatext').textContent");
-  ok("the header meta line is there", /octave 4/.test(meta0), meta0);
+  ok("the header meta line is the tempo and the key", /^112 · C major$/.test(meta0), meta0);
 
   /* the tempo, and the header line following it, in a real browser */
   const before = await b.eval("Number(document.getElementById('metatext').textContent.split(' · ')[0])");
@@ -484,11 +484,14 @@ function freePort(start){
       await b.key("Tab", { key:"Tab", vk:9 });
     }
   }
+  /* the meta line stopped naming the octave (2026-08-01 — display is tempo
+     and key only), so the model is asked directly; the keys still do the
+     moving, which is what is under test */
   async function setOctave(n){
     for (let i = 0; i < 6; i++){
-      const m = /octave (\d)/.exec(await meta2());
-      if (!m || Number(m[1]) === n) return;
-      if (Number(m[1]) < n) await b.key("PageUp", { key:"PageUp", vk:33 });
+      const cur = Number(await b.eval("baseOctave"));
+      if (!isFinite(cur) || cur === n) return;
+      if (cur < n) await b.key("PageUp", { key:"PageUp", vk:33 });
       else await b.key("PageDown", { key:"PageDown", vk:34 });
     }
   }
