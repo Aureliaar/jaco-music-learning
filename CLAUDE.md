@@ -118,68 +118,53 @@ the footer, which is the living key help.
 7. Windows console is cp932 — Python on quest-log.json needs
    `encoding='utf-8'` both directions.
 
-## Where the project stands (2026-07-31, evening)
+## Where the project stands (2026-08-01)
 
-L1 and L2 PASSED (L2 2026-07-31; deliverable *L2 Candidate I*, pass
-record in CURRICULUM.md; keystone ruling: ostinato). Open L2 side
-content: torch, hocket handoff, Part II reprises (audit in QUESTS.md —
-only Call and Answer II currently meets its constraint, credit pending
-ten-loop). Deliverable candidates + Ostinato Variant motif shelved as
-drill-channel workspaces in the quest log. Economy: quest barter (see
-rule 2); balance 2 small features + 1 any-size (L2 grant) — BUDGET.md.
-**Evaluation is self-administered** (family-verdict system scrapped
-2026-07-31 — never plan around outside evaluators). L3 = duration/holds
-(3.1 one voice, 3.2 two voices — pare-down rule), L4 = harmony/chords,
-groove/samples/arrangement/endgame L5–L8. Quest authoring rules:
-QUEST-COPY.md. L3 quest board: to be authored at unlock.
+L1 and L2 PASSED (records in CURRICULUM.md; keystone ruling: ostinato).
+**L3.1 is live and its board is authored**: eight holds quests delivered
+as drills with `lesson: 3` (long note, all ring, ring the seam, two
+breaths, steal the beat, threes, daylight, apprentice's hand — copy in
+QUESTS.md). The suspension, the honest drone and the pedal are parked
+for 3.2 (deferral rule). Open L2 side content: pass the torch, Part II
+reprises (audit in QUESTS.md; Call and Answer II credit pending the
+player's ten-loop call). Economy: quest barter (rule 2); **balance 2
+small features + 1 credit** — BUDGET.md. Evaluation is self-administered
+(never plan around outside evaluators). Quest authoring rules:
+QUEST-COPY.md — including the 2026-08-01 ruling: never specify the goal
+in copy; constraints make discovery likely, never guaranteed; Teaches is
+a terse name. L4 = harmony/chords, groove/samples/arrangement/endgame
+L5–L8.
 
-**In flight:** the pre-L3 UX pass runs in worktree `E:\experiments\daw-l3`
-(branch `l3-buildout`): stage 1 quest-board UX landed (f5a27be, demo on
-:4179 from `E:\experiments\daw-l3-demo`), stage 2 gamepad/input running.
-L3 holds runs in parallel in `E:\experiments\daw-l3-holds` (branch
-`l3-holds`, based on f5a27be). Per-stage player approval gates each next
-stage. Queued, in order: (a) stage-1 warranty batch — bg crossfade not
-flash; tabs need a real tab affordance; gamepad drives the EXISTING left
-rail, not a bespoke log UI ("less is more"), fix Start-mode gamepad
-dead-air; verify built-in quest text; surface done state; (b) housekeeping
-two-step after all in-flight agents land — refactor + test shrink to the
-budget (extract a tier-1 data-integrity harness ~150-200 checks, weed
-reltest of quest-log-content pins, move bootcheck/drilltest off the live
-quest-log onto temp copies) AND split folio.html (~60k tokens
-post-merge) into ~5 plain <script src> subsystem files + CSS — no ES
-modules (file:// CORS), no build step; ORDER MATTERS: reconcile
-l3-buildout+l3-holds monolith-to-monolith FIRST, split second.
-**Player authorization 2026-08-01: reconciliation → housekeeping →
-merge to main run WITHOUT per-step player checks** once the warranty
-batch lands (harness gates still apply; live tab reloads on player's
-own time); (c) stage 3 voice management (player gate).
-Merge to main only after review; pricing judged at merge.
+**Design rulings 2026-08-01 (do not re-litigate):**
+- The F1 key page is DELETED (rot-prone). The F1 keydown is still
+  swallowed on purpose — unhandled, F1 opens Chrome help, focus is lost,
+  rAF stops, and the playhead and gamepad poll die with it. F1 is
+  reserved for the queued key overlay.
+- Tonic, mode and tempo have NO runtime controls, by design: the header
+  shows `tempo · key` and nothing edits them. Tonic is fixed per
+  workspace (chromaticism is the spice channel), tempo comes from the
+  seed, mode from the contour. Binding ergonomics revisited at L4, not
+  before.
+- The meta line is tempo and key only.
 
-Backlog — pre-L3 UX pass (player's list, 2026-07-31; scope/pricing judged
-at build time, some items warranty):
-1. ~~Tabs for quests~~ — done, stage 1.
-2. ~~Reorder / favorite system for quests~~ — done, stage 1.
-3. ~~DELETE absolute mode on gamepad entirely~~ — done, stage 2.
-4. ~~Easier voice switch~~ — done, stage 2: tab / shift+tab, and L1/R1.
-5. ~~Rework L2/R2 usage~~ — done, stage 2. They were the absolute crossbar
-   and nothing else; they are the leap modifiers now, and every shoulder is
-   named in the hint strip.
-6. ~~Key help more contextually visible~~ — done, stage 1 (hint strip).
-7. ~~Don't hide the main folio during crossbar (Start) mode~~ — done,
-   stage 2: the crossbar overlays the head of the page.
-8. Better voice management — UX to be defined, must anticipate 3 voices
-   (L3.2/L4 horizon). **Still open** — the one item of the punch list that
-   is not built, and it waits on the player saying what they want.
-9. ~~Per-quest backgrounds~~ — done: `quest-backgrounds/<id>.png`, probed
-   per workspace, fetched and decoded before the ground changes, with the
-   scrim treatment on the title, the footer and both margins.
-Design against migraine rules; sigil/parchment idiom.
+**Queued builds, in order (briefs in `briefs/`, build serially):**
+1. `briefs/key-overlay.md` — the hint strip dies; togglable key overlay
+   in the crossbar idiom, top-right affordance (1 feature credit;
+   includes the crossbar-chip-overlap warranty rider).
+2. `briefs/duplicate-workspace.md` — duplicate/promote a workspace
+   (quest → "II", free play → "To Be Named"); 1 small feature.
+Player-gated, unscheduled: voice management anticipating 3 voices
+(L3.2/L4 horizon — waits on the player's UX direction); the L7
+structure-view idea (pattern placement + variation, noted 2026-08-01 —
+build at L7, not before). Design against migraine rules;
+sigil/parchment idiom.
 
-Housekeeping done 2026-08-01 (needs no repeating):
-- Tests restructured: tier-1 extracted, the harnesses weeded of live-log
-  reads, of what tier-1 owns, of what the real browser already measures,
-  and of prose scans; `cdp.mjs` gone; test LOC 6269 → 5017 against 5027 of
-  app.
-- `folio.html` split into `folio.css` + `js/*.js` (see Architecture).
-- The harnesses no longer touch `quests/quest-log.json`: they seed their
-  own log in a temp dir via `FOLIO_LOG`.
+Housekeeping done (needs no repeating): tests restructured twice —
+tier-1 extracted; live-log reads gone (harnesses seed their own log via
+`FOLIO_LOG`); leaptest folded into reltest; enumeration cut in favor of
+contracts (2026-08-01 pare-down: app 4760, tests 4449 LOC, ratio
+0.93:1 — the remaining app fat is prose comments, kept on purpose).
+`folio.html` split into `folio.css` + `js/*.js` (see Architecture). Old
+worktrees daw-l3 / daw-l3-holds / daw-l3-demo / daw-pare are merged and
+removable; the :4179 and :4182 demo servers are STALE — the live
+instrument is :4173 only.
