@@ -28,13 +28,20 @@ document.addEventListener("keydown", function(e){
   }
   if (e.altKey) return;
 
-  /* F1 was the page of the key: two columns of prose about every binding
-     there is, which went stale faster than the bindings did. It is gone and
-     the hint strip under the footer is the key help. The press is still
-     swallowed, and does nothing at all: left to the browser, F1 opens its
-     own help window and takes the folio out of focus, which is a worse
-     answer to an old habit than silence. */
-  if (code === "F1"){ e.preventDefault(); return; }
+  /* F1 was the page of the key, and then the strip under the footer; it is
+     the key overlay now — the crossbar's drawing of the controls, raised
+     over the folio and put down again by the same press. The press goes on
+     being swallowed whatever it does: left to the browser, F1 opens its own
+     help window and takes the folio out of focus, which stops the animation
+     frame and the playhead and the pad poll with it. */
+  if (code === "F1"){ e.preventDefault(); toggleKeys(); return; }
+  /* while it is up it is a page like the others: nothing written on the
+     board reaches the pattern, and the way out is escape or F1 again */
+  if (keysOpen()){
+    e.preventDefault();
+    if (code === "Escape") closeKeys();
+    return;
+  }
   if (code === "F3"){ e.preventDefault(); toggleQuests(); return; }
   if (e.shiftKey && code === "KeyB"){
     e.preventDefault(); cycleScenery(); return;
@@ -270,6 +277,16 @@ function pollPads(){
   /* select is the transport, everywhere and always: play or stop, whatever
      page is up. It is the one button that does not care where you are. */
   if (gpEdge(cur, GP_SELECT)){ if (playing) stop(); else play(); }
+
+  /* the key overlay is a page as well, and the pad honours it: nothing here
+     reaches the pattern while it is up, and ○ or start puts it down exactly
+     as either puts the crossbar down. No new chord was invented for it —
+     raising it is F1, on the board. */
+  if (keysOpen()){
+    if (gpEdge(cur, GP_CIRCLE) || gpEdge(cur, GP_START)) closeKeys();
+    navReset();
+    gpPrev = cur; return;
+  }
 
   /* start raises the settings crossbar, and puts it down again. While it is
      up the eight slots are items, read in the crossbar's own order, and
