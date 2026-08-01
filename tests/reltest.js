@@ -1779,12 +1779,12 @@ ok("and F4 raises nothing", (R.key("F4"), !T.keysOpen() &&
    !ids.quests.classList.contains("on") && !ids.settings.classList.contains("on")));
 reset();
 eq("a fresh page is on its own tones", T.validate(T.doc).tones, [null, null]);
-/* an earlier check up the file leaves the crossbar on whichever drawing it
-   was turned to, so the drawing is set here rather than assumed */
-T.xbarMode = 0;
+/* start has no memory (player ruling 2026-08-02): however the crossbar was
+   left, it always rises in the settings drawing */
+T.xbarMode = 1;
 press(GP.START);
 ok("start raises the crossbar", ids.settings.classList.contains("on"));
-eq("it opens on the drawing it was left on", T.XBAR_MODES[T.xbarMode].name, "settings");
+eq("and it always rises in the settings drawing", T.XBAR_MODES[T.xbarMode].name, "settings");
 press(GP.R1);
 eq("R1 turns it to the scriptorium", T.XBAR_MODES[T.xbarMode].name, "scriptorium");
 press(GP.L1);

@@ -234,6 +234,9 @@ function toggleSettings(){
   markSettings(on);
   if (on) questsEl.classList.remove("on");
   applyViz();
+  /* start has no memory: the crossbar always rises in its first drawing,
+     and the other modes are somewhere you go, not somewhere you wake */
+  if (on) xbarMode = 0;
   if (on) renderSettings();
   renderRails();
   say(on ? "settings · ↑↓ the workspace, ←→ the lesson · the margin, in the thumb"

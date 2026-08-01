@@ -49,16 +49,16 @@ window.addEventListener("keydown", unlockAudio, true);
    written up in the melody's octave still reads as the bass.
 
    From Lesson 3 each also carries the release it uses when a note is *held*
-   rather than struck: a note that has been ringing for half a second does
-   not stop the way a sixteenth does, and a longer taper is both what the
-   ear expects of it and what keeps the end of a long note from clicking.
-   The shape is otherwise identical — the same attack, the same level, the
-   same silence at both ends — only the sustain in the middle is longer. */
+   rather than struck — a longer taper, so the end of a long note does not
+   click — and a *decay*: the time constant of the die-away a hold rides,
+   because a tone that stands at one volume for four beats is an organ,
+   whatever the waveform. The bass dies slower than the lead on purpose,
+   the way longer strings do. */
 var TONE = [
   { type:"triangle", cut:2500, q:0.7, level:LEVEL, attack:ATTACK,
-    release:RELEASE, hold:0.10 },
+    release:RELEASE, hold:0.10, decay:1.6 },
   { type:"sine",     cut:820,  q:0.9, level:0.30,  attack:0.014,
-    release:0.070,   hold:0.17 }
+    release:0.070,   hold:0.17, decay:2.4 }
 ];
 
 /* One note: oscillator -> lowpass -> gain envelope. Gain starts at 0 and
@@ -93,13 +93,12 @@ function playNote(name, at, dur, v, held){
   g.gain.setValueAtTime(0, at);
   g.gain.linearRampToValueAtTime(t.level, at + t.attack);
   if (held){
-    /* a held tone does not stand at attention for four beats: a real
-       instrument speaks and then settles, and a triangle at constant full
-       amplitude is an organ pipe with none of the charm. One exponential
-       settle toward just over half height gives the length its shape; the
-       release still starts from wherever the settle has got to. */
-    var tau = 1.4, base = 0.55;
-    var atRel = t.level * (base + (1 - base) * Math.exp(-(relStart - at) / tau));
+    /* a held tone speaks and then dies away, all the way: one exponential
+       decay at the timbre's own rate, like a struck string. A hold is how
+       long the note is allowed to ring, not how long it is propped up. The
+       release still starts from wherever the decay has got to, so a note
+       let go early is at its own height when it is let go. */
+    var atRel = t.level * Math.exp(-(relStart - at) / t.decay);
     g.gain.exponentialRampToValueAtTime(Math.max(0.0001, atRel), relStart);
   } else {
     g.gain.setValueAtTime(t.level, relStart);
