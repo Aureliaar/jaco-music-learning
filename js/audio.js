@@ -91,7 +91,18 @@ function playNote(name, at, dur, v, held){
   var relStart = Math.max(at + t.attack + 0.001, relEnd - rel);
   g.gain.setValueAtTime(0, at);
   g.gain.linearRampToValueAtTime(t.level, at + t.attack);
-  g.gain.setValueAtTime(t.level, relStart);
+  if (held){
+    /* a held tone does not stand at attention for four beats: a real
+       instrument speaks and then settles, and a triangle at constant full
+       amplitude is an organ pipe with none of the charm. One exponential
+       settle toward just over half height gives the length its shape; the
+       release still starts from wherever the settle has got to. */
+    var tau = 1.4, base = 0.55;
+    var atRel = t.level * (base + (1 - base) * Math.exp(-(relStart - at) / tau));
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0001, atRel), relStart);
+  } else {
+    g.gain.setValueAtTime(t.level, relStart);
+  }
   g.gain.linearRampToValueAtTime(0, relEnd);
 
   osc.connect(lp); lp.connect(g); g.connect(master);

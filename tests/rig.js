@@ -144,6 +144,7 @@ function boot(opts){
     const p = { calls: [], value: 1,
       setValueAtTime(v, t){ p.calls.push(["set", v, t]); },
       linearRampToValueAtTime(v, t){ p.calls.push(["ramp", v, t]); },
+      exponentialRampToValueAtTime(v, t){ p.calls.push(["expramp", v, t]); },
       cancelScheduledValues(){ p.calls.push(["cancel"]); } };
     return p;
   }
