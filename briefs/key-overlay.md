@@ -2,9 +2,8 @@
 
 *Authored 2026-08-01 from player direction. QUEUED: do not build until the
 pare-down branch has merged (it touches the same files: views, entry,
-css, CLAUDE.md). Pricing judged at build time (likely 1 small feature —
-the hint strip it replaces was item 6 of the UX pass and shipped working,
-so this is a redesign, not warranty).*
+css, CLAUDE.md). Pricing RULED by the player 2026-08-01: 1 feature
+credit.*
 
 ## The ask
 
