@@ -71,6 +71,14 @@ the same as constraining the grid.
 three; it became hiccup / handoff / snap. If bullets pull toward
 different skills, split the quest.
 
+**Don't specify the goal — and don't over-ensure it** (player ruling,
+2026-08-01). The constraint should make the discovery *likely*, not
+guaranteed, and the copy must not explain what will be discovered. No
+concept names in titles; the *Teaches:* line is a terse name, not a
+mechanism ("syncopation by sustain." — full stop, no "the weight lands
+before the beat"). If discovery doesn't happen, the answer is more
+quests, not more words.
+
 ## Bullet format spec
 
 - En-dash bullets ("- text"), separated by `\n`. Rendered via

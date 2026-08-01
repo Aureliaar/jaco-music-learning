@@ -239,60 +239,52 @@ may hear a scale.
 
 *Authored 2026-08-01 at unlock, per QUEST-COPY.md. Delivered as drills
 (`lesson: 3`) with empty seeded pages — key and tempo chosen per quest.
-One voice only: the pare-down rule. The bass shelf stays empty until 3.2,
-where ⚔ The Suspension (the latecomer's rematch), the honest drone, and
-the pedal-under-motion idea live — all three need the second voice to be
-scored honestly (deferral rule), so they are parked, not goal-ified.
-Eight quests, the size of the L1 board; L2 reprises are not possible in
-a one-voice phase, so 3.1 carries its own full spread.*
+One voice only: the pare-down rule. The suspension, the honest drone and
+the pedal wait for 3.2 — they need the second voice (deferral rule).
+Authoring note, player ruling 2026-08-01: don't specify the goal in the
+copy; simple constraints that likely lead to the discovery; don't
+overexplain; don't over-ensure — if discovery doesn't happen, make more
+quests.*
 
 ### ⚔ The Long Note *(seed: A minor, 92)*
 - exactly one note of four steps or more
 - every other note two steps or fewer
-*Teaches: a long note is a peak in time — spend it once.*
+*Teaches: length is emphasis.*
 
 ### ⚔ All Ring *(seed: F major, 96)*
 - no silent steps anywhere
 - at least three different note lengths
-*Teaches: breath without silence — the release does the resting.*
+*Teaches: breath without silence.*
 
 ### ⚔ Ring the Seam *(seed: D minor, 100)*
 - one note rings across the loop seam
 - step 1 strikes nothing
-*Teaches: the seam is a place a note can live, not a wall.*
+*Teaches: the seam is a place, not a wall.*
 
 ### ⚔ Two Breaths *(seed: G major, 104)*
 - exactly two silent steps, not adjacent
 - exactly two notes of three steps or more
-*Teaches: a rest and a hold are different breaths; learn which one the
-phrase wants.*
+*Teaches: a rest and a hold are different breaths.*
 
 ### ⚔ Steal the Beat *(seed: E minor, 100)*
 - no strike on steps 5, 9, 13
 - a held note sounds on each
-*Teaches: syncopation by sustain — the weight lands before the beat.*
+*Teaches: syncopation by sustain.*
 
-### ⚔ Three Against Four *(seed: A minor, 132)*
+### ⚔ Threes *(seed: A minor, 132)*
 - every note exactly three steps long
 - at least five notes
-*Teaches: cross-rhythm — a three-grain against a four-grid; the seam
-settles the argument.*
+*Teaches: cross-rhythm.*
 
 ### ⚔ Daylight *(seed: D major, 96)*
 - steps 1–8: every note rings into the next
 - steps 9–16: every note cut short before the next
-*Teaches: articulation — legato and detached are the same notes with
-different endings.*
+*Teaches: articulation — endings are decisions.*
 
 ### ⚔ The Apprentice's Hand *(seed: C major, 128 — returns from L1)*
 - transcribe 16 steps of a Uematsu line, recording playing
 - change exactly four steps until it is yours
 - keep both; play them back to back
-
-Held-note melodies are finally legal — *To Zanarkand*'s right hand and
-*Terra's Theme* are on the menu now, not just running 16ths. Recall is
-not part of the exercise: loop a few seconds, hunt each note against the
-audio.
 *Teaches: the distance between imitation and voice is about four
 decisions.*
 

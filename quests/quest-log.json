@@ -1238,7 +1238,7 @@
    "id": "long-note",
    "name": "the long note",
    "summary": "- exactly one note of four steps or more\n- every other note two steps or fewer",
-   "teaches": "a long note is a peak in time — spend it once.",
+   "teaches": "length is emphasis.",
    "lesson": 3,
    "pattern": {
     "version": 1,
@@ -1296,7 +1296,7 @@
    "id": "all-ring",
    "name": "all ring",
    "summary": "- no silent steps anywhere\n- at least three different note lengths",
-   "teaches": "breath without silence — the release does the resting.",
+   "teaches": "breath without silence.",
    "lesson": 3,
    "pattern": {
     "version": 1,
@@ -1354,7 +1354,7 @@
    "id": "ring-seam",
    "name": "ring the seam",
    "summary": "- one note rings across the loop seam\n- step 1 strikes nothing",
-   "teaches": "the seam is a place a note can live, not a wall.",
+   "teaches": "the seam is a place, not a wall.",
    "lesson": 3,
    "pattern": {
     "version": 1,
@@ -1412,7 +1412,7 @@
    "id": "two-breaths",
    "name": "two breaths",
    "summary": "- exactly two silent steps, not adjacent\n- exactly two notes of three steps or more",
-   "teaches": "a rest and a hold are different breaths; learn which one the phrase wants.",
+   "teaches": "a rest and a hold are different breaths.",
    "lesson": 3,
    "pattern": {
     "version": 1,
@@ -1528,7 +1528,7 @@
    "id": "steal-beat",
    "name": "steal the beat",
    "summary": "- no strike on steps 5, 9, 13\n- a held note sounds on each",
-   "teaches": "syncopation by sustain — the weight lands before the beat.",
+   "teaches": "syncopation by sustain.",
    "lesson": 3,
    "pattern": {
     "version": 1,
@@ -1584,13 +1584,13 @@
   },
   {
    "id": "three-four",
-   "name": "three against four",
+   "name": "threes",
    "summary": "- every note exactly three steps long\n- at least five notes",
-   "teaches": "cross-rhythm — a three-grain against a four-grid; the seam settles the argument.",
+   "teaches": "cross-rhythm.",
    "lesson": 3,
    "pattern": {
     "version": 1,
-    "title": "three against four",
+    "title": "threes",
     "tempo": 132,
     "loop": 16,
     "key": "A minor",
@@ -1644,7 +1644,7 @@
    "id": "daylight",
    "name": "daylight",
    "summary": "- steps 1–8: every note rings into the next\n- steps 9–16: every note cut short before the next",
-   "teaches": "articulation — legato and detached are the same notes with different endings.",
+   "teaches": "articulation — endings are decisions.",
    "lesson": 3,
    "pattern": {
     "version": 1,
