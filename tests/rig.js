@@ -14,6 +14,7 @@
      R.ids          the fake elements the app looked up by id
      R.store        what localStorage holds
      R.sounded      every oscillator the app started
+     R.sampled      every kit buffer it started instead
      R.clock.t      the audio clock, ours to advance
      R.key(code)    a keystroke, by physical position
      R.frame/hold/press/stick/holdLong   the pad, a frame at a time
@@ -95,7 +96,7 @@ const ELEMENT_IDS =
    "qfree","qfreesigil","qdname","qdtext","qdteach","qdstate","qpreview",
    "railquests","rtabs","railtitle","railtext","railteach","railstate",
    "settings","xbarpad","xbarface","voices","vname0","vname1","vmark0","vmark1",
-   "scenery","scenefade","scriptorium","wavpicker"];
+   "scenery","scenefade"];
 
 /* ---------- the fake pad ---------- */
 const GP = { X:0, B:1, SQ:2, TR:3, L1:4, R1:5, L2:6, R2:7, SEL:8, START:9,
@@ -138,7 +139,7 @@ function boot(opts){
   };
 
   /* ---------- fake web audio ---------- */
-  const sounded = [];
+  const sounded = [], sampled = [];
   const gains = [];
   function param(){
     const p = { calls: [], value: 1,
@@ -163,6 +164,18 @@ function boot(opts){
            length it was actually asked to ring for is readable from here */
         stop(t){ if (o._rec) o._rec.off = t; }, onended:null };
       return o;
+    }
+    /* the sampled voice: enough of a buffer for the app to hand one round.
+       What is asked of it is recorded, so a harness can tell a kit playing
+       from an oscillator playing without listening to anything. */
+    createBuffer(ch, n, rate){ return { length:n, sampleRate:rate,
+      getChannelData: () => new Float32Array(n) }; }
+    createBufferSource(){
+      const b = { buffer:null, loop:false, loopStart:0, loopEnd:0,
+        playbackRate:{ setValueAtTime:(v, at) => { b._rate = v; b._at = at; } },
+        connect(){}, disconnect(){},
+        start(){ sampled.push(b); }, stop(t){ b.off = t; }, onended:null };
+      return b;
     }
     get destination(){ return {}; }
   }
@@ -302,18 +315,18 @@ function boot(opts){
     get grow(){ return _g("grow"); },
     GROW_DELAY: _g("GROW_DELAY"), growStep: _g("growStep"),
     get seamBars(){ return _g("seamBars"); },
-    /* ---- the scriptorium: the kits and the sampled voice ---- */
+    /* ---- the tones: the kits off the shelf and the sampled voice ---- */
     encodeWAV: _g("encodeWAV"), decodeWAV: _g("decodeWAV"),
-    parseManifest: _g("parseManifest"), manifestLine: _g("manifestLine"),
-    manifestText: _g("manifestText"), generate: _g("generate"),
-    truncate: _g("truncate"), resample: _g("resample"), autoLoop: _g("autoLoop"),
-    midiFreq: _g("midiFreq"), samplePlay: _g("samplePlay"),
-    nearestSample: _g("nearestSample"), scriptOn: _g("scriptOn"),
-    toggleScriptorium: _g("toggleScriptorium"), toggleWear: _g("toggleWear"),
-    KIT_KEY: _g("KIT_KEY"), WEAR_KEY: _g("WEAR_KEY"),
-    get kitWorn(){ return _g("kitWorn"); }, set kitWorn(v){ kitWorn = v; },
-    get kitSamples(){ return _g("kitSamples"); }, set kitSamples(v){ kitSamples = v; },
-    get benchNow(){ return _g("bench"); },
+    parseManifest: _g("parseManifest"), midiFreq: _g("midiFreq"),
+    samplePlay: _g("samplePlay"), nearestSample: _g("nearestSample"),
+    voiceSamples: _g("voiceSamples"), docTone: _g("docTone"),
+    toneHere: _g("toneHere"), toneLabel: _g("toneLabel"), TONE_RAIL: _g("TONE_RAIL"),
+    readTones: _g("readTones"), allOwnTone: _g("allOwnTone"),
+    toneStep: _g("toneStep"), toneValue: _g("toneValue"), toneNow: _g("toneNow"),
+    stepXbarMode: _g("stepXbarMode"), xbarStep: _g("xbarStep"),
+    XBAR_MODES: _g("XBAR_MODES"), xbarSlots: _g("xbarSlots"),
+    get xbarMode(){ return _g("xbarMode"); }, set xbarMode(v){ xbarMode = v; },
+    get kitBank(){ return _g("kitBank"); },
     STEPS: _g("STEPS"), STORE_KEY: _g("STORE_KEY"), LEGACY_KEY: _g("LEGACY_KEY"),
     defaultDoc: _g("defaultDoc"), NOTE_KEYS: _g("NOTE_KEYS") };
   window.__probe = function(n){ try { return eval(n); } catch(e){ return "__undefined__"; } };
@@ -368,7 +381,7 @@ function boot(opts){
 
   frame([]);                        /* the pad says hello once */
 
-  return { T, probe: window.__probe, ids, store, blobs, sounded, gains, clock,
+  return { T, probe: window.__probe, ids, store, blobs, sounded, sampled, gains, clock,
            document, window, winHandlers, state, FakeCtx,
            ok, eq, tally, done, key, keyUp, frame, frames, hold, press: hold,
            holdLong, stick, noPad, padState, blank, steps, GP,

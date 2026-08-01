@@ -489,8 +489,7 @@ function rollLoop(){
    everything else stay exactly where they were while the thumb turns a
    setting. */
 function applyViz(){
-  var page = questsEl.classList.contains("on") ||
-             (typeof scriptOn === "function" && scriptOn());
+  var page = questsEl.classList.contains("on");
   column.style.display = (!page && viz === "column") ? "flex" : "none";
   roll.classList.toggle("on", !page && viz === "roll");
   voicesEl.classList.toggle("off", page);   /* the strip belongs to the page */
@@ -632,15 +631,33 @@ function renderLoop(){
 var KSHOULDER = [["23%","24%"],["23%","78%"],["77%","24%"],["77%","78%"]];
 
 function keysNow(){
-  if (settingsEl.classList.contains("on")) return { where:"the settings", clusters:[
-    { kind:"pad", name:"the d-pad", pos:XPOS, items:[
-      ["←","the lesson before"],["↑","the workspace before"],
-      ["→","the lesson after"],["↓","the workspace after"]] },
-    { kind:"pad", name:"the face buttons", pos:XPOS, items:[
-      ["□","solo"],["△","mute"],["○","put it down"],["✕","the background"]] },
-    { kind:"list", name:"and otherwise", items:[
-      ["start","put it down"],["escape","put it down"],["select","play, stop"]] }
-  ]};
+  /* the crossbar has more than one drawing on it now, and the overlay is the
+     crossbar's drawing borrowed — so it says whichever one is up, and the
+     bumpers that turn from one to the other are named in both */
+  if (settingsEl.classList.contains("on")){
+    if (XBAR_MODES[xbarMode].name === "scriptorium") return {
+      where:"the settings · the scriptorium", clusters:[
+      { kind:"pad", name:"the d-pad", pos:XPOS, items:[
+        ["←","the bass's tone before"],["↑","the lead's tone before"],
+        ["→","the bass's tone after"],["↓","the lead's tone after"]],
+        note:"stepping onto a tone is wearing it · the page keeps its own, and so does every workspace" },
+      { kind:"pad", name:"the face buttons", pos:XPOS, items:[
+        ["□","—"],["△","—"],["○","put it down"],["✕","—"]] },
+      { kind:"list", name:"and otherwise", items:[
+        ["L1 · R1","the other drawing of the crossbar"],
+        ["start","put it down"],["escape","put it down"],["select","play, stop"]] }
+    ]};
+    return { where:"the settings", clusters:[
+      { kind:"pad", name:"the d-pad", pos:XPOS, items:[
+        ["←","the lesson before"],["↑","the workspace before"],
+        ["→","the lesson after"],["↓","the workspace after"]] },
+      { kind:"pad", name:"the face buttons", pos:XPOS, items:[
+        ["□","solo"],["△","mute"],["○","put it down"],["✕","the background"]] },
+      { kind:"list", name:"and otherwise", items:[
+        ["L1 · R1","the other drawing of the crossbar"],
+        ["start","put it down"],["escape","put it down"],["select","play, stop"]] }
+    ]};
+  }
   if (questsEl.classList.contains("on")) return { where:"the quest log", clusters:[
     { kind:"pad", name:"the d-pad · the arrows", pos:XPOS, items:[
       ["←","the lesson before"],["↑","up the list"],
@@ -692,7 +709,6 @@ function keysNow(){
       ["O · P","solo, mute"],
       ["F2", rollv ? "the column instead" : "the roll instead"],
       ["F3","the quest log"],
-      ["F4","the scriptorium — kits; W wears one, in the room"],
       ["shift+B","the background"],
       ["ctrl+S · ctrl+O","out to a file, in from one"],
       ["F1 · escape","these keys, away"]] },
@@ -763,8 +779,6 @@ function setKeys(on){
   keyhelpEl.classList.toggle("on", on);
   keyhelpEl.setAttribute("aria-hidden", on ? "false" : "true");
   if (keymarkEl) keymarkEl.setAttribute("aria-expanded", on ? "true" : "false");
-  /* one drawing at a time: the scriptorium steps down when the keys go up */
-  if (on && typeof scriptOn === "function" && scriptOn()) toggleScriptorium();
   if (on) renderKeys();
   else while (keyhelpEl.firstChild) keyhelpEl.removeChild(keyhelpEl.firstChild);
 }

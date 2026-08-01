@@ -57,6 +57,17 @@ var VOICE_FIELD = ["steps", "bass"];
    a board on which nothing is held is byte for byte the log it always was. */
 var VOICE_HOLD = ["hold", "basshold"];
 
+/* ---- what each voice sounds like ----
+   One entry per voice: null is the voice's own synth tone, the one the folio
+   has always had, and a string is the name of a kit on the shelf. It belongs
+   to the page rather than to the browser, so a workspace remembers its own
+   sound and switching workspaces switches it; and it is optional, so every
+   page written before it reads exactly as it always did, in the two tones
+   audio.js draws. A name this folio has never heard of is not an error: that
+   voice plays its own tone and the name is kept, because the page may well
+   travel back somewhere the kit exists. js/tones.js does the playing. */
+var VOICE_TONE = "tones";
+
 /* a page: the whole document. Every workspace holds one of these. */
 function defaultDoc(){
   return {
@@ -69,6 +80,7 @@ function defaultDoc(){
     bass: new Array(STEPS).fill(null),    /* the second voice */
     hold: new Array(STEPS).fill(1),       /* how long each lead note rings */
     basshold: new Array(STEPS).fill(1),   /* and each bass note */
+    tones: [null, null],                  /* what each voice sounds like */
     mute: [false, false],
     solo: [false, false]
   };
@@ -357,16 +369,36 @@ function allPlain(a){
   for (var i = 0; i < a.length; i++) if (a[i] !== 1) return false;
   return true;
 }
+/* the tones, read as permissively as everything optional here is: absent,
+   short, long, junk, a number where a name should be — all of it means the
+   voice's own tone, and none of it can cost the page its notes. A name is
+   trimmed and capped and otherwise believed, kit or no kit. */
+function readTones(a){
+  var out = [], i, t;
+  for (i = 0; i < VOICES; i++){
+    t = Array.isArray(a) ? a[i] : null;
+    out.push((typeof t === "string" && t.trim()) ? t.trim().slice(0, 32) : null);
+  }
+  return out;
+}
+/* every voice on its own tone: the array says only what the absence of it says */
+function allOwnTone(a){
+  if (!Array.isArray(a)) return true;
+  for (var i = 0; i < a.length; i++) if (a[i]) return false;
+  return true;
+}
 /* a page on its way out of the app — a file, the autosave, the quest log.
-   The lengths are written only where something is actually held, so a page
-   with no holds in it is the page it always was, to the byte, and an older
-   build reads what it wrote. */
+   The lengths are written only where something is actually held, and the
+   tones only where a voice is wearing one, so a page with no holds and no
+   kits in it is the page it always was, to the byte, and an older build
+   reads what it wrote. */
 function docOut(d){
   if (!d || typeof d !== "object") return d;
   var out = {}, k, v;
   for (k in d) if (Object.prototype.hasOwnProperty.call(d, k)) out[k] = d[k];
   for (v = 0; v < VOICES; v++)
     if (allPlain(out[VOICE_HOLD[v]])) delete out[VOICE_HOLD[v]];
+  if (allOwnTone(out[VOICE_TONE])) delete out[VOICE_TONE];
   return out;
 }
 function readFlags(a){
@@ -396,6 +428,7 @@ function validate(obj){
            steps: steps, bass: bass,
            hold: readHolds(obj.hold, steps),
            basshold: readHolds(obj.basshold, bass),
+           tones: readTones(obj.tones),
            mute: readFlags(obj.mute), solo: readFlags(obj.solo) };
 }
 /* The autosave is now the autosave of a workspace. Every modification runs

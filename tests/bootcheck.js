@@ -1,4 +1,4 @@
-/* Headless boot over the real server, in a real browser — 189 checks.
+/* Headless boot over the real server, in a real browser — 212 checks.
 
    What is here is what only a browser can say: that the page boots without a
    runtime error, that a real keystroke and a real pad button reach the model
@@ -233,15 +233,10 @@ function freePort(start){
   ok("and no slot is off the page",
      box.every(q => q[0] >= 0 && q[1] >= 0), box);
 
-  /* nothing in the mode is a page any more: the quest log and the key are
-     both gone from it, and neither can be reached from a slot */
-  const labels = await b.eval(
-    "Array.prototype.map.call(document.querySelectorAll('#settings .xslot .xl')," +
-    "function(e){return e.textContent;})");
-  ok("no slot of it is the quest log", labels.every(l => !/quest/i.test(l)), labels);
-  ok("and none is the key", labels.every(l => l !== "the key"), labels);
+  /* what is on the slots is reltest's, against the fake DOM; what a browser
+     alone can say is that walking them opens no page and leaves it up */
   await b.tap(GP.DL); await b.tap(GP.DR); await b.tap(GP.DU); await b.tap(GP.DD);
-  ok("walking every d-pad slot opens no page", !(await on("quests")), labels);
+  ok("walking every d-pad slot opens no page", !(await on("quests")));
   ok("and the mode is still up", await on("settings"));
 
   /* ↑ and ↓ are the workspaces in the left margin, and walking is arriving */
@@ -341,6 +336,84 @@ function freePort(start){
      (await b.key("KeyZ", { key:"z", vk:90 }),
       (await b.eval("document.getElementById('column').textContent")) !== colBefore));
   ok("no runtime errors from any of the pad work", errors.length === 0, errors);
+
+  /* ---- the crossbar's second drawing: what the two voices sound like ----
+     Only a browser can say that the second drawing is actually drawn — the
+     four slots redrawn in place, the chip marked, and the kits fetched off
+     the real server and handed to a real AudioBufferSourceNode. */
+  console.log("\n== the scriptorium, on the crossbar ==");
+  await b.tap(GP.START);
+  ok("the crossbar is up again", await on("settings"));
+  const xmode = () => b.eval("XBAR_MODES[xbarMode].name");
+  const mode0 = await xmode();
+  await b.tap(GP.R1); await wait(120);
+  ok("R1 turns it to another drawing", (await xmode()) !== mode0, [mode0, await xmode()]);
+  if ((await xmode()) !== "scriptorium"){ await b.tap(GP.R1); await wait(120); }
+  eq2("and the scriptorium is one of them", await xmode(), "scriptorium");
+  eq2("the chip for it is the marked one",
+      await b.eval("(document.querySelectorAll('#settings .xchip.on')[0]||{}).textContent"),
+      "scriptorium");
+  const xl = await b.eval("[].map.call(document.querySelectorAll('#settings .xslot .xl')," +
+                          "function(e){return e.textContent;})");
+  eq2("its four directions are the two voices, two rails each",
+      xl.slice(0, 4), ["the bass", "the lead", "the bass", "the lead"]);
+  const leadSlot = () => b.eval("document.querySelectorAll('#settings .xslot')[1].textContent");
+  const bassSlot = () => b.eval("document.querySelectorAll('#settings .xslot')[0].textContent");
+  const lead0 = await leadSlot(), bass0 = await bassSlot();
+  await b.tap(GP.DD); await wait(150);
+  ok("the d-pad down walks the lead's rail, and walking is arriving",
+     (await b.eval("doc.tones[0]")) !== null, await b.eval("doc.tones"));
+  ok("the slot reads the tone it arrived on", (await leadSlot()) !== lead0,
+     [lead0, await leadSlot()]);
+  ok("and the bass is exactly where it was", (await bassSlot()) === bass0);
+  await b.tap(GP.DR); await wait(150);
+  ok("the d-pad right walks the bass's rail instead",
+     (await b.eval("doc.tones[1]")) !== null, await b.eval("doc.tones"));
+  ok("neither slot is empty on the page",
+     (await leadSlot()).length > 6 && (await bassSlot()).length > 6,
+     [await leadSlot(), await bassSlot()]);
+  await b.shot(__dirname + "/settings-scriptorium.png");
+  await b.tap(GP.B);
+  ok("the circle button puts it down as it always did", !(await on("settings")));
+
+  /* ---- and it is really a kit that plays ----
+     The page is pointed at the checked-in piano, the shelf is waited for, and
+     then both voices are asked for a note: the one wearing a kit must come
+     out of an AudioBufferSourceNode and the one on its own tone out of an
+     oscillator. Nothing here listens; it counts what was built. */
+  console.log("\n== a voice wearing a kit plays the kit ==");
+  await b.eval("audio()");
+  let bank = 0;
+  for (let i = 0; i < 60; i++){
+    bank = await b.eval("(kitBank.piano||[]).length");
+    if (bank > 0) break;
+    await wait(200);
+  }
+  ok("the piano kit came off the shelf, decoded", bank > 0, bank);
+  ok("its samples carry the roots the manifest named",
+     (await b.eval("kitBank.piano.every(function(s){return s.root>=24&&s.root<=96;})")) === true);
+  await b.eval("doc.tones = ['piano', null];");
+  ok("the lead's samples are the kit's", (await b.eval("voiceSamples(0)!==null")) === true);
+  ok("and the bass has none", (await b.eval("voiceSamples(1)===null")) === true);
+  await b.eval("(function(){window.__b=0;window.__o=0;" +
+    "var mb=ctx.createBufferSource.bind(ctx),mo=ctx.createOscillator.bind(ctx);" +
+    "ctx.createBufferSource=function(){window.__b++;return mb();};" +
+    "ctx.createOscillator=function(){window.__o++;return mo();};})()");
+  await b.eval("playNote('C4', ctx.currentTime+0.05, 0.3, 0, true)");
+  eq2("the lead's note was built from a buffer", await b.eval("[__b,__o]"), [1, 0]);
+  await b.eval("playNote('C2', ctx.currentTime+0.05, 0.3, 1, true)");
+  eq2("and the bass's from an oscillator, as ever", await b.eval("[__b,__o]"), [1, 1]);
+  await b.eval("doc.tones = [null, null];");
+  await b.eval("playNote('C4', ctx.currentTime+0.05, 0.3, 0, true)");
+  eq2("put back on its own tone, the lead is an oscillator again",
+      await b.eval("[__b,__o]"), [1, 2]);
+  await b.eval("save();");
+  /* the drawing is sticky by design, so it is turned back to the settings
+     before the rest of the harness asks the crossbar for its own slots */
+  await b.tap(GP.START); await b.tap(GP.L1); await wait(120);
+  eq2("and L1 turns the crossbar back to the settings", await xmode(), "settings");
+  await b.tap(GP.START);
+  ok("still no runtime errors from any of the tone work", errors.length === 0, errors);
 
   /* ---- the second voice, in a real browser ---- */
   console.log("\n== two voices, on the page ==");

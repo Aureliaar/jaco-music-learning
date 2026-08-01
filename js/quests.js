@@ -90,47 +90,58 @@ function buildSettings(){
 }
 buildSettings();
 
-/* ================= the crossbar's modes (spike) =================
+/* ================= the crossbar's modes =================
    L1 and R1 turn the crossbar itself: the same eight slots, redrawn as
    another room. Settings is the first drawing; the scriptorium is the
-   second — what the lead wears, walked as the workspace rail is walked:
-   stepping onto a kit is already wearing it. */
-function wearRail(){
-  var names = (typeof shelf !== "undefined")
-    ? shelf.map(function(k){ return k.name; }) : [];
-  return ["own tone"].concat(names);
+   second — what the two voices sound like, walked as the workspace rail is
+   walked. Stepping onto a tone is already wearing it: there is nothing to
+   confirm and no list to open, exactly as in the settings drawing.
+
+   ↑ and ↓ are the lead's rail and ← and → are the bass's, which is the
+   voice strip's own arrangement turned on its side — the lead above, the
+   bass beside it — and it means the two rails never share a direction and
+   the thumb never has to say which voice it meant.
+
+   The choice belongs to the workspace. It rides in the page and is written
+   by the ordinary autosave, so switching workspaces switches the sound with
+   everything else about the page. */
+function toneRail(v){ return TONE_RAIL[v] || TONE_RAIL[0]; }
+function toneNow(v){
+  if (!Array.isArray(doc.tones)) doc.tones = [null, null];
+  return doc.tones[v] || null;
 }
-function wearNow(){
-  return (typeof kitWorn !== "undefined" && kitWorn && kitName)
-    ? kitName : "own tone";
+/* what the slot reads: the tone's name, and where the kit is not on this
+   folio's shelf — file://, or a page written somewhere else — the plain
+   fact of it, because a rail that lies about what will be heard is worse
+   than no rail */
+function toneValue(v){
+  var t = toneNow(v);
+  return toneLabel(t) + (toneHere(t) ? "" : " · not here");
 }
-function wearStep(d){
-  var rail = wearRail(), at = rail.indexOf(wearNow());
+function toneStep(v, d){
+  var rail = toneRail(v), at = rail.indexOf(toneNow(v));
   if (at < 0) at = 0;
   var next = rail[(at + d + rail.length) % rail.length];
-  if (next === "own tone"){
-    setWear(false);
-    say("the lead has its own tone");
-  } else {
-    kitName = next;
-    try { localStorage.setItem(KIT_KEY, next); } catch (e){}
-    loadKit(next, function(){
-      setWear(true);
-      say("the lead wears · " + next);
-      if (settingsEl.classList.contains("on")) renderSettings();
-    });
-  }
+  if (!Array.isArray(doc.tones)) doc.tones = [null, null];
+  doc.tones[v] = next;
+  save();                             /* the page changed; the page is written */
   renderSettings();
+  say(VOICE_NAMES[v] + " · " + toneLabel(next) +
+      (toneHere(next) ? "" : " · not on this folio's shelf — its own tone plays"));
 }
 var SCRIPTBAR = [
-  { glyph:"←", label:"" },
+  { glyph:"←", label:"the bass",
+    value:function(){ return toneValue(1); },
+    run:function(){ toneStep(1, -1); }, head:true },
   { glyph:"↑", label:"the lead",
-    value:function(){ return wearNow(); },
-    run:function(){ wearStep(-1); }, head:true },
-  { glyph:"→", label:"" },
+    value:function(){ return toneValue(0); },
+    run:function(){ toneStep(0, -1); }, head:true },
+  { glyph:"→", label:"the bass",
+    value:function(){ return toneValue(1); },
+    run:function(){ toneStep(1, 1); }, head:true },
   { glyph:"↓", label:"the lead",
-    value:function(){ return wearNow(); },
-    run:function(){ wearStep(1); }, head:true },
+    value:function(){ return toneValue(0); },
+    run:function(){ toneStep(0, 1); }, head:true },
   { glyph:"□", label:"" },
   { glyph:"△", label:"" },
   { glyph:"○", label:"close",
@@ -150,7 +161,7 @@ function stepXbarMode(d){
   say(XBAR_MODES[xbarMode].name + " · L1 R1 turn the crossbar");
 }
 function xbarStep(d){       /* what ↑↓ mean depends on the drawing */
-  if (XBAR_MODES[xbarMode].name === "scriptorium") wearStep(d);
+  if (XBAR_MODES[xbarMode].name === "scriptorium") toneStep(0, d);
   else railStep(d);
 }
 var xchips = [];
@@ -198,7 +209,7 @@ function runSetting(i){
 }
 function anyPage(){
   return questsEl.classList.contains("on") || settingsEl.classList.contains("on") ||
-         keysOpen() || (typeof scriptOn === "function" && scriptOn());
+         keysOpen();
 }
 /* the body carries the mode so that the title can step back behind the
    crossbar standing over it; the folio itself is never touched */

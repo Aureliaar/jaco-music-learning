@@ -150,10 +150,32 @@ ok("and they never leak into the lead's",
    V(pageOf({ steps: noteAt({ 0:"C4" }), bass: noteAt({ 0:"C2" }),
               basshold:[5,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1] })).hold[0] === 1);
 
+/* ---- what each voice sounds like: the one field this build added ---- */
+console.log("\n== the tones beside the voices ==");
+eq("a page with no tones is two own tones", V(pageOf()).tones, [null, null]);
+eq("a named kit is kept as it was written",
+   V(pageOf({ tones:["piano", "sub"] })).tones, ["piano", "sub"]);
+eq("one voice may name one and the other not",
+   V(pageOf({ tones:[null, "sub"] })).tones, [null, "sub"]);
+eq("a tone that is not a string is no tone", V(pageOf({ tones:[7, {}] })).tones, [null, null]);
+eq("an empty name is no tone", V(pageOf({ tones:["", "  "] })).tones, [null, null]);
+eq("a name is trimmed", V(pageOf({ tones:["  piano  ", null] })).tones, ["piano", null]);
+eq("and capped, so a page cannot carry prose here",
+   V(pageOf({ tones:["k".repeat(200), null] })).tones[0].length, 32);
+eq("tones that are not an array at all are two own tones",
+   V(pageOf({ tones:"piano" })).tones, [null, null]);
+eq("a third entry is not a third voice", V(pageOf({ tones:["a","b","c"] })).tones.length, 2);
+ok("and a page is never rejected for its tones",
+   V(pageOf({ steps: noteAt({ 0:"C4" }), tones:"rubbish" })).steps[0] === "C4");
+ok("allOwnTone says so of an absent array", T.allOwnTone(undefined) === true);
+ok("and of an array of nulls", T.allOwnTone([null, null]) === true);
+ok("and not of one with a name in it", T.allOwnTone([null, "sub"]) === false);
+
 console.log("\n== what a plain page writes out ==");
 const outPlain = T.docOut(V(pageOf({ steps: noteAt({ 0:"C4" }) })));
 ok("a page with nothing held writes no lead lengths", !("hold" in outPlain));
 ok("and no bass lengths", !("basshold" in outPlain));
+ok("a page on its own tones writes no tones", !("tones" in outPlain));
 eq("its steps are there as they always were", outPlain.steps[0], "C4");
 ok("and so is every other field",
    ["version","title","tempo","loop","key","steps","bass","mute","solo"]
@@ -163,6 +185,9 @@ const outHeld = T.docOut(V(pageOf({ steps: noteAt({ 0:"C4" }),
 ok("a page with something held writes its lengths", "hold" in outHeld);
 eq("exactly as they were asked for", outHeld.hold[0], 4);
 ok("and still no bass lengths, nothing being held there", !("basshold" in outHeld));
+const outTone = T.docOut(V(pageOf({ steps: noteAt({ 0:"C4" }), tones:[null, "sub"] })));
+ok("a page wearing a kit writes its tones", "tones" in outTone);
+eq("both of them, so the null is not a hole", outTone.tones, [null, "sub"]);
 ok("allPlain says so of an absent array", T.allPlain(undefined) === true);
 ok("and of an array of ones", T.allPlain([1,1,1]) === true);
 ok("and not of one with a two in it", T.allPlain([1,2,1]) === false);
@@ -173,6 +198,7 @@ const rich = V(pageOf({ title:"the round trip", tempo:96, loop:8, key:"E minor",
   bass:  noteAt({ 0:"E2", 8:"B2" }),
   hold:  [3,1,2,1,1,4,1,1,1,1,1,2,1,1,1,1],
   basshold:[8,1,1,1,1,1,1,1,4,1,1,1,1,1,1,1],
+  tones:["music-box", "pluck-bass"],
   mute:[false,true], solo:[false,false] }));
 const wire = JSON.stringify(T.docOut(rich));
 const back = V(JSON.parse(wire));
@@ -182,6 +208,7 @@ eq("it keeps the lead's notes", back.steps, rich.steps);
 eq("it keeps the bass's notes", back.bass, rich.bass);
 eq("it keeps the lead's lengths", back.hold, rich.hold);
 eq("it keeps the bass's lengths", back.basshold, rich.basshold);
+eq("it keeps the tones", back.tones, rich.tones);
 eq("it keeps mute", back.mute, rich.mute);
 eq("it keeps solo", back.solo, rich.solo);
 eq("and a second trip changes nothing", JSON.stringify(T.docOut(back)), wire);
@@ -397,53 +424,80 @@ ok("anything past full scale is clamped, not wrapped", clipped[0] > 0.99 && clip
 ok("nonsense is not a WAV", T.decodeWAV(new Uint8Array(80)) === null);
 ok("and neither is something too short to be one", T.decodeWAV(new Uint8Array(8)) === null);
 
-console.log("\n== the cut, and the manifest that records it ==");
-const cutMe = T.encodeWAV(new Float32Array(1000), 22050);
-eq("truncating takes the frames asked for",
-   T.truncate(T.decodeWAV(cutMe).data, 100, 300).length, 200);
-eq("downsampling halves the frames with the rate",
-   T.resample(T.decodeWAV(cutMe).data, 22050, 11025).length, 500);
-const gen = T.generate("glass", 60, 0.4, 0.7, 22050);
-ok("a generated wave comes with a loop", gen.loopEnd > gen.loopStart);
-ok("that sits inside it", gen.loopEnd <= gen.data.length);
-const lp = T.autoLoop(gen.data, 22050, 60);
-ok("a spliced loop starts before it ends", lp.loopEnd > lp.loopStart);
-ok("and stays inside the sample", lp.loopEnd <= gen.data.length && lp.loopStart >= 0);
-
-const rec = { file:"piano-c4.wav", root:60, rate:11025, frames:5000, bytes:10044,
-              loopStart:3000, loopEnd:4200, decay:2.4, source:"a piano, curated" };
-const line = T.manifestLine(rec);
-ok("the line names the file", /`piano-c4\.wav`/.test(line), line);
-ok("and reads as prose", / — root C4 · 11025 Hz/.test(line), line);
-const readBack = T.parseManifest(T.manifestText("piano", [rec]))["piano-c4.wav"];
-ok("the manifest is read back at all", !!readBack);
-eq("with the root note", readBack.root, 60);
-eq("the rate", readBack.rate, 11025);
-eq("the loop points", [readBack.loopStart, readBack.loopEnd], [3000, 4200]);
-eq("the imposed decay", readBack.decay, 2.4);
-eq("and where the material came from", readBack.source, "a piano, curated");
-const plain = T.parseManifest("# kit: x\n\nprose about nothing\n- `hat.wav` — 8000 Hz · 900 B\n");
+console.log("\n== the manifest, which is where a sample's root and loop live ==");
+const read = T.parseManifest(
+  "# kit: piano\n\nprose about nothing\n" +
+  "- `piano-c4.wav` \u2014 root C4 \u00b7 11025 Hz \u00b7 0.45 s \u00b7 10044 B \u00b7 " +
+  "loop 3000\u20134200 \u00b7 decay 2.4 s \u00b7 source: a piano, curated\n")["piano-c4.wav"];
+ok("a sample line is read at all", !!read);
+eq("with the root note", read.root, 60);
+eq("the rate", read.rate, 11025);
+eq("the loop points", [read.loopStart, read.loopEnd], [3000, 4200]);
+eq("the imposed decay", read.decay, 2.4);
+eq("and where the material came from", read.source, "a piano, curated");
+const plain = T.parseManifest("# kit: x\n\nprose about nothing\n- `hat.wav` \u2014 8000 Hz \u00b7 900 B\n");
 eq("a line with no loop and no decay is still a sample", Object.keys(plain).join(), "hat.wav");
 eq("with no loop", [plain["hat.wav"].loopStart, plain["hat.wav"].loopEnd], [0, 0]);
 eq("and no decay", plain["hat.wav"].decay, 0);
 eq("prose around it is not a sample", Object.keys(T.parseManifest("just a sentence")).length, 0);
 
-console.log("\n== the sampled voice, and what it refuses ==");
-T.kitSamples = [{ file:"a.wav", rate:8000, data:new Float32Array(80), frames:80,
-                  root:48, loopStart:0, loopEnd:0, decay:0, buf:null },
-                { file:"b.wav", rate:8000, data:new Float32Array(80), frames:80,
-                  root:72, loopStart:0, loopEnd:0, decay:0, buf:null }];
-T.kitWorn = true;
-eq("the nearer root is the one that plays", T.nearestSample(T.midiFreq(50)).root, 48);
-eq("and from above, likewise", T.nearestSample(T.midiFreq(70)).root, 72);
-T.kitWorn = false;
-ok("nothing is worn, nothing is chosen", T.nearestSample(T.midiFreq(60)) === null);
+/* The kits are checked in, so what is on the shelf is a data format like any
+   other: the label has to name files that are there, at the rate and the roots
+   it claims, and the drawer has to fit the budget the tool states. Baked by
+   kits/bake.mjs; read here exactly as the page reads them. */
+console.log("\n== the kits on the shelf, as the page will read them ==");
+for (const kit of fs.readdirSync(REPO + "/kits", { withFileTypes:true })
+                    .filter(e => e.isDirectory()).map(e => e.name).sort()){
+  const dir = REPO + "/kits/" + kit;
+  const meta = T.parseManifest(fs.readFileSync(dir + "/manifest.md", "utf8"));
+  const names = Object.keys(meta), bad = [];
+  let bytes = 0;
+  for (const n of names){
+    if (!fs.existsSync(dir + "/" + n)){ bad.push(n + ": not on disk"); continue; }
+    bytes += fs.statSync(dir + "/" + n).size;
+    const w = T.decodeWAV(new Uint8Array(fs.readFileSync(dir + "/" + n)));
+    if (!w) bad.push(n + ": will not decode");
+    else if (w.rate !== meta[n].rate) bad.push(n + ": rate " + w.rate + " not " + meta[n].rate);
+    else if (!(meta[n].loopEnd === 0 || (meta[n].loopStart < meta[n].loopEnd &&
+               meta[n].loopEnd <= w.data.length))) bad.push(n + ": loop outside the sample");
+    if (!(meta[n].root >= 24 && meta[n].root <= 96)) bad.push(n + ": root " + meta[n].root);
+  }
+  ok(kit + ": its label names samples, and every one of them holds up",
+     names.length > 0 && bad.length === 0, bad);
+  ok(kit + ": every sample on disk is on the label",
+     fs.readdirSync(dir).filter(n => n.endsWith(".wav")).every(n => names.includes(n)));
+  ok(kit + ": and the drawer fits the 64KB budget", bytes <= 65536, bytes);
+}
+
+console.log("\n== the sampled voice, per voice, and what it refuses ==");
+const twoRoots = [{ file:"a.wav", rate:8000, data:new Float32Array(80), frames:80,
+                    root:48, loopStart:0, loopEnd:0, decay:0, buf:null },
+                  { file:"b.wav", rate:8000, data:new Float32Array(80), frames:80,
+                    root:72, loopStart:0, loopEnd:0, decay:0, buf:null }];
+eq("the nearer root is the one that plays", T.nearestSample(twoRoots, T.midiFreq(50)).root, 48);
+eq("and from above, likewise", T.nearestSample(twoRoots, T.midiFreq(70)).root, 72);
+ok("no samples, nothing chosen", T.nearestSample(null, T.midiFreq(60)) === null);
+T.audioInit();                       /* the sampled voice needs a context to ask */
+T.kitBank.demo = twoRoots;
+T.doc.tones = [null, null];
+ok("both voices on their own tone: nothing is sampled",
+   T.voiceSamples(0) === null && T.voiceSamples(1) === null);
 ok("and the sampled voice declines, so the folio's own tone plays",
    T.samplePlay(440, 0, 0.2, 0, false) === false);
-T.kitWorn = true;
-ok("the bass is never the kit's", T.samplePlay(440, 0, 0.2, 1, false) === false);
-T.kitWorn = false;
-T.kitSamples = [];
+T.doc.tones = [null, "demo"];
+ok("a kit named on the bass is the bass's", T.voiceSamples(1) === twoRoots);
+ok("and the lead is untouched by it", T.voiceSamples(0) === null);
+ok("the bass plays a buffer now", T.samplePlay(T.midiFreq(48), 0, 0.2, 1, false) === true);
+ok("while the lead still plays its own tone",
+   T.samplePlay(T.midiFreq(48), 0, 0.2, 0, false) === false);
+T.doc.tones = ["nowhere", null];
+ok("a kit this folio has not got is its own tone, not an error",
+   T.voiceSamples(0) === null && T.samplePlay(440, 0, 0.2, 0, false) === false);
+ok("and the rail says as much", T.toneHere("nowhere") === false && T.toneHere(null) === true);
+eq("a folder name is not what is said out loud", T.toneLabel("music-box"), "music box");
+eq("and no tone at all has a name too", T.toneLabel(null), "own tone");
+delete T.kitBank.demo;
+T.doc.tones = [null, null];
 
 /* ================= 3. server.mjs, driven for real ================= */
 console.log("\n== the server, against a log of its own ==");

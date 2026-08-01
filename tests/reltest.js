@@ -1,5 +1,5 @@
 /* Headless regression harness for folio.html: the instrument's identity.
-   697 checks.
+   726 checks.
 
    What the hands do, and what the page does about it — plain entry by
    physical position, the contour moves the pad writes, the leaps and the
@@ -1763,35 +1763,85 @@ ok("it opens over the quest log as well", T.keysOpen());
 eq("and says so there", T.keysNow().where, "the quest log");
 T.closeKeys(); T.toggleQuests(); reset();
 
-/* ================= the scriptorium, by key =================
-   F4 raises the room the kits are made in; inside it W is what the lead voice
-   wears and nothing at all reaches the pattern. Outside it W is a note like
-   any other, which is the only thing that could have gone wrong here. */
-console.log("\n== the scriptorium, raised and put down ==");
+/* ================= the crossbar's scriptorium =================
+   The room with the dials in it is gone. What a voice sounds like is a rail
+   on the crossbar's second drawing: L1 and R1 turn to it, and then the four
+   directions are two rails — up and down the lead's, left and right the
+   bass's. Walking is arriving, and where it arrives is the *page*, so it
+   autosaves and it follows the workspace. */
+console.log("\n== the crossbar, turned to the scriptorium ==");
+closePages(); reset();
 page({}); T.cursor = 0;
 R.key("KeyW");
-ok("W outside the room is the note it has always been", T.doc.steps[0] !== null,
+ok("W is the note it has always been, no room to swallow it", T.doc.steps[0] !== null,
    T.doc.steps[0]);
-page({}); T.cursor = 0;
-R.key("F4");
-ok("F4 raises the scriptorium", T.scriptOn() === true);
-R.key("KeyC");
-eq("a note key inside it writes nothing", T.doc.steps[0], null);
-R.key("KeyW");
-ok("W with no kit loaded wears nothing", T.kitWorn === false);
-T.kitSamples = [{ file:"a.wav", rate:8000, data:new Float32Array(8), frames:8,
-                  root:60, loopStart:0, loopEnd:0, decay:0, buf:null }];
-R.key("KeyW");
-ok("W with a kit loaded wears it", T.kitWorn === true);
-R.key("KeyW");
-ok("and W again takes it off", T.kitWorn === false);
-R.key("Escape");
-ok("escape puts the room down", T.scriptOn() === false);
-R.key("F4"); R.key("F4");
-ok("F4 twice leaves it down", T.scriptOn() === false);
-T.kitSamples = [];
-page({}); T.cursor = 0;
-R.key("KeyW");
-ok("and the board is the board again", T.doc.steps[0] !== null, T.doc.steps[0]);
+ok("and F4 raises nothing", (R.key("F4"), !T.keysOpen() &&
+   !ids.quests.classList.contains("on") && !ids.settings.classList.contains("on")));
+reset();
+eq("a fresh page is on its own tones", T.validate(T.doc).tones, [null, null]);
+/* an earlier check up the file leaves the crossbar on whichever drawing it
+   was turned to, so the drawing is set here rather than assumed */
+T.xbarMode = 0;
+press(GP.START);
+ok("start raises the crossbar", ids.settings.classList.contains("on"));
+eq("it opens on the drawing it was left on", T.XBAR_MODES[T.xbarMode].name, "settings");
+press(GP.R1);
+eq("R1 turns it to the scriptorium", T.XBAR_MODES[T.xbarMode].name, "scriptorium");
+press(GP.L1);
+eq("and L1 turns it back", T.XBAR_MODES[T.xbarMode].name, "settings");
+press(GP.L1);
+eq("the drawings wrap", T.XBAR_MODES[T.xbarMode].name, "scriptorium");
+const slots = T.xbarSlots();
+eq("all four directions are the head of the slot", slots.slice(0, 4).map(x => !!x.head),
+   [true, true, true, true]);
+eq("up and down are the lead", [slots[1].label, slots[3].label], ["the lead", "the lead"]);
+eq("left and right are the bass", [slots[0].label, slots[2].label], ["the bass", "the bass"]);
+ok("and nothing is on the face buttons but the way out",
+   [4, 5, 7].every(i => !slots[i].run) && !!slots[6].run);
+
+console.log("\n== the two rails, walked ==");
+frames(2, [GP.DD]); frames(2, []);
+eq("down walks the lead's rail on", T.doc.tones[0], T.TONE_RAIL[0][1]);
+eq("and leaves the bass alone", T.doc.tones[1], null);
+frames(2, [GP.DU]); frames(2, []);
+eq("up walks it back", T.doc.tones[0], null);
+frames(2, [GP.DU]); frames(2, []);
+eq("and past the head it wraps to the end",
+   T.doc.tones[0], T.TONE_RAIL[0][T.TONE_RAIL[0].length - 1]);
+press(GP.DR);
+eq("right walks the bass's rail on", T.doc.tones[1], T.TONE_RAIL[1][1]);
+eq("and the lead is where it was", T.doc.tones[0], T.TONE_RAIL[0][T.TONE_RAIL[0].length - 1]);
+press(GP.DL);
+eq("left walks it back", T.doc.tones[1], null);
+press(GP.DL);
+eq("and it wraps too", T.doc.tones[1], T.TONE_RAIL[1][T.TONE_RAIL[1].length - 1]);
+ok("every rail begins on the voice's own tone, and neither shares a kit",
+   T.TONE_RAIL.every(r => r[0] === null) &&
+   T.TONE_RAIL[0].every(t => t === null || T.TONE_RAIL[1].indexOf(t) < 0));
+ok("a kit that is not on this folio's shelf says so",
+   / · not here$/.test(T.xbarSlots()[3].value()), T.xbarSlots()[3].value());
+ok("the tones are autosaved with the page",
+   JSON.stringify(JSON.parse(store["folio.v1"]).tones) === JSON.stringify(T.doc.tones),
+   store["folio.v1"]);
+ok("the overlay describes the drawing that is up",
+   T.keysNow().where === "the settings · the scriptorium", T.keysNow().where);
+press(GP.B);
+ok("○ puts the crossbar down as it always did", !ids.settings.classList.contains("on"));
+
+console.log("\n== a tone belongs to the workspace ==");
+T.switchWorkspace(null);
+T.doc.tones = ["piano", "sub"]; T.save();
+T.switchWorkspace("stray");
+eq("another workspace has its own tones", T.doc.tones, [null, null]);
+T.doc.tones = ["pluck", null]; T.save();
+T.switchWorkspace(null);
+eq("and free play still has the ones it was left with", T.doc.tones, ["piano", "sub"]);
+T.switchWorkspace("stray");
+eq("as does the quest", T.doc.tones, ["pluck", null]);
+ok("the log carries them per workspace",
+   T.stateToJSON().quests.stray.pattern.tones.join() === "pluck,");
+T.doc.tones = [null, null]; T.switchWorkspace(null);
+T.doc.tones = [null, null]; T.save();
+closePages(); reset();
 
 R.done();

@@ -6,6 +6,7 @@
      folio.html              -> dist/index.html
      folio.css               -> dist/folio.css               (the whole look)
      js/*.js                 -> dist/js/*.js                 (the app itself)
+     kits/<kit>/             -> dist/kits/<kit>/             (the tones' samples)
      auditor.html            -> dist/auditor.html            (the blind lineup)
      quests/quest-log.json   -> dist/quests/quest-log.json   (the seed)
      folio-forest.png        -> dist/folio-forest.png        (quiet scenery)
@@ -34,9 +35,7 @@ const FILES = [
   ["js/audio.js", "js/audio.js"],
   ["js/edit.js", "js/edit.js"],
   ["js/quests.js", "js/quests.js"],
-  /* the scriptorium travels; the kits themselves do not — a shared copy is
-     read-only and has no shelf to write to, so it falls back to the tone */
-  ["js/scriptorium.js", "js/scriptorium.js"],
+  ["js/tones.js", "js/tones.js"],
   ["js/entry.js", "js/entry.js"],
   ["js/boot.js", "js/boot.js"],
   ["auditor.html", "auditor.html"],
@@ -86,6 +85,31 @@ try {
   console.log("  " + BG + "/ -> dist/" + BG + "/ (" + names.length + " stills)");
 } catch {
   console.log("  (skipped " + BG + "/ — not present)");
+}
+
+/* The kits the two tone rails name. A dumb host has no /api/kits to list
+   them, so the page falls back to asking each kit for its manifest.md by
+   name off the disk — which is why the folders travel whole, samples and
+   label together, and why nothing here needs an index. bake.mjs stays home:
+   the shared copy plays kits, it does not make them. */
+const KITS = "kits";
+try {
+  const dirs = (await fs.readdir(path.join(ROOT, KITS), { withFileTypes: true }))
+                 .filter(e => e.isDirectory()).map(e => e.name).sort();
+  let n = 0;
+  for (const d of dirs){
+    const names = (await fs.readdir(path.join(ROOT, KITS, d)))
+                    .filter(f => f.endsWith(".wav") || f === "manifest.md").sort();
+    if (!names.length) continue;
+    await fs.mkdir(path.join(DIST, KITS, d), { recursive: true });
+    for (const f of names){
+      await fs.copyFile(path.join(ROOT, KITS, d, f), path.join(DIST, KITS, d, f));
+      n++;
+    }
+  }
+  console.log("  " + KITS + "/ -> dist/" + KITS + "/ (" + dirs.length + " kits, " + n + " files)");
+} catch {
+  console.log("  (skipped " + KITS + "/ — not present)");
 }
 
 const sharedLogPath = path.join(DIST, "quests", "quest-log.json");

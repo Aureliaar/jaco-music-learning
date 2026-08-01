@@ -42,14 +42,28 @@ const seen = [];
      the per-workspace stills after that: the instrument, the blind lineup
      page, the seed, and the pictures — and nothing else */
   const stills = listed.filter(n => n.indexOf("quest-backgrounds/") === 0);
-  const rest = listed.filter(n => n.indexOf("quest-backgrounds/") !== 0);
+  const samples = listed.filter(n => n.indexOf("kits/") === 0);
+  const rest = listed.filter(n => n.indexOf("quest-backgrounds/") !== 0 &&
+                                  n.indexOf("kits/") !== 0);
   ok("dist holds the pages, the app, the seed and nothing else",
      JSON.stringify(rest) === JSON.stringify(
        ["auditor.html","folio-forest.png","folio-paper.png","folio-sea.png",
         "folio.css","index.html",
         "js/audio.js","js/boot.js","js/edit.js","js/entry.js","js/quests.js",
-        "js/scriptorium.js","js/state.js","js/views.js",
+        "js/state.js","js/tones.js","js/views.js",
         "quests/quest-log.json"]), rest);
+  /* the kits travel whole — a dumb host has no /api/kits to list them, so the
+     page asks each one for its manifest.md by name and the label has to be
+     there beside the samples it names */
+  const kitDirs = fs.readdirSync(REPO + "/kits", { withFileTypes:true })
+                    .filter(e => e.isDirectory()).map(e => e.name).sort();
+  ok("every kit on the shelf travels", kitDirs.length > 0 &&
+     kitDirs.every(k => samples.includes("kits/" + k + "/manifest.md")), samples);
+  ok("with its samples beside its label",
+     kitDirs.every(k => samples.some(n => n.indexOf("kits/" + k + "/") === 0 &&
+                                          n.endsWith(".wav"))), samples);
+  ok("and nothing else out of kits/ — the bake script stays home",
+     samples.every(n => n.endsWith(".wav") || n.endsWith("/manifest.md")), samples);
   /* the split is only safe if every script the page names actually travels */
   const named = (fs.readFileSync(DIST + "/index.html", "utf8")
                    .match(/<script src="([^"]+)"/g) || [])
@@ -111,6 +125,20 @@ const seen = [];
   ok("it asked for /api once", seen.filter(s => /api\/quest-log/.test(s)).length === 1, seen);
   ok("and then for the committed log",
      seen.some(s => s === "GET /quests/quest-log.json"), seen);
+
+  /* and the fallback is not decoration: with no API to list the shelf, the
+     page must still have the kits its rails name, off plain files */
+  let bank = 0;
+  for (let i = 0; i < 40; i++){
+    bank = await b.eval("(kitBank.piano||[]).length");
+    if (bank > 0) break;
+    await wait(200);
+  }
+  ok("a dumb host still gives the page its kits", bank > 0, bank);
+  ok("asked for by name, off the disk",
+     seen.some(t => t === "GET /kits/piano/manifest.md"), seen.filter(t => /kits/.test(t)));
+  ok("and the samples the label named came with it",
+     seen.some(t => t.indexOf("GET /kits/piano/") === 0 && /[.]wav$/.test(t)));
 
   console.log("\n== quiet scenery ==");
   ok("paper is the calm default",
