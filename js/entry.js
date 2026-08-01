@@ -318,14 +318,17 @@ function pollPads(){
      gpNav rather than by the edge loop, which skips them. */
   if (settingsEl.classList.contains("on")){
     if (gpEdge(cur, GP_START)){ closeSettings(); navReset(); gpPrev = cur; return; }
+    /* the bumpers turn the crossbar itself: which drawing the slots are */
+    if (gpEdge(cur, GP_L1)) stepXbarMode(-1);
+    if (gpEdge(cur, GP_R1)) stepXbarMode(1);
     for (i = 0; i < 8; i++){
       if (i === 1 || i === 3) continue;         /* the rail, held below */
       if (gpEdge(cur, GP_SLOTS[i])){ runSetting(i); break; }
     }
     if (settingsEl.classList.contains("on")){
       var sy = (gp.axes && gp.axes.length > 1) ? gp.axes[1] : 0;
-      gpNav(cur[GP_DU] || sy <= -STICK_DEAD, "up",   -1, now, railStep);
-      gpNav(cur[GP_DD] || sy >=  STICK_DEAD, "down",  1, now, railStep);
+      gpNav(cur[GP_DU] || sy <= -STICK_DEAD, "up",   -1, now, xbarStep);
+      gpNav(cur[GP_DD] || sy >=  STICK_DEAD, "down",  1, now, xbarStep);
     } else navReset();                          /* ○ put it down */
     gpPrev = cur; return;
   }

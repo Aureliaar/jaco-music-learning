@@ -503,6 +503,16 @@
      saying is either on the crossbar itself or on the voice strip below. */
   header{transition:opacity 0.3s ease-out;}
   body[data-settings] header{opacity:0;}
+  /* the crossbar's own tabs: which drawing the eight slots are.
+     L1 and R1 turn it; the mouse may tap a name. */
+  .xchips{
+    display:flex;justify-content:center;gap:1.2rem;
+    margin:0 0 0.6rem;
+    font-size:0.86em;letter-spacing:0.06em;
+    color:var(--faded);
+  }
+  .xchip{cursor:pointer;}
+  .xchip.on{color:var(--gilt);}
   .xbars{
     display:flex;
     justify-content:center;

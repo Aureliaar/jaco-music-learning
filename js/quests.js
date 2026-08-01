@@ -89,6 +89,86 @@ function buildSettings(){
   }
 }
 buildSettings();
+
+/* ================= the crossbar's modes (spike) =================
+   L1 and R1 turn the crossbar itself: the same eight slots, redrawn as
+   another room. Settings is the first drawing; the scriptorium is the
+   second — what the lead wears, walked as the workspace rail is walked:
+   stepping onto a kit is already wearing it. */
+function wearRail(){
+  var names = (typeof shelf !== "undefined")
+    ? shelf.map(function(k){ return k.name; }) : [];
+  return ["own tone"].concat(names);
+}
+function wearNow(){
+  return (typeof kitWorn !== "undefined" && kitWorn && kitName)
+    ? kitName : "own tone";
+}
+function wearStep(d){
+  var rail = wearRail(), at = rail.indexOf(wearNow());
+  if (at < 0) at = 0;
+  var next = rail[(at + d + rail.length) % rail.length];
+  if (next === "own tone"){
+    setWear(false);
+    say("the lead has its own tone");
+  } else {
+    kitName = next;
+    try { localStorage.setItem(KIT_KEY, next); } catch (e){}
+    loadKit(next, function(){
+      setWear(true);
+      say("the lead wears · " + next);
+      if (settingsEl.classList.contains("on")) renderSettings();
+    });
+  }
+  renderSettings();
+}
+var SCRIPTBAR = [
+  { glyph:"←", label:"" },
+  { glyph:"↑", label:"the lead",
+    value:function(){ return wearNow(); },
+    run:function(){ wearStep(-1); }, head:true },
+  { glyph:"→", label:"" },
+  { glyph:"↓", label:"the lead",
+    value:function(){ return wearNow(); },
+    run:function(){ wearStep(1); }, head:true },
+  { glyph:"□", label:"" },
+  { glyph:"△", label:"" },
+  { glyph:"○", label:"close",
+    value:function(){ return "back to the page"; },
+    run:function(){ closeSettings(); } },
+  { glyph:"✕", label:"" }
+];
+var XBAR_MODES = [
+  { name:"settings",    slots:SETTINGS },
+  { name:"scriptorium", slots:SCRIPTBAR }
+];
+var xbarMode = 0;
+function xbarSlots(){ return XBAR_MODES[xbarMode].slots; }
+function stepXbarMode(d){
+  xbarMode = (xbarMode + d + XBAR_MODES.length) % XBAR_MODES.length;
+  renderSettings();
+  say(XBAR_MODES[xbarMode].name + " · L1 R1 turn the crossbar");
+}
+function xbarStep(d){       /* what ↑↓ mean depends on the drawing */
+  if (XBAR_MODES[xbarMode].name === "scriptorium") wearStep(d);
+  else railStep(d);
+}
+var xchips = [];
+(function buildChips(){
+  var row = document.createElement("div");
+  row.className = "xchips";
+  for (var i = 0; i < XBAR_MODES.length; i++){
+    var c = document.createElement("span");
+    c.className = "xchip";
+    c.textContent = XBAR_MODES[i].name;
+    c.addEventListener("click", (function(n){
+      return function(){ xbarMode = n; renderSettings(); };
+    })(i));
+    row.appendChild(c);
+    xchips.push(c);
+  }
+  settingsEl.insertBefore(row, settingsEl.firstChild);
+})();
 /* the strip answers the mouse too: a name chooses that voice, its mark
    under it takes it away and gives it back */
 for (var i = 0; i < VOICES; i++){
@@ -100,16 +180,19 @@ for (var i = 0; i < VOICES; i++){
   })(i));
 }
 function renderSettings(){
+  var slots = xbarSlots();
   for (var i = 0; i < 8; i++){
-    var s = SETTINGS[i], r = xslots[i];
+    var s = slots[i], r = xslots[i];
     r.glyph.textContent = s.glyph;
     r.label.textContent = s.label || "—";
     r.value.textContent = s.run ? s.value() : "";
     r.el.className = "xslot" + (s.run ? "" : " none") + (s.head ? " head" : "");
   }
+  for (i = 0; i < xchips.length; i++)
+    xchips[i].classList.toggle("on", i === xbarMode);
 }
 function runSetting(i){
-  var s = SETTINGS[i];
+  var s = xbarSlots()[i];
   if (!s || !s.run){ say("nothing on that slot yet"); return; }
   s.run();
 }
