@@ -21,6 +21,8 @@
                       the key, the tempo, the loop, the pages
        js/quests.js   workspaces, drills, the quest log on disk and its sync,
                       the board's tabs, the two side rails
+       js/scriptorium.js  the kits: the WAV both ways, the foundry, the cut,
+                      the shelf over /api/kits, and the sampled voice
        js/entry.js    the keyboard by physical position, and the gamepad
        js/boot.js     the order it all happens in, once
 
@@ -74,6 +76,8 @@
     </div>
     <p>Constraint &eacute;tudes, in any order, abandoned guiltlessly. Each is a workspace holding its own page, and nothing is ever bound, loaded or lost. &#10087; complete &middot; &#8226; something written &middot; &#9876; where you are &middot; &#10022; kept to hand. The left margin carries the same marks for the lesson it is showing.</p>
   </section>
+
+  <section class="scriptorium" id="scriptorium" aria-label="the scriptorium"></section>
   </div>
 
   <div class="divider"></div>
@@ -105,6 +109,7 @@
   <button type="button" data-scene="quest" aria-pressed="false">quest</button>
 </div>
 <input type="file" id="picker" class="hidden-input" accept=".json,.folio,application/json" tabindex="-1">
+<input type="file" id="wavpicker" class="hidden-input" accept="audio/*,.wav" tabindex="-1">
 
 
 <script src="js/state.js"></script>
@@ -112,6 +117,7 @@
 <script src="js/audio.js"></script>
 <script src="js/edit.js"></script>
 <script src="js/quests.js"></script>
+<script src="js/scriptorium.js"></script>
 <script src="js/entry.js"></script>
 <script src="js/boot.js"></script>
 </body>

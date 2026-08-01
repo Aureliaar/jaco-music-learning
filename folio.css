@@ -1131,3 +1131,95 @@
   /* the footer takes the scene's darkening breath through the box it sits in */
   .foot{width:100%;position:relative;isolation:isolate;}
   .hidden-input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;left:-9999px;}
+
+  /* ---- the scriptorium ----
+     The room where the kits are made: a page like the quest log, on the same
+     measure and the same height, so raising it moves nothing around it. It is
+     a workshop, so it is denser than the rest of the folio — but the density
+     is rows of words on parchment, never a grid: no rules between the rows,
+     no boxes inside boxes, and every rim a hairline. Nothing here moves. */
+  .scriptorium{
+    display:none;
+    width:100%;
+    max-width:44rem;
+    min-height:38.6rem;
+    color:var(--ink);
+    font-size:0.9rem;
+    line-height:1.45;
+  }
+  .scriptorium.on{display:block;}
+  .scriptorium h2{
+    margin:0 0 0.7rem;
+    font-weight:400;
+    font-variant:small-caps;
+    letter-spacing:0.14em;
+    font-size:1.05rem;
+  }
+  .sbody{display:flex;flex-direction:column;gap:0.34rem;}
+  .srow{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:0.3rem 0.42rem;
+    min-height:1.5rem;
+  }
+  .slabel{
+    font-variant:small-caps;
+    letter-spacing:0.1em;
+    color:var(--faded);
+    min-width:4.2rem;
+  }
+  .sval{color:var(--ink);opacity:0.78;min-width:4.4rem;font-size:0.84rem;}
+  .sdim{color:var(--faded);font-size:0.84rem;}
+  .sempty{padding:1.1rem 0;font-style:italic;}
+  .sfile{min-width:11rem;}
+  .skit{font-variant:small-caps;letter-spacing:0.08em;min-width:7rem;}
+  .sover{color:#8A4B22;}
+  /* the budget is the number the interlude is about, so it is the one line
+     with any weight to it — a sealed strip of the wash, no rule under it */
+  .sbudget{
+    background:linear-gradient(rgba(201,188,160,0.24),rgba(201,188,160,0.10));
+    border-radius:0.2rem;
+    padding:0.3rem 0.5rem;
+    margin:0.15rem 0 0.35rem;
+  }
+  .ssample{padding-left:0.2rem;color:var(--ink);}
+  .sbtn{
+    font:inherit;
+    font-size:0.82rem;
+    color:var(--ink);
+    background:transparent;
+    border:1px solid var(--rule);
+    border-radius:0.9rem;
+    padding:0.1rem 0.62rem;
+    cursor:pointer;
+    opacity:0.86;
+    transition:opacity 0.18s ease-out, border-color 0.18s ease-out;
+  }
+  .sbtn:hover{opacity:1;border-color:var(--gilt);}
+  .sbtn.on{border-color:var(--gilt);color:var(--gilt);opacity:1;}
+  .sbtn.keep{border-color:var(--gilt);}
+  .sbtn.off{opacity:0.45;}
+  .sname{
+    font:inherit;
+    font-size:0.84rem;
+    color:var(--ink);
+    background:rgba(255,252,244,0.34);
+    border:0;
+    border-bottom:1px solid var(--rule);
+    padding:0.06rem 0.3rem;
+    width:9.5rem;
+  }
+  /* a knob and its two words travel together and wrap together */
+  .sgroup{display:inline-flex;align-items:center;gap:0.3rem;}
+  .sgroup .slabel{min-width:0;}
+  .sgroup .sval{min-width:3.4rem;text-align:right;}
+  .sdial{width:7.5rem;accent-color:var(--gilt);}
+  .swave{
+    width:100%;
+    height:4.2rem;
+    margin:0.4rem 0 0.2rem;
+    background:rgba(255,252,244,0.30);
+    border-radius:0.2rem;
+  }
+  .swearing{color:var(--gilt);}

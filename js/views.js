@@ -489,7 +489,8 @@ function rollLoop(){
    everything else stay exactly where they were while the thumb turns a
    setting. */
 function applyViz(){
-  var page = questsEl.classList.contains("on");
+  var page = questsEl.classList.contains("on") ||
+             (typeof scriptOn === "function" && scriptOn());
   column.style.display = (!page && viz === "column") ? "flex" : "none";
   roll.classList.toggle("on", !page && viz === "roll");
   voicesEl.classList.toggle("off", page);   /* the strip belongs to the page */
@@ -691,6 +692,7 @@ function keysNow(){
       ["O · P","solo, mute"],
       ["F2", rollv ? "the column instead" : "the roll instead"],
       ["F3","the quest log"],
+      ["F4","the scriptorium — kits; W wears one, in the room"],
       ["shift+B","the background"],
       ["ctrl+S · ctrl+O","out to a file, in from one"],
       ["F1 · escape","these keys, away"]] },
@@ -761,6 +763,8 @@ function setKeys(on){
   keyhelpEl.classList.toggle("on", on);
   keyhelpEl.setAttribute("aria-hidden", on ? "false" : "true");
   if (keymarkEl) keymarkEl.setAttribute("aria-expanded", on ? "true" : "false");
+  /* one drawing at a time: the scriptorium steps down when the keys go up */
+  if (on && typeof scriptOn === "function" && scriptOn()) toggleScriptorium();
   if (on) renderKeys();
   else while (keyhelpEl.firstChild) keyhelpEl.removeChild(keyhelpEl.firstChild);
 }

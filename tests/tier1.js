@@ -374,11 +374,83 @@ eq("it is written forward as version 2", migrated.version, 2);
 ok("with the motif under its own name now", !!migrated.quests.summit.pattern &&
    !("motif" in migrated.quests.summit));
 
+/* ========== 2b. the samples the scriptorium writes, and their labels ======
+   A kit is WAV files and a manifest line each. Both are formats that outlive
+   whatever the panel above them looks like, which is the whole test. */
+console.log("\n== the WAV, out and back ==");
+const wavIn = Float32Array.from([0, 0.5, -0.5, 1, -1, 0.25]);
+const enc = T.encodeWAV(wavIn, 11025);
+eq("a mono PCM16 file is 44 bytes and two a frame", enc.length, 44 + wavIn.length * 2);
+eq("it opens RIFF", String.fromCharCode(enc[0], enc[1], enc[2], enc[3]), "RIFF");
+eq("and says WAVE", String.fromCharCode(enc[8], enc[9], enc[10], enc[11]), "WAVE");
+const dec = T.decodeWAV(enc);
+ok("it decodes", !!dec);
+eq("at the rate it was written", dec.rate, 11025);
+eq("with every frame back", dec.data.length, wavIn.length);
+ok("and the samples within a bit of themselves",
+   Array.prototype.every.call(dec.data, (v, i) => Math.abs(v - wavIn[i]) < 0.0001),
+   Array.from(dec.data));
+eq("a rate of 8000 survives too", T.decodeWAV(T.encodeWAV(wavIn, 8000)).rate, 8000);
+const clipped = T.decodeWAV(T.encodeWAV(Float32Array.from([4, -4]), 8000)).data;
+ok("anything past full scale is clamped, not wrapped", clipped[0] > 0.99 && clipped[1] < -0.99,
+   Array.from(clipped));
+ok("nonsense is not a WAV", T.decodeWAV(new Uint8Array(80)) === null);
+ok("and neither is something too short to be one", T.decodeWAV(new Uint8Array(8)) === null);
+
+console.log("\n== the cut, and the manifest that records it ==");
+const cutMe = T.encodeWAV(new Float32Array(1000), 22050);
+eq("truncating takes the frames asked for",
+   T.truncate(T.decodeWAV(cutMe).data, 100, 300).length, 200);
+eq("downsampling halves the frames with the rate",
+   T.resample(T.decodeWAV(cutMe).data, 22050, 11025).length, 500);
+const gen = T.generate("glass", 60, 0.4, 0.7, 22050);
+ok("a generated wave comes with a loop", gen.loopEnd > gen.loopStart);
+ok("that sits inside it", gen.loopEnd <= gen.data.length);
+const lp = T.autoLoop(gen.data, 22050, 60);
+ok("a spliced loop starts before it ends", lp.loopEnd > lp.loopStart);
+ok("and stays inside the sample", lp.loopEnd <= gen.data.length && lp.loopStart >= 0);
+
+const rec = { file:"piano-c4.wav", root:60, rate:11025, frames:5000, bytes:10044,
+              loopStart:3000, loopEnd:4200, decay:2.4, source:"a piano, curated" };
+const line = T.manifestLine(rec);
+ok("the line names the file", /`piano-c4\.wav`/.test(line), line);
+ok("and reads as prose", / — root C4 · 11025 Hz/.test(line), line);
+const readBack = T.parseManifest(T.manifestText("piano", [rec]))["piano-c4.wav"];
+ok("the manifest is read back at all", !!readBack);
+eq("with the root note", readBack.root, 60);
+eq("the rate", readBack.rate, 11025);
+eq("the loop points", [readBack.loopStart, readBack.loopEnd], [3000, 4200]);
+eq("the imposed decay", readBack.decay, 2.4);
+eq("and where the material came from", readBack.source, "a piano, curated");
+const plain = T.parseManifest("# kit: x\n\nprose about nothing\n- `hat.wav` — 8000 Hz · 900 B\n");
+eq("a line with no loop and no decay is still a sample", Object.keys(plain).join(), "hat.wav");
+eq("with no loop", [plain["hat.wav"].loopStart, plain["hat.wav"].loopEnd], [0, 0]);
+eq("and no decay", plain["hat.wav"].decay, 0);
+eq("prose around it is not a sample", Object.keys(T.parseManifest("just a sentence")).length, 0);
+
+console.log("\n== the sampled voice, and what it refuses ==");
+T.kitSamples = [{ file:"a.wav", rate:8000, data:new Float32Array(80), frames:80,
+                  root:48, loopStart:0, loopEnd:0, decay:0, buf:null },
+                { file:"b.wav", rate:8000, data:new Float32Array(80), frames:80,
+                  root:72, loopStart:0, loopEnd:0, decay:0, buf:null }];
+T.kitWorn = true;
+eq("the nearer root is the one that plays", T.nearestSample(T.midiFreq(50)).root, 48);
+eq("and from above, likewise", T.nearestSample(T.midiFreq(70)).root, 72);
+T.kitWorn = false;
+ok("nothing is worn, nothing is chosen", T.nearestSample(T.midiFreq(60)) === null);
+ok("and the sampled voice declines, so the folio's own tone plays",
+   T.samplePlay(440, 0, 0.2, 0, false) === false);
+T.kitWorn = true;
+ok("the bass is never the kit's", T.samplePlay(440, 0, 0.2, 1, false) === false);
+T.kitWorn = false;
+T.kitSamples = [];
+
 /* ================= 3. server.mjs, driven for real ================= */
 console.log("\n== the server, against a log of its own ==");
 const TMP = fs.mkdtempSync(path.join(os.tmpdir(), "folio-tier1-"));
 const LOG = path.join(TMP, "quest-log.json");
 const LOGDIR = TMP;
+const KITS = path.join(TMP, "kits");     /* never the player's own shelf either */
 const seedLog = { folio:"quest-log", version:2, active:null,
   free: pageOf({ title:"the server's page", steps: noteAt({ 0:"C4" }) }),
   quests:{ stray:{ done:true, pattern: pageOf({ steps: noteAt({ 0:"E4" }) }) } },
@@ -389,7 +461,8 @@ const seedLog = { folio:"quest-log", version:2, active:null,
   const BASE = "http://127.0.0.1:" + port;
   const srv = spawn(process.execPath, [REPO + "/server.mjs"],
     { cwd: REPO, stdio:["ignore","pipe","pipe"],
-      env: Object.assign({}, process.env, { PORT:String(port), FOLIO_LOG: LOG }) });
+      env: Object.assign({}, process.env,
+        { PORT:String(port), FOLIO_LOG: LOG, FOLIO_KITS: KITS }) });
   let srvlog = "";
   srv.stdout.on("data", d => { srvlog += d; });
   srv.stderr.on("data", d => { srvlog += d; });
@@ -515,6 +588,77 @@ const seedLog = { folio:"quest-log", version:2, active:null,
   eq("and a bare directory is not a file", (await fetch(BASE + "/quest-backgrounds/")).status, 404);
   eq("a NUL in the path is refused",
      (await fetch(BASE + "/folio%00.html")).status, 403);
+
+  /* --- the shelf of kits --- */
+  console.log("\n== the kits, over the same server ==");
+  const rawReq = (method, p2, body) => new Promise(res => {
+    const rq = require("http").request(
+      { host:"127.0.0.1", port, path:p2, method },
+      r => { const bits = []; r.on("data", d => bits.push(d));
+             r.on("end", () => res({ status:r.statusCode, headers:r.headers,
+                                     body:Buffer.concat(bits) })); });
+    rq.on("error", () => res({ status:0, headers:{}, body:Buffer.alloc(0) }));
+    if (body) rq.write(body);
+    rq.end();
+  });
+  const wav = T.encodeWAV(Float32Array.from([0, 0.5, -0.5, 1]), 11025);
+  const empty = await (await fetch(BASE + "/api/kits")).json();
+  eq("an empty shelf still carries the marker", empty.folio, "kits");
+  eq("and says what the budget is", empty.budget, 65536);
+  eq("with no kits on it", empty.kits, []);
+
+  const put = await rawReq("PUT", "/api/kits/bench/tone.wav", Buffer.from(wav));
+  eq("a sample is written", put.status, 204);
+  eq("and the server says how many bytes it took", put.headers["x-folio-bytes"], String(wav.length));
+  ok("the file is on disk", fs.existsSync(path.join(KITS, "bench", "tone.wav")));
+  ok("byte for byte what was sent",
+     Buffer.compare(fs.readFileSync(path.join(KITS, "bench", "tone.wav")), Buffer.from(wav)) === 0);
+  ok("with no temporary file left beside it",
+     fs.readdirSync(path.join(KITS, "bench")).every(n => !/\.tmp$/.test(n)));
+  eq("the manifest goes the same way",
+     (await rawReq("PUT", "/api/kits/bench/manifest.md",
+                   Buffer.from("# kit: bench\n\n- `tone.wav` — root C4 · 11025 Hz\n"))).status, 204);
+
+  const shelf = await (await fetch(BASE + "/api/kits")).json();
+  eq("the kit is on the shelf now", shelf.kits.map(k => k.name).join(), "bench");
+  eq("with its one sample", shelf.kits[0].files.map(f => f.name).join(), "tone.wav");
+  eq("and the sample's size", shelf.kits[0].files[0].bytes, wav.length);
+  eq("the kit's bytes are the samples' — the manifest is the label, not the load",
+     shelf.kits[0].bytes, wav.length);
+  ok("and the manifest travels with it", /root C4/.test(shelf.kits[0].manifest));
+  const back = await rawReq("GET", "/api/kits/bench/tone.wav");
+  eq("the sample comes back", back.status, 200);
+  eq("as audio", back.headers["content-type"], "audio/wav");
+  ok("unchanged", Buffer.compare(back.body, Buffer.from(wav)) === 0);
+  ok("and it round-trips through the decoder",
+     T.decodeWAV(new Uint8Array(back.body)).rate === 11025);
+
+  eq("a .wav that is not a WAVE file is refused",
+     (await rawReq("PUT", "/api/kits/bench/lie.wav", Buffer.from("hello"))).status, 400);
+  ok("and nothing was written for it", !fs.existsSync(path.join(KITS, "bench", "lie.wav")));
+  eq("a traversal in the kit's name is refused",
+     (await rawReq("PUT", "/api/kits/..%2f..%2fevil/x.wav", Buffer.from(wav))).status, 403);
+  eq("a traversal in the sample's name too",
+     (await rawReq("PUT", "/api/kits/bench/..%2f..%2fevil.wav", Buffer.from(wav))).status, 403);
+  eq("a dotted name is refused as well",
+     (await rawReq("PUT", "/api/kits/bench/a..b.wav", Buffer.from(wav))).status, 403);
+  eq("and so is anything that is not a sample or a manifest",
+     (await rawReq("PUT", "/api/kits/bench/boot.js", Buffer.from("alert(1)"))).status, 403);
+  eq("a NUL is refused", (await rawReq("PUT", "/api/kits/bench/x%00.wav", Buffer.from(wav))).status, 403);
+  ok("nothing escaped the kits directory",
+     !fs.existsSync(path.join(TMP, "evil.wav")) && !fs.existsSync(path.join(TMP, "evil")));
+  const huge = Buffer.concat([Buffer.from(wav), Buffer.alloc(300 * 1024)]);
+  eq("a sample past the cap is refused", (await rawReq("PUT", "/api/kits/bench/huge.wav", huge)).status, 413);
+  ok("and it is not on disk", !fs.existsSync(path.join(KITS, "bench", "huge.wav")));
+  eq("the shelf itself takes no writes", (await rawReq("PUT", "/api/kits", Buffer.from("x"))).status, 405);
+  eq("nor does POST reach a sample",
+     (await rawReq("POST", "/api/kits/bench/tone.wav", Buffer.from(wav))).status, 405);
+  eq("a sample can be struck out", (await rawReq("DELETE", "/api/kits/bench/tone.wav")).status, 204);
+  ok("and it is gone", !fs.existsSync(path.join(KITS, "bench", "tone.wav")));
+  eq("striking out what is not there is a 404",
+     (await rawReq("DELETE", "/api/kits/bench/tone.wav")).status, 404);
+  eq("a sample that is not there is a 404 to read as well",
+     (await rawReq("GET", "/api/kits/bench/tone.wav")).status, 404);
 
   srv.kill();
   await wait(200);

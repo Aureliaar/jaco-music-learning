@@ -67,6 +67,11 @@ var TONE = [
 function playNote(name, at, dur, v, held){
   var f = noteToFreq(name);
   if (!f) return;
+  /* the sampled voice first, and only if it is wearing something: a kit is
+     worn by the lead and by nothing else, and it says no over file://, before
+     a sample has decoded, and whenever it is simply not on — in which case
+     this is the folio's own tone, exactly as it always was */
+  if (typeof samplePlay === "function" && samplePlay(f, at, dur, v, held)) return;
   var t = TONE[v || 0] || TONE[0];
   /* one note, however long: a held note is not a run of struck ones, so
      nothing is retriggered inside `dur` — the envelope simply stays up. The

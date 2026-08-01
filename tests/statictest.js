@@ -48,14 +48,14 @@ const seen = [];
        ["auditor.html","folio-forest.png","folio-paper.png","folio-sea.png",
         "folio.css","index.html",
         "js/audio.js","js/boot.js","js/edit.js","js/entry.js","js/quests.js",
-        "js/state.js","js/views.js",
+        "js/scriptorium.js","js/state.js","js/views.js",
         "quests/quest-log.json"]), rest);
   /* the split is only safe if every script the page names actually travels */
   const named = (fs.readFileSync(DIST + "/index.html", "utf8")
                    .match(/<script src="([^"]+)"/g) || [])
                   .map(t => t.slice(13, -1));
   ok("and every script index.html names is one of them",
-     named.length === 7 && named.every(n => listed.includes(n)), named);
+     named.length === 8 && named.every(n => listed.includes(n)), named);
   ok("with the stylesheet it names beside them",
      /<link[^>]+href="folio\.css"/.test(fs.readFileSync(DIST + "/index.html", "utf8")));
   ok("and the workspaces' own stills travel with them",
@@ -96,8 +96,10 @@ const seen = [];
         errors.push(JSON.stringify(e.params.exceptionDetails).slice(0,300));
       if (e.method === "Log.entryAdded" && e.params.entry.level === "error"){
         const t = e.params.entry.text + " " + (e.params.entry.url || "");
-        /* the 404 on /api is the whole point; a favicon is not our business */
-        if (!/favicon|api\/quest-log/.test(t)) errors.push(t);
+        /* the 404s on /api are the whole point — the log's, and the shelf of
+           kits the scriptorium asks a dumb host for and does not get; a
+           favicon is not our business either */
+        if (!/favicon|api\/quest-log|api\/kits/.test(t)) errors.push(t);
       }
     }
   }, 50);

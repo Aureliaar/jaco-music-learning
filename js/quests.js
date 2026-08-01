@@ -115,7 +115,7 @@ function runSetting(i){
 }
 function anyPage(){
   return questsEl.classList.contains("on") || settingsEl.classList.contains("on") ||
-         keysOpen();
+         keysOpen() || (typeof scriptOn === "function" && scriptOn());
 }
 /* the body carries the mode so that the title can step back behind the
    crossbar standing over it; the folio itself is never touched */
