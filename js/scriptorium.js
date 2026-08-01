@@ -335,6 +335,21 @@ function fetchShelf(then){
 }
 /* every sample of the active kit, fetched and decoded once. A kit is 64KB;
    there is nothing here worth being lazy about. */
+/* No splice point in a piano is clean: a string's partials are inharmonic,
+   so the wave never comes back exactly in phase and a bare loop seam clicks
+   on every pass — at a 60 ms loop that is a ~16 Hz buzz riding the whole
+   hold. So the seam is crossfaded once, at load: the last stretch of the
+   loop is blended, equal-power, into the material just before the loop's
+   start, and the wrap lands mid-blend on the very thing it plays next. */
+function crossfadeLoop(data, l0, l1){
+  var F = Math.min((l1 - l0) >> 1, l0, 256);
+  if (F < 8 || l1 > data.length) return;
+  for (var i = 0; i < F; i++){
+    var t = (i + 1) / F * Math.PI / 2;
+    data[l1 - F + i] = data[l1 - F + i] * Math.cos(t) +
+                       data[l0 - F + i] * Math.sin(t);
+  }
+}
 function loadKit(name, then){
   kitSamples = [];
   var k = kitOf(name);
@@ -348,6 +363,7 @@ function loadKit(name, then){
         var w = ab && decodeWAV(new Uint8Array(ab));
         if (w){
           var m = meta[f.name] || {};
+          if (m.loopEnd > m.loopStart) crossfadeLoop(w.data, m.loopStart, m.loopEnd);
           kitSamples.push({
             file: f.name, bytes: f.bytes, rate: w.rate, data: w.data,
             frames: w.data.length, root: m.root || 60,
