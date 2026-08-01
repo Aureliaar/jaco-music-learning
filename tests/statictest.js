@@ -151,8 +151,8 @@ const seen = [];
      the scene, pale ink over the same borderless breath */
   const ends = await b.eval(`(function(){
     var out = {};
-    /* the footer and the standing hint under it are one piece of marginalia
-       now, and take one scrim between them: .foot is what wears it */
+    /* the footer is marginalia and wears the scene's scrim on the box it
+       sits in rather than on itself: .foot is what carries it */
     ['header','.foot'].forEach(function(sel){
       var el = document.querySelector(sel), s = getComputedStyle(el),
           p = getComputedStyle(el, '::before'),

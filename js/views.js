@@ -3,7 +3,7 @@
    Every element the app holds by id; the scenery behind the sheet and the
    dissolve from one scene to the next; the written column; the roll and
    everything laid on it — the home rules, the bars, the intervals, the guide;
-   the renderers; the standing hint under the footer; and say(), which is the
+   the renderers; the key overlay F1 raises; and say(), which is the
    one way anything speaks.
 
    It reads the document and writes the page, and never the other way round. */
@@ -22,7 +22,8 @@ var vnames = [document.getElementById("vname0"), document.getElementById("vname1
 var vmarks = [document.getElementById("vmark0"), document.getElementById("vmark1")];
 var qlist  = document.getElementById("qlist");
 var qtabs  = document.getElementById("qtabs");
-var hintsEl = document.getElementById("hints");
+var keyhelpEl = document.getElementById("keyhelp");
+var keymarkEl = document.getElementById("keymark");
 var qfree  = document.getElementById("qfree");
 var qfreesigil = document.getElementById("qfreesigil");
 var qdname = document.getElementById("qdname");
@@ -606,65 +607,178 @@ function renderLoop(){
   }
   rollLoop();
 }
-/* ================= the standing hint =================
-   There was a page of the key once, a destination, and nobody walks to a
-   destination to remember which key steps back a sixteenth; it went stale
-   faster than the bindings it described, and it is gone. This strip is the
-   key help now: the keys that matter where the hands actually are, under
-   the footer, always — a handful at most,
-   the same handful for the same situation, changing only when the situation
-   does. It holds its height whatever it says, so the page never moves
-   because of it; it is quieter than the footer above it; and it announces
-   nothing. Everything in it is named by position, as everything in this app
-   is: the letters are places on the board, not what a keyboard prints. */
-function hintsNow(){
-  if (settingsEl.classList.contains("on"))
-    return [["↑ ↓","workspace"],["← →","lesson"],["□","solo"],["△","mute"],
-            ["✕","the background"],["start","close"]];
-  if (questsEl.classList.contains("on"))
-    return [["↑ ↓","quest"],["← →","lesson"],["enter","work here"],
-            ["F","keep to hand"],["shift + ↑ ↓","move it"],["C","complete"],["F3","close"]];
-  /* both hands are named, because there is only one story to tell now: the
-     keyboard names pitches by position, the pad names moves. The shoulders
-     are named too — the four buttons nothing on the page ever said out
-     loud, which is exactly how they came to be a puzzle rather than a
-     control: the bumpers change hands, the triggers widen a move. And the
-     length is named, because Lesson 3 is the whole reason a note is not
-     always a sixteenth any more; the rest of the strip stays on its diet. */
-  return [["z…m q…i","notes"],["△ ✕ ○ □","the shape"],
-          ["L2 R2","third, fifth"],
-          ["← →","step"],["− +","shorter, longer"],
-          ["period","clear"],["space","play"],
-          ["tab · L1 R1","voice"],["L","loop"],
-          ["F2", viz === "roll" ? "the column" : "the roll"],
-          ["F3","quests"]];
+/* ================= the key overlay =================
+   There was a page of the key once, two columns of prose about every binding
+   there is, and it went stale faster than the bindings did; then a strip of
+   it under the footer, which could only ever be a run-on line. This is
+   neither. It is the settings crossbar's own drawing, borrowed: the controls
+   where the hands actually find them — the d-pad a compass, the face buttons
+   a cluster, the shoulders drawn where the fingers sit — each named with
+   what it does beneath it, and the board's own keys in a group of their own.
+
+   F1 raises it and F1 puts it down; so does escape, and so does the quiet
+   mark in the top-right corner for a hand on a mouse. It is laid *over* the
+   folio, exactly as the crossbar is, so the page it is describing stays in
+   view; and while it is up nothing reaches the pattern, which is the
+   discipline the crossbar and the quest log already keep.
+
+   It says what the mode you are in can do and nothing else, so it cannot
+   grow into the page of prose it replaced. Everything in it is named by
+   position, as everything in this app is: the letters are places on the
+   board, not what a keyboard prints. */
+/* where the four shoulders sit: the bumpers above, the triggers below, the
+   left hand's pair on the left and the right hand's on the right */
+var KSHOULDER = [["23%","24%"],["23%","78%"],["77%","24%"],["77%","78%"]];
+
+function keysNow(){
+  if (settingsEl.classList.contains("on")) return { where:"the settings", clusters:[
+    { kind:"pad", name:"the d-pad", pos:XPOS, items:[
+      ["←","the lesson before"],["↑","the workspace before"],
+      ["→","the lesson after"],["↓","the workspace after"]] },
+    { kind:"pad", name:"the face buttons", pos:XPOS, items:[
+      ["□","solo"],["△","mute"],["○","put it down"],["✕","the background"]] },
+    { kind:"list", name:"and otherwise", items:[
+      ["start","put it down"],["escape","put it down"],["select","play, stop"]] }
+  ]};
+  if (questsEl.classList.contains("on")) return { where:"the quest log", clusters:[
+    { kind:"pad", name:"the d-pad · the arrows", pos:XPOS, items:[
+      ["←","the lesson before"],["↑","up the list"],
+      ["→","the lesson after"],["↓","down the list"]],
+      note:"← and → are the board's own; the pad walks the list" },
+    { kind:"pad", name:"the face buttons", pos:XPOS, items:[
+      ["□","—"],["△","—"],["○","complete"],["✕","work here"]],
+      note:"R3 closes the log" },
+    { kind:"list", name:"the board", items:[
+      ["enter","work here, or back to free play"],
+      ["C","complete"],
+      ["F","keep it to hand"],
+      ["shift ↑ ↓","move it up the list, or down"],
+      ["F3 · escape","close the log"],
+      ["ctrl+S","the log, out to a file"],
+      ["space","play, stop"],
+      ["F1","these keys, away"]] }
+  ]};
+  /* the page itself. The d-pad's two pairs trade places between the two
+     views — the column reads down, the drawing reads right — and this is
+     the one place that difference has ever been written down. The board's
+     arrows do not trade: they are the cursor either way. */
+  var rollv = (viz === "roll");
+  return { where: rollv ? "the folio · the roll" : "the folio · the column", clusters:[
+    { kind:"pad", name:"the d-pad", pos:XPOS, items: rollv
+      ? [["←","a step back"],["↑","nudge it up"],["→","a step on"],["↓","nudge it down"]]
+      : [["←","nudge it down"],["↑","a step back"],["→","nudge it up"],["↓","a step on"]],
+      note:"nudge · the note under the cursor, a scale step, staying where it is" },
+    { kind:"pad", name:"the face buttons", pos:XPOS, items:[
+      ["□","a rest"],["△","up a step"],["○","the same note again"],["✕","down a step"]],
+      note:"held, the note goes on ringing" },
+    { kind:"pad", name:"the shoulders", pos:KSHOULDER, items:[
+      ["L1","the voice before"],["L2","widen it to a third"],
+      ["R1","the voice after"],["R2","widen it to a fifth"]],
+      note:"both triggers · out of the key, a semitone · either one under the d-pad's ← → moves the note's start, or its end" },
+    { kind:"list", name:"the board", items:[
+      ["z … ,  ·  q … i","the notes, two rows, an octave each"],
+      ["s d g h j  ·  2 3 5 6 7","the notes between"],
+      ["← ↑","a step back"],
+      ["→ ↓","a step on"],
+      ["home · end","the first step, the last"],
+      ["− +","shorter, longer · shift, all the way"],
+      ["period","clear the step"],
+      ["space","play, stop"],
+      ["tab","the next voice · shift, the one before"],
+      ["page ↑ ↓","which octave the note keys are"],
+      ["L","the loop"],
+      ["K","the names, away and back"],
+      ["O · P","solo, mute"],
+      ["F2", rollv ? "the column instead" : "the roll instead"],
+      ["F3","the quest log"],
+      ["shift+B","the background"],
+      ["ctrl+S · ctrl+O","out to a file, in from one"],
+      ["F1 · escape","these keys, away"]] },
+    { kind:"list", name:"and on the pad", items:[
+      ["select","play, stop"],["start","the settings"],
+      ["L3","the loop"],["R3","the roll or the column"]] }
+  ]};
 }
-function renderHints(){
-  if (!hintsEl) return;
-  var h = hintsNow(), i, k, v, s;
-  while (hintsEl.firstChild) hintsEl.removeChild(hintsEl.firstChild);
-  for (i = 0; i < h.length; i++){
-    if (i){
-      s = document.createElement("span");
-      s.textContent = " · ";
-      hintsEl.appendChild(s);
+/* one control, drawn as the crossbar draws its slots: the glyph, and under
+   it what it does. Where the cluster is a shape, it is placed in it. */
+function keySlot(item, p){
+  var el = document.createElement("div"), g, v;
+  el.className = "xslot";
+  if (p){
+    el.style.left = p[0]; el.style.top = p[1];
+    el.style.transform = "translateY(-50%)";
+  }
+  g = document.createElement("span"); g.className = "xg"; g.textContent = item[0];
+  v = document.createElement("span"); v.className = "xv"; v.textContent = item[1];
+  el.appendChild(g); el.appendChild(v);
+  return el;
+}
+function renderKeys(){
+  if (!keyhelpEl) return;
+  while (keyhelpEl.firstChild) keyhelpEl.removeChild(keyhelpEl.firstChild);
+  var k = keysNow(), i, j, c, box, bars, bar, hub, list, line, b, s, el;
+  el = document.createElement("h2");
+  el.textContent = "the keys · " + k.where;
+  keyhelpEl.appendChild(el);
+  bars = document.createElement("div");
+  bars.className = "kbars";
+  keyhelpEl.appendChild(bars);
+  for (i = 0; i < k.clusters.length; i++){
+    c = k.clusters[i];
+    box = document.createElement("div");
+    box.className = "kgroup " + c.kind;
+    el = document.createElement("h3"); el.textContent = c.name;
+    box.appendChild(el);
+    if (c.kind === "list"){
+      list = document.createElement("div"); list.className = "klist";
+      for (j = 0; j < c.items.length; j++){
+        line = document.createElement("div"); line.className = "kline";
+        b = document.createElement("b"); b.textContent = c.items[j][0];
+        s = document.createElement("span"); s.textContent = c.items[j][1];
+        line.appendChild(b); line.appendChild(s);
+        list.appendChild(line);
+      }
+      box.appendChild(list);
+    } else {
+      bar = document.createElement("div"); bar.className = "xbar";
+      hub = document.createElement("div"); hub.className = "xhub";
+      bar.appendChild(hub);
+      for (j = 0; j < c.items.length; j++)
+        bar.appendChild(keySlot(c.items[j], c.pos[j]));
+      box.appendChild(bar);
     }
-    /* a key and what it does are one thing and wrap as one: the strip runs
-       to a second line now, and "F2" ending a line with "the column"
-       beginning the next is two hints where there is one */
-    s = document.createElement("span");
-    s.className = "hint";
-    k = document.createElement("b"); k.textContent = h[i][0];
-    v = document.createElement("span"); v.textContent = " " + h[i][1];
-    s.appendChild(k); s.appendChild(v);
-    hintsEl.appendChild(s);
+    if (c.note){
+      el = document.createElement("p"); el.className = "knote";
+      el.textContent = c.note;
+      box.appendChild(el);
+    }
+    bars.appendChild(box);
   }
 }
+function keysOpen(){ return !!keyhelpEl && keyhelpEl.classList.contains("on"); }
+function setKeys(on){
+  if (!keyhelpEl) return;
+  keyhelpEl.classList.toggle("on", on);
+  keyhelpEl.setAttribute("aria-hidden", on ? "false" : "true");
+  if (keymarkEl) keymarkEl.setAttribute("aria-expanded", on ? "true" : "false");
+  if (on) renderKeys();
+  else while (keyhelpEl.firstChild) keyhelpEl.removeChild(keyhelpEl.firstChild);
+}
+function toggleKeys(){ setKeys(!keysOpen()); }
+function closeKeys(){ if (keysOpen()) setKeys(false); }
+if (keymarkEl && keymarkEl.addEventListener)
+  keymarkEl.addEventListener("click", function(){
+    toggleKeys();
+    /* the mark keeps no focus: with it, space and enter would be the button's
+       before they were the transport's */
+    if (keymarkEl.blur) keymarkEl.blur();
+  });
 
 var lastSaid = "‸ cursor row";
 function say(msg){
   lastSaid = msg;
-  renderHints();
+  /* the overlay describes the mode, and the mode can change under it */
+  if (keysOpen()) renderKeys();
   footer.textContent = msg + (
     questsEl.classList.contains("on")   ? " · F3 to close" + syncNote() :
     settingsEl.classList.contains("on") ? " · start, or ○, to close" : "");

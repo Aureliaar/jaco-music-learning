@@ -15,7 +15,7 @@
        js/state.js    the document: the page as data, the holds arithmetic,
                       the key and its degrees, the validator, the autosave
        js/views.js    the page drawn: the column, the roll, the scenery,
-                      the renderers, the hint strip, say()
+                      the renderers, the key overlay, say()
        js/audio.js    the two timbres, the lookahead scheduler, the transport
        js/edit.js     what the hands do: writing, length, contour, the voices,
                       the key, the tempo, the loop, the pages
@@ -79,9 +79,11 @@
   <div class="divider"></div>
   <div class="foot">
     <footer id="footer">&#8248; cursor row</footer>
-    <div class="hints" id="hints" aria-label="the keys that matter here"></div>
   </div>
 </main>
+
+<button type="button" class="keymark" id="keymark" aria-expanded="false">the keys &middot; F1</button>
+<section class="keyhelp" id="keyhelp" aria-label="the keys" aria-hidden="true"></section>
 
 <aside class="rail left" id="raill" aria-label="workspaces">
   <div class="rtabs" id="rtabs" role="tablist" aria-label="the lessons"></div>

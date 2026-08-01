@@ -90,7 +90,7 @@ function mkEl(tag){
 }
 
 const ELEMENT_IDS =
-  ["column","footer","metatext","picker","quests","qlist","qtabs","hints",
+  ["column","footer","metatext","picker","quests","qlist","qtabs","keyhelp","keymark",
    "roll","rollfield","rollbase",
    "qfree","qfreesigil","qdname","qdtext","qdteach","qdstate","qpreview",
    "railquests","rtabs","railtitle","railtext","railteach","railstate",
@@ -285,8 +285,8 @@ function boot(opts){
     railSequence: _g("railSequence"),
     get activeTab(){ return _g("activeTab"); },
     get qtabsEl(){ return _g("qtabs"); },
-    get hintsEl(){ return _g("hintsEl"); },
-    hintsNow: _g("hintsNow"), renderHints: _g("renderHints"),
+    get keyhelpEl(){ return _g("keyhelpEl"); },
+    keysNow: _g("keysNow"), keysOpen: _g("keysOpen"), closeKeys: _g("closeKeys"),
     applyScenery: _g("applyScenery"), sceneNow: _g("sceneNow"),
     questBgUrl: _g("questBgUrl"), QUEST_BG_DIR: _g("QUEST_BG_DIR"),
     get scenePref(){ return _g("scenePref"); },
