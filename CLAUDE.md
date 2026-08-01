@@ -23,8 +23,9 @@ board + rules), `BUDGET.md` (HUD budget ledger) before proposing anything.
 THE CODE IS THE SOURCE OF TRUTH: many sessions/agents have modified it;
 always read it for current bindings — do not trust docs or memory for
 keymaps. The F1 key page is DELETED (2026-08-01, "too rot prone"): the
-truth about bindings is `js/entry.js` and the contextual hint strip under
-the footer, which is the living key help.
+truth about bindings is `js/entry.js`, and the living key help is the
+contextual **key overlay** F1 raises — the crossbar's drawing of the
+controls, laid over the folio (the hint strip it replaced is gone).
 
 - `folio.html` — the markup and the list of scripts. It
   carries a MAP comment at the head saying what lives where. **Read the map
@@ -33,7 +34,7 @@ the footer, which is the living key help.
 - `js/*.js` — the instrument, split 2026-08-01, loaded in this order:
   `state.js` (the page as data, holds arithmetic, key/degrees, the
   validator, the autosave) · `views.js` (column, roll, scenery, renderers,
-  hint strip, `say()`) · `audio.js` (timbres, lookahead scheduler,
+  the key overlay, `say()`) · `audio.js` (timbres, lookahead scheduler,
   transport) · `edit.js` (writing, length, contour, voices, key, tempo,
   loop, the pages) · `quests.js` (workspaces, drills, the log on disk and
   its sync, tabs, rails) · `entry.js` (keyboard by `e.code`, gamepad) ·
@@ -136,10 +137,10 @@ a terse name. L4 = harmony/chords, groove/samples/arrangement/endgame
 L5–L8.
 
 **Design rulings 2026-08-01 (do not re-litigate):**
-- The F1 key page is DELETED (rot-prone). The F1 keydown is still
-  swallowed on purpose — unhandled, F1 opens Chrome help, focus is lost,
-  rAF stops, and the playhead and gamepad poll die with it. F1 is
-  reserved for the queued key overlay.
+- The F1 key page is DELETED (rot-prone). F1 raises the key overlay now,
+  and its keydown is still swallowed whatever it does — unhandled, F1
+  opens Chrome help, focus is lost, rAF stops, and the playhead and
+  gamepad poll die with it.
 - Tonic, mode and tempo have NO runtime controls, by design: the header
   shows `tempo · key` and nothing edits them. Tonic is fixed per
   workspace (chromaticism is the spice channel), tempo comes from the
@@ -148,9 +149,10 @@ L5–L8.
 - The meta line is tempo and key only.
 
 **Queued builds, in order (briefs in `briefs/`, build serially):**
-1. `briefs/key-overlay.md` — the hint strip dies; togglable key overlay
-   in the crossbar idiom, top-right affordance (1 feature credit;
-   includes the crossbar-chip-overlap warranty rider).
+1. ~~`briefs/key-overlay.md`~~ — BUILT, unmerged, in worktree
+   `E:\experiments\daw-overlay` (branch `key-overlay`), 1 feature credit:
+   the strip is gone, F1 raises the overlay, top-right mark, and the
+   crossbar-chip-overlap warranty rider is in it.
 2. `briefs/duplicate-workspace.md` — duplicate/promote a workspace
    (quest → "II", free play → "To Be Named"); 1 small feature.
 Player-gated, unscheduled: voice management anticipating 3 voices
