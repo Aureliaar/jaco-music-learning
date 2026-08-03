@@ -160,6 +160,14 @@ function genPluck(midi, len, rate, bright, damp, seed){
   const rnd = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296 * 2 - 1; };
   for (let i = 0; i < N; i++) buf[i] = rnd();
   lowpass(buf, rate, bright);
+  /* the averaging preserves whatever DC the burst happened to have, so the
+     string would otherwise decay onto a silent pedestal instead of onto
+     nothing — inaudible itself, but it is level the loop then sustains and
+     the zero-crossing search cannot see through. Taken out at birth. */
+  let dc = 0;
+  for (let i = 0; i < N; i++) dc += buf[i];
+  dc /= N;
+  for (let i = 0; i < N; i++) buf[i] -= dc;
   let p = 0;
   for (let i = 0; i < n; i++){
     const cur = buf[p];
@@ -209,7 +217,7 @@ const KITS = {
   "music-box": {
     voice: "lead",
     note: "a struck bell, voiced soft: a sine and three quiet inharmonic partials, the high ones first to go, the glassy top filtered away",
-    samples: [48, 60, 72].map(root => ({
+    samples: [48, 60, 72, 84].map(root => ({
       root, decay: 3.4, len: 0.55,
       source: "the foundry · bell partials 1 · 2.01 · 3.02 · 4.96, lowpassed at 2600 Hz",
       make(){ return down(genBell(root, 0.55, WORK)); }
@@ -218,10 +226,22 @@ const KITS = {
   "pluck": {
     voice: "lead",
     note: "Karplus-Strong: a noise burst round a delay line, voiced soft rather than bright",
-    samples: [48, 60, 72].map((root, i) => ({
-      root, decay: 2.2, len: 0.5,
-      source: "the foundry · Karplus-Strong · damp 0.497 · burst filtered at 1900 Hz",
-      make(){ return down(genPluck(root, 0.5, WORK, 1900, 0.497, 20260802 + i)); }
+    /* the string loses a little on every trip round the delay line, and a
+       high string makes its trips faster — so one damp for every root gave
+       the low strings a ring and the high ones a click that was dead before
+       its own loop point. Damp rises with the root to hold the die-away
+       even across the registers, and the burst opens a little too, so a
+       high pluck still has two or three partials to speak with. */
+    samples: [
+      { root: 48, damp: 0.497,   bright: 1900 },
+      { root: 60, damp: 0.4978,  bright: 1900 },
+      { root: 72, damp: 0.4994,  bright: 2600 },
+      { root: 84, damp: 0.4999,  bright: 3600 }
+    ].map((v, i) => ({
+      root: v.root, decay: 2.2, len: 0.5,
+      source: "the foundry · Karplus-Strong · damp " + v.damp +
+              " · burst filtered at " + v.bright + " Hz",
+      make(){ return down(genPluck(v.root, 0.5, WORK, v.bright, v.damp, 20260802 + i)); }
     }))
   },
   "pluck-bass": {

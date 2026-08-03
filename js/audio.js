@@ -59,8 +59,14 @@ var TONE = [
      first fall (tau), a knee (when), and the long quiet tail after it
      (tail tau) — it loses most of itself inside a second and then sings
      small, which is what a hold sounds like when something real was hit */
+  /* `track` keeps the brightness relative to the note rather than absolute:
+     a fixed cutoff hands a high note almost nothing but its fundamental, so
+     the lead thinned to a whistle above middle C and the whole folio learned
+     to live low. The cutoff is now at least `track` times the fundamental —
+     the same overtones in reach at every octave — and the fixed `cut` stays
+     as the floor, so below middle C nothing changes at all. */
   { type:"triangle", cut:2500, q:0.7, level:LEVEL, attack:ATTACK,
-    release:RELEASE, hold:0.10, decay:[0.37, 1.0, 3.0] },
+    release:RELEASE, hold:0.10, decay:[0.37, 1.0, 3.0], track:9.5 },
   { type:"sine",     cut:820,  q:0.9, level:0.30,  attack:0.014,
     release:0.070,   hold:0.17, decay:[0.60, 1.4, 4.0] }
 ];
@@ -88,7 +94,7 @@ function playNote(name, at, dur, v, held){
 
   var lp = ctx.createBiquadFilter();
   lp.type = "lowpass";
-  lp.frequency.setValueAtTime(t.cut, at);
+  lp.frequency.setValueAtTime(t.track ? Math.max(t.cut, f * t.track) : t.cut, at);
   lp.Q.setValueAtTime(t.q, at);
 
   var g = ctx.createGain();

@@ -29,6 +29,11 @@
 var KIT_API  = "api/kits";
 var KIT_DIR  = "kits";                /* where a plain file host keeps them */
 var KIT_LEVEL = 0.34;                 /* samples are peak-normalised, so one level does */
+var KIT_CUT   = 5500;                 /* the courtesy the synth voices always had: a kit
+                                         played dry, mono and close goes to the output
+                                         through a gentle lowpass, so the hammer's zing
+                                         and a sped-up sample's folded top are taken off
+                                         without dulling the tone's own brightness */
 
 /* ---- the rails ----
    What each voice may be, in the order the crossbar walks it. null is the
@@ -347,14 +352,19 @@ function samplePlay(freq, at, dur, v, held){
   }
   g.gain.linearRampToValueAtTime(0, end);
 
-  src.connect(g); g.connect(master);
+  var lp = ctx.createBiquadFilter();
+  lp.type = "lowpass";
+  lp.frequency.setValueAtTime(KIT_CUT, at);
+  lp.Q.setValueAtTime(0.7, at);
+
+  src.connect(lp); lp.connect(g); g.connect(master);
   src.start(at);
   src.stop(looped ? end + 0.01 : Math.min(end, at + natural) + 0.01);
   live.push(src);
   src.onended = function(){
     var k = live.indexOf(src);
     if (k >= 0) live.splice(k, 1);
-    try { src.disconnect(); g.disconnect(); } catch (e){}
+    try { src.disconnect(); lp.disconnect(); g.disconnect(); } catch (e){}
   };
   return true;
 }
