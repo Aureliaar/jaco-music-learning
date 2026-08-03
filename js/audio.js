@@ -67,9 +67,28 @@ var TONE = [
      as the floor, so below middle C nothing changes at all. */
   { type:"triangle", cut:2500, q:0.7, level:LEVEL, attack:ATTACK,
     release:RELEASE, hold:0.10, decay:[0.37, 1.0, 3.0], track:9.5 },
+  /* `wave` is the bass's own spectrum — the fundamental, a soft octave,
+     a whisper of the twelfth — instead of the pure sine it was. A sine
+     stands its whole voice on one frequency, and one frequency is what a
+     room mode seizes: bass-heavy pages boomed on whichever notes the
+     room liked, and wore the ear out even on headphones. Spreading the
+     energy a little keeps the tone as dark as before under the same
+     cutoff, but nothing left for the room to grab whole. */
   { type:"sine",     cut:820,  q:0.9, level:0.30,  attack:0.014,
-    release:0.070,   hold:0.17, decay:[0.60, 1.4, 4.0] }
+    release:0.070,   hold:0.17, decay:[0.60, 1.4, 4.0],
+    wave:[1, 0.22, 0.09] }
 ];
+/* the spectrum is built once per tone, on the context the notes play on */
+function toneWave(t){
+  if (!t.wave) return null;
+  if (!t._pw){
+    var re = new Float32Array(t.wave.length + 1);
+    var im = new Float32Array(t.wave.length + 1);
+    for (var i = 0; i < t.wave.length; i++) im[i + 1] = t.wave[i];
+    t._pw = ctx.createPeriodicWave(re, im);
+  }
+  return t._pw;
+}
 
 /* One note: oscillator -> lowpass -> gain envelope. Gain starts at 0 and
    ends at 0, so nothing ever switches on or off abruptly. Release finishes
@@ -89,7 +108,8 @@ function playNote(name, at, dur, v, held){
      release is the only part that knows the difference. */
   var rel = held ? t.hold : t.release;
   var osc = ctx.createOscillator();
-  osc.type = t.type;
+  if (t.wave) osc.setPeriodicWave(toneWave(t));
+  else osc.type = t.type;
   osc.frequency.setValueAtTime(f, at);
 
   var lp = ctx.createBiquadFilter();

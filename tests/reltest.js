@@ -544,7 +544,9 @@ eq("neither is muted", T.doc.mute, [false,false]);
 eq("neither is soloed", T.doc.solo, [false,false]);
 /* the two timbres are genuinely different, and the bass is the darker */
 ok("the lead keeps the triangle it always had", T.TONE[0].type === "triangle", T.TONE[0]);
-ok("the bass is a rounder wave", T.TONE[1].type !== T.TONE[0].type, T.TONE[1]);
+ok("the bass carries its own spectrum, led by the fundamental",
+   Array.isArray(T.TONE[1].wave) && T.TONE[1].wave[0] === 1 &&
+   T.TONE[1].wave.every(h => h <= 1), T.TONE[1].wave);
 ok("under a much lower cutoff", T.TONE[1].cut < T.TONE[0].cut / 2, [T.TONE[0].cut, T.TONE[1].cut]);
 ok("with a slower attack and a longer release",
    T.TONE[1].attack > T.TONE[0].attack && T.TONE[1].release > T.TONE[0].release, T.TONE[1]);

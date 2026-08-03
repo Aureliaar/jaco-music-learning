@@ -174,8 +174,10 @@ function boot(opts){
     createGain(){ const g = { gain: param(), connect(){}, disconnect(){} };
       gains.push(g); return g; }
     createBiquadFilter(){ return { type:"", frequency:param(), Q:param(), connect(){}, disconnect(){} }; }
+    createPeriodicWave(re, im){ return { re, im }; }
     createOscillator(){
       const o = { type:"", frequency:{ setValueAtTime:(f, at) => { o._f = f; o._at = at; } },
+        setPeriodicWave(w){ o._wave = w; },
         connect(){}, disconnect(){},
         start(){ o._rec = { freq:o._f, at:o._at, gain:(gains[gains.length - 1] || {}).gain };
                  sounded.push(o._rec); },
