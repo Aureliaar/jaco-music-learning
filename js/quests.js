@@ -1222,7 +1222,12 @@ function renderQuests(){
     if (s.done){ r.stat.textContent = "❧"; r.stat.className = "qstat done"; }
     else if (questHasContent(q.id)){ r.stat.textContent = "•"; r.stat.className = "qstat bound"; }
     else { r.stat.textContent = ""; r.stat.className = "qstat"; }
-    if (r.fav) r.fav.textContent = s.fav ? "✦" : "";
+    /* the mark rests hollow and faint when the quest is not kept — a mark
+       that only ever appeared once set was a button nobody could find */
+    if (r.fav){
+      r.fav.textContent = s.fav ? "✦" : "✧";
+      r.fav.classList.toggle("on", !!s.fav);
+    }
   }
   renderTabs();
   layoutQuestRows();

@@ -906,7 +906,8 @@
   /* the favourite: the page's own gilt, and a mark rather than a button.
      It is the last thing on the row, so the three sigils that describe the
      work — complete, written-in, where you are — keep the places they had. */
-  .qfav{text-align:center;line-height:1;color:var(--gilt);opacity:0.85;cursor:pointer;}
+  .qfav{text-align:center;line-height:1;color:var(--faded);opacity:0.55;cursor:pointer;}
+  .qfav.on{color:var(--gilt);opacity:0.85;}
   /* the free-play workspace: named above the list, never navigated to
      directly — the active quest, chosen again, comes back here */
   .qfree{

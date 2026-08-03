@@ -332,13 +332,13 @@ function pollPads(){
     /* The log is a keyboard page that the pad can read over your shoulder:
        d-pad up and down walk the caret, ✕ enters the quest's page (or comes
        back to free play), ○ marks it complete, R3 closes it as escape does.
-       Nothing more: the pad's way round the board is the left margin under
-       start, where turning a lesson and walking into a workspace are two
-       directions of one stick. Keeping a quest to hand and moving it up the
-       list are arrangements made once and lived with, and they are F and
-       shift on the keyboard. */
+       □ keeps the quest to hand, as F does on the keyboard. Nothing more:
+       the pad's way round the board is the left margin under start, where
+       turning a lesson and walking into a workspace are two directions of
+       one stick; moving a quest up the list is still shift on the board. */
     if (gpEdge(cur, GP_CROSS))    chooseWorkspace();
     if (gpEdge(cur, GP_CIRCLE))   toggleComplete();
+    if (gpEdge(cur, GP_SQUARE))   toggleFavourite();
     if (gpEdge(cur, GP_R3))       toggleQuests();
     var qy = (gp.axes && gp.axes.length > 1) ? gp.axes[1] : 0;
     gpNav(cur[GP_DU] || qy <= -STICK_DEAD, "up",   -1, now, moveQuest);

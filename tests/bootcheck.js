@@ -994,8 +994,8 @@ function freePort(start){
      await b.eval("(document.querySelector('#rtabs .rtab.on')||{}).textContent||''"));
   await b.shot(__dirname + "/boot-favourite.png");
   await b.key("KeyF", { key:"f", vk:70 }); await wait(150);
-  ok("F again lets it go",
-     (await b.eval("document.querySelector('#qlist .quest.sel .qfav').textContent")) === "");
+  ok("F again lets it go, back to the resting mark",
+     (await b.eval("document.querySelector('#qlist .quest.sel .qfav').textContent")) === "✧");
 
   const wasOrder = await rowNames();
   await b.key("ArrowUp", KEY.UP); await wait(80);

@@ -702,7 +702,7 @@ function keysNow(){
       ["→","the lesson after"],["↓","down the list"]],
       note:"← and → are the board's own; the pad walks the list" },
     { kind:"pad", name:"the face buttons", pos:XPOS, items:[
-      ["□","—"],["△","—"],["○","complete"],["✕","work here"]],
+      ["□","keep it to hand"],["△","—"],["○","complete"],["✕","work here"]],
       note:"R3 closes the log" },
     { kind:"list", name:"the board", items:[
       ["enter","work here, or back to free play"],

@@ -505,6 +505,15 @@ press(GP.TR); eq("△ is a move, never the voice", T.doc.steps[0], "D4");
 eq("and did not change hands", T.voice, 0);
 reset(); page({15:"C4"});
 press(GP.X); eq("✕ is the move down", T.doc.steps[0], "B3");
+/* with the log up the pad reads the board, and □ is the favourite there */
+reset(); page({3:"C4"}); T.cursor = 3;
+T.toggleQuests();
+press(GP.SQ);
+ok("with the log up, □ keeps the caret's quest to hand", T.favOf(T.ALL[T.qsel].id));
+eq("and clears no step while it is", T.doc.steps[3], "C4");
+press(GP.SQ);
+ok("□ again lets it go", !T.favOf(T.ALL[T.qsel].id));
+T.toggleQuests();
 
 console.log("\n== the rest of the pad ==");
 reset();
