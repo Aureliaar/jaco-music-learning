@@ -692,7 +692,9 @@ function keysNow(){
     { kind:"pad", name:"the shoulders", pos:KSHOULDER, items:[
       ["L1","the voice before"],["L2","widen it to a third"],
       ["R1","the voice after"],["R2","widen it to a fifth"]],
-      note:"both triggers · out of the key, a semitone · either one under the d-pad's ← → moves the note's start, or its end" },
+      note: rollv
+        ? "both triggers · ↑ ↓ out of the key, a semitone · ← → carry the note, its length with it · either trigger alone under ← → moves the note's start, or its end"
+        : "both triggers · ← → out of the key, a semitone · ↑ ↓ carry the note, its length with it · either trigger alone under ← → moves the note's start, or its end" },
     { kind:"list", name:"the board", items:[
       ["z … ,  ·  q … i","the notes, two rows, an octave each"],
       ["s d g h j  ·  2 3 5 6 7","the notes between"],

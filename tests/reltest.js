@@ -1560,6 +1560,61 @@ eq("a released trigger changes no hand", T.voice, voice0);
 eq("nor the octave", T.baseOctave, oct0);
 eq("and wrote nothing", T.doc.steps.filter(Boolean).length, 0);
 
+console.log("\n== the note carried along time ==");
+/* Both triggers under the d-pad's *time* pair pick the note up and put it
+   down a step over, its written length with it — the third thing that can be
+   done to a note in time, and the one the two edges are not. The pair the
+   hatch is on does not change: the axis is what says which, so the two trade
+   places between the views exactly as the bare d-pad's pairs do. */
+reset();
+page({ 4:"E4" }); T.cursor = 4; T.setLen(0, 4, 3, true);
+hold(GP.L2, GP.R2, GP.DD);
+eq("both triggers and the column's down carry the note on", T.doc.steps[5], "E4");
+eq("leaving nothing behind", T.doc.steps[4], null);
+eq("and its length came with it", T.writtenLen(T.doc, 0, 5), 3);
+eq("the pitch is untouched", T.doc.steps.filter(Boolean).join(), "E4");
+eq("the cursor rides along", T.cursor, 5);
+hold(GP.L2, GP.R2, GP.DU);
+eq("and up carries it back", T.doc.steps[4], "E4");
+eq("still three steps long", T.writtenLen(T.doc, 0, 4), 3);
+/* the seats it was given were carrying nothing but a cursor stride, and the
+   hatch keeps the pitch axis in both views */
+page({ 4:"E4" }); T.cursor = 4;
+hold(GP.L2, GP.R2, GP.DR);
+eq("the column's ← → under both is still the hatch, not a carry",
+   [T.doc.steps[4], T.doc.steps[5]], ["F4", null]);
+page({ 4:"E4" }); T.cursor = 4; useRoll();
+hold(GP.L2, GP.R2, GP.DR);
+eq("in the roll the carry is on ← →, where time runs", T.doc.steps[5], "E4");
+hold(GP.L2, GP.R2, GP.DU);
+eq("and ↑ ↓ there is still the hatch", T.doc.steps[5], "F4");
+eq("which moved no note", T.doc.steps[6], null);
+useColumn();
+/* it asks about the step it lands on and nothing else: the length is kept
+   whole and the ring caps itself, so carrying it back restores the page */
+page({ 4:"E4", 6:"G4" }, { hold: Object.assign(new Array(16).fill(1), { 4:4 }) });
+T.cursor = 4;
+eq("a note written longer than its room rings only to the next note",
+   T.spanOf(T.doc, 0, 4), 2);
+hold(GP.L2, GP.R2, GP.DD);
+eq("carried nearer that note, the written length is kept whole",
+   T.writtenLen(T.doc, 0, 5), 4);
+eq("and the ring caps itself against what is there", T.spanOf(T.doc, 0, 5), 1);
+hold(GP.L2, GP.R2, GP.DU);
+eq("carried back, it rings as it did", T.spanOf(T.doc, 0, 4), 2);
+page({ 4:"E4", 5:"G4" }); T.cursor = 4;
+hold(GP.L2, GP.R2, GP.DD);
+eq("a note cannot be carried onto another", T.doc.steps[4], "E4");
+eq("which is left alone as well", T.doc.steps[5], "G4");
+ok("and says so", /is taken/.test(ids.footer.textContent), ids.footer.textContent);
+page({ 15:"E4" }); T.cursor = 15;
+hold(GP.L2, GP.R2, GP.DD);
+eq("nor off the foot of the page", T.doc.steps[15], "E4");
+page({ 8:"E4" }); T.cursor = 4;
+hold(GP.L2, GP.R2, GP.DD);
+eq("an empty step has no note to carry", T.doc.steps[8], "E4");
+ok("and says so too", /no note to move/.test(ids.footer.textContent), ids.footer.textContent);
+
 console.log("\n== the pad across frames ==");
 /* Everything above presses the pad one frame at a time, which is not how a
    hand plays it: the modifier goes down several frames before the thumb

@@ -244,6 +244,15 @@ function padNudge(n){
   nudge(n);
 }
 
+/* the note carried along time, as the pad asks for it: both triggers held,
+   and the d-pad's *time* pair — its ↑↓ in the column, its ←→ in the roll,
+   the same axis the bare pad walks the cursor along. Both triggers already
+   mean "out of the ordinary" everywhere on this pad, and here the axis says
+   which kind: the pitch pair under them is the semitone out of the key, the
+   time pair is the note picked up and put down a step over. Neither seat
+   was carrying anything but a cursor stride the bare d-pad already gives. */
+function padMove(n){ moveNote(n); }
+
 function gpPick(){
   var pads = (navigator.getGamepads && navigator.getGamepads()) || [];
   if (padIndex !== null && pads[padIndex] && pads[padIndex].connected) return pads[padIndex];
@@ -398,16 +407,27 @@ function pollPads(){
      already made, the release against a beginning already made — and this is
      one modifier each.
 
-     Both triggers held, ← and → are the nudge again and out of the key, a
+     Both triggers held, the d-pad's two pairs split by what their axis
+     already means. The *pitch* pair is the nudge again and out of the key, a
      semitone at a time, which is what the pair has always meant together, on
-     the d-pad exactly as on △ and ✕. So the same two triggers say three
-     things and never have to ask which: one of them under the d-pad is an
-     edge, both of them are the hatch out of the key, either of them under a
-     face button is a leap. The leap reads button edges and the edge-edit
-     reads the d-pad, so neither can swallow the other; and a trigger is
-     never spent by being held, because nothing on this pad waits on a
-     trigger's release to find out what the hand meant. */
+     the d-pad exactly as on △ and ✕. The *time* pair carries the whole note
+     one step along, its length with it — the note in the wrong place, put in
+     the right one. Which pair is which trades with the view, exactly as the
+     bare d-pad's do, because it is the same axis underneath: time is ↑↓ in
+     the column and ←→ in the roll.
+
+     So the same two triggers say four things and never have to ask which:
+     one of them under the d-pad is an edge, both of them are the hatch out
+     of the key on the pitch axis and the carry on the time axis, either of
+     them under a face button is a leap. The leap reads button edges and
+     everything else reads the d-pad, so neither can swallow the other; and a
+     trigger is never spent by being held, because nothing on this pad waits
+     on a trigger's release to find out what the hand meant. */
   var edge = (lead === 1) ? padStart : (lead === 2) ? padEnd : null;
+  /* both of them: the time pair carries the note, the pitch pair is the
+     hatch out of the key. `carry` is null the rest of the time, which
+     leaves the time pair the plain cursor stride it has always been. */
+  var carry = (lead === 3) ? padMove : null;
   ax = (gp.axes && gp.axes.length > 0) ? gp.axes[0] : 0;
   ay = (gp.axes && gp.axes.length > 1) ? gp.axes[1] : 0;    /* left stick Y, +1 = down */
   if (edge){
@@ -423,13 +443,13 @@ function pollPads(){
       gpNav(cur[GP_DD] || ay >=  STICK_DEAD, "down",  1, now);
     }
   } else if (viz === "roll"){
-    gpNav(cur[GP_DL] || ax <= -STICK_DEAD, "left",  -1, now);
-    gpNav(cur[GP_DR] || ax >=  STICK_DEAD, "right",  1, now);
+    gpNav(cur[GP_DL] || ax <= -STICK_DEAD, "left",  -1, now, carry);
+    gpNav(cur[GP_DR] || ax >=  STICK_DEAD, "right",  1, now, carry);
     gpNav(cur[GP_DU] || ay <= -STICK_DEAD, "up",    1, now, padNudge);
     gpNav(cur[GP_DD] || ay >=  STICK_DEAD, "down", -1, now, padNudge);
   } else {
-    gpNav(cur[GP_DU] || ay <= -STICK_DEAD, "up",   -1, now);
-    gpNav(cur[GP_DD] || ay >=  STICK_DEAD, "down",  1, now);
+    gpNav(cur[GP_DU] || ay <= -STICK_DEAD, "up",   -1, now, carry);
+    gpNav(cur[GP_DD] || ay >=  STICK_DEAD, "down",  1, now, carry);
     gpNav(cur[GP_DL], "left",  -1, now, padNudge);
     gpNav(cur[GP_DR], "right",  1, now, padNudge);
   }

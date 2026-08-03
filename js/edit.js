@@ -157,6 +157,44 @@ function moveEdge(end, d){
       (n === 1 ? "one step" : n + " steps"));
 }
 
+/* ---- and the note itself, carried ----
+   The third thing that can be done to a note in time, and the one the
+   other two are not: moving its start alone re-times the attack against an
+   ending already decided, and moving its end alone re-decides the ending —
+   but a note that is simply in the wrong place wants neither. It wants to
+   go where it belongs and arrive the same length it left, because its
+   length was never the mistake. So this carries both edges at once and
+   changes nothing but where the note sits.
+
+   Only the step it lands on is asked about. What its length does once it
+   is there is the page's business and not a thing to be quietly rewritten:
+   the written length is kept whole, and the ring caps itself against
+   whatever it now runs into, exactly as it would have if the note had been
+   written there in the first place. Move it back and it rings as it did. */
+function moveNote(d){
+  var i = headAt(voice, cursor);
+  if (i < 0){ say("step " + (cursor + 1) + " is empty — no note to move"); return; }
+  var j = i + d;
+  if (j < 0 || j >= STEPS){
+    say("that note is already at the " + (d < 0 ? "head" : "foot") + " of the page");
+    return;
+  }
+  var s = vsteps(voice), h = vhold(voice);
+  if (s[j]){ say("step " + (j + 1) + " is taken"); return; }
+  var name = s[i], len = writtenLen(doc, voice, i);
+  s[i] = null; h[i] = 1;
+  s[j] = name; h[j] = len;
+  renderNotes();
+  /* the cursor rides along, so holding the direction walks the note and not
+     out from under it */
+  if (headAt(voice, cursor) !== j){ cursor = j; renderCursor(); }
+  save();
+  showGuide(midiOf(name));
+  audition(name, spanOf(doc, voice, j));
+  say(display(name) + " at step " + (j + 1) + " · " +
+      (len === 1 ? "one step" : len + " steps"));
+}
+
 /* − and +, and the same pair with shift: a step at a time, or the whole
    room there is and back to a plain sixteenth */
 function stretch(d, whole){
