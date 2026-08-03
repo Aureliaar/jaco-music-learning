@@ -1950,6 +1950,19 @@ T.cursor = 4; T.moveEdge(false, -1);
 eq("a free note moves as it always did", T.doc.steps[3], "E4");
 eq("leaving nothing behind it", T.doc.steps[4], null);
 
+/* the carry — the third mover — comes through the same door */
+sealedPage();
+T.cursor = 8; hold(GP.L2, GP.R2, GP.DD);
+eq("a note pinned to its step is not carried either", T.doc.steps[8], "G4");
+eq("and nothing arrived a step on", T.doc.steps[9], null);
+sealedPage();
+T.cursor = 4; hold(GP.L2, GP.R2, GP.DD);
+eq("a sealed length does not refuse the carry, which keeps it whole",
+   T.doc.steps[5], "E4");
+eq("its length rode with it", T.doc.hold[5], 3);
+eq("and so did its seal", T.doc.lock[5], "l");
+eq("leaving none behind", T.doc.lock[4], null);
+
 sealedPage();
 T.cursor = 12; key("Period");
 eq("a note with all three seals is not cleared", T.doc.steps[12], "A4");

@@ -231,11 +231,12 @@ function moveNote(d){
     say("that note is already at the " + (d < 0 ? "head" : "foot") + " of the page");
     return;
   }
-  var s = vsteps(voice), h = vhold(voice);
+  var s = vsteps(voice);
   if (s[j]){ say("step " + (j + 1) + " is taken"); return; }
   var name = s[i], len = writtenLen(doc, voice, i);
-  s[i] = null; h[i] = 1;
-  s[j] = name; h[j] = len;
+  /* through the guarded door: the length rides whole, so only a pinned
+     step refuses — the carry is exactly what a length seal permits */
+  if (!carryNote(voice, i, j, len)) return;
   renderNotes();
   /* the cursor rides along, so holding the direction walks the note and not
      out from under it */
