@@ -1,7 +1,7 @@
 {
   "folio": "quest-log",
   "version": 2,
-  "active": "stray",
+  "active": "give-way",
   "free": {
     "version": 1,
     "title": "untitled folio",
@@ -9,39 +9,61 @@
     "loop": 16,
     "key": "C major",
     "steps": [
-      "B3",
-      "C4",
-      "D4",
-      null,
-      "B3",
-      "C4",
-      "D4",
-      "E4",
-      "F4",
+      "B2",
       null,
       null,
+      "E3",
       null,
+      null,
+      "C3",
+      null,
+      null,
+      "F2",
       null,
       null,
       null,
-      "A3"
+      null,
+      null,
+      null
     ],
     "bass": [
-      "F3",
       null,
-      "E3",
       null,
-      "F3",
-      "F3",
-      "E3",
       null,
-      "F3",
-      "F3",
-      "E3",
       null,
-      "F3",
-      "F3",
-      "G3",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "hold": [
+      3,
+      1,
+      1,
+      2,
+      1,
+      1,
+      3,
+      1,
+      1,
+      2,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "tones": [
+      "piano",
       null
     ],
     "mute": [
@@ -1026,6 +1048,60 @@
         ]
       }
     },
+    "ostinato-variant": {
+      "done": false,
+      "pattern": {
+        "version": 1,
+        "title": "untitled folio",
+        "tempo": 112,
+        "loop": 16,
+        "key": "C major",
+        "steps": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "mute": [
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false
+        ]
+      }
+    },
     "l2-candidate-1": {
       "done": true,
       "pattern": {
@@ -1144,16 +1220,16 @@
         "key": "A minor",
         "steps": [
           null,
+          "B2",
+          null,
+          "F3",
+          null,
+          "F2",
           null,
           null,
           null,
           null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
+          "B2",
           null,
           null,
           null,
@@ -1177,6 +1253,24 @@
           null,
           null,
           null
+        ],
+        "hold": [
+          1,
+          2,
+          1,
+          1,
+          1,
+          5,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
         ],
         "mute": [
           false,
@@ -1197,19 +1291,19 @@
         "loop": 16,
         "key": "F major",
         "steps": [
+          "A2",
+          null,
+          null,
+          "G2",
           null,
           null,
           null,
           null,
+          "A2",
+          "A#2",
+          "C3",
           null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
+          "A#2",
           null,
           null,
           null
@@ -1231,6 +1325,24 @@
           null,
           null,
           null
+        ],
+        "hold": [
+          3,
+          1,
+          1,
+          5,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          2,
+          1,
+          4,
+          1,
+          1,
+          1
         ],
         "mute": [
           false,
@@ -1253,19 +1365,19 @@
         "steps": [
           null,
           null,
+          "C4",
+          "A#3",
+          null,
+          "A3",
           null,
           null,
           null,
           null,
           null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
+          "G3",
+          "A3",
+          "A#3",
+          "C4",
           null
         ],
         "bass": [
@@ -1284,6 +1396,28 @@
           null,
           null,
           null,
+          null
+        ],
+        "hold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          5,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          4,
+          1
+        ],
+        "tones": [
+          "piano",
           null
         ],
         "mute": [
@@ -1305,21 +1439,21 @@
         "loop": 16,
         "key": "G major",
         "steps": [
+          "G4",
+          "F#4",
+          null,
+          "G4",
+          null,
+          "E4",
+          null,
+          "D4",
           null,
           null,
           null,
+          "E4",
           null,
           null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
+          "F#4",
           null
         ],
         "bass": [
@@ -1339,6 +1473,24 @@
           null,
           null,
           null
+        ],
+        "hold": [
+          1,
+          2,
+          1,
+          1,
+          1,
+          1,
+          1,
+          4,
+          1,
+          1,
+          1,
+          3,
+          1,
+          1,
+          2,
+          1
         ],
         "mute": [
           false,
@@ -1413,19 +1565,19 @@
         "loop": 16,
         "key": "E minor",
         "steps": [
+          "G3",
+          "F#3",
+          null,
+          "E4",
+          null,
+          "C4",
+          "B3",
           null,
           null,
+          "F#3",
+          "D3",
           null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
+          "F#3",
           null,
           null,
           null
@@ -1448,6 +1600,28 @@
           null,
           null
         ],
+        "hold": [
+          1,
+          1,
+          1,
+          2,
+          1,
+          1,
+          3,
+          1,
+          1,
+          1,
+          1,
+          1,
+          3,
+          1,
+          1,
+          1
+        ],
+        "tones": [
+          "music-box",
+          null
+        ],
         "mute": [
           false,
           false
@@ -1466,6 +1640,338 @@
         "tempo": 132,
         "loop": 16,
         "key": "A minor",
+        "steps": [
+          "F3",
+          null,
+          null,
+          "C4",
+          null,
+          null,
+          "C3",
+          null,
+          null,
+          null,
+          "D4",
+          null,
+          null,
+          "G3",
+          null,
+          null
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "hold": [
+          3,
+          1,
+          1,
+          3,
+          1,
+          1,
+          3,
+          1,
+          1,
+          1,
+          3,
+          1,
+          1,
+          3,
+          1,
+          1
+        ],
+        "mute": [
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false
+        ]
+      }
+    },
+    "daylight": {
+      "done": false,
+      "pattern": {
+        "version": 1,
+        "title": "daylight",
+        "tempo": 96,
+        "loop": 16,
+        "key": "D major",
+        "steps": [
+          "D4",
+          null,
+          "E4",
+          null,
+          null,
+          "C#4",
+          null,
+          null,
+          "B3",
+          null,
+          "A3",
+          "B3",
+          null,
+          "C#4",
+          "D4",
+          "E4"
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "hold": [
+          2,
+          1,
+          3,
+          1,
+          1,
+          3,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "mute": [
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false
+        ]
+      }
+    },
+    "give-way": {
+      "done": false,
+      "pattern": {
+        "version": 1,
+        "title": "give way",
+        "tempo": 84,
+        "loop": 16,
+        "key": "D minor",
+        "steps": [
+          "C4",
+          null,
+          null,
+          "A#3",
+          null,
+          "A3",
+          null,
+          null,
+          "G3",
+          null,
+          null,
+          "G3",
+          null,
+          "A3",
+          null,
+          "A#3"
+        ],
+        "bass": [
+          "D3",
+          "C3",
+          null,
+          "A#2",
+          null,
+          "E3",
+          null,
+          null,
+          "A#2",
+          "A2",
+          null,
+          "A2",
+          null,
+          "A#2",
+          null,
+          "A2"
+        ],
+        "hold": [
+          3,
+          1,
+          1,
+          1,
+          1,
+          3,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "basshold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          3,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "tones": [
+          "music-box",
+          "sub"
+        ],
+        "mute": [
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false
+        ]
+      }
+    },
+    "drone-2": {
+      "done": false,
+      "pattern": {
+        "version": 1,
+        "title": "the drone II",
+        "tempo": 88,
+        "loop": 16,
+        "key": "E minor",
+        "steps": [
+          null,
+          null,
+          "D4",
+          "E4",
+          "F#4",
+          null,
+          "E4",
+          null,
+          "D4",
+          null,
+          "D4",
+          null,
+          null,
+          null,
+          "B3",
+          null
+        ],
+        "bass": [
+          "A3",
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "hold": [
+          1,
+          1,
+          1,
+          4,
+          1,
+          1,
+          2,
+          1,
+          1,
+          1,
+          3,
+          1,
+          1,
+          1,
+          2,
+          1
+        ],
+        "basshold": [
+          16,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "tones": [
+          "music-box",
+          null
+        ],
+        "mute": [
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false
+        ]
+      }
+    },
+    "ceiling": {
+      "done": false,
+      "pattern": {
+        "version": 1,
+        "title": "the ceiling",
+        "tempo": 96,
+        "loop": 16,
+        "key": "G major",
         "steps": [
           null,
           null,
@@ -1512,14 +2018,104 @@
         ]
       }
     },
-    "daylight": {
+    "dovetail": {
       "done": false,
       "pattern": {
         "version": 1,
-        "title": "daylight",
-        "tempo": 96,
+        "title": "dovetail",
+        "tempo": 104,
         "loop": 16,
-        "key": "D major",
+        "key": "F major",
+        "steps": [
+          "A#3",
+          null,
+          null,
+          null,
+          "G3",
+          null,
+          null,
+          null,
+          "A3",
+          null,
+          "A#3",
+          null,
+          "C4",
+          null,
+          null,
+          null
+        ],
+        "bass": [
+          "D3",
+          null,
+          null,
+          null,
+          "E3",
+          null,
+          null,
+          null,
+          null,
+          "D3",
+          "F3",
+          null,
+          "G3",
+          "F3",
+          null,
+          null
+        ],
+        "hold": [
+          3,
+          1,
+          1,
+          1,
+          4,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          4,
+          1,
+          1,
+          1
+        ],
+        "basshold": [
+          2,
+          1,
+          1,
+          1,
+          4,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "mute": [
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false
+        ]
+      }
+    },
+    "ring-seam-2": {
+      "done": false,
+      "pattern": {
+        "version": 1,
+        "title": "ring the seam II",
+        "tempo": 100,
+        "loop": 16,
+        "key": "A minor",
         "steps": [
           null,
           null,
@@ -1749,6 +2345,10 @@
           1,
           1
         ],
+        "tones": [
+          null,
+          null
+        ],
         "mute": [
           false,
           false
@@ -1842,6 +2442,10 @@
           1,
           1,
           1
+        ],
+        "tones": [
+          null,
+          null
         ],
         "mute": [
           false,
@@ -1937,6 +2541,10 @@
           1,
           1
         ],
+        "tones": [
+          null,
+          null
+        ],
         "mute": [
           false,
           false
@@ -2030,6 +2638,10 @@
           1,
           1,
           1
+        ],
+        "tones": [
+          null,
+          null
         ],
         "mute": [
           false,
@@ -2125,6 +2737,10 @@
           1,
           1
         ],
+        "tones": [
+          null,
+          null
+        ],
         "mute": [
           false,
           false
@@ -2218,6 +2834,10 @@
           1,
           1,
           1
+        ],
+        "tones": [
+          null,
+          null
         ],
         "mute": [
           false,
@@ -2313,6 +2933,10 @@
           1,
           1
         ],
+        "tones": [
+          null,
+          null
+        ],
         "mute": [
           false,
           false
@@ -2406,6 +3030,598 @@
           1,
           1,
           1
+        ],
+        "tones": [
+          null,
+          null
+        ],
+        "mute": [
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false
+        ]
+      },
+      "lesson": 3
+    },
+    {
+      "id": "give-way",
+      "name": "give way",
+      "summary": "- exactly two lead notes of three steps or more\n- each one's next note: one step down\n- the bass strikes under each",
+      "teaches": "the suspension.",
+      "pattern": {
+        "version": 1,
+        "title": "give way",
+        "tempo": 84,
+        "loop": 16,
+        "key": "D minor",
+        "steps": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "hold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "basshold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "tones": [
+          null,
+          null
+        ],
+        "mute": [
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false
+        ]
+      },
+      "lesson": 3
+    },
+    {
+      "id": "drone-2",
+      "name": "the drone II",
+      "summary": "- the bass strikes exactly once\n- that note rings all sixteen steps\n- the lead rests at least twice",
+      "teaches": "oblique motion, no longer pretending.",
+      "pattern": {
+        "version": 1,
+        "title": "the drone II",
+        "tempo": 88,
+        "loop": 16,
+        "key": "E minor",
+        "steps": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "hold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "basshold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "tones": [
+          null,
+          null
+        ],
+        "mute": [
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false
+        ]
+      },
+      "lesson": 3
+    },
+    {
+      "id": "ceiling",
+      "name": "the ceiling",
+      "summary": "- the highest lead note rings six steps or more\n- the bass strikes four times beneath it",
+      "teaches": "the pedal, upside down.",
+      "pattern": {
+        "version": 1,
+        "title": "the ceiling",
+        "tempo": 96,
+        "loop": 16,
+        "key": "G major",
+        "steps": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "hold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "basshold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "tones": [
+          null,
+          null
+        ],
+        "mute": [
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false
+        ]
+      },
+      "lesson": 3
+    },
+    {
+      "id": "dovetail",
+      "name": "dovetail",
+      "summary": "- the voices never rest on the same step\n- each voice rests at least twice",
+      "teaches": "one breath, two lungs.",
+      "pattern": {
+        "version": 1,
+        "title": "dovetail",
+        "tempo": 104,
+        "loop": 16,
+        "key": "F major",
+        "steps": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "hold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "basshold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "tones": [
+          null,
+          null
+        ],
+        "mute": [
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false
+        ]
+      },
+      "lesson": 3
+    },
+    {
+      "id": "ring-seam-2",
+      "name": "ring the seam II",
+      "summary": "- one voice rings across the seam\n- the other strikes on step 1",
+      "teaches": "the seam, divided between voices.",
+      "pattern": {
+        "version": 1,
+        "title": "ring the seam II",
+        "tempo": 100,
+        "loop": 16,
+        "key": "A minor",
+        "steps": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "hold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "basshold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "tones": [
+          null,
+          null
+        ],
+        "mute": [
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false
+        ]
+      },
+      "lesson": 3
+    },
+    {
+      "id": "glacier",
+      "name": "the glacier",
+      "summary": "- every lead note three steps or more\n- every bass note exactly one step",
+      "teaches": "two speeds are two characters.",
+      "pattern": {
+        "version": 1,
+        "title": "the glacier",
+        "tempo": 72,
+        "loop": 16,
+        "key": "C major",
+        "steps": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "hold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "basshold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "tones": [
+          null,
+          null
         ],
         "mute": [
           false,

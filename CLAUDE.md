@@ -102,6 +102,10 @@ controls, laid over the folio (the hint strip it replaced is gone).
    trigger crossbar is deleted. Face buttons are the move (△ up, ✕ down,
    ○ again, □ rest); **triggers L2/R2 are the modifiers** (third, fifth,
    both = semitone out of key); **bumpers L1/R1 are the voice**, tapped.
+   Both triggers under the d-pad split by axis (2026-08-04): the *pitch*
+   pair is the semitone hatch, the *time* pair **carries the note** one
+   step, its written length with it — so ↑↓ in the column, ←→ in the
+   roll, trading places exactly as the bare d-pad's pairs do.
    The base octave is no longer on the pad's shoulders: it is the settings
    crossbar's ←→, and page up/down. Start still raises the settings
    crossbar, which now overlays the folio instead of replacing it.
@@ -143,11 +147,18 @@ L1 and L2 PASSED (records in CURRICULUM.md; keystone ruling: ostinato).
 2026-08-04 (long note, all ring, ring the seam, two breaths, steal the
 beat, threes, daylight — copy in QUESTS.md; apprentice's hand was the
 eighth, delivered as a drill but deferred to the new L4 and off the
-pass). The suspension, the honest drone and the pedal are parked
-for 3.2 (deferral rule). Open L2 side content: pass the torch, Part II
-reprises (audit in QUESTS.md; Call and Answer II credit pending the
-player's ten-loop call). Economy: quest barter (rule 2); **balance 2
-small features + 1 credit** — BUDGET.md. Evaluation is self-administered
+pass). **All seven are CLOSED 2026-08-04** — constraints verified against
+the instrument's own span math, not by eye; done flags set 2026-08-04
+(closure rulings: daylight spirit-passed; steal the beat passed pre-edit
+— the post-hoc change doesn't unring it). **The L3.2 board is authored
+and delivered 2026-08-04** (six quests, copy in QUESTS.md: give way,
+the drone II, the ceiling, dovetail, ring the seam II, the glacier —
+the suspension cornered by grid law, never named in copy). The lesson pass waits on
+3.2, so no any-size grant yet. Open L2 side content: pass the torch,
+Part II reprises (audit in QUESTS.md; Call and Answer II credit pending
+the player's ten-loop call). Economy: quest barter (rule 2); **balance 2
+small features + 1 credit** — BUDGET.md (7 quest credits banked, 1 small
+spent on the carry). Evaluation is self-administered
 (never plan around outside evaluators). Quest authoring rules:
 QUEST-COPY.md — including the 2026-08-01 ruling: never specify the goal
 in copy; constraints make discovery likely, never guaranteed; Teaches is

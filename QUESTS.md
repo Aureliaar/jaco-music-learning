@@ -299,6 +299,89 @@ decisions.*
 
 ---
 
+## Lesson 3.2 quests — holds, two voices
+
+*Authored 2026-08-04 at unlock, per QUEST-COPY.md. Delivered as drills
+(`lesson: 3`) with empty seeded pages. The bass returns: everything 3.1
+taught about duration, now against a second line. The suspension is
+never named in copy (the latecomer's lesson) — Give Way corners it with
+grid law and lets the ear find the clash. Rulings inherited from the
+3.1 closure: constraints on lengths read the HEARD span, and spirit
+beats letter where the copy's edge cases bite (the daylight precedent).
+The 3.2 deliverable (one loop with a deliberate suspension,
+CURRICULUM.md) closes the lesson; the pass grants the any-size feature.*
+
+*Revised same day, player ruling: Dovetail and Ring the Seam II
+WITHDRAWN before attempt (rest choreography and a 3.1 retread — the two
+least inspired), replaced by four quests built on the sealed-note
+primitive (notes seeded with pitch/rhythm/length seals the player
+cannot break; the ring-and-tick sigil marks them on the page). Sealed
+quests deliver only after the seals feature merges — the pre-merge
+instrument would strip the seals on autosave.*
+
+### ⚔ Give Way *(seed: D minor, 84 — the latecomer's ghost, third try)*
+- exactly two lead notes of three steps or more
+- each one's next note: one step down
+- the bass strikes under each
+*Teaches: the suspension.*
+
+### ⚔ The Drone II *(seed: E minor, 88 — the drone's home, honest now)*
+- the bass strikes exactly once
+- that note rings all sixteen steps
+- the lead rests at least twice
+*Teaches: oblique motion, no longer pretending.*
+
+### ⚔ The Ceiling *(seed: G major, 96)*
+- the highest lead note rings six steps or more
+- the bass strikes four times beneath it
+*Teaches: the pedal, upside down.*
+
+### ⚔ The Elder's Line *(seed: D minor, 76 — four bass notes arrive fully sealed)*
+- every lead note rings two steps or more
+- the lead never strikes where the bass does
+*Teaches: writing against a given line.*
+*(Seeds: bass 1·5·9·13, each four steps, sealed prl — a slow D–B♭–C–D
+floor. The oldest exercise there is, wearing the new primitive.)*
+
+### ⚔ Hand-Me-Down *(seed: G major, 92 — a rhythm arrives sealed, every note on one dull pitch)*
+- every sealed note is renamed
+- no note repeats its neighbour
+- the bass strikes at least three times
+*Teaches: melody and rhythm are separate clays.*
+*(Seeds: lead steps 1·3·6·9·11·14, holds 2·2·3·2·2·3, all rhythm-sealed
+on the tonic — the steps can't move or die, the names are the player's.)*
+
+### ⚔ The Keystone *(seed: A minor, 80 — one note sealed shut, high and long)*
+- no lead note above the sealed one
+- no lead note rings longer
+- the bass strikes twice while it rings
+*Teaches: the peak was placed first.*
+*(Seed: one lead note at step 7, four steps, sealed prl, high in the
+range — the loop must be built up to it and away from it.)*
+
+### ⚔ The Stray, Planted *(seed: E minor, 88 — one note sealed by name only; it may move, it may never change)*
+- its next lead note: one step down
+- a bass note rings beneath it
+*Teaches: the stranger, resolved.*
+*(Seed: one out-of-key lead note, pitch-sealed only — the player can
+carry it anywhere in time but can never fix its name; the only way out
+is to resolve it. The stray from L1, no longer optional.)*
+
+### ⚔ The Glacier *(seed: C major, 72)*
+- every lead note three steps or more
+- every bass note exactly one step
+*Teaches: two speeds are two characters.*
+
+---
+
+Completed (L3.1): ⚔ The Long Note · All Ring · Ring the Seam · Two
+Breaths · Steal the Beat · Threes · Daylight — **all seven closed
+2026-08-04**, credited in BUDGET.md. Apprentice's Hand is off this board
+(see its entry above), so the board is complete at seven. The 3.1 board
+is closed; L3.2 (the suspension, the honest drone, the pedal — second
+voice) is the remaining half of the lesson, and the lesson pass waits on
+it.
+
 Completed (L1): ⚔ The Summit · Three Stones · White Space · Call and
 Answer · Keep the Stray · Ouroboros · The Ladder (7/8; Apprentice's Hand
 deferred to L3). **Lesson 1 PASSED 2026-07-29.**
