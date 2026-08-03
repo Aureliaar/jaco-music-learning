@@ -209,6 +209,30 @@ for (var si = 0; si < sceneryButtons.length; si++){
   });
 }
 
+/* ---- the seal, as it is drawn ----
+   One small gilt ring at the shoulder of a sealed note, with up to three
+   short spokes standing off it: the left spoke is the pitch, the upright one
+   the step, the right one the length. It is the same mark in the column and
+   in the drawing, so it is learnt once; and it is deliberately quiet — at
+   arm's length it says "sealed" and nothing more, and which three it wears
+   is a thing you lean in for. There is no legend, and nothing to press. */
+function mkSeal(){
+  var s = document.createElement("i");
+  s.className = "seal";
+  for (var k = 0; k < LOCK_KINDS.length; k++){
+    var t = document.createElement("b");
+    t.className = "t" + LOCK_KINDS.charAt(k);
+    s.appendChild(t);
+  }
+  return s;
+}
+function setSeal(el, lk){
+  el.className = "seal" + (lk ? " on" : "") +
+    (lk && lk.indexOf("p") >= 0 ? " sp" : "") +
+    (lk && lk.indexOf("r") >= 0 ? " sr" : "") +
+    (lk && lk.indexOf("l") >= 0 ? " sl" : "");
+}
+
 var rows = [];
 for (var i = 0; i < STEPS; i++){
   var row = document.createElement("div");
@@ -216,13 +240,20 @@ for (var i = 0; i < STEPS; i++){
   var fl = document.createElement("span"); fl.className = "fleuron";
   var ca = document.createElement("span"); ca.className = "caret";
   var nu = document.createElement("span"); nu.className = "num"; nu.textContent = String(i + 1);
-  /* one column per voice, side by side, in the order they are named above */
-  var no = document.createElement("span"); no.className = "note empty"; no.textContent = "·";
-  var no2 = document.createElement("span"); no2.className = "note empty dim"; no2.textContent = "·";
+  /* one column per voice, side by side, in the order they are named above.
+     The written name is a text node of its own rather than the cell's whole
+     content, so that the seal can sit in the same cell and survive being
+     redrawn sixteen times a keystroke. */
+  var no = document.createElement("span"), no2 = document.createElement("span");
+  var tx = document.createTextNode("·"), tx2 = document.createTextNode("·");
+  var sl = mkSeal(), sl2 = mkSeal();
+  no.className = "note empty"; no.appendChild(tx); no.appendChild(sl);
+  no2.className = "note empty dim"; no2.appendChild(tx2); no2.appendChild(sl2);
   row.appendChild(fl); row.appendChild(ca); row.appendChild(nu);
   row.appendChild(no); row.appendChild(no2);
   column.appendChild(row);
-  rows.push({ el: row, fleuron: fl, caret: ca, note: no, note2: no2, notes: [no, no2] });
+  rows.push({ el: row, fleuron: fl, caret: ca, note: no, note2: no2,
+              notes: [no, no2], texts: [tx, tx2], seals: [sl, sl2] });
 }
 
 /* ---- the roll, built once; bars and home rules are laid out on edit ----
@@ -279,6 +310,9 @@ function mkBar(store){
   var b = document.createElement("div");
   b.className = "bar";
   b.style.display = "none";
+  /* the same seal the column draws, sitting on the head of the bar — the end
+     the note is struck at — like a seal on the end of a ribbon */
+  b.appendChild(mkSeal());
   rollfield.appendChild(b);
   store.push(b);
 }
@@ -377,6 +411,7 @@ function rollLayout(){
       b.style.height = (100 / span) + "%";
       b.style.backgroundColor = PC_COLOR[parseNote(n).pc];
       b.classList.toggle("back", v !== voice);
+      setSeal(b.firstChild, sealOf(doc, v, i));
       /* and the rest of it, come round again at the head of the page */
       if (len > head){
         var sb = seamBars[v];
@@ -388,6 +423,7 @@ function rollLayout(){
         sb.style.backgroundColor = b.style.backgroundColor;
         sb.classList.toggle("back", v !== voice);
         sb.classList.remove("outside");
+        setSeal(sb.firstChild, "");   /* the tail of a note is not its head */
       }
     }
   }
@@ -532,15 +568,17 @@ function renderNotes(){
        neither a note (it was not struck) nor a rest (it is sounding) */
     var snd = sounding(doc, v), ends = ringEnds(doc, v);
     for (var i = 0; i < STEPS; i++){
-      var n = s[i], el = rows[i].notes[v];
-      if (n){ el.textContent = display(n); el.className = "note" + back; }
+      var n = s[i], el = rows[i].notes[v], tx = rows[i].texts[v];
+      if (n){ tx.nodeValue = display(n); el.className = "note" + back; }
       else if (snd[i] >= 0){
         /* the tail of a held note: no writing at all, only the stroke,
            with its foot on the last step the note is still sounding */
-        el.textContent = "";
+        tx.nodeValue = "";
         el.className = "note hold" + (ends[i] ? " last" : "") + back;
       }
-      else  { el.textContent = "·";        el.className = "note empty" + back; }
+      else  { tx.nodeValue = "·";          el.className = "note empty" + back; }
+      /* the seal rides the step the note is struck on, never its tail */
+      setSeal(rows[i].seals[v], sealOf(doc, v, i));
     }
   }
   rollLayout();

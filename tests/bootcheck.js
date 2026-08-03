@@ -606,8 +606,11 @@ function freePort(start){
   const bare = await b.eval(`(function(){
     var bs = document.querySelectorAll('#rollfield .bar'), drawn = 0, i;
     for (i = 0; i < bs.length; i++) if (bs[i].style.display === 'block') drawn++;
-    return [drawn, document.querySelectorAll('#rollfield .barname').length,
-            document.querySelectorAll('#rollfield .bar *').length];
+    /* a bar may carry a mark of its own — the seal, on a note a quest has
+       sealed — but never a word: the drawing names nothing on itself */
+    var written = 0;
+    for (i = 0; i < bs.length; i++) if (bs[i].textContent.trim()) written++;
+    return [drawn, document.querySelectorAll('#rollfield .barname').length, written];
   })()`);
   ok("the five notes are drawn", bare[0] === 5, bare);
   ok("and not one of them carries a label", bare[1] === 0 && bare[2] === 0, bare);

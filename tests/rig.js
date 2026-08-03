@@ -63,11 +63,28 @@ function appStyle(){
 }
 
 /* ---------- the fake document ---------- */
+/* a text node, because the column's note cells hold their written name in
+   one and their seal beside it in another child */
+function mkText(v){
+  return {
+    nodeType: 3, children: [], nodeValue: String(v),
+    get textContent(){ return this.nodeValue; },
+    set textContent(x){ this.nodeValue = String(x); }
+  };
+}
 function mkEl(tag){
   const set = new Set();
   const attrs = {};
+  let own = "";
   const el = {
-    tagName: tag, children: [], style: {}, textContent: "", value: "", files: null,
+    tagName: tag, children: [], style: {}, value: "", files: null,
+    /* the real thing's semantics, so the fake cannot drift from it: reading
+       gathers the text of everything inside, and writing replaces the lot */
+    get textContent(){
+      if (!el.children.length) return own;
+      return el.children.map(c => c.textContent).join("");
+    },
+    set textContent(v){ own = String(v); el.children.length = 0; },
     get className(){ return [...set].join(" "); },
     set className(v){ set.clear(); String(v).split(/\s+/).filter(Boolean).forEach(c => set.add(c)); },
     classList: {
@@ -111,6 +128,7 @@ function boot(opts){
   const document = {
     getElementById: i => (i in ids ? ids[i] : null),
     createElement: mkEl,
+    createTextNode: mkText,
     body: mkEl("body"),
     addEventListener(t, f){ if (t === "keydown") keyHandler = f; if (t === "keyup") upHandler = f; }
   };
@@ -316,6 +334,11 @@ function boot(opts){
     get grow(){ return _g("grow"); },
     GROW_DELAY: _g("GROW_DELAY"), growStep: _g("growStep"),
     get seamBars(){ return _g("seamBars"); },
+    /* ---- the sealed note: what a quest may hand a page ---- */
+    vlock: _g("vlock"), docLock: _g("docLock"), sealOf: _g("sealOf"),
+    sealed: _g("sealed"), readLocks: _g("readLocks"), allFree: _g("allFree"),
+    setStep: _g("setStep"), carryNote: _g("carryNote"), moveEdge: _g("moveEdge"),
+    VOICE_LOCK: _g("VOICE_LOCK"), LOCK_KINDS: _g("LOCK_KINDS"),
     /* ---- the tones: the kits off the shelf and the sampled voice ---- */
     encodeWAV: _g("encodeWAV"), decodeWAV: _g("decodeWAV"),
     parseManifest: _g("parseManifest"), midiFreq: _g("midiFreq"),

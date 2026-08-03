@@ -246,6 +246,62 @@
   .row.cursor .note{font-weight:700;}         /* the only bold in the app */
   .row.cursor .note.dim{font-weight:400;}     /* and only on the voice in hand */
 
+  /* ---- the seal ----
+     A note a quest has sealed carries a small gilt ring at its shoulder, in
+     the column and on the head of its bar in the drawing alike: one mark,
+     learnt once. The ring alone says the note is not yours to unwrite. What
+     it is sealed against is said by up to three short spokes standing off
+     the ring — left the pitch, upright the step, right the length — which
+     are a hair's width and a third of the ring long, and are meant to be
+     leaned in for rather than read across the room. There is no legend and
+     nothing to press.
+
+     It is the page's own gilt at a little under full strength, the weight
+     the fleuron and the flourish are drawn at: no new colour, nothing near
+     extreme contrast, no repetition that could read as a grid — the ring is
+     round, the spokes fan, and at most a few of them are ever on a page.
+     Nothing here moves or blinks. */
+  .seal{
+    display:none;
+    position:absolute;
+    right:0.1em;top:50%;
+    width:0.58em;height:0.58em;
+    margin-top:-0.29em;
+    box-sizing:border-box;
+    border:1px solid var(--gilt);
+    border-radius:999px;
+    opacity:0.62;
+    pointer-events:none;
+  }
+  .seal.on{display:block;}
+  .seal b{
+    display:none;
+    position:absolute;
+    left:50%;bottom:50%;
+    width:1px;height:0.6em;
+    margin-left:-0.5px;
+    transform-origin:50% 100%;
+    /* transparent where it would cross the ring, so only the spoke shows */
+    background:linear-gradient(to top,rgba(0,0,0,0) 0,rgba(0,0,0,0) 62%,
+      var(--gilt) 62%,var(--gilt) 100%);
+  }
+  .seal.sp .tp{display:block;transform:rotate(-42deg);}
+  .seal.sr .tr{display:block;}
+  .seal.sl .tl{display:block;transform:rotate(42deg);}
+  /* the voice not in hand keeps its seals, a shade back with the rest of it */
+  .note.dim .seal{opacity:0.4;}
+  /* on the drawing the seal sits on the head of the bar — the end the note is
+     struck at — half on the colour and half off it */
+  .bar>.seal{
+    right:auto;left:0;top:50%;
+    margin-top:0;
+    transform:translate(-50%,-50%);
+    opacity:0.85;
+    /* a small disc of the page's own ground, so the ring reads off the bar's
+       colour as well as off the paper it half hangs over */
+    background-color:var(--ground);
+  }
+
   /* ---- the two voices, named above the page ----
      Which line the hands are in, and what each is doing. Quiet: the one in
      hand is in ink over a gilt hairline, the other is faded. Nothing moves. */

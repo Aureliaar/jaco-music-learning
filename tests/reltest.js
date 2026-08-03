@@ -1,5 +1,5 @@
 /* Headless regression harness for folio.html: the instrument's identity.
-   726 checks.
+   751 checks.
 
    What the hands do, and what the page does about it — plain entry by
    physical position, the contour moves the pad writes, the leaps and the
@@ -1897,6 +1897,82 @@ ok("the log carries them per workspace",
    T.stateToJSON().quests.stray.pattern.tones.join() === "pluck,");
 T.doc.tones = [null, null]; T.switchWorkspace(null);
 T.doc.tones = [null, null]; T.save();
+closePages(); reset();
+
+/* ---- the sealed note ----
+   Input semantics, which is what this suite is for: a binding aimed at a
+   field a quest has sealed must leave the model exactly as it was, and the
+   very same binding aimed at a free note must still do what it always did.
+   The three seals are independent, so each is checked against a note wearing
+   only one of the other two. */
+console.log("\n== a sealed note refuses the hands ==");
+function L(o){ const a = blank(); Object.keys(o).forEach(k => { a[k] = o[k]; }); return a; }
+function sealedPage(){
+  page({ 0:"C4", 4:"E4", 8:"G4", 12:"A4" },
+       { hold:[2,1,1,1, 3,1,1,1, 1,1,1,1, 1,1,1,1],
+         lock: L({ 0:"p", 4:"l", 8:"r", 12:"prl" }) });
+}
+reset(); sealedPage();
+
+T.cursor = 0; key("KeyX");
+eq("a sealed pitch is not written over", T.doc.steps[0], "C4");
+ok("and the footer says which seal it was",
+   /pitch is sealed/.test(ids.footer.textContent), ids.footer.textContent);
+eq("a refused write does not carry the cursor on either", T.cursor, 0);
+T.cursor = 2; key("KeyX");
+eq("the same key on a free step writes as it always did", T.doc.steps[2], "D4");
+
+T.cursor = 4; key("Equal");
+eq("a sealed length does not grow", T.doc.hold[4], 3);
+ok("and says so", /length is sealed/.test(ids.footer.textContent), ids.footer.textContent);
+key("Minus");
+eq("nor shrink", T.doc.hold[4], 3);
+sealedPage();   /* a fresh page: the note written at step 2 above is in the way */
+T.cursor = 0; key("Equal");
+eq("a note sealed only in its pitch still lengthens", T.doc.hold[0], 3);
+T.cursor = 4; T.setVoice(0); T.nudge(1);
+eq("and a note sealed only in its length is still free to be renamed",
+   T.doc.steps[4], "F4");
+
+T.cursor = 8; key("KeyX");
+eq("a note pinned to its step may still be renamed", T.doc.steps[8], "D4");
+sealedPage();
+T.cursor = 8; T.moveEdge(false, -1);
+eq("but it does not leave the step it begins on", T.doc.steps[8], "G4");
+eq("and the step it was asked to move to is untouched", T.doc.steps[7], null);
+ok("the footer says which seal that was",
+   /pinned to its step/.test(ids.footer.textContent), ids.footer.textContent);
+T.cursor = 4; T.moveEdge(false, -1);
+eq("a sealed length refuses this mover too, which trades length for place",
+   T.doc.steps[4], "E4");
+page({ 4:"E4" }, { hold:[1,1,1,1, 2,1,1,1, 1,1,1,1, 1,1,1,1] });
+T.cursor = 4; T.moveEdge(false, -1);
+eq("a free note moves as it always did", T.doc.steps[3], "E4");
+eq("leaving nothing behind it", T.doc.steps[4], null);
+
+sealedPage();
+T.cursor = 12; key("Period");
+eq("a note with all three seals is not cleared", T.doc.steps[12], "A4");
+ok("and says it stays", /it stays/.test(ids.footer.textContent), ids.footer.textContent);
+eq("and the cursor does not go on", T.cursor, 12);
+T.cursor = 8; key("Period");
+eq("any seal at all keeps a note, even one only pinned to its step",
+   T.doc.steps[8], "G4");
+T.cursor = 2; key("KeyX"); T.cursor = 2; key("Period");
+eq("a free note clears as it always did", T.doc.steps[2], null);
+
+/* the seal fences that note's own written fields and nothing around it */
+sealedPage();
+T.cursor = 1; key("KeyX");
+eq("writing beside a sealed note is always allowed", T.doc.steps[1], "D4");
+eq("the sealed note keeps its written length whatever stands in its way",
+   T.doc.hold[0], 2);
+eq("even though what is heard of it is now one step", T.spanOf(T.doc, 0, 0), 1);
+
+/* the seals belong to the page, so they travel with it */
+sealedPage(); T.save();
+eq("the seals are autosaved with the page",
+   JSON.parse(store["folio.v1"]).lock[12], "prl");
 closePages(); reset();
 
 R.done();
