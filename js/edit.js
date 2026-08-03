@@ -29,10 +29,56 @@ function advance(){ cursor = (cursor + ADVANCE) % STEPS; renderCursor(); }
    the folio has always written, so nothing about writing a note changed at
    Lesson 3 — the hold is always something asked for afterwards, or asked
    for by keeping hold of the key. */
+
+/* ---- what a seal refuses ----
+   The guards live here, on the four things that actually change the model —
+   writing a step, changing a length, growing one under a held key, and
+   carrying a note to another step — and never in a key or a button handler.
+   Every way in therefore inherits them, including ways in that do not exist
+   yet: a refusal is the mutation declining, not a handler remembering.
+
+   A refusal changes nothing at all and says so, once, in the ordinary voice
+   of the footer. Nothing flashes and nothing is marked in red; the seal was
+   already on the page before the hand moved. */
+function refuse(msg){ say(msg); return false; }
+var SEAL_SAY = {
+  p: "that note's pitch is sealed",
+  r: "that note is pinned to its step",
+  l: "that note's length is sealed",
+  "": "that note is sealed — it stays"
+};
+
+/* the one door every write goes through. It answers whether the page
+   changed, so that a caller can hold its tongue — and its cursor — when the
+   page did not. */
 function setStep(i, v, len){
-  vsteps(voice)[i] = v;
-  vhold(voice)[i] = (v && typeof len === "number") ? Math.max(1, len) : 1;
+  var s = vsteps(voice), lk = sealOf(doc, voice, i);
+  var want = (v && typeof len === "number") ? Math.max(1, len) : 1;
+  if (lk){
+    /* any seal at all keeps the note: it is never unwritten out from under
+       whatever the quest sealed it for */
+    if (!v) return refuse(SEAL_SAY[""]);
+    if (lk.indexOf("p") >= 0 && v !== s[i]) return refuse(SEAL_SAY.p);
+    if (lk.indexOf("l") >= 0 && want !== writtenLen(doc, voice, i))
+      return refuse(SEAL_SAY.l);
+  }
+  s[i] = v;
+  vhold(voice)[i] = want;
+  if (!v) vlock(voice)[i] = null;      /* nothing there to be sealed against */
   renderNotes(); save();
+  return true;
+}
+/* carrying a note whole: the same pitch and the same seal, at another step.
+   moveEdge is the only caller today; it is a function of its own so that
+   anything later which moves a note has one guarded door to come through. */
+function carryNote(v, i, j, len){
+  var s = vsteps(v), h = vhold(v), l = vlock(v);
+  if (sealed(doc, v, i, "r")) return refuse(SEAL_SAY.r);
+  if (len !== writtenLen(doc, v, i) && sealed(doc, v, i, "l"))
+    return refuse(SEAL_SAY.l);
+  s[j] = s[i]; h[j] = len; l[j] = l[i] || null;
+  s[i] = null; h[i] = 1; l[i] = null;
+  return true;
 }
 
 /* ================= the held note =================
@@ -52,6 +98,7 @@ function roomHere(v, i){ return roomAt(doc, v, i); }
 function setLen(v, i, n, quiet){
   var s = vsteps(v);
   if (!s[i]) return false;
+  if (sealed(doc, v, i, "l")){ if (!quiet) refuse(SEAL_SAY.l); return false; }
   var cap = roomHere(v, i);
   var was = writtenLen(doc, v, i);
   n = Math.max(1, Math.min(cap, n));
@@ -110,6 +157,9 @@ function growTick(){
   grow.next = now + growStep();
   var v = grow.v, i = grow.i, s = vsteps(v);
   if (!s[i]){ growStop(); return; }             /* it went away underneath us */
+  /* a sealed length does not grow under the finger either; said once, and
+     then the growing is let go of so it is not said again every step */
+  if (sealed(doc, v, i, "l")){ growStop(); refuse(SEAL_SAY.l); return; }
   var n = writtenLen(doc, v, i) + 1;
   if (n > roomHere(v, i)) return;               /* at the wall: hold there */
   vhold(v)[i] = n;
@@ -133,7 +183,7 @@ function moveEdge(end, d){
   var i = headAt(voice, cursor);
   if (i < 0){ say("step " + (cursor + 1) + " is empty — no note to move"); return; }
   if (end){ setLen(voice, i, writtenLen(doc, voice, i) + d); return; }
-  var s = vsteps(voice), h = vhold(voice), len = writtenLen(doc, voice, i);
+  var s = vsteps(voice), len = writtenLen(doc, voice, i);
   var j = i + d;
   if (j < 0 || j >= STEPS){
     say("that note is already at the " + (d < 0 ? "head" : "foot") + " of the page");
@@ -145,8 +195,10 @@ function moveEdge(end, d){
     return;
   }
   var name = s[i], n = Math.min(STEPS, len - d);
-  s[i] = null; h[i] = 1;
-  s[j] = name; h[j] = n;
+  /* this mover trades length for position — it holds the far end still — so
+     a note with its length sealed cannot be moved this way, and one pinned
+     to its step cannot be moved at all */
+  if (!carryNote(voice, i, j, n)) return;
   renderNotes();
   /* the cursor stays on the note it was on, wherever the note has got to */
   if (headAt(voice, cursor) !== j){ cursor = j; renderCursor(); }
@@ -171,7 +223,9 @@ function stretch(d, whole){
 
 function writeNote(name, tail){
   var at = cursor + 1;
-  setStep(cursor, name);
+  /* a refused write leaves the cursor where it is as well as the page: the
+     seal has already said what happened, and there is nothing to hear */
+  if (!setStep(cursor, name)) return;
   showGuide(midiOf(name));         /* the drawing says which pitch that was */
   audition(name);
   advance();
@@ -234,7 +288,7 @@ function nudge(n, chromatic){
   var from = clampMidi(midiOf(v));
   var m = clampMidi(chromatic ? from + n : moveDegrees(from, n));
   var name = nameOfMidi(m);
-  setStep(at, name, writtenLen(doc, voice, at));
+  if (!setStep(at, name, writtenLen(doc, voice, at))) return;
   showGuide(m);                    /* the note moved: the line moves with it */
   audition(name);
   say(display(name) + " at step " + (at + 1));
@@ -340,7 +394,7 @@ function clearStep(){
     return;
   }
   var held = writtenLen(doc, voice, at) > 1;
-  setStep(at, null);
+  if (!setStep(at, null)) return;   /* a sealed note is not cleared, or passed */
   say("cleared step " + (at + 1) + (held ? " · and the hold with it" : ""));
   advance();
 }

@@ -171,11 +171,55 @@ ok("allOwnTone says so of an absent array", T.allOwnTone(undefined) === true);
 ok("and of an array of nulls", T.allOwnTone([null, null]) === true);
 ok("and not of one with a name in it", T.allOwnTone([null, "sub"]) === false);
 
+/* ---- the sealed note: what a quest may hand a page ---- */
+console.log("\n== the seals beside the notes ==");
+const L = i => { const a = blank(); Object.keys(i).forEach(k => { a[k] = i[k]; }); return a; };
+eq("a page with no seals seals nothing",
+   V(pageOf({ steps: noteAt({ 0:"C4" }) })).lock.join(","), blank().join(","));
+const sealedPage = V(pageOf({ steps: noteAt({ 0:"C4", 4:"E4", 8:"G4" }),
+                              lock: L({ 0:"p", 4:"rl", 8:"prl" }) }));
+eq("a seal is read where there is a note", sealedPage.lock[0], "p");
+eq("two letters keep both", sealedPage.lock[4], "rl");
+eq("and all three make an immutable note", sealedPage.lock[8], "prl");
+eq("a step with no note has no seal", sealedPage.lock[1], null);
+eq("the letters come back in the canonical order however they went in",
+   V(pageOf({ steps: noteAt({ 0:"C4" }), lock: L({ 0:"lrp" }) })).lock[0], "prl");
+eq("a letter this folio has never heard of is dropped",
+   V(pageOf({ steps: noteAt({ 0:"C4" }), lock: L({ 0:"pxq" }) })).lock[0], "p");
+eq("and a seal of nothing but nonsense is no seal",
+   V(pageOf({ steps: noteAt({ 0:"C4" }), lock: L({ 0:"xyz" }) })).lock[0], null);
+eq("a seal that is not a string is no seal",
+   V(pageOf({ steps: noteAt({ 0:"C4" }), lock: L({ 0:7 }) })).lock[0], null);
+eq("a seal on an empty step is no seal",
+   V(pageOf({ steps: blank(), lock: L({ 3:"prl" }) })).lock[3], null);
+eq("a lock array that is not an array seals nothing",
+   V(pageOf({ steps: noteAt({ 0:"C4" }), lock:"prl" })).lock.join(","), blank().join(","));
+eq("a short lock array is filled out",
+   V(pageOf({ steps: noteAt({ 0:"C4", 15:"G4" }), lock:["p"] })).lock.length, 16);
+eq("and the notes past its end are free",
+   V(pageOf({ steps: noteAt({ 0:"C4", 15:"G4" }), lock:["p"] })).lock[15], null);
+eq("the second voice has seals of its own",
+   V(pageOf({ bass: noteAt({ 0:"C2" }), basslock: L({ 0:"r" }) })).basslock[0], "r");
+ok("and they never leak into the lead's",
+   V(pageOf({ steps: noteAt({ 0:"C4" }), bass: noteAt({ 0:"C2" }),
+              basslock: L({ 0:"r" }) })).lock[0] === null);
+ok("a page is never rejected for its seals",
+   V(pageOf({ steps: noteAt({ 0:"C4" }), lock:{ nonsense:true } })).steps[0] === "C4");
+eq("sealOf reads the note's letters", T.sealOf(sealedPage, 0, 4), "rl");
+ok("sealed asks after one of them", T.sealed(sealedPage, 0, 4, "r") === true);
+ok("and says no to one it does not wear", T.sealed(sealedPage, 0, 4, "p") === false);
+ok("and to any seal at all on a free note", T.sealed(sealedPage, 0, 2) === false);
+ok("allFree says so of an absent array", T.allFree(undefined) === true);
+ok("and of an array of nulls", T.allFree([null, null]) === true);
+ok("and not of one with a seal in it", T.allFree([null, "p"]) === false);
+
 console.log("\n== what a plain page writes out ==");
 const outPlain = T.docOut(V(pageOf({ steps: noteAt({ 0:"C4" }) })));
 ok("a page with nothing held writes no lead lengths", !("hold" in outPlain));
 ok("and no bass lengths", !("basshold" in outPlain));
 ok("a page on its own tones writes no tones", !("tones" in outPlain));
+ok("and a page that seals nothing writes no seals", !("lock" in outPlain));
+ok("nor bass seals", !("basslock" in outPlain));
 eq("its steps are there as they always were", outPlain.steps[0], "C4");
 ok("and so is every other field",
    ["version","title","tempo","loop","key","steps","bass","mute","solo"]
@@ -188,6 +232,10 @@ ok("and still no bass lengths, nothing being held there", !("basshold" in outHel
 const outTone = T.docOut(V(pageOf({ steps: noteAt({ 0:"C4" }), tones:[null, "sub"] })));
 ok("a page wearing a kit writes its tones", "tones" in outTone);
 eq("both of them, so the null is not a hole", outTone.tones, [null, "sub"]);
+const outSealed = T.docOut(V(pageOf({ steps: noteAt({ 0:"C4" }), lock: L({ 0:"pr" }) })));
+ok("a page with a sealed note writes its seals", "lock" in outSealed);
+eq("exactly as they were read", outSealed.lock[0], "pr");
+ok("and still no bass seals, nothing being sealed there", !("basslock" in outSealed));
 ok("allPlain says so of an absent array", T.allPlain(undefined) === true);
 ok("and of an array of ones", T.allPlain([1,1,1]) === true);
 ok("and not of one with a two in it", T.allPlain([1,2,1]) === false);
@@ -198,6 +246,8 @@ const rich = V(pageOf({ title:"the round trip", tempo:96, loop:8, key:"E minor",
   bass:  noteAt({ 0:"E2", 8:"B2" }),
   hold:  [3,1,2,1,1,4,1,1,1,1,1,2,1,1,1,1],
   basshold:[8,1,1,1,1,1,1,1,4,1,1,1,1,1,1,1],
+  lock:  L({ 0:"p", 5:"rl", 11:"prl" }),
+  basslock: L({ 8:"r" }),
   tones:["music-box", "pluck-bass"],
   mute:[false,true], solo:[false,false] }));
 const wire = JSON.stringify(T.docOut(rich));
@@ -208,6 +258,8 @@ eq("it keeps the lead's notes", back.steps, rich.steps);
 eq("it keeps the bass's notes", back.bass, rich.bass);
 eq("it keeps the lead's lengths", back.hold, rich.hold);
 eq("it keeps the bass's lengths", back.basshold, rich.basshold);
+eq("it keeps the lead's seals", back.lock, rich.lock);
+eq("it keeps the bass's seals", back.basslock, rich.basslock);
 eq("it keeps the tones", back.tones, rich.tones);
 eq("it keeps mute", back.mute, rich.mute);
 eq("it keeps solo", back.solo, rich.solo);
@@ -219,7 +271,7 @@ console.log("\n== an older build meets a newer log ==");
 const old = JSON.parse(wire);
 eq("every lead note is where it was", old.steps, rich.steps);
 eq("every bass note is where it was", old.bass, rich.bass);
-ok("the lengths are beside the notes, never inside them",
+ok("the lengths and the seals are beside the notes, never inside them",
    old.steps.every(v => v === null || typeof v === "string"), old.steps);
 ok("so an older reader takes the page whole",
    V({ version:old.version, title:old.title, tempo:old.tempo, loop:old.loop,
@@ -269,7 +321,8 @@ console.log("\n== the state, out and back ==");
 T.resetQuests();
 T.switchWorkspace("stray");
 T.setDoc(V(pageOf({ key:"E minor", tempo:96, steps: noteAt({ 0:"E4", 4:"F4" }),
-                    hold:[4,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1] })));
+                    hold:[4,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+                    lock: L({ 4:"pl" }) })));
 T.save();
 T.switchWorkspace(null);
 T.setDoc(V(pageOf({ title:"free", steps: noteAt({ 0:"C4" }) })));
@@ -281,6 +334,7 @@ eq("it names the active workspace", st.active, null);
 ok("it carries the free-play page", !!st.free && st.free.steps[0] === "C4");
 ok("and the quest's own", !!st.quests.stray && st.quests.stray.pattern.steps[0] === "E4");
 ok("with its lengths", st.quests.stray.pattern.hold[0] === 4);
+ok("and with its seals", st.quests.stray.pattern.lock[4] === "pl");
 ok("a quest nobody has touched is not in the log at all", !("summit" in st.quests));
 ok("and no marks are written where none were made",
    !("fav" in st.quests.stray) && !("order" in st.quests.stray));
@@ -289,6 +343,7 @@ T.resetQuests();
 ok("applyState reads it back", T.applyState(roundState) === true);
 eq("the quest's page came back", T.questPage("stray").steps[0], "E4");
 eq("with its length", T.questPage("stray").hold[0], 4);
+eq("and its seal", T.questPage("stray").lock[4], "pl");
 eq("free play came back too", T.wsFree.steps[0], "C4");
 eq("and a second trip is the same log",
    JSON.stringify(T.stateToJSON()), JSON.stringify(roundState));
@@ -318,8 +373,10 @@ ok("and no order imposed", T.questSlotOrder === undefined || T.orderOf("stray", 
 console.log("\n== the drill definitions the log carries ==");
 const DRILL = { id:"t1-drill", name:"a drill", summary:"do the thing",
                 teaches:"the thing", lesson:3,
+                /* a seeded quest may hand the page notes it has sealed */
                 pattern:{ version:1, title:"seed", tempo:104, loop:8, key:"F major",
-                          steps: noteAt({ 0:"F4", 2:"A4" }) } };
+                          steps: noteAt({ 0:"F4", 2:"A4" }),
+                          lock: L({ 0:"prl", 2:"r" }) } };
 T.resetQuests();
 T.applyState({ folio:"quest-log", version:2, active:null, quests:{}, drills:[DRILL] });
 const dr = T.drillById("t1-drill");
@@ -329,6 +386,15 @@ eq("its summary", dr.summary, "do the thing");
 eq("what it teaches", dr.teaches, "the thing");
 eq("and the lesson it says it is for", dr.lesson, 3);
 ok("its pattern is validated on the way in", !!dr.pattern && dr.pattern.steps[0] === "F4");
+/* the seeds are the only way a seal ever reaches a page, so the seals must
+   survive every step of the way from the definition to the workspace it
+   materialises — which is the whole feature, end to end */
+const seeded = T.seededDoc("t1-drill");
+eq("the workspace it materialises is sealed as the definition asked", seeded.lock[0], "prl");
+eq("and the second note with it", seeded.lock[2], "r");
+eq("a free note in the seed stays free", seeded.lock[4], null);
+ok("the seals ride back out with the definition",
+   T.stateToJSON().drills[0].pattern.lock[0] === "prl");
 ok("it is a workspace like any other", !!T.questById("t1-drill") ||
    T.ALL.some(q => q.id === "t1-drill"));
 eq("on its own lesson's tab", T.questGroup(T.ALL.filter(q => q.id === "t1-drill")[0]), 3);

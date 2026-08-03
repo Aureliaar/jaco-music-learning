@@ -68,6 +68,33 @@ var VOICE_HOLD = ["hold", "basshold"];
    travel back somewhere the kit exists. js/tones.js does the playing. */
 var VOICE_TONE = "tones";
 
+/* ---- the sealed note ----
+   A quest may hand a page notes that are not the player's to unwrite. A seal
+   is not a mode and not a permission system: it is a per-note fact, beside
+   the note as the length is beside it, one array per voice — so a page that
+   seals nothing is byte for byte the page it always was, and an older build
+   handed a sealed page simply does not see the seals.
+
+   An entry is a string of letters, or null for a note that wears nothing:
+
+     p   the pitch is sealed — it may be carried elsewhere, it may be made
+         longer or shorter, but it will sound the note it sounds
+     r   the onset is pinned — it will not leave the step it begins on
+     l   the written hold is sealed — it may be renamed, it may be carried,
+         but it rings for as long as it was given
+
+   The letters are canonical in that order, so "prl" is the whole of it and
+   an immutable note. And any seal at all keeps the note from being taken
+   away: nothing is left half-sealed by a delete.
+
+   What a seal constrains is that note's OWN written fields and nothing else.
+   The neighbourhood is never fenced off — writing elsewhere is always
+   allowed, including a note that shortens a sealed note's HEARD span, since
+   written and heard are kept apart here (see spanOf) and a length seal
+   freezes the written hold alone. */
+var VOICE_LOCK = ["lock", "basslock"];
+var LOCK_KINDS = "prl";
+
 /* a page: the whole document. Every workspace holds one of these. */
 function defaultDoc(){
   return {
@@ -80,6 +107,8 @@ function defaultDoc(){
     bass: new Array(STEPS).fill(null),    /* the second voice */
     hold: new Array(STEPS).fill(1),       /* how long each lead note rings */
     basshold: new Array(STEPS).fill(1),   /* and each bass note */
+    lock: new Array(STEPS).fill(null),    /* what a lead note is sealed against */
+    basslock: new Array(STEPS).fill(null),/* and a bass note */
     tones: [null, null],                  /* what each voice sounds like */
     mute: [false, false],
     solo: [false, false]
@@ -111,6 +140,31 @@ function vhold(v){
 function docHold(d, v){
   var a = d && d[VOICE_HOLD[v || 0]];
   return Array.isArray(a) ? a : null;
+}
+/* the seals beside one voice, made on first touch exactly as its lengths are */
+function vlock(v){
+  var f = VOICE_LOCK[v || 0];
+  if (!Array.isArray(doc[f])) doc[f] = new Array(STEPS).fill(null);
+  return doc[f];
+}
+function docLock(d, v){
+  var a = d && d[VOICE_LOCK[v || 0]];
+  return Array.isArray(a) ? a : null;
+}
+/* what the note at a step wears: the letters, or "" for a free note and for
+   a step with nothing on it — a seal without a note under it is not a seal */
+function sealOf(d, v, i){
+  var s = docSteps(d, v);
+  if (!s || !s[i]) return "";
+  var a = docLock(d, v), t = a ? a[i] : null;
+  return (typeof t === "string") ? t : "";
+}
+/* sealed against one thing in particular, or against anything at all. Every
+   guard in edit.js asks through here, and so must anything later that moves,
+   renames or unwrites a note — the mutation checks, never the handler. */
+function sealed(d, v, i, kind){
+  var t = sealOf(d, v, i);
+  return kind ? t.indexOf(kind) >= 0 : !!t;
 }
 /* what is *written* at a step: the length the page holds, whatever else is
    on the page around it */
@@ -369,6 +423,31 @@ function allPlain(a){
   for (var i = 0; i < a.length; i++) if (a[i] !== 1) return false;
   return true;
 }
+/* the seals, read as permissively as the lengths beside them: absent, short,
+   long, junk, a letter nobody has ever heard of, a seal where there is no
+   note — all of it means a free note at that step, and none of it can cost
+   the page its notes. What survives is kept in the canonical order however
+   it was written, so "lp" and "prl" and "pxrl" read back as letters this
+   folio knows, in the one order it writes them in. */
+function readLocks(a, steps){
+  var out = [], i, k, t, s, c;
+  for (i = 0; i < STEPS; i++){
+    t = (Array.isArray(a) && typeof a[i] === "string") ? a[i].toLowerCase() : "";
+    s = "";
+    for (k = 0; k < LOCK_KINDS.length; k++){
+      c = LOCK_KINDS.charAt(k);
+      if (t.indexOf(c) >= 0) s += c;
+    }
+    out.push((s && steps[i]) ? s : null);
+  }
+  return out;
+}
+/* nothing is sealed here: the array says only what the absence of it says */
+function allFree(a){
+  if (!Array.isArray(a)) return true;
+  for (var i = 0; i < a.length; i++) if (a[i]) return false;
+  return true;
+}
 /* the tones, read as permissively as everything optional here is: absent,
    short, long, junk, a number where a name should be — all of it means the
    voice's own tone, and none of it can cost the page its notes. A name is
@@ -388,16 +467,18 @@ function allOwnTone(a){
   return true;
 }
 /* a page on its way out of the app — a file, the autosave, the quest log.
-   The lengths are written only where something is actually held, and the
-   tones only where a voice is wearing one, so a page with no holds and no
-   kits in it is the page it always was, to the byte, and an older build
-   reads what it wrote. */
+   The lengths are written only where something is actually held, the tones
+   only where a voice is wearing one, and the seals only where a note wears
+   one, so a page with no holds, no kits and nothing sealed in it is the page
+   it always was, to the byte, and an older build reads what it wrote. */
 function docOut(d){
   if (!d || typeof d !== "object") return d;
   var out = {}, k, v;
   for (k in d) if (Object.prototype.hasOwnProperty.call(d, k)) out[k] = d[k];
-  for (v = 0; v < VOICES; v++)
+  for (v = 0; v < VOICES; v++){
     if (allPlain(out[VOICE_HOLD[v]])) delete out[VOICE_HOLD[v]];
+    if (allFree(out[VOICE_LOCK[v]])) delete out[VOICE_LOCK[v]];
+  }
   if (allOwnTone(out[VOICE_TONE])) delete out[VOICE_TONE];
   return out;
 }
@@ -428,6 +509,8 @@ function validate(obj){
            steps: steps, bass: bass,
            hold: readHolds(obj.hold, steps),
            basshold: readHolds(obj.basshold, bass),
+           lock: readLocks(obj.lock, steps),
+           basslock: readLocks(obj.basslock, bass),
            tones: readTones(obj.tones),
            mute: readFlags(obj.mute), solo: readFlags(obj.solo) };
 }
