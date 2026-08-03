@@ -91,7 +91,11 @@ controls, laid over the folio (the hint strip it replaced is gone).
    drill: append to `drills` in the file; the app adopts it within ~10 s,
    no reload. To edit anything ELSE on disk: tell the player to reload the tab
    FIRST (server wins on boot). To REMOVE a drill: edit file, then tab
-   reload (client re-donates known defs otherwise).
+   reload (client re-donates known defs otherwise). AND (learned
+   2026-08-04, the seals strip): a drill whose pattern carries fields the
+   RUNNING client predates is adopted, then re-donated WITHOUT those
+   fields by the next autosave — never deliver schema-bearing drills
+   until the tab has reloaded onto the code that knows the schema.
 2. **Feature work is quest-metered** (BUDGET.md, revised 2026-07-31 —
    the $ ledger is retired): 2 completed quests = 1 small feature; bigger
    features cost proportionally more, judged honestly; a lesson pass
