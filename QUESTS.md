@@ -241,6 +241,8 @@ may hear a scale.
 (`lesson: 3`) with empty seeded pages — key and tempo chosen per quest.
 One voice only: the pare-down rule. The suspension, the honest drone and
 the pedal wait for 3.2 — they need the second voice (deferral rule).
+The board is SEVEN quests since 2026-08-04: the apprentice's hand is
+deferred to the transcription lesson (see its entry below).
 Authoring note, player ruling 2026-08-01: don't specify the goal in the
 copy; simple constraints that likely lead to the discovery; don't
 overexplain; don't over-ensure — if discovery doesn't happen, make more
@@ -282,6 +284,13 @@ quests.*
 *Teaches: articulation — endings are decisions.*
 
 ### ⚔ The Apprentice's Hand *(seed: C major, 128 — returns from L1)*
+**DEFERRED AGAIN, 2026-08-04 — off the 3.1 board; the pass does not wait
+on it.** Second deferral: L1 lacked the holds it needs; 3.1 lacked the
+*ear* it needs. Transcription is dictation — ear → instrument — and no
+lesson has trained that direction yet. It returns as the **capstone of
+Lesson 4 (Transcription)**, after the echo tooling exists. Standing
+ruling, player-issued: **no transcription quests anywhere until that
+lesson is done.** The copy below is kept as authored, for then:
 - transcribe 16 steps of a Uematsu line, recording playing
 - change exactly four steps until it is yours
 - keep both; play them back to back

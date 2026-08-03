@@ -139,10 +139,11 @@ controls, laid over the folio (the hint strip it replaced is gone).
 ## Where the project stands (2026-08-01)
 
 L1 and L2 PASSED (records in CURRICULUM.md; keystone ruling: ostinato).
-**L3.1 is live and its board is authored**: eight holds quests delivered
-as drills with `lesson: 3` (long note, all ring, ring the seam, two
-breaths, steal the beat, threes, daylight, apprentice's hand — copy in
-QUESTS.md). The suspension, the honest drone and the pedal are parked
+**L3.1 is live and its board is authored**: seven holds quests since
+2026-08-04 (long note, all ring, ring the seam, two breaths, steal the
+beat, threes, daylight — copy in QUESTS.md; apprentice's hand was the
+eighth, delivered as a drill but deferred to the new L4 and off the
+pass). The suspension, the honest drone and the pedal are parked
 for 3.2 (deferral rule). Open L2 side content: pass the torch, Part II
 reprises (audit in QUESTS.md; Call and Answer II credit pending the
 player's ten-loop call). Economy: quest barter (rule 2); **balance 2
@@ -150,8 +151,16 @@ small features + 1 credit** — BUDGET.md. Evaluation is self-administered
 (never plan around outside evaluators). Quest authoring rules:
 QUEST-COPY.md — including the 2026-08-01 ruling: never specify the goal
 in copy; constraints make discovery likely, never guaranteed; Teaches is
-a terse name. L4 = harmony/chords, groove/samples/arrangement/endgame
-L5–L8.
+a terse name. Lessons renumbered 2026-08-04 (player ruling): **L4 =
+transcription/ear, injected** — echo tooling (the folio plays a hidden
+fragment, the player answers; contour → degrees → rhythm), apprentice's
+hand as its capstone, and a standing ban: **no transcription quests
+anywhere until L4 is done**. The 3.1 board is therefore SEVEN quests;
+its pass does not wait on apprentice's hand. L5 = harmony/chords,
+groove/samples/arrangement/endgame L6–L9. Same ruling: the lead
+**pluck kit is retired from the rail** (a bodiless string reads as a
+koto, not the guitar that was wanted; the kit stays on disk so old
+pages still play it; a future guitar takes the seat).
 
 **Design rulings 2026-08-01 (do not re-litigate):**
 - The F1 key page is DELETED (rot-prone). F1 raises the key overlay now,
@@ -161,8 +170,8 @@ L5–L8.
 - Tonic, mode and tempo have NO runtime controls, by design: the header
   shows `tempo · key` and nothing edits them. Tonic is fixed per
   workspace (chromaticism is the spice channel), tempo comes from the
-  seed, mode from the contour. Binding ergonomics revisited at L4, not
-  before.
+  seed, mode from the contour. Binding ergonomics revisited at the
+  harmony lesson (L5 after the 2026-08-04 renumbering), not before.
 - The meta line is tempo and key only.
 
 **Queued builds, in order (briefs in `briefs/`, build serially):**
@@ -178,18 +187,20 @@ optional `tones:[lead,bass]` (null = the voice's own synth tone, else a
 kit name), read permissively and written only where a voice wears one.
 The crossbar's **scriptorium** drawing (L1/R1 turn to it) walks two
 rails — d-pad ↑↓ the lead, ←→ the bass — and walking is arriving,
-autosaved with the page. Lead rail: own tone · piano · music box ·
-pluck. Bass rail: own tone · pluck bass · sub. Kits are fetched on
+autosaved with the page. Lead rail: own tone · piano · music box
+(pluck retired 2026-08-04). Bass rail: own tone · pluck bass · sub.
+Kits are fetched on
 demand (never at boot — the piano is 2 MB), over `/api/kits` where
 there is one and off plain `kits/<name>/manifest.md` where there is not,
 which is how the deployed static copy gets them. **The F4 room, the
 foundry, the bench, the mic and the shelf UI are DELETED** — do not
-rebuild them; the kits are baked by `kits/bake.mjs`. Left for L6:
-multi-sample zones, drum lanes, the 8-voice steal cap.
+rebuild them; the kits are baked by `kits/bake.mjs`. Left for the
+samples lesson (L7 after renumbering): multi-sample zones, drum lanes,
+the 8-voice steal cap.
 Player-gated, unscheduled: voice management anticipating 3 voices
-(L3.2/L4 horizon — waits on the player's UX direction); the L7
+(L3.2/harmony horizon — waits on the player's UX direction); the
 structure-view idea (pattern placement + variation, noted 2026-08-01 —
-build at L7, not before). Design against migraine rules;
+build at the arrangement lesson, L8 after renumbering, not before). Design against migraine rules;
 sigil/parchment idiom.
 
 Housekeeping done (needs no repeating): tests restructured twice —

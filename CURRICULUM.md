@@ -174,21 +174,82 @@ title track: a held-note melody carrying a whole scene by itself); *Home*
 no rests at all; only holds may breathe. ⚔ *The Suspension* (3.2, the
 latecomer's rematch with real scaffolding). ⚔ *The Apprentice's Hand*
 (3.1, returns from L1 — transcription with the recording playing, now that
-holds make it honest). ⚔ *Ring the Seam* — one note sounds across the
-loop point.
+holds make it honest — **deferred again 2026-08-04 to Lesson 4, whose
+capstone it now is; the 3.1 pass does not wait on it**). ⚔ *Ring the
+Seam* — one note sounds across the loop point.
 
 **On pass (3.2 complete):** 1 feature of any size.
 
 ---
 
-## Lesson 4 — Harmony: progressions and voice leading
+## Lesson 4 — Transcription: the ear writes *(injected 2026-08-04)*
+
+*Injected by player ruling after the apprentice's hand stalled twice.
+Every lesson so far trains one direction only — self → instrument: write
+under constraints, listen, judge, revise. Transcription runs the other
+way — ear → instrument — and that is a separate skill (dictation) the
+curriculum had presumed instead of taught. Standing ruling, effective
+immediately: **no transcription quests on any board until this lesson is
+done.** Slotting ruled as the new L4 (harmony and everything after slide
+down one); the player reserved the option to slide it later still — if it
+moves, renumber again, this note travels with it.*
+
+**Toolset:** the echo — the folio plays a short *hidden* fragment and the
+player answers it back on the grid; hit or miss is grid-checkable, so the
+drill corrects without explaining. The first tooling in the curriculum
+whose job is listening rather than writing. Built gradual, per the
+pare-down instinct: contour before intervals, intervals before rhythm,
+never all three at once until the end.
+
+**Phases:**
+- **4.1 — the echo alone:** answer what was played. Two notes, then
+  three, then a phrase. Contour first (up, down, again — the instrument's
+  native language since L1), then degrees within the seeded key, then
+  rhythm tapped onto a single pitch. No recordings yet: the folio itself
+  is the caller, so the answer is always checkable.
+- **4.2 — the recording:** real music, by ear, at the grid. Short lines
+  from pieces the player can already sing. Ends at the capstone: ⚔ *The
+  Apprentice's Hand*, exactly as authored in `QUESTS.md` — transcribe 16
+  steps of a Uematsu line, change four steps until it is yours.
+
+**Craft focus:** audiation — holding a line in the head long enough to
+find it with the hands. The discovery that singing along is already
+transcription's first half; that contour narrows a note to two or three
+candidates before the ear has to decide anything; that rhythm and pitch
+are separable problems pretending to be one.
+
+**References:** the *Saria's Song* trick — a game teaching melodies by
+echo-play is this exact tooling wearing a costume, and it worked on
+children by the million. Uematsu — any melody the player can hum
+end-to-end (that hum is the source material; the lesson is writing down
+what is already known). *To Zanarkand*, right hand — the transcription
+the player already wants, waiting at the finish line.
+
+**Deliverable:** the apprentice's hand, passed — both versions kept,
+played back to back. Self-test: the *cover test* — play the transcribed
+half against the recording; where they differ, the ear must be able to
+say which is which and why. Standing gates apply to the four-step
+variation as a composition.
+
+**Quest board (sketch — authored at unlock):** ⚔ *Echo Ladder* — the
+fragment grows one note per rung; fall off, start over · ⚔ *Which Way* —
+contour only, long fragments, no pitches asked · ⚔ *One Note Drum* — the
+rhythm of a heard phrase, tapped onto a single pitch · ⚔ *The
+Apprentice's Hand* (capstone, from L1 via L3 — third scheduling, this
+time behind its prerequisite).
+
+**On pass:** 1 feature of any size.
+
+---
+
+## Lesson 5 — Harmony: progressions and voice leading
 
 **Toolset:** a chord-capable track (3–4 simultaneous notes). Biggest single
 unlock in the curriculum.
 
-**Phases:** **4.1** — chord track + one melodic voice only (the L2/L3
+**Phases:** **5.1** — chord track + one melodic voice only (the L2/L3
 bass rests); progressions as loops, the four-chord engine and how to make
-it not sound like one. **4.2** — full stack: chords + bass + melody, all
+it not sound like one. **5.2** — full stack: chords + bass + melody, all
 prior skills in one piece.
 
 **Craft focus:** voice leading by ear — smallest movement between chords,
@@ -201,7 +262,7 @@ the bass walks between chords); *Searching for Friends* (loop-native
 progression that never fatigues). Chicane — *Sunstroke* / *Poppiholla*
 (diatonic loops with suspensions and pedal tones doing the lifting).
 
-**Deliverable (4.2):** one original loop — chords + bass + melody, 8+ bars,
+**Deliverable (5.2):** one original loop — chords + bass + melody, 8+ bars,
 cycling seamlessly.
 
 **Self-tests:** *voice-leading test* — solo the chord track; any change
@@ -218,7 +279,7 @@ recolored.
 
 ---
 
-## Lesson 5 — Velocity and swing: groove
+## Lesson 6 — Velocity and swing: groove
 
 **Toolset:** per-note velocity (keyboard-entered accents), global swing,
 per-track humanize.
@@ -232,7 +293,7 @@ off *trinity* (the same figure hit five ways in eight bars). Any FFVI
 battle track at low volume: which notes poke out — velocity doing
 arrangement's job.
 
-**Deliverable:** the Lesson 4 loop in two versions — dead (uniform) and
+**Deliverable:** the Lesson 5 loop in two versions — dead (uniform) and
 alive (velocity + swing), same notes. Self-test: a week later, blind-ish
 shuffle; if you can't instantly tell which is which, the treatment did
 nothing.
@@ -246,7 +307,7 @@ taste.
 
 ---
 
-## Lesson 6 — Samples: drums and SNES parity
+## Lesson 7 — Samples: drums and SNES parity
 
 **Toolset:** full sample playback (multi-sample kits, drum lanes), 8-voice
 polyphony cap **enforced by the tool** (voices steal, SNES-style),
@@ -277,7 +338,7 @@ as an audible feature · ⚔ *Drop Out* — one lane silent each bar, rotating.
 
 ---
 
-## Lesson 7 — Arrangement: patterns into pieces
+## Lesson 8 — Arrangement: patterns into pieces
 
 **Toolset:** pattern chaining / song mode, per-pattern track mutes, one
 macro control (filter or volume ramp) for builds.
@@ -308,7 +369,7 @@ peak · ⚔ *Transition Zoo* — the same two patterns joined three ways.
 
 ---
 
-## Lesson 8 — Harmony endgame: the Fox Capture Plan tier
+## Lesson 9 — Harmony endgame: the Fox Capture Plan tier
 
 **Toolset:** your call — the graduation project; by now you know what your
 workflow is missing.
@@ -319,9 +380,9 @@ texture translated to your sequenced world.
 
 **References:** Fox Capture Plan — *trinity*: one track, transcribe the
 progression (help is free), identify what makes it not-four-chords.
-Uematsu — *You're Not Alone* (the bridge does things Lessons 1–7 didn't
+Uematsu — *You're Not Alone* (the bridge does things Lessons 1–8 didn't
 teach; find them). Chicane — now listen for the sus chords you couldn't
-name in Lesson 4.
+name in Lesson 5.
 
 **Deliverable:** one original piece, ≥ 2 minutes, using at least one
 harmonic device from this lesson *on purpose*, in your own style — not
