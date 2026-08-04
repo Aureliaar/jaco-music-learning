@@ -868,7 +868,9 @@ closePages();
 
 console.log("\n== the contour preview ==");
 qreset();
-eq("sixteen dabs, one per step", T.qdabs.length, 16);
+/* a dab for every step the longest page there can be has: the thumbnail of
+   a sixty-four-step page is denser, never truncated */
+eq("a dab for every step of the longest page", T.qdabs.length, T.MAX_STEPS);
 key("F3"); key("Enter"); key("F3"); /* into quest A */
 key("KeyZ"); key("Period"); key("KeyN"); /* C4 on 1, a rest on 3, A4 on 5 */
 key("F3");
@@ -1997,6 +1999,117 @@ eq("even though what is heard of it is now one step", T.spanOf(T.doc, 0, 0), 1);
 sealedPage(); T.save();
 eq("the seals are autosaved with the page",
    JSON.parse(store["folio.v1"]).lock[12], "prl");
+closePages(); reset();
+
+/* ================= a page longer than the window =================
+   Sixteen steps are on screen whatever the page is; the window follows the
+   cursor and moves by halves, so what is checked here is the arithmetic of
+   that following and the bindings that drive it — never where anything is
+   drawn, which is bootcheck's business. */
+console.log("\n== a page longer than the window ==");
+function longPage(n){
+  const s = new Array(n).fill(null);
+  T.setDoc({ version:1, title:"t", tempo:112, loop:n, key:"C major", len:n,
+             steps:s.slice(), bass:s.slice(), mute:[false,false], solo:[false,false] });
+  T.jump(0);
+}
+longPage(32);
+eq("the page says how long it is", T.pageLen(), 32);
+eq("and the window opens at its head", T.winStart, 0);
+T.jump(15);
+eq("the last step of the window moves it nowhere", T.winStart, 0);
+T.jump(16);
+eq("a step past the edge moves the window by a half, not by a step", T.winStart, 8);
+T.jump(24);
+eq("and again", T.winStart, 16);
+T.jump(31);
+eq("the window never runs off the end of the page", T.winStart, 16);
+T.jump(8);
+eq("walking back moves it back", T.winStart, 8);
+key("Home");
+eq("home is the first step of the page", T.cursor, 0);
+eq("and brings the window home with it", T.winStart, 0);
+key("End");
+eq("end is the last step of THIS page, not of the window", T.cursor, 31);
+eq("with the window at the foot", T.winStart, 16);
+
+/* shift and an arrow: a whole window, in the direction the arrow means */
+longPage(64);
+key("ArrowRight", { shiftKey:true });
+eq("shift and an arrow strides a whole window", T.cursor, 16);
+key("ArrowDown", { shiftKey:true });
+eq("either arrow of the pair does it", T.cursor, 32);
+key("ArrowLeft", { shiftKey:true });
+eq("and back", T.cursor, 16);
+T.jump(60);
+key("ArrowRight", { shiftKey:true });
+eq("it stops at the end of the page rather than wrapping", T.cursor, 63);
+key("ArrowLeft", { shiftKey:true });
+key("ArrowLeft", { shiftKey:true });
+key("ArrowLeft", { shiftKey:true });
+key("ArrowLeft", { shiftKey:true });
+key("ArrowLeft", { shiftKey:true });
+eq("and at the head of it", T.cursor, 0);
+key("ArrowRight");
+eq("a bare arrow is still one step", T.cursor, 1);
+reset();
+T.cursor = 4;
+key("ArrowRight", { shiftKey:true });
+eq("on a sixteen-step page the stride moves nothing", T.cursor, 4);
+ok("and says the page is all in view", /all of it is in view/.test(ids.footer.textContent),
+   ids.footer.textContent);
+
+/* the loop's rungs grow with the page, and the short ones stay */
+longPage(32);
+key("KeyL");
+eq("the loop steps down from the whole page", T.doc.loop, 16);
+key("KeyL"); eq("and again", T.doc.loop, 8);
+key("KeyL"); eq("and again", T.doc.loop, 4);
+key("KeyL");
+eq("and round to the whole page, which is 32 here", T.doc.loop, 32);
+ok("and says so as it always did", /the whole page/.test(ids.footer.textContent),
+   ids.footer.textContent);
+
+/* shift+L is the page itself, one rung above the loop */
+reset();
+eq("a page begins at sixteen", T.pageLen(), 16);
+key("KeyL", { shiftKey:true });
+eq("shift and L lengthens it", T.pageLen(), 32);
+eq("the arrays beside the notes follow it", T.doc.steps.length, 32);
+eq("the lengths too", T.doc.hold.length, 32);
+eq("and the seals", T.doc.lock.length, 32);
+eq("a whole-page loop stays whole", T.doc.loop, 32);
+key("KeyL", { shiftKey:true });
+eq("and again", T.pageLen(), 64);
+key("KeyL", { shiftKey:true });
+eq("and round again", T.pageLen(), 16);
+eq("cutting the page cuts the arrays with it", T.doc.steps.length, 16);
+/* but never over something written */
+key("KeyL", { shiftKey:true });
+T.cursor = 20; key("KeyZ");
+eq("a note written past the sixteenth", T.doc.steps[20], "C4");
+key("KeyL", { shiftKey:true });
+key("KeyL", { shiftKey:true });
+eq("the page will not shrink out from under it", T.pageLen(), 64);
+ok("and says which step is in the way", /step 21 is written/.test(ids.footer.textContent),
+   ids.footer.textContent);
+/* and the length rides the autosave, as the key and the tempo do */
+T.save();
+eq("the length is autosaved with the page", JSON.parse(store["folio.v1"]).len, 64);
+reset(); T.save();
+ok("and a sixteen-step page still writes none",
+   !("len" in JSON.parse(store["folio.v1"])), Object.keys(JSON.parse(store["folio.v1"])));
+/* the thumbnail of a long page: denser, never truncated, never off the end */
+qreset();
+key("F3"); key("Enter"); key("F3");          /* into the first quest's page */
+key("KeyL", { shiftKey:true }); key("KeyL", { shiftKey:true });
+eq("a quest's page can be long too", T.pageLen(), 64);
+T.cursor = 40; key("KeyZ");
+key("F3");
+eq("its last quarter draws a dab", T.qdabs[40].style.display, "block");
+ok("laid where it belongs across the whole thumbnail",
+   Math.abs(parseFloat(T.qdabs[40].style.left) - 62.5) < 1, T.qdabs[40].style.left);
+eq("and nothing is drawn past the end of the page", T.qdabs[63].style.display, "none");
 closePages(); reset();
 
 R.done();

@@ -12,7 +12,28 @@
 "use strict";
 
 /* ================= model ================= */
+/* ---- how long a page is ----
+   Sixteen steps was a global once, and every loop in the app counted to it.
+   It is two things now, and they were only ever the same number by accident:
+
+     STEPS   the default length of a page, and the length of every page
+             written before there was a choice
+     WIN     how much of a page is ever on screen at once — the window the
+             column and the roll both draw, cell for cell what they always
+             drew, whatever the page under it is
+
+   The length itself belongs to the document, as the key and the tempo do:
+   `len`, optional, one of PAGE_LENS, and written out only where it is not
+   the default — so a sixteen-step page is byte for byte the page it always
+   was, and an older build reads it without ever knowing the field exists.
+   Everything derived from it — the steps, the holds, the seals — follows
+   the page it is on. */
 var STEPS = 16;
+var PAGE_LENS = [16, 32, 64];
+var MAX_STEPS = 64;
+var WIN = 16;
+var HALF = 8;            /* the window moves by halves: never a jitter, always context */
+var PAGE_FIELD = "len";
 var NAMES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
 var STORE_KEY = "folio.v1";
 var LEGACY_KEY = "folio.v0";
@@ -118,13 +139,64 @@ var doc = defaultDoc();
 var baseOctave = 4;      // C2 - C6
 var cursor = 0;
 var voice = 0;           /* which voice the hands are writing into */
+/* the first step of the window: what the column and the roll are showing.
+   A preference of the reading, never of the document — it is not saved. */
+var winStart = 0;
+
+/* how long a page is, read as permissively as everything optional here:
+   absent, junk, a number nobody offers — all of it means the sixteen the
+   folio has always had */
+function docLen(d){
+  var n = d && d[PAGE_FIELD];
+  return (PAGE_LENS.indexOf(n) >= 0) ? n : STEPS;
+}
+function pageLen(){ return docLen(doc); }
+/* the loop rungs a page of this length offers: the short ones are kept
+   whatever the page is — a deliberate four-step loop on a sixty-four-step
+   page is a thing somebody wants — and the page's own length is the top */
+function loopRungs(n){
+  var out = [], i;
+  for (i = 0; i < PAGE_LENS.length; i++) if (PAGE_LENS[i] < n) out.push(PAGE_LENS[i]);
+  return [4, 8].concat(out, [n]);
+}
+/* ---- the window, and how it follows ----
+   A long page is read sixteen steps at a time, at the size the cells have
+   always been: nothing shrinks, nothing is squeezed, and a thirty-second
+   page reads exactly as a sixteenth-step page does — there is simply more
+   of it behind and ahead. The window moves only when the cursor walks out
+   of it, and then by a half of itself, so that half of what was on screen
+   is still there afterwards: the eye keeps its place, and a step near an
+   edge does not send the page sliding under it one row at a time.
+
+   Its start is therefore always a multiple of eight, which is also why the
+   beat rules stay where they are drawn: every eighth step is a beat. */
+function syncWindow(){
+  var n = pageLen(), was = winStart, max = n - WIN;
+  if (max <= 0){ winStart = 0; return winStart !== was; }
+  while (cursor < winStart) winStart -= HALF;
+  while (cursor >= winStart + WIN) winStart += HALF;
+  winStart = Math.max(0, Math.min(max, winStart));
+  return winStart !== was;
+}
+/* which part of the page is on screen, said the way the header says things */
+function windowLabel(){
+  return (winStart + 1) + "–" + (winStart + WIN) + " of " + pageLen();
+}
+/* an array beside the steps, made to fit the page it is beside: short is
+   filled out, long is cut down, and neither costs the page anything it had */
+function fit(a, n, filler){
+  if (!Array.isArray(a)) a = [];
+  while (a.length < n) a.push(filler);
+  if (a.length > n) a.length = n;
+  return a;
+}
 
 /* Every reader of a voice goes through here, and every one of them tolerates
    a page that predates the second voice: the field is made on first touch
    rather than assumed. The same for the two flag pairs. */
 function vsteps(v){
-  var f = VOICE_FIELD[v || 0];
-  if (!doc[f]) doc[f] = new Array(STEPS).fill(null);
+  var f = VOICE_FIELD[v || 0], n = pageLen();
+  if (!doc[f] || doc[f].length !== n) doc[f] = fit(doc[f], n, null);
   return doc[f];
 }
 function docSteps(d, v){
@@ -133,8 +205,8 @@ function docSteps(d, v){
 }
 /* the lengths of one voice, made on first touch exactly as its steps are */
 function vhold(v){
-  var f = VOICE_HOLD[v || 0];
-  if (!Array.isArray(doc[f])) doc[f] = new Array(STEPS).fill(1);
+  var f = VOICE_HOLD[v || 0], n = pageLen();
+  if (!Array.isArray(doc[f]) || doc[f].length !== n) doc[f] = fit(doc[f], n, 1);
   return doc[f];
 }
 function docHold(d, v){
@@ -143,8 +215,8 @@ function docHold(d, v){
 }
 /* the seals beside one voice, made on first touch exactly as its lengths are */
 function vlock(v){
-  var f = VOICE_LOCK[v || 0];
-  if (!Array.isArray(doc[f])) doc[f] = new Array(STEPS).fill(null);
+  var f = VOICE_LOCK[v || 0], n = pageLen();
+  if (!Array.isArray(doc[f]) || doc[f].length !== n) doc[f] = fit(doc[f], n, null);
   return doc[f];
 }
 function docLock(d, v){
@@ -174,7 +246,7 @@ function writtenLen(d, v, i){
   var h = docHold(d, v), n = h ? h[i] : 1;
   if (typeof n !== "number" || !isFinite(n)) n = 1;
   n = Math.round(n);
-  return Math.max(1, Math.min(STEPS, n));
+  return Math.max(1, Math.min(docLen(d), n));
 }
 /* ---- and what is *heard* ----
    A voice is one line: it cannot hold a note through another note of its
@@ -193,8 +265,8 @@ function spanOf(d, v, i){
   var s = docSteps(d, v);
   if (!s || !s[i]) return 0;
   var want = writtenLen(d, v, i);
-  var loop = (d && d.loop) || STEPS;
-  var wrap = i < loop, lim = wrap ? loop : STEPS - i, k, j;
+  var N = docLen(d), loop = (d && d.loop) || N;
+  var wrap = i < loop, lim = wrap ? loop : N - i, k, j;
   for (k = 1; k < lim; k++){
     j = wrap ? (i + k) % loop : i + k;
     if (s[j]) break;
@@ -204,7 +276,7 @@ function spanOf(d, v, i){
 /* every step a note occupies, its own first: one run, wrapped at the seam
    where it wraps */
 function spanSteps(d, v, i){
-  var n = spanOf(d, v, i), loop = (d && d.loop) || STEPS;
+  var n = spanOf(d, v, i), loop = (d && d.loop) || docLen(d);
   var wrap = i < loop, out = [], k;
   for (k = 0; k < n; k++) out.push(wrap ? (i + k) % loop : i + k);
   return out;
@@ -212,10 +284,10 @@ function spanSteps(d, v, i){
 /* which note of a voice is sounding at each step: the index it began on,
    or −1 where the voice is silent */
 function sounding(d, v){
-  var s = docSteps(d, v), out = new Array(STEPS), i, k, run;
-  for (i = 0; i < STEPS; i++) out[i] = -1;
+  var s = docSteps(d, v), N = docLen(d), out = new Array(N), i, k, run;
+  for (i = 0; i < N; i++) out[i] = -1;
   if (!s) return out;
-  for (i = 0; i < STEPS; i++){
+  for (i = 0; i < N; i++){
     if (!s[i]) continue;
     run = spanSteps(d, v, i);
     for (k = 0; k < run.length; k++) if (out[run[k]] < 0) out[run[k]] = i;
@@ -225,10 +297,10 @@ function sounding(d, v){
 /* the last step each held note is still sounding on: where its stroke ends
    on the page, and where the release actually happens */
 function ringEnds(d, v){
-  var s = docSteps(d, v), out = new Array(STEPS), i, run;
-  for (i = 0; i < STEPS; i++) out[i] = false;
+  var s = docSteps(d, v), N = docLen(d), out = new Array(N), i, run;
+  for (i = 0; i < N; i++) out[i] = false;
   if (!s) return out;
-  for (i = 0; i < STEPS; i++){
+  for (i = 0; i < N; i++){
     if (!s[i]) continue;
     run = spanSteps(d, v, i);
     if (run.length > 1) out[run[run.length - 1]] = true;
@@ -239,8 +311,8 @@ function ringEnds(d, v){
 function roomAt(d, v, i){
   var s = docSteps(d, v);
   if (!s || !s[i]) return 0;
-  var loop = (d && d.loop) || STEPS;
-  var wrap = i < loop, lim = wrap ? loop : STEPS - i, k, j;
+  var N = docLen(d), loop = (d && d.loop) || N;
+  var wrap = i < loop, lim = wrap ? loop : N - i, k, j;
   for (k = 1; k < lim; k++){
     j = wrap ? (i + k) % loop : i + k;
     if (s[j]) break;
@@ -387,11 +459,14 @@ var NOTE_KEYS = {
 
 
 /* ================= persistence ================= */
-/* one voice's sixteen steps, read the way they have always been read */
-function readSteps(arr){
-  if (!Array.isArray(arr) || arr.length !== STEPS) return null;
+/* one voice's steps, read the way they have always been read — as many of
+   them as the page says it is long, which for a page that says nothing is
+   the sixteen it always was */
+function readSteps(arr, n){
+  n = n || STEPS;
+  if (!Array.isArray(arr) || arr.length !== n) return null;
   var out = [];
-  for (var i = 0; i < STEPS; i++){
+  for (var i = 0; i < n; i++){
     var v = arr[i];
     if (v === null || v === undefined){ out.push(null); continue; }
     /* a rhythm mark from the removed two-pass entry: accepted, then dropped */
@@ -402,17 +477,18 @@ function readSteps(arr){
   }
   return out;
 }
-function silence(){ return new Array(STEPS).fill(null); }
+function silence(n){ return new Array(n || STEPS).fill(null); }
 /* the lengths beside one voice, read as permissively as the key is: absent,
    short, long, junk, a length where there is no note — all of it means the
    plain sixteenth at that step, and none of it can cost the page its notes */
-function readHolds(a, steps){
+function readHolds(a, steps, N){
   var out = [], i, n;
-  for (i = 0; i < STEPS; i++){
+  N = N || STEPS;
+  for (i = 0; i < N; i++){
     n = (Array.isArray(a) && typeof a[i] === "number" && isFinite(a[i]))
           ? Math.round(a[i]) : 1;
     if (!(n > 1)) n = 1;
-    if (n > STEPS) n = STEPS;
+    if (n > N) n = N;
     out.push(steps[i] ? n : 1);
   }
   return out;
@@ -429,9 +505,10 @@ function allPlain(a){
    the page its notes. What survives is kept in the canonical order however
    it was written, so "lp" and "prl" and "pxrl" read back as letters this
    folio knows, in the one order it writes them in. */
-function readLocks(a, steps){
+function readLocks(a, steps, N){
   var out = [], i, k, t, s, c;
-  for (i = 0; i < STEPS; i++){
+  N = N || STEPS;
+  for (i = 0; i < N; i++){
     t = (Array.isArray(a) && typeof a[i] === "string") ? a[i].toLowerCase() : "";
     s = "";
     for (k = 0; k < LOCK_KINDS.length; k++){
@@ -480,6 +557,8 @@ function docOut(d){
     if (allFree(out[VOICE_LOCK[v]])) delete out[VOICE_LOCK[v]];
   }
   if (allOwnTone(out[VOICE_TONE])) delete out[VOICE_TONE];
+  /* and the length only where the page is longer than the page always was */
+  if (docLen(out) === STEPS) delete out[PAGE_FIELD];
   return out;
 }
 function readFlags(a){
@@ -490,29 +569,35 @@ function readFlags(a){
 function validate(obj){
   if (!obj || typeof obj !== "object" || Array.isArray(obj)) return null;
   droppedMarks = false;
-  var steps = readSteps(obj.steps);
+  /* the length is read before anything that is measured by it, and a page
+     that says nothing is the sixteen-step page it has always been */
+  var N = docLen(obj);
+  var steps = readSteps(obj.steps, N);
   if (!steps) return null;
   /* The second voice is optional and permissive, as the key is: a page from
      before Lesson 2 has no `bass` at all and gets a silent one, and a `bass`
      that cannot be read is silence rather than a rejected file — the lead is
      what the file is for, and it is never risked for the sake of the bass. */
   var bass = (obj.bass === null || obj.bass === undefined)
-               ? silence() : (readSteps(obj.bass) || silence());
+               ? silence(N) : (readSteps(obj.bass, N) || silence(N));
   var tempo = (typeof obj.tempo === "number" && isFinite(obj.tempo) && obj.tempo > 0) ? obj.tempo : 112;
   var title = (typeof obj.title === "string" && obj.title.trim()) ? obj.title.trim().slice(0, 60) : "untitled folio";
-  /* version 1 files may carry a loop length; anything but 4 or 8 means the whole page */
-  var loop = (obj.loop === 4 || obj.loop === 8) ? obj.loop : STEPS;
+  /* version 1 files may carry a loop length; anything the page does not
+     offer as a rung means the whole page, whatever the page is */
+  var loop = (loopRungs(N).indexOf(obj.loop) >= 0) ? obj.loop : N;
   /* the key is optional and permissive: a file without one is in C major,
      and so is a file whose key cannot be read */
   var key = normalizeKey(obj.key);
-  return { version: 1, title: title, tempo: tempo, loop: loop, key: key,
+  var out = { version: 1, title: title, tempo: tempo, loop: loop, key: key,
            steps: steps, bass: bass,
-           hold: readHolds(obj.hold, steps),
-           basshold: readHolds(obj.basshold, bass),
-           lock: readLocks(obj.lock, steps),
-           basslock: readLocks(obj.basslock, bass),
+           hold: readHolds(obj.hold, steps, N),
+           basshold: readHolds(obj.basshold, bass, N),
+           lock: readLocks(obj.lock, steps, N),
+           basslock: readLocks(obj.basslock, bass, N),
            tones: readTones(obj.tones),
            mute: readFlags(obj.mute), solo: readFlags(obj.solo) };
+  if (N !== STEPS) out[PAGE_FIELD] = N;
+  return out;
 }
 /* The autosave is now the autosave of a workspace. Every modification runs
    through here, exactly as before; what changed is where it lands — the

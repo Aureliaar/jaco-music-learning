@@ -426,7 +426,7 @@ function docHasNotes(d){
   for (var v = 0; v < VOICES; v++){
     var s = docSteps(d, v);
     if (!s) continue;
-    for (var i = 0; i < STEPS; i++) if (s[i]) return true;
+    for (var i = 0; i < docLen(d); i++) if (s[i]) return true;
   }
   return false;
 }
@@ -1150,7 +1150,9 @@ var qi;
    one coloured dab per sounding step, pitch as height. No rules, no grid,
    no numbers; it is there to be recognised, not read. */
 var qdabs = [], qdabs2 = [], vdabs;
-for (qi = 0; qi < STEPS; qi++){
+/* as many dabs as the longest page there can be: a thumbnail of a long
+   page is simply a denser one, drawn at the same size */
+for (qi = 0; qi < MAX_STEPS; qi++){
   var qd = document.createElement("div");
   qd.className = "qdab";
   qd.style.display = "none";
@@ -1165,16 +1167,17 @@ for (qi = 0; qi < STEPS; qi++){
 vdabs = [qdabs, qdabs2];
 function renderContour(id){
   var d = questPage(id), lo = Infinity, hi = -Infinity, i, m, v, s, n;
+  var N = docLen(d), w = 100 / N;
   for (v = 0; v < VOICES; v++){
     s = docSteps(d, v);
-    for (i = 0; s && i < STEPS; i++){
+    for (i = 0; s && i < N; i++){
       m = s[i] ? midiOf(s[i]) : null;
       if (m !== null){ if (m < lo) lo = m; if (m > hi) hi = m; }
     }
   }
   if (lo > hi){
     for (v = 0; v < VOICES; v++)
-      for (i = 0; i < STEPS; i++) vdabs[v][i].style.display = "none";
+      for (i = 0; i < MAX_STEPS; i++) vdabs[v][i].style.display = "none";
     return;
   }
   lo -= 2; hi += 2;
@@ -1182,17 +1185,18 @@ function renderContour(id){
   var span = hi - lo + 1;
   for (v = 0; v < VOICES; v++){
     s = docSteps(d, v);
-    for (i = 0; i < STEPS; i++){
+    for (i = 0; i < MAX_STEPS; i++){
       var dab = vdabs[v][i];
+      if (i >= N){ dab.style.display = "none"; continue; }
       n = s ? s[i] : null;
       if (!n){ dab.style.display = "none"; continue; }
       m = midiOf(n);
       /* the contour speaks the roll's language, so it says length the same
          way: a held note is one longer dab, never several */
-      var dl = Math.min(spanOf(d, v, i), STEPS - i);
+      var dl = Math.min(spanOf(d, v, i), N - i);
       dab.style.display = "block";
-      dab.style.left = (i * 6.25 + 1.1) + "%";
-      dab.style.width = (dl * 6.25 - 2.25) + "%";
+      dab.style.left = (i * w + w * 0.18) + "%";
+      dab.style.width = (dl * w - w * 0.36) + "%";
       dab.style.height = "0.34rem";
       dab.style.top = "calc(" + ((hi - m) / span * 100) + "% - 0.17rem)";
       dab.style.backgroundColor = PC_COLOR[parseNote(n).pc];

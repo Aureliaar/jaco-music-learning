@@ -233,8 +233,17 @@ function setSeal(el, lk){
     (lk && lk.indexOf("l") >= 0 ? " sl" : "");
 }
 
+/* ---- the page is drawn a window at a time ----
+   Everything below is built WIN rows and WIN columns wide and never any
+   wider, whatever the page under it is: `rows[k]`, `bars[k]`, `baseCells[k]`
+   are screen slots, and the step each is showing is `winStart + k`. A page
+   of sixteen has winStart pinned at nought and every one of these is the
+   step it always was, cell for cell. */
+function stepAt(k){ return winStart + k; }
+function slotOf(i){ var k = i - winStart; return (k >= 0 && k < WIN) ? k : -1; }
+
 var rows = [];
-for (var i = 0; i < STEPS; i++){
+for (var i = 0; i < WIN; i++){
   var row = document.createElement("div");
   row.className = "row" + (i % 4 === 0 ? " beat" : "");
   var fl = document.createElement("span"); fl.className = "fleuron";
@@ -252,7 +261,7 @@ for (var i = 0; i < STEPS; i++){
   row.appendChild(fl); row.appendChild(ca); row.appendChild(nu);
   row.appendChild(no); row.appendChild(no2);
   column.appendChild(row);
-  rows.push({ el: row, fleuron: fl, caret: ca, note: no, note2: no2,
+  rows.push({ el: row, fleuron: fl, caret: ca, num: nu, note: no, note2: no2,
               notes: [no, no2], texts: [tx, tx2], seals: [sl, sl2] });
 }
 
@@ -273,7 +282,7 @@ for (i = 0; i < 12; i++){
   PC_COLOR[i] = "hsl(" + ((((i * 7) % 12) * 30 + 45) % 360) + ",42%,40%)";
 }
 
-for (i = 0; i < STEPS; i += 4){
+for (i = 0; i < WIN; i += 4){
   var bl = document.createElement("div");
   bl.className = "beatline";
   bl.style.left = (i * 6.25) + "%";
@@ -303,6 +312,13 @@ var vbars = [bars, bars2];
    running off the edge of the page into nothing. Only one note per voice
    can cross the seam, so one spare bar each is all it can ever need. */
 var seamBars = [];
+/* ---- and the bar that came in from the left ----
+   The window's other edge has the same problem the seam has: a note struck
+   before the first step on screen may still be ringing across it, and a
+   drawing that began every bar at its head would simply not draw it. One
+   spare each again — only one note per voice can be sounding at the moment
+   the window opens — laid from the left edge to wherever it stops. */
+var edgeBars = [];
 /* one per step: the interval between the voices, written where both sound —
    the label itself, and the tie that hangs it between the two bars */
 var ivls = [], ivlTies = [];
@@ -316,7 +332,7 @@ function mkBar(store){
   rollfield.appendChild(b);
   store.push(b);
 }
-for (i = 0; i < STEPS; i++){
+for (i = 0; i < WIN; i++){
   mkBar(bars);
   /* the second voice's bars, drawn in the same field: pitch already keeps
      them apart, and the voice not in hand is drawn a shade back */
@@ -337,18 +353,40 @@ for (i = 0; i < STEPS; i++){
   baseCells.push(cell);
 }
 for (i = 0; i < VOICES; i++) mkBar(seamBars);
+for (i = 0; i < VOICES; i++) mkBar(edgeBars);
 
 function midiOf(s){ var p = parseNote(s); return p ? (p.oct + 1) * 12 + p.pc : null; }
+
+/* the part of a note that is not its head: the wrap at the seam, and the
+   ring that came in over the window's left edge. Both are drawn from a slot
+   to a width and carry no seal — the seal rides the step the note is struck
+   on, and this is not it. */
+function paintTail(b, v, k, wide, top, span, colour){
+  wide = Math.min(wide, WIN - k);
+  if (wide <= 0){ b.style.display = "none"; return; }
+  b.style.display = "block";
+  b.style.left = (k * 6.25 + 0.7) + "%";
+  b.style.width = (wide * 6.25 - 1.4) + "%";
+  b.style.top = top;
+  b.style.height = (100 / span) + "%";
+  b.style.backgroundColor = colour;
+  b.classList.toggle("back", v !== voice);
+  b.classList.remove("outside");
+  setSeal(b.firstChild, "");
+}
 
 function rollLayout(){
   /* fit the pitch window to the notes on the page, never tighter than two
      octaves, recomputed only on edits — user-initiated, never while idle.
      Both voices are inside the window: a bass that fell off the bottom of
      the drawing would be a bass you could not see. */
-  var lo = Infinity, hi = -Infinity, i, m, v, s;
+  /* the pitch window is fitted to the WHOLE page, not to the sixteen steps
+     on screen, so that scrolling the window never slides the drawing up and
+     down under the eye: the shape a long page has is one shape */
+  var lo = Infinity, hi = -Infinity, i, m, v, s, N = pageLen();
   for (v = 0; v < VOICES; v++){
     s = vsteps(v);
-    for (i = 0; i < STEPS; i++){
+    for (i = 0; i < N; i++){
       m = s[i] ? midiOf(s[i]) : null;
       if (m !== null){ if (m < lo) lo = m; if (m > hi) hi = m; }
     }
@@ -394,9 +432,11 @@ function rollLayout(){
   for (v = 0; v < VOICES; v++){
     s = vsteps(v);
     seamBars[v].style.display = "none";
-    for (i = 0; i < STEPS; i++){
-      var n = s[i], b = vbars[v][i];
-      if (!n){ b.style.display = "none"; continue; }
+    edgeBars[v].style.display = "none";
+    for (i = 0; i < WIN; i++) vbars[v][i].style.display = "none";
+    for (i = 0; i < N; i++){
+      var n = s[i];
+      if (!n) continue;
       m = midiOf(n);
       /* one bar per note, as wide as the note is long: a held note is one
          long stadium of colour, never a row of repeated dabs. The gap
@@ -404,27 +444,32 @@ function rollLayout(){
          sixteenths is drawn exactly as it was drawn before. */
       var len = spanOf(doc, v, i), loop = doc.loop;
       var head = (i < loop) ? Math.min(len, loop - i) : len;
-      b.style.display = "block";
-      b.style.left = (i * 6.25 + 0.7) + "%";
-      b.style.width = (head * 6.25 - 1.4) + "%";
-      b.style.top = ((hi - m) / span * 100) + "%";
-      b.style.height = (100 / span) + "%";
-      b.style.backgroundColor = PC_COLOR[parseNote(n).pc];
-      b.classList.toggle("back", v !== voice);
-      setSeal(b.firstChild, sealOf(doc, v, i));
-      /* and the rest of it, come round again at the head of the page */
-      if (len > head){
-        var sb = seamBars[v];
-        sb.style.display = "block";
-        sb.style.left = "0.7%";
-        sb.style.width = ((len - head) * 6.25 - 1.4) + "%";
-        sb.style.top = b.style.top;
-        sb.style.height = b.style.height;
-        sb.style.backgroundColor = b.style.backgroundColor;
-        sb.classList.toggle("back", v !== voice);
-        sb.classList.remove("outside");
-        setSeal(sb.firstChild, "");   /* the tail of a note is not its head */
+      var top = ((hi - m) / span * 100) + "%";
+      var colour = PC_COLOR[parseNote(n).pc];
+      var k = slotOf(i);
+      if (k >= 0){
+        var b = vbars[v][k];
+        b.style.display = "block";
+        b.style.left = (k * 6.25 + 0.7) + "%";
+        /* a note that rings out past the right edge of the window stops at
+           it: the rest of it is read by walking on, as everything past the
+           edge is */
+        b.style.width = (Math.min(head, WIN - k) * 6.25 - 1.4) + "%";
+        b.style.top = top;
+        b.style.height = (100 / span) + "%";
+        b.style.backgroundColor = colour;
+        b.classList.toggle("back", v !== voice);
+        b.classList.toggle("outside", i >= doc.loop);
+        setSeal(b.firstChild, sealOf(doc, v, i));
+      } else if (i < winStart && i + head > winStart){
+        /* struck before the window opened and still ringing across its left
+           edge: the tail of it, from the edge to wherever it stops */
+        paintTail(edgeBars[v], v, 0, Math.min(i + head, winStart + WIN) - winStart,
+                  top, span, colour);
       }
+      /* and the rest of it, come round again at the head of the page */
+      if (len > head && winStart === 0)
+        paintTail(seamBars[v], v, 0, len - head, top, span, colour);
     }
   }
   rollIntervals(hi, span);
@@ -449,10 +494,11 @@ function rollLayout(){
    that happened once. A page with nothing held is untouched by any of this:
    there, every sounding step is a struck step. */
 function rollIntervals(hi, span){
-  var lead = vsteps(0), bass = vsteps(1), i, ma, mz, el, top, d;
+  var lead = vsteps(0), bass = vsteps(1), i, k, ma, mz, el, top, d;
   var sl = sounding(doc, 0), sz = sounding(doc, 1), hl, hz;
-  for (i = 0; i < STEPS; i++){
-    el = ivls[i];
+  for (k = 0; k < WIN; k++){
+    i = stepAt(k);
+    el = ivls[k];
     hl = sl[i]; hz = sz[i];
     ma = (hl >= 0) ? midiOf(lead[hl]) : null;
     mz = (hz >= 0) ? midiOf(bass[hz]) : null;
@@ -462,7 +508,7 @@ function rollIntervals(hi, span){
     }
     el.firstChild.textContent = intervalName(ma - mz);
     el.classList.add("on");
-    el.style.left = (i * 6.25) + "%";
+    el.style.left = (k * 6.25) + "%";
     el.style.width = "6.25%";
     /* a bar's centre is half a semitone below its top edge */
     top = (ma > mz) ? ma : mz;
@@ -470,7 +516,7 @@ function rollIntervals(hi, span){
     el.style.top = ((hi - top + 0.5) / span * 100) + "%";
     el.style.height = (d / span * 100) + "%";
     /* the two voices on one pitch have no distance to tie across */
-    ivlTies[i].style.display = d ? "block" : "none";
+    ivlTies[k].style.display = d ? "block" : "none";
     el.classList.toggle("outside", i >= doc.loop);
   }
 }
@@ -500,22 +546,27 @@ function showGuide(m){
   }, GUIDE_HOLD);
 }
 function rollCursor(){
-  rollCur.style.left = (cursor * 6.25) + "%";
+  var c = slotOf(cursor);
+  rollCur.style.left = ((c < 0 ? 0 : c) * 6.25) + "%";
   rollCur.style.width = "6.25%";
-  for (var i = 0; i < STEPS; i++){
-    var on = (i === cursor);
+  rollCur.style.display = (c < 0) ? "none" : "block";
+  for (var k = 0; k < WIN; k++){
+    var i = stepAt(k), on = (k === c);
     /* the ring marks the step under the cursor in the voice in hand only */
-    bars[i].classList.toggle("cur", on && voice === 0);
-    bars2[i].classList.toggle("cur", on && voice === 1);
-    baseCells[i].classList.toggle("cur", on);
-    baseCells[i].textContent = on ? "‸" : (i % 4 === 0 ? String(i + 1) : "");
+    bars[k].classList.toggle("cur", on && voice === 0);
+    bars2[k].classList.toggle("cur", on && voice === 1);
+    baseCells[k].classList.toggle("cur", on);
+    /* the base strip counts in the page's own numbers, so where in the page
+       the window is sitting is legible off the drawing itself */
+    baseCells[k].textContent = on ? "‸" : (i % 4 === 0 ? String(i + 1) : "");
   }
 }
 function rollLoop(){
-  for (var i = 0; i < STEPS; i++){
-    bars[i].classList.toggle("outside", i >= doc.loop);
-    bars2[i].classList.toggle("outside", i >= doc.loop);
-    ivls[i].classList.toggle("outside", i >= doc.loop);
+  for (var k = 0; k < WIN; k++){
+    var out = stepAt(k) >= doc.loop;
+    bars[k].classList.toggle("outside", out);
+    bars2[k].classList.toggle("outside", out);
+    ivls[k].classList.toggle("outside", out);
   }
 }
 
@@ -559,7 +610,7 @@ function toggleViz(){
   say(viz === "roll" ? "the roll · height is pitch, colour is the note" : "the column");
 }
 
-var shownPlayhead = -1;
+var shownPlayhead = -1, shownRow = -1;
 
 function renderNotes(){
   for (var v = 0; v < VOICES; v++){
@@ -567,8 +618,8 @@ function renderNotes(){
     /* which note is ringing where, so that a step covered by a hold is
        neither a note (it was not struck) nor a rest (it is sounding) */
     var snd = sounding(doc, v), ends = ringEnds(doc, v);
-    for (var i = 0; i < STEPS; i++){
-      var n = s[i], el = rows[i].notes[v], tx = rows[i].texts[v];
+    for (var k = 0; k < WIN; k++){
+      var i = stepAt(k), n = s[i], el = rows[k].notes[v], tx = rows[k].texts[v];
       if (n){ tx.nodeValue = display(n); el.className = "note" + back; }
       else if (snd[i] >= 0){
         /* the tail of a held note: no writing at all, only the stroke,
@@ -578,9 +629,13 @@ function renderNotes(){
       }
       else  { tx.nodeValue = "·";          el.className = "note empty" + back; }
       /* the seal rides the step the note is struck on, never its tail */
-      setSeal(rows[i].seals[v], sealOf(doc, v, i));
+      setSeal(rows[k].seals[v], sealOf(doc, v, i));
     }
   }
+  /* the column counts in the page's own numbers: on a long page the numbers
+     down the margin are 17 … 32, which is the plainest thing on the screen
+     saying where in the piece you are */
+  for (var k2 = 0; k2 < WIN; k2++) rows[k2].num.textContent = String(stepAt(k2) + 1);
   rollLayout();
   renderVoices();
 }
@@ -600,29 +655,38 @@ function renderVoices(){
   voicesEl.classList.toggle("off", questsEl.classList.contains("on"));
 }
 function renderCursor(){
-  for (var i = 0; i < STEPS; i++){
-    var on = (i === cursor);
-    rows[i].el.classList.toggle("cursor", on);
-    rows[i].caret.textContent = on ? "‸" : "";
+  /* the window follows the cursor, and if it moved the page under it is a
+     different sixteen steps: the notes, the numbers and the loop's shading
+     all have to be said again, and the header has to say where this is */
+  if (syncWindow()){ renderNotes(); renderMeta(); renderLoop(); }
+  var c = slotOf(cursor);
+  for (var k = 0; k < WIN; k++){
+    var on = (k === c);
+    rows[k].el.classList.toggle("cursor", on);
+    rows[k].caret.textContent = on ? "‸" : "";
   }
   rollCursor();
 }
+/* the playhead is a step of the piece; the row it lights is a slot of the
+   window, and on a long page the playhead spends most of its turn off
+   screen — the transport runs the whole loop whatever is being read */
 function renderPlayhead(step){
-  if (step === shownPlayhead) return;
-  if (shownPlayhead >= 0){
-    rows[shownPlayhead].el.classList.remove("play");
-    rows[shownPlayhead].fleuron.textContent = "";
+  var row = (step >= 0) ? slotOf(step) : -1;
+  if (step === shownPlayhead && row === shownRow) return;
+  if (shownRow >= 0){
+    rows[shownRow].el.classList.remove("play");
+    rows[shownRow].fleuron.textContent = "";
   }
-  if (step >= 0){
-    rows[step].el.classList.add("play");
-    rows[step].fleuron.textContent = "❧";
-    rollWash.style.left = (step * 6.25) + "%";
+  if (row >= 0){
+    rows[row].el.classList.add("play");
+    rows[row].fleuron.textContent = "❧";
+    rollWash.style.left = (row * 6.25) + "%";
     rollWash.style.width = "6.25%";
     rollWash.style.display = "block";
   } else {
     rollWash.style.display = "none";
   }
-  shownPlayhead = step;
+  shownPlayhead = step; shownRow = row;
 }
 /* ---- the meta line, pared back to what only it says ----
    It used to carry the title, the tempo, the octave, the key, the loop, the
@@ -635,13 +699,20 @@ function renderPlayhead(step){
    (2026-08-01): entry is relative and the roll shows where you are, so the
    number informed nothing. What is left is the two settings of the piece
    that have no other home: how fast, and in what. That is what the line is
-   for. */
+   for.
+
+   A page longer than the window earns the line's one addition: which
+   sixteen steps of it are on screen. It is the same kind of fact as the
+   other two — a setting of the reading rather than a control — and it is
+   there only while the page is long, so every sixteen-step folio there has
+   ever been says tempo and key and nothing else, exactly as ruled. */
 function renderMeta(){
-  meta.textContent = doc.tempo + " · " + doc.key;
+  meta.textContent = doc.tempo + " · " + doc.key +
+    (pageLen() > WIN ? " · " + windowLabel() : "");
 }
 function renderLoop(){
-  for (var i = 0; i < STEPS; i++){
-    rows[i].el.classList.toggle("outside", i >= doc.loop);
+  for (var k = 0; k < WIN; k++){
+    rows[k].el.classList.toggle("outside", stepAt(k) >= doc.loop);
   }
   rollLoop();
 }
@@ -738,13 +809,16 @@ function keysNow(){
       ["s d g h j  ·  2 3 5 6 7","the notes between"],
       ["← ↑","a step back"],
       ["→ ↓","a step on"],
-      ["home · end","the first step, the last"],
+      ["home · end","the first step of the page, the last"],
+      ["shift ← ↑","a window back"],
+      ["shift → ↓","a window on"],
       ["− +","shorter, longer · shift, all the way"],
       ["period","clear the step"],
       ["space","play, stop"],
       ["tab","the next voice · shift, the one before"],
       ["page ↑ ↓","which octave the note keys are"],
       ["L","the loop"],
+      ["shift+L","how long the page is · 16, 32, 64"],
       ["K","the names, away and back"],
       ["O · P","solo, mute"],
       ["F2", rollv ? "the column instead" : "the roll instead"],
@@ -841,4 +915,7 @@ function say(msg){
     questsEl.classList.contains("on")   ? " · F3 to close" + syncNote() :
     settingsEl.classList.contains("on") ? " · start, or ○, to close" : "");
 }
-function renderAll(){ renderNotes(); renderCursor(); renderMeta(); renderLoop(); }
+function renderAll(){
+  syncWindow();
+  renderNotes(); renderCursor(); renderMeta(); renderLoop();
+}

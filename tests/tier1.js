@@ -289,6 +289,46 @@ eq("and it writes back out byte for byte what it read",
    JSON.stringify(T.docOut(lifted)),
    JSON.stringify(Object.assign({}, older, { bass: blank(), mute:[false,false], solo:[false,false] })));
 
+/* ---- how long a page is ----
+   The length is a field of the document like the key, optional and written
+   only where it is not the sixteen it always was. The two things that must
+   outlive any rewrite of the drawing are here: an old page still reads as
+   sixteen without saying so, and a long page survives the round trip with
+   every array beside its notes the same length as its notes. */
+console.log("\n== how long the page is ==");
+const long32 = new Array(32).fill(null);
+long32[0] = "C4"; long32[20] = "G4";
+const long = V(pageOf({ len:32, steps: long32, bass: new Array(32).fill(null),
+                        loop:32, hold: new Array(32).fill(1) }));
+ok("a page that says it is 32 reads", !!long);
+eq("with all 32 of its steps", long.steps.length, 32);
+eq("its note past the sixteenth kept", long.steps[20], "G4");
+eq("a silent second voice of the same length", long.bass.length, 32);
+eq("and lengths beside them of the same length", long.hold.length, 32);
+eq("and seals", long.lock.length, 32);
+eq("docLen says so", T.docLen(long), 32);
+eq("a whole-page loop is the whole of THIS page", long.loop, 32);
+const longWire = JSON.stringify(T.docOut(long));
+const longBack = V(JSON.parse(longWire));
+eq("the round trip keeps the length", T.docLen(longBack), 32);
+eq("and every note of it", longBack.steps, long.steps);
+eq("and a second trip changes nothing", JSON.stringify(T.docOut(longBack)), longWire);
+ok("a long page writes the field", "len" in JSON.parse(longWire));
+const plain16 = V(pageOf({ steps: noteAt({ 0:"C4" }) }));
+eq("a page that says nothing is sixteen", T.docLen(plain16), 16);
+ok("and writes no length field at all", !("len" in T.docOut(plain16)));
+eq("a length nobody offers is sixteen too", T.docLen({ len:20 }), 16);
+eq("and so is junk", T.docLen({ len:"long" }), 16);
+ok("a page claiming 32 with sixteen steps in it is refused",
+   V(pageOf({ len:32, steps: noteAt({ 0:"C4" }) })) === null);
+eq("the rungs of a sixteen page", T.loopRungs(16), [4,8,16]);
+eq("the rungs grow with the page", T.loopRungs(32), [4,8,16,32]);
+eq("and again", T.loopRungs(64), [4,8,16,32,64]);
+/* an older build handed a long page reads a page it cannot measure: the
+   length is beside the notes, not inside them, so its notes are still notes */
+ok("the length is a field, never a change to what a step is",
+   JSON.parse(longWire).steps.every(v => v === null || typeof v === "string"));
+
 console.log("\n== the autosave, saved and loaded ==");
 T.resetQuests();
 T.setDoc(rich);

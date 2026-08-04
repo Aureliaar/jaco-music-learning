@@ -222,6 +222,7 @@ function boot(opts){
     VOICES: _g("VOICES"), VOICE_NAMES: _g("VOICE_NAMES"), TONE: _g("TONE"),
     bars2: _g("bars2"), qdabs2: _g("qdabs2"),
     enterNote: _g("enterNote"), clearStep: _g("clearStep"), moveCursor: _g("moveCursor"),
+    jump: _g("jump"), renderCursor: _g("renderCursor"),
     validate: _g("validate"), importText: _g("importText"),
     save: _g("save"), load: _g("load"), scheduler: _g("scheduler"),
     setDoc: function(d){ doc = d; renderAll(); },
@@ -353,7 +354,11 @@ function boot(opts){
     XBAR_MODES: _g("XBAR_MODES"), xbarSlots: _g("xbarSlots"),
     get xbarMode(){ return _g("xbarMode"); }, set xbarMode(v){ xbarMode = v; },
     get kitBank(){ return _g("kitBank"); },
-    STEPS: _g("STEPS"), STORE_KEY: _g("STORE_KEY"), LEGACY_KEY: _g("LEGACY_KEY"),
+    STEPS: _g("STEPS"), WIN: _g("WIN"), MAX_STEPS: _g("MAX_STEPS"),
+    PAGE_LENS: _g("PAGE_LENS"), PAGE_FIELD: _g("PAGE_FIELD"),
+    docLen: _g("docLen"), pageLen: _g("pageLen"), loopRungs: _g("loopRungs"),
+    get winStart(){ return _g("winStart"); },
+    STORE_KEY: _g("STORE_KEY"), LEGACY_KEY: _g("LEGACY_KEY"),
     defaultDoc: _g("defaultDoc"), NOTE_KEYS: _g("NOTE_KEYS") };
   window.__probe = function(n){ try { return eval(n); } catch(e){ return "__undefined__"; } };
 `;
