@@ -213,6 +213,63 @@ ok("allFree says so of an absent array", T.allFree(undefined) === true);
 ok("and of an array of nulls", T.allFree([null, null]) === true);
 ok("and not of one with a seal in it", T.allFree([null, "p"]) === false);
 
+/* ---- the mirrored span: one cell of music, pointed at from several sites ---- */
+console.log("\n== the mirrors beside the notes ==");
+const M = (o, extra) => V(pageOf(Object.assign({ mirrors: o }, extra || {})));
+const ostinato = [{ voice:1, cell:4, sites:[0,4,8] }];
+eq("a page with no mirrors is bound nowhere", V(pageOf()).mirrors, []);
+eq("a mirror is read whole", M(ostinato).mirrors, ostinato);
+eq("two mirrors, one a voice, are both read",
+   M([{ voice:0, cell:8, sites:[0,8] }, { voice:1, cell:4, sites:[0,4,8] }]).mirrors.length, 2);
+eq("its sites come back in order however they were written",
+   M([{ voice:0, cell:4, sites:[8,0,4] }]).mirrors[0].sites, [0,4,8]);
+
+console.log("\n== what a mirror has to be ==");
+const dropped = (name, o) => eq(name, M(o).mirrors, []);
+dropped("a mirror that is not an object is dropped", ["mirror"]);
+dropped("a voice that is not a voice is dropped", [{ voice:2, cell:4, sites:[0] }]);
+dropped("nor may it be a name", [{ voice:"bass", cell:4, sites:[0] }]);
+dropped("a cell below one step is dropped", [{ voice:0, cell:0, sites:[0] }]);
+dropped("and a negative one", [{ voice:0, cell:-4, sites:[0] }]);
+dropped("a cell longer than the page is dropped", [{ voice:0, cell:17, sites:[0] }]);
+dropped("a fractional cell is dropped", [{ voice:0, cell:2.5, sites:[0] }]);
+dropped("a mirror with no sites is dropped", [{ voice:0, cell:4, sites:[] }]);
+dropped("sites that are not an array are dropped", [{ voice:0, cell:4, sites:0 }]);
+dropped("a site that runs off the end is dropped", [{ voice:0, cell:4, sites:[0,14] }]);
+dropped("a site before the page is dropped", [{ voice:0, cell:4, sites:[-1] }]);
+dropped("a fractional site is dropped", [{ voice:0, cell:4, sites:[0,4.5] }]);
+dropped("a site that is not a number is dropped", [{ voice:0, cell:4, sites:["0"] }]);
+dropped("the same site twice is dropped", [{ voice:0, cell:4, sites:[0,4,0] }]);
+dropped("sites lying over each other are dropped", [{ voice:0, cell:4, sites:[0,2] }]);
+eq("and a mirror lying over one already read is dropped, the first one kept",
+   M([{ voice:0, cell:4, sites:[0,8] }, { voice:0, cell:2, sites:[2,9] }]).mirrors.length, 1);
+eq("the same cell in the other voice is not an overlap at all",
+   M([{ voice:0, cell:4, sites:[0,8] }, { voice:1, cell:4, sites:[0,8] }]).mirrors.length, 2);
+eq("a good mirror beside a bad one is still read",
+   M([{ voice:0, cell:99, sites:[0] }, { voice:1, cell:4, sites:[0,4] }]).mirrors.length, 1);
+eq("mirrors that are not an array bind nothing", M("everywhere").mirrors, []);
+ok("and a page is never rejected for its mirrors",
+   M({ nonsense:true }, { steps: noteAt({ 0:"C4" }) }).steps[0] === "C4");
+ok("a page keeps its notes when its mirror is thrown away",
+   M([{ voice:0, cell:99, sites:[0] }], { steps: noteAt({ 0:"C4", 4:"E4" }) })
+     .steps.filter(Boolean).length === 2);
+eq("a long page may carry sites a short one could not",
+   M([{ voice:0, cell:8, sites:[0,24] }], { len:32, steps:new Array(32).fill(null),
+      bass:new Array(32).fill(null) }).mirrors[0].sites, [0,24]);
+
+console.log("\n== the mirror, read off the page ==");
+const bound = M(ostinato);
+ok("a step inside a site is bound", T.mirrored(bound, 1, 5) === true);
+ok("the same step in the other voice is not", T.mirrored(bound, 0, 5) === false);
+ok("nor is a step past the last site", T.mirrored(bound, 1, 14) === false);
+eq("every site of a step is the same offset in each cell",
+   T.mirrorSites(bound, 1, 1), [1,5,9]);
+eq("a step nothing binds is its own only site", T.mirrorSites(bound, 1, 14), [14]);
+eq("and so is every step of a page with no mirrors at all",
+   T.mirrorSites(V(pageOf()), 0, 7), [7]);
+eq("mirrorAt says how far into the cell a step is", T.mirrorAt(bound, 1, 10).off, 2);
+ok("and nothing where nothing binds", T.mirrorAt(bound, 1, 15) === null);
+
 console.log("\n== what a plain page writes out ==");
 const outPlain = T.docOut(V(pageOf({ steps: noteAt({ 0:"C4" }) })));
 ok("a page with nothing held writes no lead lengths", !("hold" in outPlain));
@@ -236,6 +293,15 @@ const outSealed = T.docOut(V(pageOf({ steps: noteAt({ 0:"C4" }), lock: L({ 0:"pr
 ok("a page with a sealed note writes its seals", "lock" in outSealed);
 eq("exactly as they were read", outSealed.lock[0], "pr");
 ok("and still no bass seals, nothing being sealed there", !("basslock" in outSealed));
+ok("a page bound nowhere writes no mirrors", !("mirrors" in outPlain));
+const outBound = T.docOut(M(ostinato));
+ok("a page with a mirror writes it", "mirrors" in outBound);
+eq("exactly as it was read", outBound.mirrors, ostinato);
+eq("and a page's mirrors survive being written out and read back in",
+   V(JSON.parse(JSON.stringify(outBound))).mirrors, ostinato);
+ok("allUnbound says so of an absent array", T.allUnbound(undefined) === true);
+ok("and of an empty one", T.allUnbound([]) === true);
+ok("and not of one with a mirror in it", T.allUnbound(ostinato) === false);
 ok("allPlain says so of an absent array", T.allPlain(undefined) === true);
 ok("and of an array of ones", T.allPlain([1,1,1]) === true);
 ok("and not of one with a two in it", T.allPlain([1,2,1]) === false);

@@ -260,6 +260,17 @@
   .note.dim{color:var(--faded);}
   .row.cursor .note{font-weight:700;}         /* the only bold in the app */
   .row.cursor .note.dim{font-weight:400;}     /* and only on the voice in hand */
+  /* ---- music that is in more than one place ----
+     A mirrored cell is one piece of music pointed at from several sites, and
+     no site is the original — so it cannot be drawn with an arrow, a bracket
+     or a mark on one end of it. It is drawn by weight instead: everywhere the
+     cell stands, the writing is a shade lighter than music written by hand.
+     Eight sites of an ostinato are therefore eight lighter passages and not
+     eight of anything repeated across the page — no rule, no band, no tint,
+     nothing that could stack up into a stripe. Less contrast than the page
+     already has, never more, and nothing here moves. */
+  .note.mirror{opacity:0.62;}
+  .note.mirror.dim{opacity:0.5;}
 
   /* ---- the seal ----
      A note a quest has sealed carries a small gilt ring at its shoulder, in
@@ -398,6 +409,12 @@
   /* the voice not in hand: a shade back, and a shade further past the loop */
   .bar.back{opacity:0.45;}
   .bar.back.outside{opacity:0.2;}
+  /* a bar of a mirrored cell, at the same lighter weight the column writes
+     one in — after the two above, so the shades compound rather than argue */
+  .bar.mirror{opacity:0.62;}
+  .bar.mirror.outside{opacity:0.26;}
+  .bar.mirror.back{opacity:0.3;}
+  .bar.mirror.back.outside{opacity:0.14;}
   .bar.cur{box-shadow:0 0 0 1px var(--ink);}   /* the roll's answer to bold */
   /* ---- the names on the drawing ----
      The roll says pitch with height and colour, which is quick to read and
