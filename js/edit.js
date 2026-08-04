@@ -22,7 +22,7 @@
    and it wraps around the page exactly as the arrows do. Moving the cursor
    by hand is untouched, and still one step at a time. */
 var ADVANCE = 2;
-function advance(){ cursor = (cursor + ADVANCE) % STEPS; renderCursor(); }
+function advance(){ cursor = (cursor + ADVANCE) % pageLen(); renderCursor(); }
 /* every edit lands in the voice the hands are in, and nowhere else.
    A step written into is a step struck afresh: unless a length is handed in
    (the nudge keeps the one the note already had), it is the plain sixteenth
@@ -164,7 +164,7 @@ function growTick(){
   if (n > roomHere(v, i)) return;               /* at the wall: hold there */
   vhold(v)[i] = n;
   renderNotes(); save();
-  if (n > ADVANCE){ cursor = (i + n) % STEPS; renderCursor(); }
+  if (n > ADVANCE){ cursor = (i + n) % pageLen(); renderCursor(); }
   say(display(s[i]) + " at step " + (i + 1) + " · " + n + " steps");
 }
 
@@ -185,7 +185,7 @@ function moveEdge(end, d){
   if (end){ setLen(voice, i, writtenLen(doc, voice, i) + d); return; }
   var s = vsteps(voice), len = writtenLen(doc, voice, i);
   var j = i + d;
-  if (j < 0 || j >= STEPS){
+  if (j < 0 || j >= pageLen()){
     say("that note is already at the " + (d < 0 ? "head" : "foot") + " of the page");
     return;
   }
@@ -194,7 +194,7 @@ function moveEdge(end, d){
     say(display(s[i]) + " is one step long — its start cannot pass its end");
     return;
   }
-  var name = s[i], n = Math.min(STEPS, len - d);
+  var name = s[i], n = Math.min(pageLen(), len - d);
   /* this mover trades length for position — it holds the far end still — so
      a note with its length sealed cannot be moved this way, and one pinned
      to its step cannot be moved at all */
@@ -227,7 +227,7 @@ function moveNote(d){
   var i = headAt(voice, cursor);
   if (i < 0){ say("step " + (cursor + 1) + " is empty — no note to move"); return; }
   var j = i + d;
-  if (j < 0 || j >= STEPS){
+  if (j < 0 || j >= pageLen()){
     say("that note is already at the " + (d < 0 ? "head" : "foot") + " of the page");
     return;
   }
@@ -256,7 +256,7 @@ function stretch(d, whole){
     say("step " + (cursor + 1) + " is empty — nothing to hold");
     return;
   }
-  var want = whole ? (d > 0 ? STEPS : 1) : writtenLen(doc, voice, i) + d;
+  var want = whole ? (d > 0 ? pageLen() : 1) : writtenLen(doc, voice, i) + d;
   setLen(voice, i, want);
 }
 
@@ -289,7 +289,7 @@ function enterNote(off){
    A page with nothing on it anchors on the tonic in the base octave. */
 
 function anchorMidi(){
-  var span = (cursor < doc.loop) ? doc.loop : STEPS, s = vsteps(voice);
+  var span = (cursor < doc.loop) ? doc.loop : pageLen(), s = vsteps(voice);
   for (var k = 1; k <= span; k++){
     var i = ((cursor - k) % span + span) % span;
     if (s[i]) return clampMidi(midiOf(s[i]));
@@ -408,8 +408,12 @@ function shiftTempo(d){
   say("tempo · " + n + (n !== want ? " — the end of the range" : ""));
 }
 
-/* the loop: playback repeats the first 4, 8, or all 16 steps. Editing is
-   never fenced in — the cursor still walks the whole page. */
+/* the loop: playback repeats the first few steps of the page. The rungs
+   grow with the page — a thirty-two-step page offers 4, 8, 16 and its own
+   thirty-two — and the short ones are kept whatever the page is, because a
+   four-step loop under a long page is something somebody asks for on
+   purpose. Editing is never fenced in — the cursor still walks the whole
+   page. */
 function setLoop(n){
   doc.loop = n;
   if (schedStep >= n) schedStep = 0;   /* mid-playback shortening snaps home */
@@ -417,9 +421,63 @@ function setLoop(n){
      and not merely re-shaded: a note that rang across the old seam may ring
      across a different one now, or stop at the end of the page instead */
   renderNotes(); renderLoop(); renderMeta(); save();
-  say(n === STEPS ? "loop · the whole page" : "loop · first " + n + " steps");
+  say(n === pageLen() ? "loop · the whole page" : "loop · first " + n + " steps");
 }
-function cycleLoop(){ setLoop(doc.loop === STEPS ? 8 : doc.loop === 8 ? 4 : STEPS); }
+/* down the rungs and round again, as it always went: the whole page, then
+   the halves under it, then back to the whole page */
+function cycleLoop(){
+  var r = loopRungs(pageLen()), i = r.indexOf(doc.loop);
+  setLoop(r[(i <= 0 ? r.length : i) - 1]);
+}
+
+/* ---- how long the page is ----
+   Sixteen steps, thirty-two, sixty-four, and round again — beside the loop
+   on the board because it is the same kind of decision one rung up: the
+   loop says how much of the page repeats, this says how much page there is.
+   Growing costs nothing; shrinking would take away whatever is written past
+   the new end, so it does not — it says what is in the way and leaves the
+   page alone. */
+function cyclePageLen(){
+  var n = pageLen(), want = PAGE_LENS[(PAGE_LENS.indexOf(n) + 1) % PAGE_LENS.length];
+  var v, s, i, last = -1;
+  if (want < n){
+    for (v = 0; v < VOICES; v++){
+      s = vsteps(v);
+      for (i = want; i < n; i++) if (s[i]) last = i;
+    }
+    if (last >= 0){
+      say("step " + (last + 1) + " is written — a page of " +
+          want + " has nowhere to keep it");
+      return;
+    }
+  }
+  doc[PAGE_FIELD] = want;
+  for (v = 0; v < VOICES; v++){ vsteps(v); vhold(v); vlock(v); }
+  /* the loop is a rung of the page it is on: a whole-page loop stays whole,
+     and one longer than the new page comes down to it */
+  if (doc.loop === n || doc.loop > want) doc.loop = want;
+  if (cursor >= want) cursor = want - 1;
+  if (schedStep >= doc.loop) schedStep = 0;
+  save();
+  renderAll();
+  say("the page · " + want + " steps" + (want > WIN ? " · " + windowLabel() : ""));
+}
+
+/* ---- a window at a time ----
+   Sixty-four steps is four windows, and walking between them one step at a
+   time is the tedium the window was supposed to answer. Shift and an arrow
+   is therefore the stride: a whole window, in the direction the arrow
+   already means, landing on the same place in the next window as it left in
+   this one. It does not wrap — a mover that comes out at the far end of the
+   piece is a mover you cannot use without looking. */
+function moveSection(d){
+  var n = pageLen();
+  if (n <= WIN){ say("the page is " + n + " steps — all of it is in view"); return; }
+  var want = cursor + d * WIN;
+  cursor = Math.max(0, Math.min(n - 1, want));
+  renderCursor();
+  say("step " + (cursor + 1) + " · " + windowLabel());
+}
 
 function clearStep(){
   /* clearing takes away whatever is sounding here, which for a step in the
@@ -438,7 +496,8 @@ function clearStep(){
   advance();
 }
 function moveCursor(d){
-  cursor = (cursor + d + STEPS) % STEPS;
+  var n = pageLen();
+  cursor = (cursor + d + n) % n;
   renderCursor();
   say("step " + (cursor + 1));
 }

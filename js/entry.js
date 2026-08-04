@@ -116,16 +116,26 @@ document.addEventListener("keydown", function(e){
       e.preventDefault(); clearStep(); return;
     /* both arrow pairs walk the cursor: up/left back, down/right forward —
        the column reads down, the roll reads right, the hands need not care */
+    /* and with shift, a window at a time: page up and page down are the
+       octave and have been for as long as there have been notes, so the
+       stride down a long page lives on the arrows it is a bigger version of */
     case "ArrowUp": case "ArrowLeft":
-      e.preventDefault(); moveCursor(-1); return;
+      e.preventDefault();
+      if (e.shiftKey) moveSection(-1); else moveCursor(-1);
+      return;
     case "ArrowDown": case "ArrowRight":
-      e.preventDefault(); moveCursor(1); return;
+      e.preventDefault();
+      if (e.shiftKey) moveSection(1); else moveCursor(1);
+      return;
     case "Home":       e.preventDefault(); jump(0); return;
-    case "End":        e.preventDefault(); jump(STEPS - 1); return;
+    case "End":        e.preventDefault(); jump(pageLen() - 1); return;
     case "PageUp":     e.preventDefault(); shiftOctave(1); return;
     case "PageDown":   e.preventDefault(); shiftOctave(-1); return;
+    /* the loop, and one rung up from it the page the loop is a part of */
     case "KeyL":
-      e.preventDefault(); cycleLoop(); return;
+      e.preventDefault();
+      if (e.shiftKey) cyclePageLen(); else cycleLoop();
+      return;
     /* beside it by position: the names on the drawing, away and back */
     case "KeyK":
       e.preventDefault(); toggleNames(); return;
