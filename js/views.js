@@ -520,7 +520,7 @@ function midiOf(s){ var p = parseNote(s); return p ? (p.oct + 1) * 12 + p.pc : n
    ring that came in over the window's left edge. Both are drawn from a slot
    to a width and carry no seal — the seal rides the step the note is struck
    on, and this is not it. */
-function paintTail(b, v, k, wide, top, span, colour){
+function paintTail(b, v, k, wide, top, span, colour, bound){
   var w = 100 / winRoll;
   wide = Math.min(wide, winRoll - k);
   if (wide <= 0){ b.style.display = "none"; return; }
@@ -531,6 +531,7 @@ function paintTail(b, v, k, wide, top, span, colour){
   b.style.height = (100 / span) + "%";
   b.style.backgroundColor = colour;
   b.classList.toggle("back", v !== voice);
+  b.classList.toggle("mirror", !!bound);
   b.classList.remove("outside");
   setSeal(b.firstChild, "");
 }
@@ -618,6 +619,9 @@ function rollLayout(){
       var head = (i < loop) ? Math.min(len, loop - i) : len;
       var top = ((hi - m) / span * 100) + "%";
       var colour = PC_COLOR[parseNote(n).pc];
+      /* the same lighter weight the column writes a bound note in, on the
+         bar and on whatever of it runs off either edge */
+      var bound = mirrored(doc, v, i);
       var k = rollSlot(i);
       if (k >= 0){
         var b = vbars[v][k];
@@ -631,17 +635,18 @@ function rollLayout(){
         b.style.height = (100 / span) + "%";
         b.style.backgroundColor = colour;
         b.classList.toggle("back", v !== voice);
+        b.classList.toggle("mirror", bound);
         b.classList.toggle("outside", i >= doc.loop);
         setSeal(b.firstChild, sealOf(doc, v, i));
       } else if (i < startRoll && i + head > startRoll){
         /* struck before the window opened and still ringing across its left
            edge: the tail of it, from the edge to wherever it stops */
         paintTail(edgeBars[v], v, 0, Math.min(i + head, startRoll + winRoll) - startRoll,
-                  top, span, colour);
+                  top, span, colour, bound);
       }
       /* and the rest of it, come round again at the head of the page */
       if (len > head && startRoll === 0)
-        paintTail(seamBars[v], v, 0, len - head, top, span, colour);
+        paintTail(seamBars[v], v, 0, len - head, top, span, colour, bound);
     }
   }
   rollIntervals(hi, span);
@@ -800,12 +805,19 @@ function renderNotes(){
     var snd = sounding(doc, v), ends = ringEnds(doc, v);
     for (var k = 0; k < winCol; k++){
       var i = colStep(k), n = s[i], el = rows[k].notes[v], tx = rows[k].texts[v];
-      if (n){ tx.nodeValue = display(n); el.className = "note" + back; }
+      /* ---- what the page says about a bound step ----
+         Music inside a mirrored cell is written a shade lighter than music
+         written by hand, in both views, so the page shows what is bound
+         without saying which of the sites came first — none of them did.
+         It is on the writing and on the stroke, and not on the rests: an
+         empty step is faint already and a fainter one would say nothing. */
+      var bound = mirrored(doc, v, i) ? " mirror" : "";
+      if (n){ tx.nodeValue = display(n); el.className = "note" + back + bound; }
       else if (snd[i] >= 0){
         /* the tail of a held note: no writing at all, only the stroke,
            with its foot on the last step the note is still sounding */
         tx.nodeValue = "";
-        el.className = "note hold" + (ends[i] ? " last" : "") + back;
+        el.className = "note hold" + (ends[i] ? " last" : "") + back + bound;
       }
       else  { tx.nodeValue = "·";          el.className = "note empty" + back; }
       /* the seal rides the step the note is struck on, never its tail */

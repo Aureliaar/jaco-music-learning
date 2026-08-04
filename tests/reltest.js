@@ -2005,6 +2005,129 @@ eq("the seals are autosaved with the page",
    JSON.parse(store["folio.v1"]).lock[12], "prl");
 closePages(); reset();
 
+/* ================= the mirrored span =================
+   A cell of music pointed at from several places, and no original among
+   them: what is checked here is that every door which writes music writes
+   all of the sites, and that the ones which would break the promise refuse.
+   The schema itself — what a mirror has to be, and what is dropped — is
+   tier1's. Nothing here is drawn: the lighter weight is bootcheck's. */
+console.log("\n== a write at one site is the cell ==");
+/* the lead bound in threes: a cell of four at steps 1, 5 and 9, so the four
+   steps at the foot of the page are free and can say what unbound looks like */
+function boundPage(o, extra){
+  page(o, Object.assign({ mirrors:[{ voice:0, cell:4, sites:[0,4,8] }] }, extra||{}));
+}
+reset(); useColumn(); boundPage({});
+
+T.cursor = 1; key("KeyX");
+eq("a note written at one site is written at every site",
+   [T.doc.steps[1], T.doc.steps[5], T.doc.steps[9]], ["D4","D4","D4"]);
+eq("and nowhere outside the cell", T.doc.steps[13], null);
+eq("the second voice is untouched by a mirror on the first", T.doc.bass[5], null);
+
+boundPage({}); T.cursor = 1; T.relStep(1);
+eq("the contour writes the cell too, every site of it",
+   [T.doc.steps[1], T.doc.steps[5], T.doc.steps[9]], ["C4","C4","C4"]);
+T.cursor = 5; T.nudge(1);
+eq("a nudge at any site leans every site", T.doc.steps[1], "D4");
+eq("including the one it was asked at", T.doc.steps[9], "D4");
+
+boundPage({}); T.cursor = 1; key("KeyX"); T.cursor = 1; key("Equal");
+eq("a length asked for at one site is the cell's length",
+   [T.doc.hold[1], T.doc.hold[5], T.doc.hold[9]], [2,2,2]);
+T.cursor = 9; key("Minus");
+eq("and shortening at another site shortens all three",
+   [T.doc.hold[1], T.doc.hold[5], T.doc.hold[9]], [1,1,1]);
+
+boundPage({}); T.cursor = 1; key("KeyX");
+T.growStart(0, 1, "KeyX"); T.grow.next = 0; T.growTick();
+eq("the note growing under the finger grows at every site",
+   [T.doc.hold[1], T.doc.hold[5], T.doc.hold[9]], [2,2,2]);
+
+boundPage({}); T.cursor = 1; key("KeyX"); T.cursor = 5; key("Period");
+eq("clearing at one site clears the cell",
+   [T.doc.steps[1], T.doc.steps[5], T.doc.steps[9]], [null,null,null]);
+
+boundPage({}); T.cursor = 1; key("KeyX"); T.cursor = 1; T.moveNote(1);
+eq("the carry takes the note at every site",
+   [T.doc.steps[2], T.doc.steps[6], T.doc.steps[10]], ["D4","D4","D4"]);
+eq("and leaves none of them behind",
+   [T.doc.steps[1], T.doc.steps[5], T.doc.steps[9]], [null,null,null]);
+T.cursor = 2; T.moveEdge(false, -1);
+eq("and so does the mover that trades length for place", T.doc.steps[5], "D4");
+
+/* the promise the mirror makes is that the sites are the same music, so a
+   note may not walk out of its cell, into one, or from one to another */
+boundPage({ 3:"G4", 7:"G4", 11:"G4" });
+T.cursor = 11; T.moveNote(1);
+eq("a bound note is not carried out of its cell",
+   [T.doc.steps[3], T.doc.steps[7], T.doc.steps[11]], ["G4","G4","G4"]);
+eq("and nothing arrived outside it", T.doc.steps[12], null);
+ok("and the page says why",
+   /bound to a mirrored span/.test(ids.footer.textContent), ids.footer.textContent);
+boundPage({ 12:"A4" });
+T.cursor = 12; T.moveNote(-1);
+eq("nor is a free note carried into one", T.doc.steps[12], "A4");
+eq("and nothing arrived inside it", T.doc.steps[11], null);
+boundPage({ 3:"G4" });
+T.cursor = 3; T.moveNote(1);
+eq("but a carry from one offset of the cell to another is the cell turning",
+   [T.doc.steps[0], T.doc.steps[4], T.doc.steps[8]], ["G4","G4","G4"]);
+eq("and the offset it left is empty at every site",
+   [T.doc.steps[3], T.doc.steps[7], T.doc.steps[11]], [null,null,null]);
+/* a site is asked about at every site, not only under the hand */
+boundPage({ 0:"C4" });
+T.cursor = 1; key("KeyX"); T.cursor = 1; T.moveNote(-1);
+eq("a step taken at any site refuses the carry for all of them", T.doc.steps[1], "D4");
+ok("and names the step it found taken",
+   /is taken/.test(ids.footer.textContent), ids.footer.textContent);
+
+console.log("\n== a seal inside a cell is a seal on the cell ==");
+boundPage({ 1:"C4", 5:"C4", 9:"C4" }, { lock: L({ 5:"p" }) });
+T.cursor = 1; key("KeyX");
+eq("a pitch sealed at one site is sealed at every site", T.doc.steps[1], "C4");
+ok("and says which seal it was",
+   /pitch is sealed/.test(ids.footer.textContent), ids.footer.textContent);
+boundPage({ 1:"C4", 5:"C4", 9:"C4" }, { lock: L({ 9:"r" }) });
+T.cursor = 1; T.moveNote(1);
+eq("a note pinned at one site does not move at any", T.doc.steps[1], "C4");
+boundPage({ 1:"C4", 5:"C4", 9:"C4" }, { lock: L({ 5:"l" }) });
+T.cursor = 1; key("Equal");
+eq("nor does a length sealed at one site grow at any",
+   T.writtenLen(T.doc, 0, 1), 1);
+boundPage({ 1:"C4", 5:"C4", 9:"C4" }, { lock: L({ 1:"p" }) });
+T.cursor = 5; T.nudge(1);
+eq("and it is the same seal read from every side", T.doc.steps[5], "C4");
+
+console.log("\n== written once, heard at each site for itself ==");
+/* the whole of the written-versus-heard rule, on a cell: the length is the
+   cell's, but where the ring runs out is whatever stands at that site */
+page({}, { bass: steps({ 3:"C2", 7:"C2", 8:"E2" }),
+           basshold:[1,1,1,4, 1,1,1,4, 1,1,1,1, 1,1,1,1],
+           mirrors:[{ voice:1, cell:4, sites:[0,4] }] });
+eq("the written length is one number", [T.doc.basshold[3], T.doc.basshold[7]], [4,4]);
+eq("what is heard at the first site is the whole of it", T.spanOf(T.doc, 1, 3), 4);
+eq("and at the second it stops where the next note stands", T.spanOf(T.doc, 1, 7), 1);
+
+console.log("\n== a mirror binds one voice ==");
+page({}, { bass: blank(), mirrors:[{ voice:1, cell:4, sites:[0,4,8] }] });
+T.setVoice(0); T.cursor = 1; key("KeyX");
+eq("a mirror on the bass leaves the lead free", T.doc.steps[1], "D4");
+eq("with nothing written at the other sites", T.doc.steps[5], null);
+T.setVoice(1); T.cursor = 1; key("KeyX");
+eq("while the bass under it writes the cell",
+   [T.doc.bass[1], T.doc.bass[5], T.doc.bass[9]], ["D4","D4","D4"]);
+T.setVoice(0);
+
+/* the mirror belongs to the page, so it travels with it */
+boundPage({}); T.save();
+eq("the mirrors are autosaved with the page",
+   JSON.parse(store["folio.v1"]).mirrors[0].sites, [0,4,8]);
+reset();
+eq("and a page with none writes none",
+   "mirrors" in JSON.parse(T.exportJSON()), false);
+closePages(); reset();
+
 /* ================= a page longer than the window =================
    How much of a page is on screen is measured off the screen, and the two
    views are measured apart — so what is checked here is the arithmetic that

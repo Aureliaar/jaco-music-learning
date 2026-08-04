@@ -48,11 +48,43 @@ var SEAL_SAY = {
   "": "that note is sealed — it stays"
 };
 
+/* ---- and what a mirror does instead of refusing ----
+   A step inside a mirrored cell is not one step: it is the same step in
+   several places at once, and writing it writes all of them. That is not a
+   guard and never says no — it is what putting a note down there MEANS, so
+   it lives in the same doors the seals do and every way in inherits it,
+   including the ways in that do not exist yet.
+
+   The one thing a mirror does refuse is a note carried across its edge: a
+   note that walked out of a cell would leave the cell holding one thing at
+   one site and another at the rest, which is the drift the mirror was for. */
+var MIRROR_SAY = "that note is bound to a mirrored span — it stays inside it";
+
+/* the one place the written fields of a step are actually put down: the note,
+   its written length, and its seal, at every site the step belongs to at
+   once. A step nothing binds has one site — itself — so a page with no
+   mirror on it writes exactly as it always wrote. */
+function putAt(v, i, name, len, lk){
+  var s = vsteps(v), h = vhold(v), l = vlock(v), sites = mirrorSites(doc, v, i), k, p;
+  for (k = 0; k < sites.length; k++){
+    p = sites[k];
+    s[p] = name || null;
+    h[p] = name ? len : 1;
+    l[p] = name ? (lk || null) : null;   /* nothing there to be sealed against */
+  }
+}
+/* and the length alone, the same way round: shared because it is written,
+   while what is heard of it is still each site's own business */
+function holdAt(v, i, n){
+  var h = vhold(v), sites = mirrorSites(doc, v, i), k;
+  for (k = 0; k < sites.length; k++) h[sites[k]] = n;
+}
+
 /* the one door every write goes through. It answers whether the page
    changed, so that a caller can hold its tongue — and its cursor — when the
    page did not. */
 function setStep(i, v, len){
-  var s = vsteps(voice), lk = sealOf(doc, voice, i);
+  var s = vsteps(voice), lk = sealAll(doc, voice, i);
   var want = (v && typeof len === "number") ? Math.max(1, len) : 1;
   if (lk){
     /* any seal at all keeps the note: it is never unwritten out from under
@@ -62,9 +94,7 @@ function setStep(i, v, len){
     if (lk.indexOf("l") >= 0 && want !== writtenLen(doc, voice, i))
       return refuse(SEAL_SAY.l);
   }
-  s[i] = v;
-  vhold(voice)[i] = want;
-  if (!v) vlock(voice)[i] = null;      /* nothing there to be sealed against */
+  putAt(voice, i, v, want, vlock(voice)[i]);
   renderNotes(); save();
   return true;
 }
@@ -72,12 +102,21 @@ function setStep(i, v, len){
    moveEdge is the only caller today; it is a function of its own so that
    anything later which moves a note has one guarded door to come through. */
 function carryNote(v, i, j, len){
-  var s = vsteps(v), h = vhold(v), l = vlock(v);
-  if (sealed(doc, v, i, "r")) return refuse(SEAL_SAY.r);
-  if (len !== writtenLen(doc, v, i) && sealed(doc, v, i, "l"))
+  var s = vsteps(v), from = mirrorAt(doc, v, i), to = mirrorAt(doc, v, j);
+  /* out of a cell, into a cell, or from one cell to another: all three would
+     make the sites differ, and the mirror is the promise that they do not */
+  if ((from && from.m) !== (to && to.m)) return refuse(MIRROR_SAY);
+  if (sealedAll(doc, v, i, "r")) return refuse(SEAL_SAY.r);
+  if (len !== writtenLen(doc, v, i) && sealedAll(doc, v, i, "l"))
     return refuse(SEAL_SAY.l);
-  s[j] = s[i]; h[j] = len; l[j] = l[i] || null;
-  s[i] = null; h[i] = 1; l[i] = null;
+  var dst = mirrorSites(doc, v, j), k;
+  /* the caller looked at the step under the hand; a bound note has to arrive
+     at every one of its sites, so every one of them is asked */
+  for (k = 0; k < dst.length; k++)
+    if (s[dst[k]]) return refuse("step " + (dst[k] + 1) + " is taken");
+  var name = s[i], lk = vlock(v)[i];
+  putAt(v, i, null);                 /* out of every site it stood in */
+  putAt(v, j, name, len, lk);        /* and into every site it is going to */
   return true;
 }
 
@@ -93,12 +132,14 @@ function headAt(v, i){
   return snd[i];
 }
 /* the length that can be asked for here: never past the next note of the
-   same voice, and never longer than one turn of the loop */
-function roomHere(v, i){ return roomAt(doc, v, i); }
+   same voice, and never longer than one turn of the loop — and for a bound
+   note, the most room any of its sites has, since the length is written once
+   for all of them and heard at each of them separately */
+function roomHere(v, i){ return roomAll(doc, v, i); }
 function setLen(v, i, n, quiet){
   var s = vsteps(v);
   if (!s[i]) return false;
-  if (sealed(doc, v, i, "l")){ if (!quiet) refuse(SEAL_SAY.l); return false; }
+  if (sealedAll(doc, v, i, "l")){ if (!quiet) refuse(SEAL_SAY.l); return false; }
   var cap = roomHere(v, i);
   var was = writtenLen(doc, v, i);
   n = Math.max(1, Math.min(cap, n));
@@ -109,7 +150,7 @@ function setLen(v, i, n, quiet){
           (n === cap ? " · as long as it will go here" : ""));
     return false;
   }
-  vhold(v)[i] = n;
+  holdAt(v, i, n);
   renderNotes(); save();
   if (!quiet){
     showGuide(midiOf(s[i]));
@@ -159,10 +200,10 @@ function growTick(){
   if (!s[i]){ growStop(); return; }             /* it went away underneath us */
   /* a sealed length does not grow under the finger either; said once, and
      then the growing is let go of so it is not said again every step */
-  if (sealed(doc, v, i, "l")){ growStop(); refuse(SEAL_SAY.l); return; }
+  if (sealedAll(doc, v, i, "l")){ growStop(); refuse(SEAL_SAY.l); return; }
   var n = writtenLen(doc, v, i) + 1;
   if (n > roomHere(v, i)) return;               /* at the wall: hold there */
-  vhold(v)[i] = n;
+  holdAt(v, i, n);
   renderNotes(); save();
   if (n > ADVANCE){ cursor = (i + n) % pageLen(); renderCursor(); }
   say(display(s[i]) + " at step " + (i + 1) + " · " + n + " steps");

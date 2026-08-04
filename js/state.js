@@ -118,6 +118,43 @@ var VOICE_TONE = "tones";
 var VOICE_LOCK = ["lock", "basslock"];
 var LOCK_KINDS = "prl";
 
+/* ---- the mirrored span ----
+   A quest may want to say that these eight steps and those eight steps are
+   the same music — a reprise — or that the bass repeats on fours. Written by
+   hand that is two copies to keep in step, and they drift.
+
+   A mirror is one cell of music pointed at from several places on the page.
+   Not a source and a copy: there is no original and no direction. A cell of
+   length `cell` has a list of `sites`, and the music at every one of them IS
+   the cell — writing at any site writes the cell, and every other site is
+   already changed by the time the page is drawn again. It binds one voice:
+   a mirror on the bass leaves the lead free to answer it.
+
+     mirrors: [ { voice:1, cell:4, sites:[0,4,8,12,16,20,24,28] } ]
+
+   The Return is a cell of 8 with sites at 0 and 24 in both voices — two
+   mirrors, one a voice. An ostinato is the eight sites above. Even spacing
+   is only what a site list happens to say: the primitive is a list, not a
+   period, and a cell may sit anywhere with anything between.
+
+   Sites are step indices, from nought, as every index in this file is.
+
+   It arrives with the workspace, like the key, the tempo and the length, and
+   NOTHING in the instrument makes or unmakes one (player ruling 2026-08-05):
+   there is no binding, nothing on the pad, no way in. A hand for it comes at
+   the arrangement lesson.
+
+   What is shared is the *written* music — the note, its written length, and
+   any seal on it. What is heard is still computed at each site by the rule
+   that has always governed it (spanOf): a note whose ring runs past the end
+   of its site goes on ringing into whatever follows it *there*, so one cell
+   can sound different in different places. That is the point, not a leak.
+
+   Optional and written only where one exists, as `tones` and `len` are: a
+   page with no mirror is byte for byte the page it always was, and a build
+   that predates this simply does not see the field. */
+var MIRROR_FIELD = "mirrors";
+
 /* a page: the whole document. Every workspace holds one of these. */
 function defaultDoc(){
   return {
@@ -133,6 +170,7 @@ function defaultDoc(){
     lock: new Array(STEPS).fill(null),    /* what a lead note is sealed against */
     basslock: new Array(STEPS).fill(null),/* and a bass note */
     tones: [null, null],                  /* what each voice sounds like */
+    mirrors: [],                          /* cells bound to several places */
     mute: [false, false],
     solo: [false, false]
   };
@@ -270,6 +308,67 @@ function sealOf(d, v, i){
 function sealed(d, v, i, kind){
   var t = sealOf(d, v, i);
   return kind ? t.indexOf(kind) >= 0 : !!t;
+}
+/* ---- the mirror, read off the page ----
+   The whole of it is four small questions, and everything that writes music
+   asks one of them. A page with no mirrors answers every one of them exactly
+   as the folio always did — mirrorSites of a free step is that step alone —
+   which is why the doors in edit.js could be moved onto these without a
+   single `if` about mirrors anywhere in them. */
+function docMirrors(d){
+  var a = d && d[MIRROR_FIELD];
+  return Array.isArray(a) ? a : [];
+}
+/* which cell covers this step of this voice, and how far into it we are */
+function mirrorAt(d, v, i){
+  var ms = docMirrors(d), k, j, m;
+  for (k = 0; k < ms.length; k++){
+    m = ms[k];
+    if (m.voice !== v) continue;
+    for (j = 0; j < m.sites.length; j++)
+      if (i >= m.sites[j] && i < m.sites[j] + m.cell)
+        return { m: m, off: i - m.sites[j] };
+  }
+  return null;
+}
+function mirrored(d, v, i){ return !!mirrorAt(d, v, i); }
+/* every step that IS this step: the same offset at every site of its cell,
+   ascending, this one among them — and just this one where nothing binds it */
+function mirrorSites(d, v, i){
+  var a = mirrorAt(d, v, i), out = [], k;
+  if (!a) return [i];
+  for (k = 0; k < a.m.sites.length; k++) out.push(a.m.sites[k] + a.off);
+  return out;
+}
+/* a seal anywhere in the cell is a seal on the cell: the sites are one note
+   wearing one seal, so the letters are read as the union of what they wear,
+   in the canonical order the file writes them in */
+function sealAll(d, v, i){
+  var sites = mirrorSites(d, v, i), t = "", s = "", k, j, x, c;
+  for (k = 0; k < sites.length; k++){
+    x = sealOf(d, v, sites[k]);
+    for (j = 0; j < x.length; j++) if (t.indexOf(x.charAt(j)) < 0) t += x.charAt(j);
+  }
+  for (k = 0; k < LOCK_KINDS.length; k++){
+    c = LOCK_KINDS.charAt(k);
+    if (t.indexOf(c) >= 0) s += c;
+  }
+  return s;
+}
+function sealedAll(d, v, i, kind){
+  var t = sealAll(d, v, i);
+  return kind ? t.indexOf(kind) >= 0 : !!t;
+}
+/* how long this note may be *written*, which is a question about the cell and
+   not about one site of it. The written length is shared and the heard length
+   is not, so the room is the most any site has: a note at the foot of the
+   cell may be given a ring that runs past the end of one site — it simply
+   stops earlier where something stands in its way, which is what spanOf has
+   always done to every note on the page. */
+function roomAll(d, v, i){
+  var sites = mirrorSites(d, v, i), r = 0, k;
+  for (k = 0; k < sites.length; k++) r = Math.max(r, roomAt(d, v, sites[k]));
+  return r;
 }
 /* what is *written* at a step: the length the page holds, whatever else is
    on the page around it */
@@ -570,6 +669,58 @@ function readTones(a){
   }
   return out;
 }
+/* ---- the mirrors, read ----
+   Read strictly and dropped freely, which is the opposite of everything else
+   optional here and is the right way round for this one: a length or a tone
+   read wrong costs the page a little sound, but a mirror read wrong would
+   fan a write out into steps nobody meant, and go on doing it. So a mirror
+   that is not exactly what a mirror is — a voice that is not a voice, a cell
+   shorter than a step or longer than the page, a site that is not a whole
+   number, a site that runs off the end, a site named twice, a site lying
+   over another site of its own cell or over any cell already read — is
+   dropped whole, and the notes underneath it are not touched. A page keeps
+   its music whatever its mirrors say.
+
+   Dropped whole, and not the field: a good mirror beside a bad one is read.
+   Two cells of the same voice may not overlap, because a step that belonged
+   to two cells would have no answer to what writing on it means. */
+function readMirrors(a, N){
+  var out = [], taken = [], k, i, j, v, m, cell, sites, s, bad, seen;
+  for (v = 0; v < VOICES; v++) taken.push(new Array(N).fill(false));
+  if (!Array.isArray(a)) return out;
+  for (k = 0; k < a.length; k++){
+    m = a[k];
+    if (!m || typeof m !== "object" || Array.isArray(m)) continue;
+    v = m.voice;
+    if (typeof v !== "number" || !isFinite(v) || v !== Math.round(v) ||
+        v < 0 || v >= VOICES) continue;
+    cell = m.cell;
+    if (typeof cell !== "number" || !isFinite(cell) || cell !== Math.round(cell) ||
+        cell < 1 || cell > N) continue;
+    if (!Array.isArray(m.sites) || !m.sites.length) continue;
+    sites = []; bad = false; seen = {};
+    for (i = 0; i < m.sites.length; i++){
+      s = m.sites[i];
+      if (typeof s !== "number" || !isFinite(s) || s !== Math.round(s) ||
+          s < 0 || s + cell > N){ bad = true; break; }
+      if (seen["s" + s]){ bad = true; break; }
+      seen["s" + s] = true;
+      sites.push(s);
+    }
+    if (bad) continue;
+    sites.sort(function(x, y){ return x - y; });
+    for (i = 1; i < sites.length; i++) if (sites[i] < sites[i - 1] + cell) bad = true;
+    for (i = 0; i < sites.length; i++)
+      for (j = 0; j < cell; j++) if (taken[v][sites[i] + j]) bad = true;
+    if (bad) continue;
+    for (i = 0; i < sites.length; i++)
+      for (j = 0; j < cell; j++) taken[v][sites[i] + j] = true;
+    out.push({ voice: v, cell: cell, sites: sites });
+  }
+  return out;
+}
+/* nothing is bound here: the array says only what the absence of it says */
+function allUnbound(a){ return !Array.isArray(a) || !a.length; }
 /* every voice on its own tone: the array says only what the absence of it says */
 function allOwnTone(a){
   if (!Array.isArray(a)) return true;
@@ -590,6 +741,7 @@ function docOut(d){
     if (allFree(out[VOICE_LOCK[v]])) delete out[VOICE_LOCK[v]];
   }
   if (allOwnTone(out[VOICE_TONE])) delete out[VOICE_TONE];
+  if (allUnbound(out[MIRROR_FIELD])) delete out[MIRROR_FIELD];
   /* and the length only where the page is longer than the page always was */
   if (docLen(out) === STEPS) delete out[PAGE_FIELD];
   return out;
@@ -628,6 +780,7 @@ function validate(obj){
            lock: readLocks(obj.lock, steps, N),
            basslock: readLocks(obj.basslock, bass, N),
            tones: readTones(obj.tones),
+           mirrors: readMirrors(obj[MIRROR_FIELD], N),
            mute: readFlags(obj.mute), solo: readFlags(obj.solo) };
   if (N !== STEPS) out[PAGE_FIELD] = N;
   return out;

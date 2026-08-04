@@ -351,6 +351,13 @@ function boot(opts){
     sealed: _g("sealed"), readLocks: _g("readLocks"), allFree: _g("allFree"),
     setStep: _g("setStep"), carryNote: _g("carryNote"), moveEdge: _g("moveEdge"),
     VOICE_LOCK: _g("VOICE_LOCK"), LOCK_KINDS: _g("LOCK_KINDS"),
+    moveNote: _g("moveNote"),
+    /* ---- the mirrored span: one cell, several sites ---- */
+    MIRROR_FIELD: _g("MIRROR_FIELD"), readMirrors: _g("readMirrors"),
+    docMirrors: _g("docMirrors"), mirrorAt: _g("mirrorAt"),
+    mirrorSites: _g("mirrorSites"), mirrored: _g("mirrored"),
+    sealAll: _g("sealAll"), sealedAll: _g("sealedAll"), roomAll: _g("roomAll"),
+    allUnbound: _g("allUnbound"), putAt: _g("putAt"), holdAt: _g("holdAt"),
     /* ---- the tones: the kits off the shelf and the sampled voice ---- */
     encodeWAV: _g("encodeWAV"), decodeWAV: _g("decodeWAV"),
     parseManifest: _g("parseManifest"), midiFreq: _g("midiFreq"),
