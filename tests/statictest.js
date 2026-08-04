@@ -51,7 +51,7 @@ const seen = [];
         "folio.css","index.html",
         "js/audio.js","js/boot.js","js/edit.js","js/entry.js","js/quests.js",
         "js/state.js","js/tones.js","js/views.js",
-        "quests/quest-log.json"]), rest);
+        "quests/quest-log.json","quests/rulings.json"]), rest);
   /* the kits travel whole — a dumb host has no /api/kits to list them, so the
      page asks each one for its manifest.md by name and the label has to be
      there beside the samples it names */
@@ -252,16 +252,23 @@ const seen = [];
      JSON.stringify(Object.keys(inPage.quests || {}).sort()) ===
      JSON.stringify(Object.keys(sharedDisk.quests || {}).sort()),
      [Object.keys(inPage.quests||{}), Object.keys(sharedDisk.quests||{})]);
-  /* The build marks the completions QUESTS.md records; whatever that list is
-     on the day, the page must hold exactly what the snapshot holds. What is
-     deliberately *not* asserted here is any particular count or any
-     particular melody: quests/quest-log.json is the player's live workspace,
-     and a harness that reads its contents is a harness that goes red every
-     time they write something. */
-  const doneInPage = Object.keys(inPage.quests || {}).filter(id => inPage.quests[id].done).sort();
-  const doneInSnap = Object.keys(sharedDisk.quests || {}).filter(id => sharedDisk.quests[id].done).sort();
-  ok("the completions the snapshot marks are the completions the page shows",
-     JSON.stringify(doneInPage) === JSON.stringify(doneInSnap), [doneInPage, doneInSnap]);
+  /* The completions live in a file of their own now, and the build publishes
+     the ones QUESTS.md records. Whatever that list is on the day, the page
+     must show exactly what the published rulings say — off a dumb host with
+     no /api, which is the whole point of the plain-file fallback. What is
+     deliberately *not* asserted is any particular count or melody:
+     quests/quest-log.json is the player's live workspace, and a harness that
+     reads its contents goes red every time they write something. */
+  const ruleSnap = JSON.parse(fs.readFileSync(DIST + "/quests/rulings.json", "utf8"));
+  ok("the log the shared copy carries speaks of no verdict at all",
+     JSON.stringify(sharedDisk).indexOf('"done"') < 0);
+  const doneInSnap = Object.keys(ruleSnap.complete || {})
+                       .filter(id => ruleSnap.complete[id]).sort();
+  const doneInPage = (await b.eval("JSON.stringify(Object.keys(rulings).filter(function(k){return rulings[k];}).sort())"));
+  ok("the completions the rulings publish are the completions the page shows",
+     doneInPage === JSON.stringify(doneInSnap), [doneInPage, doneInSnap]);
+  ok("and it asked a plain host for them by name",
+     seen.some(s => s === "GET /quests/rulings.json"), seen);
   const firstQuest = Object.keys(sharedDisk.quests || {})[0];
   if (firstQuest){
     const a = JSON.stringify((sharedDisk.quests[firstQuest].pattern || {}).steps);

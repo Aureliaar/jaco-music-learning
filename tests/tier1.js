@@ -395,20 +395,75 @@ T.resetQuests();
 T.applyState({ folio:"quest-log", version:2, active:null, quests:{
   stray:{ done:true, fav:true, order:3, pattern:null },
   summit:{ done:false, pattern:null } } });
-ok("done is read", T.qState.stray.done === true);
+ok("the log's old done flag seeds the ruling", T.isDone("stray") === true);
 ok("kept-to-hand is read", T.favOf("stray") === true);
 eq("and the order it was put in", T.orderOf("stray", 99), 3);
 ok("a quest with neither mark has neither", T.favOf("summit") === false);
 eq("and falls back to the order it was delivered in", T.orderOf("summit", 7), 7);
 const marks = T.stateToJSON();
 ok("the marks ride back out", marks.quests.stray.fav === true && marks.quests.stray.order === 3);
+ok("but the verdict never does - it is not the log's to carry",
+   JSON.stringify(marks).indexOf('"done"') < 0, marks.quests);
 ok("and a quest carrying no mark and no work is not written at all",
    !("summit" in marks.quests), Object.keys(marks.quests));
 T.resetQuests();
 T.applyState({ folio:"quest-log", version:2, quests:{ stray:{ done:true } } });
-ok("a log that knows neither mark still reads", T.qState.stray.done === true);
+ok("a log that knows neither mark still reads", T.isDone("stray") === true);
 ok("with nothing kept to hand", T.favOf("stray") === false);
 ok("and no order imposed", T.questSlotOrder === undefined || T.orderOf("stray", 5) === 5);
+
+/* ---- the rulings: the verdicts, in a file of their own ----
+   A quest is closed by evaluation, never by the tab, so the flag lives in
+   quests/rulings.json and the log has stopped carrying it. What must outlive
+   any rewrite: the file's shape, its round trip, the per-id merge (a fragment
+   is a fragment, not a denial of everything it leaves out), and the
+   permissive read of a log that still says `done`. */
+console.log("\n== the rulings, apart from the log ==");
+T.resetRulings();
+ok("nothing is complete until something says so", T.isDone("stray") === false);
+ok("a rulings file is read", T.applyRulings({ folio:"rulings", version:1,
+  complete:{ stray:true, summit:true } }) === true);
+ok("and both are marked", T.isDone("stray") && T.isDone("summit"));
+ok("reading the same file again changes nothing",
+   T.applyRulings({ folio:"rulings", version:1, complete:{ stray:true } }) === false);
+ok("a fragment names only what it names",
+   T.applyRulings({ folio:"rulings", version:1, complete:{ ladder:true } }) === true &&
+   T.isDone("stray") === true && T.isDone("summit") === true);
+ok("and a retraction is said out loud, by name",
+   T.applyRulings({ folio:"rulings", version:1, complete:{ summit:false } }) === true &&
+   T.isDone("summit") === false && T.isDone("stray") === true);
+ok("a quest log is not a rulings file", T.applyRulings({ folio:"quest-log", quests:{} }) === false);
+ok("nor is nothing", T.applyRulings(null) === false);
+ok("nor an array", T.applyRulings([]) === false);
+ok("nor one with no verdicts in it", T.applyRulings({ folio:"rulings" }) === false);
+ok("the verdicts are cached in the browser too", (function(){
+  T.cacheRulings();
+  const cached = JSON.parse(R.store[T.RULE_KEY]);
+  return cached.folio === "rulings" && cached.complete.stray === true;
+})(), R.store[T.RULE_KEY]);
+ok("and read back out of it", (function(){
+  T.resetRulings();
+  T.loadRulings();
+  return T.isDone("stray") === true && T.isDone("summit") === false;
+})());
+/* the whole point: the log is written while a verdict stands, and says
+   nothing about it either way */
+T.resetQuests();
+T.applyRulings({ folio:"rulings", version:1, complete:{ stray:true } });
+T.switchWorkspace("stray");
+T.save();
+ok("the log written under a standing verdict never mentions it",
+   JSON.stringify(T.stateToJSON()).indexOf('"done"') < 0);
+ok("while the folio still shows it", T.isDone("stray") === true);
+/* and a log that predates the file is still read, as a seed and no more */
+T.resetQuests();
+T.applyState({ folio:"quest-log", version:2, quests:{ stray:{ done:true } } });
+ok("an older log's flag becomes a ruling", T.isDone("stray") === true);
+T.resetRulings();
+T.applyRulings({ folio:"rulings", version:1, complete:{ stray:false } });
+T.applyState({ folio:"quest-log", version:2, quests:{ stray:{ done:true } } });
+ok("but never over one the rulings file has already settled", T.isDone("stray") === false);
+T.resetRulings();
 
 console.log("\n== the drill definitions the log carries ==");
 const DRILL = { id:"t1-drill", name:"a drill", summary:"do the thing",
@@ -467,7 +522,7 @@ const ghost = T.drillById("t1-orphan");
 ok("it is kept, as a ghost", !!ghost && ghost.ghost === true);
 eq("named by its id", ghost.name, "t1-orphan");
 ok("its page is not lost", T.questPage("t1-orphan").steps[0] === "G4");
-ok("its done flag is not lost", T.qState["t1-orphan"].done === true);
+ok("the verdict it carried is not lost", T.isDone("t1-orphan") === true);
 const ghostOut = T.stateToJSON();
 ok("the ghost is never written out as a definition",
    !(ghostOut.drills || []).some(d => d.id === "t1-orphan"));
@@ -500,7 +555,7 @@ ok("a version-1 log reads", T.applyState({ folio:"quest-log", version:1, active:
   quests:{ summit:{ done:true, motif: pageOf({ steps: noteAt({ 0:"D4", 6:"A4" }) }) } } }));
 eq("its motif became the quest's page", T.questPage("summit").steps[0], "D4");
 eq("with the rest of it", T.questPage("summit").steps[6], "A4");
-ok("the done flag came across", T.qState.summit.done === true);
+ok("the done flag came across", T.isDone("summit") === true);
 eq("and the active workspace with it", T.qActive, "summit");
 const migrated = T.stateToJSON();
 eq("it is written forward as version 2", migrated.version, 2);
@@ -621,7 +676,8 @@ const seedLog = { folio:"quest-log", version:2, active:null,
   const srv = spawn(process.execPath, [REPO + "/server.mjs"],
     { cwd: REPO, stdio:["ignore","pipe","pipe"],
       env: Object.assign({}, process.env,
-        { PORT:String(port), FOLIO_LOG: LOG, FOLIO_KITS: KITS }) });
+        { PORT:String(port), FOLIO_LOG: LOG, FOLIO_KITS: KITS,
+          FOLIO_RULINGS: path.join(TMP, "rulings.json") }) });
   let srvlog = "";
   srv.stdout.on("data", d => { srvlog += d; });
   srv.stderr.on("data", d => { srvlog += d; });
@@ -700,12 +756,101 @@ const seedLog = { folio:"quest-log", version:2, active:null,
   const both = JSON.parse(fs.readFileSync(LOG, "utf8"));
   eq("the tab's drills come first, the disk's after",
      both.drills.map(d => d.id).join(), "t1-known,t1-onDisk");
-  const dropDone = JSON.parse(JSON.stringify(both));
-  dropDone.quests.stray.done = false;
+
+  /* --- the rulings, over the same server --- */
+  console.log("\n== the rulings, over the same server ==");
+  const RULE = path.join(TMP, "rulings.json");
+  const ruleGet = h => fetch(BASE + "/api/rulings", { headers: h || {} });
+  const rulePut = body => fetch(BASE + "/api/rulings",
+    { method:"PUT", headers:{ "content-type":"application/json" }, body });
+  const absentR = await ruleGet();
+  eq("nothing ruled yet is a 404", absentR.status, 404);
+  ok("in JSON, as the log's is, so a static host is still told apart",
+     /json/.test(absentR.headers.get("content-type") || ""));
+  eq("carrying the marker anyway", (await absentR.json()).folio, "rulings");
+  const rp1 = await rulePut(JSON.stringify({ folio:"rulings", version:1,
+    complete:{ stray:true } }));
+  eq("a ruling is written with a 204", rp1.status, 204);
+  ok("and answers with the tag it wrote", !!rp1.headers.get("etag"));
+  ok("the file is there now", fs.existsSync(RULE));
+  const onRule = JSON.parse(fs.readFileSync(RULE, "utf8"));
+  eq("carrying the marker", onRule.folio, "rulings");
+  eq("at version 1", onRule.version, 1);
+  eq("and the verdict itself", onRule.complete, { stray:true });
+  ok("written as readable JSON ending in a newline",
+     /\n$/.test(fs.readFileSync(RULE, "utf8")));
+  ok("with no temporary file left beside it",
+     fs.readdirSync(TMP).every(n => !/\.tmp$/.test(n)), fs.readdirSync(TMP));
+  const rg = await ruleGet();
+  eq("it reads back", rg.status, 200);
+  const rtag = rg.headers.get("etag");
+  eq("under the tag the write reported", rtag, rp1.headers.get("etag"));
+  eq("an unchanged file is a 304", (await ruleGet({ "if-none-match": rtag })).status, 304);
+  await rulePut(JSON.stringify({ folio:"rulings", version:1, complete:{ summit:true } }));
+  eq("a PUT that names one quest leaves every other alone",
+     JSON.parse(fs.readFileSync(RULE, "utf8")).complete, { stray:true, summit:true });
+  await rulePut(JSON.stringify({ folio:"rulings", version:1, complete:{ stray:false } }));
+  eq("and a retraction, said by name, is taken",
+     JSON.parse(fs.readFileSync(RULE, "utf8")).complete, { stray:false, summit:true });
+  eq("a PUT that is not JSON is a 400", (await rulePut("{not json")).status, 400);
+  eq("a PUT with no marker is a 400",
+     (await rulePut(JSON.stringify({ complete:{} }))).status, 400);
+  eq("a PUT with the wrong marker is a 400",
+     (await rulePut(JSON.stringify({ folio:"quest-log", complete:{} }))).status, 400);
+  eq("a PUT with no verdicts in it is a 400",
+     (await rulePut(JSON.stringify({ folio:"rulings" }))).status, 400);
+  eq("an array of verdicts is not a map of them",
+     (await rulePut(JSON.stringify({ folio:"rulings", complete:[1,2] }))).status, 400);
+  eq("and none of them touched the file",
+     JSON.parse(fs.readFileSync(RULE, "utf8")).complete, { stray:false, summit:true });
+  eq("POST is not a method it knows",
+     (await fetch(BASE + "/api/rulings", { method:"POST", body:"{}" })).status, 405);
+  eq("the rulings are never served as a plain file either",
+     (await fetch(BASE + "/quests/rulings.json")).status, 404);
+
+  /* --- the race this whole file exists to lose --- */
+  console.log("\n== the ruling a stale tab cannot take back ==");
+  await rulePut(JSON.stringify({ folio:"rulings", version:1, complete:{ ouroboros:true } }));
+  const oblivious = JSON.parse(JSON.stringify(both));   /* a full state, a second old */
+  oblivious.free.steps[6] = "B4";
+  eq("the tab pushes everything it has", (await fetch(BASE + "/api/quest-log",
+    { method:"PUT", headers:{ "content-type":"application/json" },
+      body: JSON.stringify(oblivious) })).status, 204);
+  eq("its music lands", JSON.parse(fs.readFileSync(LOG, "utf8")).free.steps[6], "B4");
+  eq("and the ruling it never heard of is still standing",
+     JSON.parse(fs.readFileSync(RULE, "utf8")).complete.ouroboros, true);
+  const late = JSON.parse(JSON.stringify(both));
+  late.quests.stray.done = true;         /* an old client, still saying it in the log */
   await fetch(BASE + "/api/quest-log",
-    { method:"PUT", headers:{ "content-type":"application/json" }, body: JSON.stringify(dropDone) });
-  eq("nothing else on disk is preserved — a done flag belongs to the page",
-     JSON.parse(fs.readFileSync(LOG, "utf8")).quests.stray.done, false);
+    { method:"PUT", headers:{ "content-type":"application/json" }, body: JSON.stringify(late) });
+  eq("and a log that still speaks of done reaches no verdict at all",
+     JSON.parse(fs.readFileSync(RULE, "utf8")).complete.stray, false);
+
+  /* --- the migration, on fixtures of its own --- */
+  console.log("\n== the flags walked out of a log ==");
+  const MIG = fs.mkdtempSync(path.join(os.tmpdir(), "folio-mig-"));
+  const migLog = path.join(MIG, "quest-log.json"), migRule = path.join(MIG, "rulings.json");
+  fs.writeFileSync(migLog, JSON.stringify({ folio:"quest-log", version:2, active:null,
+    quests:{ stray:{ done:true, pattern: pageOf({ steps: noteAt({ 0:"E4" }) }) },
+             summit:{ done:false, pattern:null },
+             ladder:{ done:true, fav:true } } }, null, 2) + "\n");
+  const mig = () => new Promise(res => {
+    const p3 = spawn(process.execPath, [REPO + "/scripts/migrate-rulings.mjs", migLog, migRule],
+                     { stdio:"ignore" });
+    p3.on("exit", c => res(c));
+  });
+  eq("the migration runs", await mig(), 0);
+  eq("every flag that was set is a ruling now",
+     JSON.parse(fs.readFileSync(migRule, "utf8")).complete, { stray:true, ladder:true });
+  const migAfter = JSON.parse(fs.readFileSync(migLog, "utf8"));
+  ok("and the log speaks of them no more",
+     JSON.stringify(migAfter).indexOf('"done"') < 0, migAfter.quests);
+  eq("while every page in it is untouched", migAfter.quests.stray.pattern.steps[0], "E4");
+  eq("and every other mark", migAfter.quests.ladder.fav, true);
+  eq("running it twice is not a second migration", await mig(), 0);
+  eq("and rules nothing new", JSON.parse(fs.readFileSync(migRule, "utf8")).complete,
+     { stray:true, ladder:true });
+  try { fs.rmSync(MIG, { recursive:true, force:true }); } catch (e){}
 
   /* --- what it refuses --- */
   const bad = (body, why) => fetch(BASE + "/api/quest-log",
@@ -828,12 +973,13 @@ const seedLog = { folio:"quest-log", version:2, active:null,
   let raised = null;
   try {
     T.resetQuests();
+    delete R.store[T.RULE_KEY];        /* a browser that has never seen a verdict */
     R.store[T.QUEST_KEY] = JSON.stringify(seedLog);
     const restored = T.bootState();
     ok("bootState says it restored something", restored === true);
     eq("the free-play page is the one in the log", T.doc.steps[0], "C4");
     ok("the quest's page is there too", T.questPage("stray").steps[0] === "E4");
-    ok("and its done flag", T.qState.stray.done === true);
+    ok("and its verdict, read out of the log it predates", T.isDone("stray") === true);
   } catch (e){ raised = String(e && e.stack || e); }
   ok("and nothing was raised doing it", raised === null, raised);
 

@@ -825,12 +825,16 @@ eq("and the quest's page is stored under its id", T.wsDoc[Q[0].id].steps[0], "D4
 console.log("\n== done, and the glyphs ==");
 qreset(); key("F3");
 eq("an untouched quest shows nothing", T.qrows[0].stat.textContent, "");
-key("KeyC"); ok("C marks complete", T.qState[Q[0].id].done);
+key("KeyC"); ok("C marks complete", T.isDone(Q[0].id));
 eq("the gilt fleuron shows", T.qrows[0].stat.textContent, "❧");
-key("KeyC"); ok("C again sets it aside", !T.qState[Q[0].id].done);
-press(GP.B); ok("circle marks complete on the pad", T.qState[Q[0].id].done);
-eq("done survives a reload", (function(){ T.resetQuests(); T.loadQuests(); T.renderQuests();
-   return T.qState[Q[0].id].done; })(), true);
+key("KeyC"); ok("C again sets it aside", !T.isDone(Q[0].id));
+press(GP.B); ok("circle marks complete on the pad", T.isDone(Q[0].id));
+/* the verdict is not in the log any more: it survives a reload out of its
+   own file, and the log written beside it never mentions it */
+ok("and the log carries no verdict at all",
+   JSON.stringify(T.stateToJSON()).indexOf('"done"') < 0, T.stateToJSON().quests);
+eq("complete survives a reload", (function(){ T.resetQuests(); T.loadQuests(); T.renderQuests();
+   return T.isDone(Q[0].id); })(), true);
 qreset(); key("F3"); key("Enter"); key("F3");
 key("KeyZ");
 key("F3");
@@ -973,10 +977,10 @@ key("F3"); key("Enter"); key("F3");
 eq("coming back finds the edit", T.doc.steps[8], "C4");
 eq("and does not re-seed", T.doc.steps.filter(Boolean).length, 9);
 key("F3"); T.qsel = iItch; key("KeyC");
-ok("C marks a drill complete", T.qState["drill-itch"].done);
+ok("C marks a drill complete", T.isDone("drill-itch"));
 eq("and the row says so", T.qrowsNow[iItch].stat.textContent, "❧");
 key("KeyC");
-ok("and unmarks it", !T.qState["drill-itch"].done);
+ok("and unmarks it", !T.isDone("drill-itch"));
 closePages();
 
 console.log("\n== a workspace whose definition is missing ==");
@@ -985,7 +989,7 @@ const orphan = logWith([], { quests: { "drill-gone": { done:true,
   pattern:{ version:1, title:"x", tempo:112, loop:16, key:"C major", steps: steps({0:"E4"}) } } } });
 ok("it applies without crashing", T.applyState(orphan));
 eq("the workspace is kept", T.workspaceDoc("drill-gone").steps[0], "E4");
-eq("its done flag too", T.qState["drill-gone"].done, true);
+eq("the verdict an older log carried is still read", T.isDone("drill-gone"), true);
 eq("it is listed by its id", T.ALL[8].id, "drill-gone");
 eq("named by its id", T.ALL[8].short, "drill-gone");
 eq("with no summary", T.ALL[8].text, "");
@@ -1329,7 +1333,7 @@ ok("a quest with neither mark and no page is still not written",
    Object.keys(plainJSON.quests || {}).length === 0, plainJSON.quests);
 T.applyState({ folio:"quest-log", version:2, active:null, quests:{
   ladder:{ done:true, pattern:null } } });
-ok("an older log reads clean", T.qState.ladder.done === true);
+ok("an older log reads clean", T.isDone("ladder") === true);
 ok("with nothing kept to hand", !T.favOf("ladder"));
 eq("and no order imposed", T.qState.ladder.order, null);
 /* the lesson a drill declares survives the round trip */

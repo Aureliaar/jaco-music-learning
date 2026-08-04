@@ -75,7 +75,10 @@ function freePort(start){
 
   fs.writeFileSync(LOG, JSON.stringify(SEED, null, 2));
   const srv = spawn(process.execPath, [REPO + "/server.mjs"],
-    { cwd: REPO, stdio: ["ignore","pipe","pipe"], env: Object.assign({}, process.env, { PORT: String(port), FOLIO_LOG: LOG }) });
+    { cwd: REPO, stdio: ["ignore","pipe","pipe"], env: Object.assign({}, process.env,
+      { PORT: String(port), FOLIO_LOG: LOG,
+        /* the verdicts are a file of their own, and just as much the player's */
+        FOLIO_RULINGS: require("path").join(TMP, "rulings.json") }) });
   let srvlog = "";
   srv.stdout.on("data", d => { srvlog += d; });
   srv.stderr.on("data", d => { srvlog += d; });
@@ -95,8 +98,10 @@ function freePort(start){
       if (e.method === "Runtime.exceptionThrown")
         errors.push(JSON.stringify(e.params.exceptionDetails).slice(0, 300));
       if (e.method === "Log.entryAdded" && e.params.entry.level === "error")
-        { /* the browser asks for a favicon the app does not ship; not our error */
-          if (!/favicon/.test(e.params.entry.text + " " + (e.params.entry.url || "")))
+        { /* the browser asks for a favicon the app does not ship; not our
+             error. Neither is the 404 for a rulings file nothing has written
+             yet — that answer is how the folio tells a server from a host. */
+          if (!/favicon|api\/rulings/.test(e.params.entry.text + " " + (e.params.entry.url || "")))
             errors.push(e.params.entry.text + " @ " + (e.params.entry.url || "")); }
     }
   }, 50);

@@ -274,6 +274,15 @@ function boot(opts){
     questPage: _g("questPage"), questHasContent: _g("questHasContent"),
     questGlyph: _g("questGlyph"),
     qdabs: _g("qdabs"), rrows: _g("rrows"), renderRails: _g("renderRails"),
+    /* ---- the rulings, which live apart from the log ---- */
+    get rulings(){ return _g("rulings"); },
+    resetRulings: function(){ rulings = {}; },
+    isDone: _g("isDone"), applyRulings: _g("applyRulings"),
+    loadRulings: _g("loadRulings"), cacheRulings: _g("cacheRulings"),
+    ruleRead: _g("ruleRead"), rulePush: _g("rulePush"),
+    RULE_URL: _g("RULE_URL"), RULE_SEED_URL: _g("RULE_SEED_URL"),
+    RULE_KEY: _g("RULE_KEY"),
+    get ruleETag(){ return _g("ruleETag"); },
     syncNote: _g("syncNote"), httpOrigin: _g("httpOrigin"),
     applyServerState: _g("applyServerState"),
     get syncOn(){return syncOn;}, set syncOn(v){syncOn=v;},
@@ -304,7 +313,7 @@ function boot(opts){
     stopPoll: function(){ if (pollTimer) clearInterval(pollTimer); pollTimer = null; },
     get POLL_MS(){ return _g("POLL_MS"); },
     resetDrills: function(){ DRILLS = []; rebuildList(); },
-    resetQuests: function(){ qState = {}; qActive = null; qsel = 0;
+    resetQuests: function(){ qState = {}; rulings = {}; qActive = null; qsel = 0;
       wsDoc = {}; wsFree = null; doc = workspaceDoc(null);
       renderAll(); renderQuests(); renderMeta(); },
     exportJSON: function(){ return JSON.stringify(docOut(doc)); },
