@@ -101,7 +101,14 @@ controls, laid over the folio (the hint strip it replaced is gone).
    features cost proportionally more, judged honestly; a lesson pass
    grants 1 feature of any size. Bug fixes, warranty, music feedback,
    theory, drills: free. Never build features unprompted.
-3. **Keyboard = physical position only** (`KeyboardEvent.code`) — IT
+3. **The gamepad is the primary surface** (player ruling 2026-08-04),
+   and it stays in the **FFXIV cross-hotbar idiom**. Every feature has a
+   pad home, and **that layout is agreed with the player BEFORE the
+   brief is written** — never delegated to the building agent, never
+   deferred because the seats look full. Keyboard bindings are derived
+   from the agreed pad layout, not the other way round. A feature that
+   only the keyboard can reach is not finished.
+   **Keyboard = physical position only** (`KeyboardEvent.code`) — IT
    layout. Gamepad (revised 2026-07-31): contour entry ONLY — the absolute
    trigger crossbar is deleted. Face buttons are the move (△ up, ✕ down,
    ○ again, □ rest); **triggers L2/R2 are the modifiers** (third, fifth,
@@ -152,17 +159,26 @@ L1 and L2 PASSED (records in CURRICULUM.md; keystone ruling: ostinato).
 beat, threes, daylight — copy in QUESTS.md; apprentice's hand was the
 eighth, delivered as a drill but deferred to the new L4 and off the
 pass). **All seven are CLOSED 2026-08-04** — constraints verified against
-the instrument's own span math, not by eye; done flags set 2026-08-04
+the instrument's own span math, not by eye; **their done flags were NOT
+set** (2026-08-04: the claim that they were is false in every commit —
+the flag is only ever set in-app, C on the row with the quest log up;
+the rail is the truth, not these documents)
 (closure rulings: daylight spirit-passed; steal the beat passed pre-edit
 — the post-hoc change doesn't unring it). **The L3.2 board is authored
 and delivered 2026-08-04** (six quests, copy in QUESTS.md: give way,
 the drone II, the ceiling, dovetail, ring the seam II, the glacier —
-the suspension cornered by grid law, never named in copy). The lesson pass waits on
-3.2, so no any-size grant yet. Open L2 side content: pass the torch,
+the suspension cornered by grid law, never named in copy), then REVISED
+the same day: dovetail and ring the seam II withdrawn, four sealed-note
+quests in their place (elder's line, hand-me-down, keystone, stray
+planted). **Four are CLOSED 2026-08-04** — give way, the drone II, the
+elder's line, the stray planted (span math again, ten loops
+self-administered). Open: hand-me-down and the keystone miss their
+letter by one edit each; the ceiling and the glacier are unwritten. The
+lesson pass waits on the 3.2 deliverable, so no any-size grant yet. Open L2 side content: pass the torch,
 Part II reprises (audit in QUESTS.md; Call and Answer II credit pending
-the player's ten-loop call). Economy: quest barter (rule 2); **balance 2
-small features + 1 credit** — BUDGET.md (7 quest credits banked, 1 small
-spent on the carry). Evaluation is self-administered
+the player's ten-loop call). Economy: quest barter (rule 2); **balance 0** —
+BUDGET.md (the four 3.2 closures banked 2 smalls; both spent the same
+day on long pages, priced medium). Evaluation is self-administered
 (never plan around outside evaluators). Quest authoring rules:
 QUEST-COPY.md — including the 2026-08-01 ruling: never specify the goal
 in copy; constraints make discovery likely, never guaranteed; Teaches is
