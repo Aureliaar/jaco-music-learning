@@ -92,8 +92,18 @@
     *,*::before,*::after{transition:none !important;animation:none !important;}
   }
 
+  /* ---- how wide the folio is ----
+     The measure of the page — 46rem, or all the room there is on a narrow
+     screen — is what everything made of words is set to and what the cells
+     of both views are sized from. The drawing may need more than that and
+     never less: on a wide screen it holds more of the page across, and the
+     sheet grows with it rather than letting it spill over the edge. views.js
+     measures the room and puts the answer in --pagew; where it says nothing,
+     which is the column, the quest log and every narrow screen, the measure
+     is exactly what it always was. */
   main{
-    width:min(46rem,92vw);
+    width:var(--pagew,min(46rem,92vw));
+    max-width:100vw;
     display:flex;
     flex-direction:column;
     align-items:center;
@@ -110,6 +120,11 @@
     display:flex;
     flex-direction:column;
     align-items:center;
+    /* the field is given the height the screen has for it (views.js), and
+       what stands in it stands in the middle of it: the column fills the
+       box by construction, and the drawing, which keeps the height it has
+       always had, sits where it has always sat rather than riding up */
+    justify-content:center;
     position:relative;
     isolation:isolate;
     /* above the title's and the footer's breath, which are free to run under
@@ -482,6 +497,7 @@
   .roll.nonames .octname,.roll.nonames .gname,.roll.nonames .ivl{display:none;}
   .rollbase{
     display:grid;
+    /* one column per step on screen; views.js says how many */
     grid-template-columns:repeat(16,1fr);
     height:1.7rem;
     align-items:center;

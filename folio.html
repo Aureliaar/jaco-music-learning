@@ -14,8 +14,9 @@
        folio.css      every rule the page is drawn by
        js/state.js    the document: the page as data, the holds arithmetic,
                       the key and its degrees, the validator, the autosave
-       js/views.js    the page drawn: the column, the roll, the scenery,
-                      the renderers, the key overlay, say()
+       js/views.js    the page drawn: the column, the roll, how much of the
+                      page each of them has room for, the scenery, the
+                      renderers, the key overlay, say()
        js/audio.js    the two timbres, the lookahead scheduler, the transport
        js/edit.js     what the hands do: writing, length, contour, the voices,
                       the key, the tempo, the loop, the pages
@@ -31,7 +32,7 @@
 </head>
 <body data-scenery="paper">
 <div class="scenefade" id="scenefade" aria-hidden="true"></div>
-<main>
+<main id="page">
   <header>
     <h1>Folio</h1>
     <div class="flourish" aria-hidden="true"><i></i><span>&#10086;</span><i></i></div>

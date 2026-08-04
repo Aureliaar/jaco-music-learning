@@ -18,9 +18,12 @@
 
      STEPS   the default length of a page, and the length of every page
              written before there was a choice
-     WIN     how much of a page is ever on screen at once — the window the
-             column and the roll both draw, cell for cell what they always
-             drew, whatever the page under it is
+     WIN     how much of a page a view shows before anything has been
+             measured — the fallback, and the sixteen the folio always drew
+
+   How much is actually on screen is not a constant at all: it is whatever
+   the screen has room for, measured by views.js and different in the two
+   views, because they read in different directions. See the window below.
 
    The length itself belongs to the document, as the key and the tempo do:
    `len`, optional, one of PAGE_LENS, and written out only where it is not
@@ -32,7 +35,6 @@ var STEPS = 16;
 var PAGE_LENS = [16, 32, 64];
 var MAX_STEPS = 64;
 var WIN = 16;
-var HALF = 8;            /* the window moves by halves: never a jitter, always context */
 var PAGE_FIELD = "len";
 var NAMES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
 var STORE_KEY = "folio.v1";
@@ -139,9 +141,21 @@ var doc = defaultDoc();
 var baseOctave = 4;      // C2 - C6
 var cursor = 0;
 var voice = 0;           /* which voice the hands are writing into */
-/* the first step of the window: what the column and the roll are showing.
-   A preference of the reading, never of the document — it is not saved. */
-var winStart = 0;
+/* ---- what each view is showing ----
+   Two windows, not one. The column reads downwards and the roll reads
+   across, so they are bound by different edges of the screen and there is
+   no reason on earth they should be showing the same number of steps: a
+   wide short screen may have the whole page in the drawing and two thirds
+   of it in the writing at the same moment. Each therefore keeps its own
+   size and its own first step, and both follow the one cursor, so that
+   turning from one to the other lands on the step you left.
+
+   The sizes are measured (views.js, fitViews) and the sixteens here are
+   only what stands until something has been measured — which is also what
+   a harness with no layout in it sees. Neither is a preference of the
+   document: none of this is saved. */
+var winCol = WIN, winRoll = WIN;
+var startCol = 0, startRoll = 0;
 
 /* how long a page is, read as permissively as everything optional here:
    absent, junk, a number nobody offers — all of it means the sixteen the
@@ -160,27 +174,46 @@ function loopRungs(n){
   return [4, 8].concat(out, [n]);
 }
 /* ---- the window, and how it follows ----
-   A long page is read sixteen steps at a time, at the size the cells have
-   always been: nothing shrinks, nothing is squeezed, and a thirty-second
-   page reads exactly as a sixteenth-step page does — there is simply more
-   of it behind and ahead. The window moves only when the cursor walks out
-   of it, and then by a half of itself, so that half of what was on screen
-   is still there afterwards: the eye keeps its place, and a step near an
-   edge does not send the page sliding under it one row at a time.
+   A page longer than the room a view has is read a window at a time, at
+   the size the cells have always been: nothing shrinks, nothing is
+   squeezed, and a long page reads exactly as a sixteen-step page does —
+   there is simply more of it behind and ahead. The window moves only when
+   the cursor walks out of it, and then by a half of itself, so that half of
+   what was on screen is still there afterwards: the eye keeps its place,
+   and a step near an edge does not send the page sliding under it one row
+   at a time.
 
-   Its start is therefore always a multiple of eight, which is also why the
-   beat rules stay where they are drawn: every eighth step is a beat. */
-function syncWindow(){
-  var n = pageLen(), was = winStart, max = n - WIN;
-  if (max <= 0){ winStart = 0; return winStart !== was; }
-  while (cursor < winStart) winStart -= HALF;
-  while (cursor >= winStart + WIN) winStart += HALF;
-  winStart = Math.max(0, Math.min(max, winStart));
-  return winStart !== was;
+   Where a view has room for the whole page there is no window at all: the
+   start pins at nought and stays there, and nothing anywhere says a word
+   about which part of the page you are on, because you are on all of it. */
+function follow(start, win, n){
+  var max = n - win, half = Math.max(1, win >> 1);
+  if (max <= 0) return 0;
+  while (cursor < start) start -= half;
+  while (cursor >= start + win) start += half;
+  return Math.max(0, Math.min(max, start));
 }
+/* both windows follow the one cursor, always, whichever view is up: the
+   view not being read is kept exactly as coherent as the one that is, so
+   that F2 is a turn of the page and never a jump */
+function syncWindow(){
+  var n = pageLen(), a = startCol, b = startRoll;
+  startCol = follow(startCol, winCol, n);
+  startRoll = follow(startRoll, winRoll, n);
+  return startCol !== a || startRoll !== b;
+}
+/* the view being read, and what it is showing. viz belongs to views.js and
+   is the roll until it says otherwise. */
+function colView(){ return typeof viz === "string" && viz === "column"; }
+function winNow(){ return colView() ? winCol : winRoll; }
+function winStartNow(){ return colView() ? startCol : startRoll; }
+/* is this view holding less than the page? the one question the label — and
+   the stride, and every line that mentions a window — is allowed to ask */
+function windowed(){ return winNow() < pageLen(); }
 /* which part of the page is on screen, said the way the header says things */
 function windowLabel(){
-  return (winStart + 1) + "–" + (winStart + WIN) + " of " + pageLen();
+  var s = winStartNow();
+  return (s + 1) + "–" + Math.min(pageLen(), s + winNow()) + " of " + pageLen();
 }
 /* an array beside the steps, made to fit the page it is beside: short is
    filled out, long is cut down, and neither costs the page anything it had */
