@@ -438,16 +438,18 @@ function cycleLoop(){
    window and its stride are navigation, and stay. */
 
 /* ---- a window at a time ----
-   Sixty-four steps is four windows, and walking between them one step at a
-   time is the tedium the window was supposed to answer. Shift and an arrow
-   is therefore the stride: a whole window, in the direction the arrow
-   already means, landing on the same place in the next window as it left in
-   this one. It does not wrap — a mover that comes out at the far end of the
-   piece is a mover you cannot use without looking. */
+   Sixty-four steps is several windows, and walking between them one step at
+   a time is the tedium the window was supposed to answer. Shift and an
+   arrow is therefore the stride: a whole window of the view you are in — so
+   it is as long as that view is wide — in the direction the arrow already
+   means, landing on the same place in the next window as it left in this
+   one. It does not wrap — a mover that comes out at the far end of the
+   piece is a mover you cannot use without looking. And where the whole page
+   is on screen there is nowhere to stride to, and it says so. */
 function moveSection(d){
   var n = pageLen();
-  if (n <= WIN){ say("the page is " + n + " steps — all of it is in view"); return; }
-  var want = cursor + d * WIN;
+  if (!windowed()){ say("the page is " + n + " steps — all of it is in view"); return; }
+  var want = cursor + d * winNow();
   cursor = Math.max(0, Math.min(n - 1, want));
   renderCursor();
   say("step " + (cursor + 1) + " · " + windowLabel());

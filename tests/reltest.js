@@ -2002,10 +2002,13 @@ eq("the seals are autosaved with the page",
 closePages(); reset();
 
 /* ================= a page longer than the window =================
-   Sixteen steps are on screen whatever the page is; the window follows the
-   cursor and moves by halves, so what is checked here is the arithmetic of
-   that following and the bindings that drive it — never where anything is
-   drawn, which is bootcheck's business. */
+   How much of a page is on screen is measured off the screen, and the two
+   views are measured apart — so what is checked here is the arithmetic that
+   hangs off those two numbers: each window following the one cursor,
+   moving by halves of itself, and the rule that decides whether anything is
+   said about a window at all. Never where anything is drawn, which is
+   bootcheck's business. A fake DOM has no screen, so both views stand at
+   the sixteen the folio always drew until a check sizes them itself. */
 console.log("\n== a page longer than the window ==");
 function longPage(n){
   const s = new Array(n).fill(null);
@@ -2015,23 +2018,47 @@ function longPage(n){
 }
 longPage(32);
 eq("the page says how long it is", T.pageLen(), 32);
-eq("and the window opens at its head", T.winStart, 0);
+eq("and the window opens at its head", T.startCol, 0);
+eq("in both views at once", T.startRoll, 0);
 T.jump(15);
-eq("the last step of the window moves it nowhere", T.winStart, 0);
+eq("the last step of the window moves it nowhere", T.startCol, 0);
 T.jump(16);
-eq("a step past the edge moves the window by a half, not by a step", T.winStart, 8);
+eq("a step past the edge moves the window by a half, not by a step", T.startCol, 8);
 T.jump(24);
-eq("and again", T.winStart, 16);
+eq("and again", T.startCol, 16);
 T.jump(31);
-eq("the window never runs off the end of the page", T.winStart, 16);
+eq("the window never runs off the end of the page", T.startCol, 16);
 T.jump(8);
-eq("walking back moves it back", T.winStart, 8);
+eq("walking back moves it back", T.startCol, 8);
 key("Home");
 eq("home is the first step of the page", T.cursor, 0);
-eq("and brings the window home with it", T.winStart, 0);
+eq("and brings the window home with it", T.startCol, 0);
 key("End");
 eq("end is the last step of THIS page, not of the window", T.cursor, 31);
-eq("with the window at the foot", T.winStart, 16);
+eq("with the window at the foot", T.startCol, 16);
+
+/* ---- the two views are sized apart, and each keeps its own window ---- */
+T.winRoll = 32;                    /* a screen wide enough for the whole page */
+T.jump(31);
+eq("a view with room for the whole page has no window at all", T.startRoll, 0);
+eq("and the view beside it keeps the window it needs", T.startCol, 16);
+T.jump(0);
+eq("both follow the one cursor, so neither loses it", T.startCol, 0);
+eq("and the one with the whole page in view never moves", T.startRoll, 0);
+/* a window that is not a half of the page: the stride is a half of ITSELF,
+   and the last window of the page is flush with its end */
+T.winCol = 22;
+T.jump(0);  eq("a window of twenty-two opens at the head", T.startCol, 0);
+T.jump(22); eq("and strides by eleven, up to the foot of the page", T.startCol, 10);
+
+/* ---- what is said about a window, and when ---- */
+T.viz = "roll";
+eq("the view holding the whole page says nothing about windows", T.windowed(), false);
+T.viz = "column";
+eq("the view holding less than the page says so", T.windowed(), true);
+eq("and says which part of it, in the page's own numbers",
+   T.windowLabel(), "11–32 of 32");
+T.winCol = 16; T.winRoll = 16; T.viz = "roll";
 
 /* shift and an arrow: a whole window, in the direction the arrow means */
 longPage(64);

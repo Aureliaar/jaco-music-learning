@@ -357,7 +357,16 @@ function boot(opts){
     STEPS: _g("STEPS"), WIN: _g("WIN"), MAX_STEPS: _g("MAX_STEPS"),
     PAGE_LENS: _g("PAGE_LENS"), PAGE_FIELD: _g("PAGE_FIELD"),
     docLen: _g("docLen"), pageLen: _g("pageLen"), loopRungs: _g("loopRungs"),
-    get winStart(){ return _g("winStart"); },
+    /* the two windows: each view's size and where it opens. The sizes are
+       measured off a real screen, which a fake DOM has none of, so here
+       they stand at the sixteen the folio always drew until a check says
+       otherwise — which is how the arithmetic is driven. */
+    get winCol(){ return _g("winCol"); }, set winCol(v){ winCol = v; },
+    get winRoll(){ return _g("winRoll"); }, set winRoll(v){ winRoll = v; },
+    get startCol(){ return _g("startCol"); },
+    get startRoll(){ return _g("startRoll"); },
+    get viz(){ return _g("viz"); }, set viz(v){ viz = v; },
+    windowed: _g("windowed"), windowLabel: _g("windowLabel"),
     STORE_KEY: _g("STORE_KEY"), LEGACY_KEY: _g("LEGACY_KEY"),
     defaultDoc: _g("defaultDoc"), NOTE_KEYS: _g("NOTE_KEYS") };
   window.__probe = function(n){ try { return eval(n); } catch(e){ return "__undefined__"; } };

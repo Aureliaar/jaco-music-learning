@@ -1,7 +1,8 @@
 /* Folio — js/views.js : the page, drawn.
 
    Every element the app holds by id; the scenery behind the sheet and the
-   dissolve from one scene to the next; the written column; the roll and
+   dissolve from one scene to the next; how much of the page each view has
+   room for, measured off the screen; the written column; the roll and
    everything laid on it — the home rules, the bars, the intervals, the guide;
    the renderers; the key overlay F1 raises; and say(), which is the
    one way anything speaks.
@@ -234,18 +235,24 @@ function setSeal(el, lk){
 }
 
 /* ---- the page is drawn a window at a time ----
-   Everything below is built WIN rows and WIN columns wide and never any
-   wider, whatever the page under it is: `rows[k]`, `bars[k]`, `baseCells[k]`
-   are screen slots, and the step each is showing is `winStart + k`. A page
-   of sixteen has winStart pinned at nought and every one of these is the
-   step it always was, cell for cell. */
-function stepAt(k){ return winStart + k; }
-function slotOf(i){ var k = i - winStart; return (k >= 0 && k < WIN) ? k : -1; }
+   Everything below is built the longest a page can be — sixty-four rows,
+   sixty-four columns — and shows as many of them as the screen has room
+   for: `rows[k]`, `bars[k]`, `baseCells[k]` are screen slots, and the step
+   each is showing is that view's first step plus k. The two views are sized
+   apart (fitViews, below) because they are bound by different edges, so
+   each has its own pair of these. A slot past the end of its view is not
+   drawn at all.
+
+   Nothing here decides how many that is; it only asks. */
+function colStep(k){ return startCol + k; }
+function colSlot(i){ var k = i - startCol; return (k >= 0 && k < winCol) ? k : -1; }
+function rollStep(k){ return startRoll + k; }
+function rollSlot(i){ var k = i - startRoll; return (k >= 0 && k < winRoll) ? k : -1; }
 
 var rows = [];
-for (var i = 0; i < WIN; i++){
+for (var i = 0; i < MAX_STEPS; i++){
   var row = document.createElement("div");
-  row.className = "row" + (i % 4 === 0 ? " beat" : "");
+  row.className = "row";
   var fl = document.createElement("span"); fl.className = "fleuron";
   var ca = document.createElement("span"); ca.className = "caret";
   var nu = document.createElement("span"); nu.className = "num"; nu.textContent = String(i + 1);
@@ -282,11 +289,16 @@ for (i = 0; i < 12; i++){
   PC_COLOR[i] = "hsl(" + ((((i * 7) % 12) * 30 + 45) % 360) + ",42%,40%)";
 }
 
-for (i = 0; i < WIN; i += 4){
+/* the beat rules: one every fourth step of the page, wherever that falls in
+   the window. They are laid out with the bars rather than built in place,
+   because which slots are beats depends on where the window opens. */
+var beatlines = [];
+for (i = 0; i * 4 <= MAX_STEPS; i++){
   var bl = document.createElement("div");
   bl.className = "beatline";
-  bl.style.left = (i * 6.25) + "%";
+  bl.style.display = "none";
   rollfield.appendChild(bl);
+  beatlines.push(bl);
 }
 var rollWash = document.createElement("div");
 rollWash.className = "rollwash";
@@ -332,7 +344,7 @@ function mkBar(store){
   rollfield.appendChild(b);
   store.push(b);
 }
-for (i = 0; i < WIN; i++){
+for (i = 0; i < MAX_STEPS; i++){
   mkBar(bars);
   /* the second voice's bars, drawn in the same field: pitch already keeps
      them apart, and the voice not in hand is drawn a shade back */
@@ -355,6 +367,153 @@ for (i = 0; i < WIN; i++){
 for (i = 0; i < VOICES; i++) mkBar(seamBars);
 for (i = 0; i < VOICES; i++) mkBar(edgeBars);
 
+/* ================= each view takes the room it has =================
+   The window used to be sixteen steps in both views because sixteen steps
+   was all a page ever was. It is not a number any more: it is however much
+   of the page the screen can hold, and the two views are not bound by the
+   same edge of it.
+
+   The roll reads left to right, so it is bound by the width: as many steps
+   as fit across, up to the whole page — on a wide screen a thirty-two-step
+   page is simply all there, with no window and nothing said about one. The
+   column reads downwards, so it is bound by the height: as many rows as fit
+   at the row height it has always had. The two numbers have no reason to
+   agree and mostly do not, which is why each view keeps its own.
+
+   None of it is guessed. The cell keeps the size it has always had — the
+   measure of the page divided by the sixteen it was drawn for — and what is
+   measured is the room: the viewport, the margins the rails hold, the
+   chrome above and below the folio. Then it is a division and a floor.
+   Nothing is squeezed to fit and nothing is stretched to fill; a screen
+   with room for eleven rows shows eleven, and the window mechanics that
+   already existed carry the rest of the page.
+
+   The sheet grows with the drawing rather than the drawing spilling off it,
+   so the folio is one page at whatever width the drawing needs; the written
+   column keeps the measure it always had, and so does everything made of
+   words. */
+var pageEl  = document.getElementById("page");
+var fieldEl = document.getElementById("field");
+var railEl  = document.getElementById("raill");
+var PAGE_W = "--pagew";
+var MIN_SLOTS = 4;             /* below this a view is not a view */
+var GUTTER = 1.5;              /* rem of air between the drawing and the rails */
+var ROLL_PAD = 2.7;            /* rem the drawing keeps for the rules' names */
+var ROW_H = 2.35;              /* em of a written row: folio.css says so too */
+var fitted = { w:0, h:0, len:0 };
+var fitW = { base:0, roll:0 };
+
+function boxOf(el){
+  return (el && el.getBoundingClientRect) ? el.getBoundingClientRect() : null;
+}
+function boxW(el){ var r = boxOf(el); return r ? r.width : 0; }
+function boxH(el){ var r = boxOf(el); return r ? r.height : 0; }
+/* the root's own font size, which is where every measure in the stylesheet
+   is counted from — and it is itself a clamp on the viewport's height, so
+   it is read rather than assumed */
+function remPx(){
+  var n;
+  if (!window.getComputedStyle || !document.documentElement) return 0;
+  n = parseFloat(window.getComputedStyle(document.documentElement).fontSize);
+  return (n > 0) ? n : 0;
+}
+function styleNum(el, prop){
+  var s;
+  if (!el || !window.getComputedStyle) return 0;
+  s = parseFloat(window.getComputedStyle(el)[prop]);
+  return (s > 0) ? s : 0;
+}
+function clampSlots(n, page){
+  return Math.max(MIN_SLOTS, Math.min(page, Math.floor(n)));
+}
+/* how wide the folio is asked to be: the drawing's width where the drawing
+   is what is up and wants more than the page's own measure, and the measure
+   itself everywhere else — the quest log, the column, a folio being read */
+function applyWidth(){
+  var root = document.documentElement, wide;
+  if (!root || !root.style || !root.style.setProperty) return;
+  wide = (viz === "roll" && !questsEl.classList.contains("on")) ? fitW.roll : 0;
+  if (wide > fitW.base) root.style.setProperty(PAGE_W, Math.round(wide) + "px");
+  else root.style.removeProperty(PAGE_W);
+}
+/* how many slots each view is showing, and the shape of the boxes they sit
+   in. Returns true when a view's size actually changed — the caller draws;
+   nothing here draws anything. */
+function fitViews(){
+  var vw = window.innerWidth || 0, vh = window.innerHeight || 0, n = pageLen();
+  var root = document.documentElement, em, base, chrome, availH, availW;
+  var pad, cell, wasC = winCol, wasR = winRoll, rollW;
+  if (!pageEl || !fieldEl || !boxOf(pageEl) || !vw || !vh) return false;
+  if (vw === fitted.w && vh === fitted.h && n === fitted.len) return false;
+  fitted = { w:vw, h:vh, len:n };
+  em = remPx() || 16;
+
+  /* measured from the page at its own measure, so the widening never feeds
+     itself: everything below is arithmetic on this one reading */
+  if (root && root.style && root.style.removeProperty) root.style.removeProperty(PAGE_W);
+  fieldEl.style.minHeight = "";
+  roll.style.width = "";
+  base = boxW(pageEl) || 46 * em;
+  fitW.base = base;
+  /* everything of the folio that is not the working field: the title, the
+     rules, the footer. It does not change with the number of rows, which is
+     the whole reason it can be measured once and divided by. */
+  chrome = Math.max(0, boxH(pageEl) - boxH(fieldEl));
+  availH = Math.max(em * 8, vh - chrome - em);
+  fieldEl.style.minHeight = Math.round(availH) + "px";
+
+  /* the column: rows of the height they have always been, as many as stand
+     under the voice strip. The row is measured rather than counted off the
+     stylesheet — its rule is a pixel the arithmetic would not know about,
+     and twenty-six of those is a row over the edge of the screen. It is
+     measured even when the drawing is what is up, by standing the column up
+     for the reading and sitting it down again inside the one frame: a
+     window that is only right in the view you happen to be in is not right. */
+  var shown = column.style.display, rowH;
+  if (shown === "none") column.style.display = "flex";
+  rowH = boxH(rows[0].el) || ROW_H * em;
+  if (shown === "none") column.style.display = shown;
+  winCol = clampSlots((availH - boxH(voicesEl)) / rowH, n);
+
+  /* the roll: cells of the width they have always been — the page's measure
+     less the margin the names live in, over the sixteen it was drawn for —
+     as many as stand between the rails */
+  pad = styleNum(roll, "paddingLeft") || ROLL_PAD * em;
+  cell = (base - pad) / STEPS;
+  availW = vw - 2 * boxW(railEl) - 2 * GUTTER * em;
+  winRoll = clampSlots((availW - pad) / cell, n);
+  rollW = pad + winRoll * cell;
+  fitW.roll = rollW;
+  roll.style.width = Math.round(rollW) + "px";
+  applyWidth();
+
+  applySlots();
+  return winCol !== wasC || winRoll !== wasR;
+}
+/* the slots past the end of a view are not drawn at all: the column's rows
+   go away, and the drawing's base strip counts only as far as it reaches */
+function applySlots(){
+  var k;
+  for (k = 0; k < MAX_STEPS; k++){
+    rows[k].el.style.display = (k < winCol) ? "" : "none";
+    baseCells[k].style.display = (k < winRoll) ? "" : "none";
+  }
+  rollbase.style.gridTemplateColumns = "repeat(" + winRoll + ",1fr)";
+}
+applySlots();
+/* A resize is a stream of events, and refitting on each of them would be
+   the thrash the whole thing is supposed to avoid: the last one wins, a
+   breath after the dragging stops, and the page is redrawn once. */
+var fitTimer = null;
+function fitSoon(){
+  if (fitTimer) clearTimeout(fitTimer);
+  fitTimer = setTimeout(function(){
+    fitTimer = null;
+    if (fitViews()) renderAll();
+  }, 140);
+}
+if (window.addEventListener) window.addEventListener("resize", fitSoon);
+
 function midiOf(s){ var p = parseNote(s); return p ? (p.oct + 1) * 12 + p.pc : null; }
 
 /* the part of a note that is not its head: the wrap at the seam, and the
@@ -362,11 +521,12 @@ function midiOf(s){ var p = parseNote(s); return p ? (p.oct + 1) * 12 + p.pc : n
    to a width and carry no seal — the seal rides the step the note is struck
    on, and this is not it. */
 function paintTail(b, v, k, wide, top, span, colour){
-  wide = Math.min(wide, WIN - k);
+  var w = 100 / winRoll;
+  wide = Math.min(wide, winRoll - k);
   if (wide <= 0){ b.style.display = "none"; return; }
   b.style.display = "block";
-  b.style.left = (k * 6.25 + 0.7) + "%";
-  b.style.width = (wide * 6.25 - 1.4) + "%";
+  b.style.left = (k * w + w * 0.112) + "%";
+  b.style.width = (wide * w - w * 0.224) + "%";
   b.style.top = top;
   b.style.height = (100 / span) + "%";
   b.style.backgroundColor = colour;
@@ -383,7 +543,7 @@ function rollLayout(){
   /* the pitch window is fitted to the WHOLE page, not to the sixteen steps
      on screen, so that scrolling the window never slides the drawing up and
      down under the eye: the shape a long page has is one shape */
-  var lo = Infinity, hi = -Infinity, i, m, v, s, N = pageLen();
+  var lo = Infinity, hi = -Infinity, i, m, v, s, N = pageLen(), w = 100 / winRoll;
   for (v = 0; v < VOICES; v++){
     s = vsteps(v);
     for (i = 0; i < N; i++){
@@ -429,11 +589,23 @@ function rollLayout(){
     octlines.push(ln);
   }
 
+  /* the beat rules stand on every fourth step of the PAGE, wherever the
+     window happens to have opened — the window's own first step is not a
+     beat unless the page says it is */
+  var bi = 0;
+  for (i = 0; i < winRoll; i++){
+    if (rollStep(i) % 4 || bi >= beatlines.length) continue;
+    beatlines[bi].style.display = "block";
+    beatlines[bi].style.left = (i * w) + "%";
+    bi++;
+  }
+  for (i = bi; i < beatlines.length; i++) beatlines[i].style.display = "none";
+
   for (v = 0; v < VOICES; v++){
     s = vsteps(v);
     seamBars[v].style.display = "none";
     edgeBars[v].style.display = "none";
-    for (i = 0; i < WIN; i++) vbars[v][i].style.display = "none";
+    for (i = 0; i < MAX_STEPS; i++) vbars[v][i].style.display = "none";
     for (i = 0; i < N; i++){
       var n = s[i];
       if (!n) continue;
@@ -446,29 +618,29 @@ function rollLayout(){
       var head = (i < loop) ? Math.min(len, loop - i) : len;
       var top = ((hi - m) / span * 100) + "%";
       var colour = PC_COLOR[parseNote(n).pc];
-      var k = slotOf(i);
+      var k = rollSlot(i);
       if (k >= 0){
         var b = vbars[v][k];
         b.style.display = "block";
-        b.style.left = (k * 6.25 + 0.7) + "%";
+        b.style.left = (k * w + w * 0.112) + "%";
         /* a note that rings out past the right edge of the window stops at
            it: the rest of it is read by walking on, as everything past the
            edge is */
-        b.style.width = (Math.min(head, WIN - k) * 6.25 - 1.4) + "%";
+        b.style.width = (Math.min(head, winRoll - k) * w - w * 0.224) + "%";
         b.style.top = top;
         b.style.height = (100 / span) + "%";
         b.style.backgroundColor = colour;
         b.classList.toggle("back", v !== voice);
         b.classList.toggle("outside", i >= doc.loop);
         setSeal(b.firstChild, sealOf(doc, v, i));
-      } else if (i < winStart && i + head > winStart){
+      } else if (i < startRoll && i + head > startRoll){
         /* struck before the window opened and still ringing across its left
            edge: the tail of it, from the edge to wherever it stops */
-        paintTail(edgeBars[v], v, 0, Math.min(i + head, winStart + WIN) - winStart,
+        paintTail(edgeBars[v], v, 0, Math.min(i + head, startRoll + winRoll) - startRoll,
                   top, span, colour);
       }
       /* and the rest of it, come round again at the head of the page */
-      if (len > head && winStart === 0)
+      if (len > head && startRoll === 0)
         paintTail(seamBars[v], v, 0, len - head, top, span, colour);
     }
   }
@@ -495,11 +667,11 @@ function rollLayout(){
    there, every sounding step is a struck step. */
 function rollIntervals(hi, span){
   var lead = vsteps(0), bass = vsteps(1), i, k, ma, mz, el, top, d;
-  var sl = sounding(doc, 0), sz = sounding(doc, 1), hl, hz;
-  for (k = 0; k < WIN; k++){
-    i = stepAt(k);
+  var sl = sounding(doc, 0), sz = sounding(doc, 1), hl, hz, w = 100 / winRoll;
+  for (k = 0; k < MAX_STEPS; k++){
+    i = rollStep(k);
     el = ivls[k];
-    hl = sl[i]; hz = sz[i];
+    hl = (k < winRoll) ? sl[i] : -1; hz = (k < winRoll) ? sz[i] : -1;
     ma = (hl >= 0) ? midiOf(lead[hl]) : null;
     mz = (hz >= 0) ? midiOf(bass[hz]) : null;
     /* only where both voices sound, and only where one of them moved */
@@ -508,8 +680,8 @@ function rollIntervals(hi, span){
     }
     el.firstChild.textContent = intervalName(ma - mz);
     el.classList.add("on");
-    el.style.left = (k * 6.25) + "%";
-    el.style.width = "6.25%";
+    el.style.left = (k * w) + "%";
+    el.style.width = w + "%";
     /* a bar's centre is half a semitone below its top edge */
     top = (ma > mz) ? ma : mz;
     d = Math.abs(ma - mz);
@@ -546,12 +718,12 @@ function showGuide(m){
   }, GUIDE_HOLD);
 }
 function rollCursor(){
-  var c = slotOf(cursor);
-  rollCur.style.left = ((c < 0 ? 0 : c) * 6.25) + "%";
-  rollCur.style.width = "6.25%";
+  var c = rollSlot(cursor), w = 100 / winRoll;
+  rollCur.style.left = ((c < 0 ? 0 : c) * w) + "%";
+  rollCur.style.width = w + "%";
   rollCur.style.display = (c < 0) ? "none" : "block";
-  for (var k = 0; k < WIN; k++){
-    var i = stepAt(k), on = (k === c);
+  for (var k = 0; k < winRoll; k++){
+    var i = rollStep(k), on = (k === c);
     /* the ring marks the step under the cursor in the voice in hand only */
     bars[k].classList.toggle("cur", on && voice === 0);
     bars2[k].classList.toggle("cur", on && voice === 1);
@@ -562,8 +734,8 @@ function rollCursor(){
   }
 }
 function rollLoop(){
-  for (var k = 0; k < WIN; k++){
-    var out = stepAt(k) >= doc.loop;
+  for (var k = 0; k < winRoll; k++){
+    var out = rollStep(k) >= doc.loop;
     bars[k].classList.toggle("outside", out);
     bars2[k].classList.toggle("outside", out);
     ivls[k].classList.toggle("outside", out);
@@ -580,6 +752,9 @@ function applyViz(){
   column.style.display = (!page && viz === "column") ? "flex" : "none";
   roll.classList.toggle("on", !page && viz === "roll");
   voicesEl.classList.toggle("off", page);   /* the strip belongs to the page */
+  /* the sheet is as wide as what is on it: the drawing may want more than
+     the page's own measure, and nothing else ever does */
+  applyWidth();
 }
 
 /* ---- the names, put away and brought back ----
@@ -607,6 +782,11 @@ function toggleViz(){
   viz = (viz === "column") ? "roll" : "column";
   try { localStorage.setItem(VIZ_KEY, viz); } catch (e){}
   applyViz();
+  /* the two views hold different amounts of the page, so the one line that
+     says which part is on screen belongs to whichever is up: turning the
+     page over is one of the things that can put that label away, or raise
+     it */
+  renderMeta();
   say(viz === "roll" ? "the roll · height is pitch, colour is the note" : "the column");
 }
 
@@ -618,8 +798,8 @@ function renderNotes(){
     /* which note is ringing where, so that a step covered by a hold is
        neither a note (it was not struck) nor a rest (it is sounding) */
     var snd = sounding(doc, v), ends = ringEnds(doc, v);
-    for (var k = 0; k < WIN; k++){
-      var i = stepAt(k), n = s[i], el = rows[k].notes[v], tx = rows[k].texts[v];
+    for (var k = 0; k < winCol; k++){
+      var i = colStep(k), n = s[i], el = rows[k].notes[v], tx = rows[k].texts[v];
       if (n){ tx.nodeValue = display(n); el.className = "note" + back; }
       else if (snd[i] >= 0){
         /* the tail of a held note: no writing at all, only the stroke,
@@ -634,8 +814,13 @@ function renderNotes(){
   }
   /* the column counts in the page's own numbers: on a long page the numbers
      down the margin are 17 … 32, which is the plainest thing on the screen
-     saying where in the piece you are */
-  for (var k2 = 0; k2 < WIN; k2++) rows[k2].num.textContent = String(stepAt(k2) + 1);
+     saying where in the piece you are — and the heavier rule falls on the
+     page's beats, not on the window's, so a window that opened mid-bar is
+     still ruled where the music is */
+  for (var k2 = 0; k2 < winCol; k2++){
+    rows[k2].num.textContent = String(colStep(k2) + 1);
+    rows[k2].el.classList.toggle("beat", colStep(k2) % 4 === 0);
+  }
   rollLayout();
   renderVoices();
 }
@@ -655,12 +840,13 @@ function renderVoices(){
   voicesEl.classList.toggle("off", questsEl.classList.contains("on"));
 }
 function renderCursor(){
-  /* the window follows the cursor, and if it moved the page under it is a
-     different sixteen steps: the notes, the numbers and the loop's shading
-     all have to be said again, and the header has to say where this is */
+  /* the windows follow the cursor, and if either moved the page under it is
+     a different stretch of the piece: the notes, the numbers and the loop's
+     shading all have to be said again, and the header has to say where this
+     is */
   if (syncWindow()){ renderNotes(); renderMeta(); renderLoop(); }
-  var c = slotOf(cursor);
-  for (var k = 0; k < WIN; k++){
+  var c = colSlot(cursor);
+  for (var k = 0; k < winCol; k++){
     var on = (k === c);
     rows[k].el.classList.toggle("cursor", on);
     rows[k].caret.textContent = on ? "‸" : "";
@@ -671,7 +857,11 @@ function renderCursor(){
    window, and on a long page the playhead spends most of its turn off
    screen — the transport runs the whole loop whatever is being read */
 function renderPlayhead(step){
-  var row = (step >= 0) ? slotOf(step) : -1;
+  /* the two views hold different stretches of the page, so the playhead may
+     well be on screen in one of them and not in the other: each is asked
+     for its own slot */
+  var row = (step >= 0) ? colSlot(step) : -1;
+  var k = (step >= 0) ? rollSlot(step) : -1, w = 100 / winRoll;
   if (step === shownPlayhead && row === shownRow) return;
   if (shownRow >= 0){
     rows[shownRow].el.classList.remove("play");
@@ -680,8 +870,10 @@ function renderPlayhead(step){
   if (row >= 0){
     rows[row].el.classList.add("play");
     rows[row].fleuron.textContent = "❧";
-    rollWash.style.left = (row * 6.25) + "%";
-    rollWash.style.width = "6.25%";
+  }
+  if (k >= 0){
+    rollWash.style.left = (k * w) + "%";
+    rollWash.style.width = w + "%";
     rollWash.style.display = "block";
   } else {
     rollWash.style.display = "none";
@@ -701,18 +893,20 @@ function renderPlayhead(step){
    that have no other home: how fast, and in what. That is what the line is
    for.
 
-   A page longer than the window earns the line's one addition: which
-   sixteen steps of it are on screen. It is the same kind of fact as the
-   other two — a setting of the reading rather than a control — and it is
-   there only while the page is long, so every sixteen-step folio there has
-   ever been says tempo and key and nothing else, exactly as ruled. */
+   A page the view in hand cannot hold all of earns the line's one addition:
+   which part of it is on screen. It is the same kind of fact as the other
+   two — a setting of the reading rather than a control — and it is there
+   only while something is actually out of view, which depends on the view:
+   a wide screen showing the whole of a thirty-two-step page in the drawing
+   says tempo and key and nothing else, and turning to the column, which
+   holds twenty of it, is what puts the label up. */
 function renderMeta(){
   meta.textContent = doc.tempo + " · " + doc.key +
-    (pageLen() > WIN ? " · " + windowLabel() : "");
+    (windowed() ? " · " + windowLabel() : "");
 }
 function renderLoop(){
-  for (var k = 0; k < WIN; k++){
-    rows[k].el.classList.toggle("outside", stepAt(k) >= doc.loop);
+  for (var k = 0; k < winCol; k++){
+    rows[k].el.classList.toggle("outside", colStep(k) >= doc.loop);
   }
   rollLoop();
 }
@@ -915,6 +1109,11 @@ function say(msg){
     settingsEl.classList.contains("on") ? " · start, or ○, to close" : "");
 }
 function renderAll(){
+  /* a page of a different length has a different amount of itself in view —
+     a thirty-two-step page may be whole in the drawing where a sixty-four
+     is not. Nothing else here needs measuring, and fitViews does none when
+     nothing has changed. */
+  fitViews();
   syncWindow();
   renderNotes(); renderCursor(); renderMeta(); renderLoop();
 }
