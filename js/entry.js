@@ -131,11 +131,10 @@ document.addEventListener("keydown", function(e){
     case "End":        e.preventDefault(); jump(pageLen() - 1); return;
     case "PageUp":     e.preventDefault(); shiftOctave(1); return;
     case "PageDown":   e.preventDefault(); shiftOctave(-1); return;
-    /* the loop, and one rung up from it the page the loop is a part of */
+    /* the loop — how much of the page repeats. How long the page IS comes
+       with the workspace and has no key: it is seeded, like the tempo. */
     case "KeyL":
-      e.preventDefault();
-      if (e.shiftKey) cyclePageLen(); else cycleLoop();
-      return;
+      e.preventDefault(); cycleLoop(); return;
     /* beside it by position: the names on the drawing, away and back */
     case "KeyK":
       e.preventDefault(); toggleNames(); return;

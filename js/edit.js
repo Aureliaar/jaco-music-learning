@@ -431,37 +431,11 @@ function cycleLoop(){
 }
 
 /* ---- how long the page is ----
-   Sixteen steps, thirty-two, sixty-four, and round again — beside the loop
-   on the board because it is the same kind of decision one rung up: the
-   loop says how much of the page repeats, this says how much page there is.
-   Growing costs nothing; shrinking would take away whatever is written past
-   the new end, so it does not — it says what is in the way and leaves the
-   page alone. */
-function cyclePageLen(){
-  var n = pageLen(), want = PAGE_LENS[(PAGE_LENS.indexOf(n) + 1) % PAGE_LENS.length];
-  var v, s, i, last = -1;
-  if (want < n){
-    for (v = 0; v < VOICES; v++){
-      s = vsteps(v);
-      for (i = want; i < n; i++) if (s[i]) last = i;
-    }
-    if (last >= 0){
-      say("step " + (last + 1) + " is written — a page of " +
-          want + " has nowhere to keep it");
-      return;
-    }
-  }
-  doc[PAGE_FIELD] = want;
-  for (v = 0; v < VOICES; v++){ vsteps(v); vhold(v); vlock(v); }
-  /* the loop is a rung of the page it is on: a whole-page loop stays whole,
-     and one longer than the new page comes down to it */
-  if (doc.loop === n || doc.loop > want) doc.loop = want;
-  if (cursor >= want) cursor = want - 1;
-  if (schedStep >= doc.loop) schedStep = 0;
-  save();
-  renderAll();
-  say("the page · " + want + " steps" + (want > WIN ? " · " + windowLabel() : ""));
-}
+   Sixteen steps, thirty-two or sixty-four, and NOTHING here edits it
+   (player ruling 2026-08-04): the length is seeded with the workspace, as
+   the tonic and the tempo are. A page is as long as the quest that asked
+   for it, and the instrument holds no control that changes its mind. The
+   window and its stride are navigation, and stay. */
 
 /* ---- a window at a time ----
    Sixty-four steps is four windows, and walking between them one step at a

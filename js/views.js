@@ -818,7 +818,6 @@ function keysNow(){
       ["tab","the next voice · shift, the one before"],
       ["page ↑ ↓","which octave the note keys are"],
       ["L","the loop"],
-      ["shift+L","how long the page is · 16, 32, 64"],
       ["K","the names, away and back"],
       ["O · P","solo, mute"],
       ["F2", rollv ? "the column instead" : "the roll instead"],

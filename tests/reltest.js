@@ -2070,39 +2070,30 @@ eq("and round to the whole page, which is 32 here", T.doc.loop, 32);
 ok("and says so as it always did", /the whole page/.test(ids.footer.textContent),
    ids.footer.textContent);
 
-/* shift+L is the page itself, one rung above the loop */
+/* the page's length is seeded, never driven: no key changes it, and the
+   one that used to (shift+L) is gone — L is the loop and only the loop */
 reset();
 eq("a page begins at sixteen", T.pageLen(), 16);
 key("KeyL", { shiftKey:true });
-eq("shift and L lengthens it", T.pageLen(), 32);
-eq("the arrays beside the notes follow it", T.doc.steps.length, 32);
-eq("the lengths too", T.doc.hold.length, 32);
-eq("and the seals", T.doc.lock.length, 32);
-eq("a whole-page loop stays whole", T.doc.loop, 32);
-key("KeyL", { shiftKey:true });
-eq("and again", T.pageLen(), 64);
-key("KeyL", { shiftKey:true });
-eq("and round again", T.pageLen(), 16);
-eq("cutting the page cuts the arrays with it", T.doc.steps.length, 16);
-/* but never over something written */
-key("KeyL", { shiftKey:true });
-T.cursor = 20; key("KeyZ");
-eq("a note written past the sixteenth", T.doc.steps[20], "C4");
-key("KeyL", { shiftKey:true });
-key("KeyL", { shiftKey:true });
-eq("the page will not shrink out from under it", T.pageLen(), 64);
-ok("and says which step is in the way", /step 21 is written/.test(ids.footer.textContent),
-   ids.footer.textContent);
-/* and the length rides the autosave, as the key and the tempo do */
+eq("shift and L no longer lengthen it", T.pageLen(), 16);
+eq("they cycle the loop, as bare L does", T.doc.loop, 8);
+/* a seeded long page carries its arrays, and they ride the autosave the
+   way the key and the tempo do */
+longPage(64);
+eq("the arrays beside the notes follow the seed", T.doc.steps.length, 64);
+T.cursor = 20; key("KeyZ");                  /* writing wakes the rest of them */
+eq("the lengths too", T.doc.hold.length, 64);
 T.save();
 eq("the length is autosaved with the page", JSON.parse(store["folio.v1"]).len, 64);
+eq("and the note written past the sixteenth with it",
+   JSON.parse(store["folio.v1"]).steps[20], "C4");
 reset(); T.save();
 ok("and a sixteen-step page still writes none",
    !("len" in JSON.parse(store["folio.v1"])), Object.keys(JSON.parse(store["folio.v1"])));
 /* the thumbnail of a long page: denser, never truncated, never off the end */
 qreset();
 key("F3"); key("Enter"); key("F3");          /* into the first quest's page */
-key("KeyL", { shiftKey:true }); key("KeyL", { shiftKey:true });
+longPage(64);
 eq("a quest's page can be long too", T.pageLen(), 64);
 T.cursor = 40; key("KeyZ");
 key("F3");
