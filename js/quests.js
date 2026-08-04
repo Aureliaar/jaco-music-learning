@@ -405,8 +405,72 @@ var wsFree = null;           /* the free-play page */
 var wsDoc = {};              /* id -> page, made the first time a quest is entered */
 
 function questSlot(id){
-  if (!qState[id]) qState[id] = { done:false, fav:false, order:null };
+  if (!qState[id]) qState[id] = { fav:false, order:null };
   return qState[id];
+}
+/* ---- the rulings: which quests are closed ----
+   A quest is not finished by pressing a key; it is finished when the work
+   has been read and judged, and the verdict is written into the repository
+   from outside. That verdict used to ride in the quest log, which the open
+   tab rewrites whole every few seconds — so every ruling written to disk was
+   quietly saved away again by the next autosave.
+
+   It lives in `quests/rulings.json` now, and nothing else does:
+
+     { "folio":"rulings", "version":1, "complete": { "<id>": true } }
+
+   The folio only ever READS it — at boot, and on the same slow poll the
+   drills already ride, so a verdict written on disk reaches the rail within
+   ten seconds and no reload. C on a row (and ○ on the pad) still says
+   complete, and now says it to that file alone, one id at a time: a PUT
+   naming one quest cannot disturb what is ruled about any other.
+
+   With no server — file://, and the read-only copy — there is nothing to
+   ask, so nothing is marked and nothing breaks. A log written before the
+   rulings had a file of their own carries `done` beside each quest, and it
+   is still read: it seeds a ruling this session has not otherwise heard
+   about, and is never written back out. */
+var rulings = {};                  /* id -> true, the verdicts, read not owned */
+function isDone(id){ return !!rulings[id]; }
+function ruleMap(o){
+  if (!o || typeof o !== "object" || Array.isArray(o) || o.folio !== "rulings") return null;
+  return (o.complete && typeof o.complete === "object" && !Array.isArray(o.complete))
+           ? o.complete : null;
+}
+/* the file is the authority: every id it names is set to what it says, and
+   ids it does not name are left alone (it may be a fragment, and a fragment
+   is not a denial). Answers whether anything actually changed. */
+function applyRulings(o){
+  var m = ruleMap(o), id, v, hit = false;
+  if (!m) return false;
+  for (id in m){
+    if (!Object.prototype.hasOwnProperty.call(m, id)) continue;
+    v = !!m[id];
+    /* a verdict of `false` is still a verdict: it is written down, so that a
+       log carrying the old `done` cannot seed over the top of a retraction */
+    if (Object.prototype.hasOwnProperty.call(rulings, id) && !!rulings[id] === v) continue;
+    rulings[id] = v;
+    hit = true;
+  }
+  if (hit) cacheRulings();
+  return hit;
+}
+function cacheRulings(){
+  try {
+    localStorage.setItem(RULE_KEY,
+      JSON.stringify({ folio:"rulings", version:1, complete:rulings }));
+  } catch (e){}
+}
+function loadRulings(){
+  var raw = null;
+  try { raw = localStorage.getItem(RULE_KEY); } catch (e){ return false; }
+  if (!raw) return false;
+  try { return applyRulings(JSON.parse(raw)); } catch (e){ return false; }
+}
+/* what the log's own `done` used to mean, kept readable forever: a seed, and
+   only where this session has heard nothing about that quest */
+function seedRuling(id, done){
+  if (done && !Object.prototype.hasOwnProperty.call(rulings, id)) rulings[id] = true;
 }
 function questById(id){
   for (var i = 0; i < ALL.length; i++) if (ALL[i].id === id) return ALL[i];
@@ -525,11 +589,15 @@ function railTab(d){
   moveTab(d);
   if (settingsEl.classList.contains("on")) renderSettings();
 }
+/* C on the row, ○ on the pad: the same key it always was, writing to the
+   rulings file instead of into the log — one id, and nothing else said */
 function toggleComplete(){
-  var q = selQuest(), s = questSlot(q.id);
-  s.done = !s.done;
-  save(); renderQuests();
-  say(q.short + (s.done ? " · complete" : " · set aside"));
+  var q = selQuest(), on = !isDone(q.id);
+  rulings[q.id] = on;
+  cacheRulings();
+  rulePush(q.id, on);
+  renderQuests();
+  say(q.short + (on ? " · complete" : " · set aside"));
 }
 
 /* ---- the shape of the whole state, in storage and on disk alike ---- */
@@ -541,8 +609,10 @@ function stateToJSON(){
   for (i = 0; i < ALL.length; i++){
     id = ALL[i].id; s = qState[id]; d = wsDoc[id];
     var fav = !!(s && s.fav), ord = (s && typeof s.order === "number") ? s.order : null;
-    if (!d && !(s && s.done) && !fav && ord === null) continue;
-    out.quests[id] = { done: !!(s && s.done), pattern: d ? docOut(d) : null };
+    /* the verdict is not written here any more — it is the rulings file's,
+       and a log that never carries it can never carry one away */
+    if (!d && !fav && ord === null) continue;
+    out.quests[id] = { pattern: d ? docOut(d) : null };
     /* the two marks are written only where they were made, so a log from a
        board nobody has arranged is byte for byte the log it always was */
     if (fav) out.quests[id].fav = true;
@@ -591,7 +661,9 @@ function applyState(o){
       /* a workspace whose definition is not here: kept, and given a ghost
          so that it still has a line, a page and a name (its id) */
       if (!questById(id)){ DRILLS.push(ghostDrill(id)); rebuildList(); }
-      questSlot(id).done = !!q.done;
+      /* `done` was the log's once: still read, as a seed for the rulings,
+         and never written back into the log */
+      seedRuling(id, !!q.done);
       /* both optional, and both simply absent in a log written before they
          existed — an unarranged board reads as the natural order */
       questSlot(id).fav = !!q.fav;
@@ -620,6 +692,7 @@ function applyState(o){
    already put on the page becomes the free-play workspace. */
 function loadState(){
   var raw = null, o;
+  loadRulings();             /* the verdicts first: the log's `done` only seeds */
   try { raw = localStorage.getItem(QUEST_KEY); } catch (e){ return false; }
   if (raw){
     try { if (applyState(JSON.parse(raw))) return true; } catch (e){}
@@ -655,6 +728,12 @@ function loadQuests(){ return loadState(); }
    next change tries again. */
 var SYNC_URL = "api/quest-log";
 var SEED_URL = "quests/quest-log.json";
+/* the rulings, the same three ways: the server's door, the committed copy a
+   dumb host serves as a plain file, and the browser's own cache under it */
+var RULE_URL = "api/rulings";
+var RULE_SEED_URL = "quests/rulings.json";
+var RULE_KEY = "folio.rulings.v1";
+var ruleETag = null;
 var SYNC_DEBOUNCE = 2000;
 var POLL_MS = 10000;               /* how often the file is looked at again */
 var pollTimer = null;
@@ -723,6 +802,39 @@ function syncFlush(){
   } catch (e){ putInFlight = false; syncState = "failed"; syncTouch(); }
 }
 
+/* ---- the rulings, over the wire ----
+   Read on the poll, and written one id at a time. The read is conditional,
+   like the log's, so an unchanged file costs a 304; the write says only what
+   the key just said, so the server has nothing to merge away and a tab that
+   has never heard of another verdict cannot touch it. */
+function ruleRead(url, cond){
+  if (!syncOn && !staticMode) return;
+  if (typeof fetch !== "function") return;
+  var h = { "accept": "application/json" };
+  if (cond && ruleETag) h["if-none-match"] = ruleETag;
+  try {
+    fetch(url, { headers: h }).then(function(r){
+      if (!r || r.status === 304 || !r.ok) return;
+      if (cond){ var et = etagOf(r); if (et) ruleETag = et; }
+      return r.json().then(function(o){
+        if (applyRulings(o)) renderQuests();   /* the mark, and the margin's */
+      }, function(){});
+    }, function(){});
+  } catch (e){}
+}
+function rulePush(id, on){
+  if (!syncOn || typeof fetch !== "function") return;
+  var body = { folio:"rulings", version:1, complete:{} };
+  body.complete[id] = !!on;
+  try {
+    fetch(RULE_URL, { method:"PUT", headers:{ "content-type":"application/json" },
+                      body: JSON.stringify(body) }).then(function(r){
+      var et = etagOf(r);
+      if (et) ruleETag = et;                   /* so the next poll is a 304 */
+    }, function(){});
+  } catch (e){}
+}
+
 /* ---- live delivery: the file is looked at again, gently ----
    The tab is open for hours; a drill written into the file in the meantime
    should arrive without a reload, and without the next autosave writing it
@@ -742,6 +854,7 @@ function pollTick(){
   if (!syncOn || staticMode || syncMute) return;
   if (syncTimer || putInFlight) return;        /* a write is pending: not now */
   if (typeof fetch !== "function") return;
+  ruleRead(RULE_URL, true);                    /* the verdicts ride the same poll */
   var h = { "accept": "application/json" };
   if (logETag) h["if-none-match"] = logETag;
   try {
@@ -843,6 +956,7 @@ function goStatic(){
   syncState = "idle";
   syncTouch();
   seedBoot();                      /* the published snapshot always wins */
+  ruleRead(RULE_SEED_URL, false);  /* and the verdicts published with it */
 }
 function syncBoot(){
   syncOn = httpOrigin();
@@ -853,8 +967,8 @@ function syncBoot(){
       if (!r) return;
       if (r.status === 404){
         /* server.mjs says so in JSON; a static host says it in HTML or text */
-        if (jsonish(r)){ syncState = "ok"; pollStart(); }   /* no log yet: ours becomes it */
-        else goStatic();
+        if (jsonish(r)){ syncState = "ok"; pollStart(); ruleRead(RULE_URL, true); }
+        else goStatic();                                    /* no log yet: ours becomes it */
         return;
       }
       if (!r.ok){ syncState = "failed"; syncTouch(); return; }
@@ -863,6 +977,7 @@ function syncBoot(){
       return r.json().then(function(o){
         syncState = "ok";
         pollStart();
+        ruleRead(RULE_URL, true);       /* the verdicts, beside the log */
         if (applyServerState(o))
           say("restored from the server ‸ cursor row" +
               (activeQuest() ? " · ⚔ " + activeQuest().short : ""));
@@ -1223,7 +1338,7 @@ function renderQuests(){
     r.el.classList.toggle("sel", i === qsel);
     r.caret.textContent = (i === qsel) ? "‸" : "";
     r.sigil.textContent = (q.id === qActive) ? "⚔" : "";
-    if (s.done){ r.stat.textContent = "❧"; r.stat.className = "qstat done"; }
+    if (isDone(q.id)){ r.stat.textContent = "❧"; r.stat.className = "qstat done"; }
     else if (questHasContent(q.id)){ r.stat.textContent = "•"; r.stat.className = "qstat bound"; }
     else { r.stat.textContent = ""; r.stat.className = "qstat"; }
     /* the mark rests hollow and faint when the quest is not kept — a mark
@@ -1252,7 +1367,7 @@ function renderQuestDetail(){
   qdteach.textContent = q.teaches ? "Teaches: " + q.teaches : "";
   bits.push(q.id === qActive ? "⚔ you are working here"
                              : "enter to work here — its page is kept apart");
-  if (s.done) bits.push("❧ complete");
+  if (isDone(q.id)) bits.push("❧ complete");
   if (s.fav) bits.push("✦ kept to hand");
   if (!questHasContent(q.id)) bits.push("nothing written yet");
   qdstate.textContent = bits.join(" · ");
@@ -1334,13 +1449,13 @@ function renderRails(){
     r.el.classList.toggle("nav", nav && id === qActive);
     r.glyph.textContent = questGlyph(id);
     /* finished, and kept to hand: two marks, because they are two things */
-    if (r.done) r.done.textContent = questSlot(id).done ? "❧" : "";
+    if (r.done) r.done.textContent = isDone(id) ? "❧" : "";
     if (r.fav) r.fav.textContent = favOf(id) ? "✦" : "";
   }
   var q = activeQuest();
   railtitle.textContent = q ? plainName(q) : "Free play";
   railtext.textContent  = q ? (q.text || "") : "No constraint. Whatever you write here stays here.";
   railteach.textContent = (q && q.teaches) ? "Teaches: " + q.teaches : "";
-  railstate.textContent = q ? (questSlot(q.id).done ? "❧ complete" : "not yet complete")
+  railstate.textContent = q ? (isDone(q.id) ? "❧ complete" : "not yet complete")
                             : "F3 for the quest log";
 }

@@ -16,6 +16,9 @@ const REPO = require("path").resolve(__dirname, "..").split("\\").join("/");
    tracked file is neither read nor written by anything below. */
 const TMP  = require("fs").mkdtempSync(require("path").join(require("os").tmpdir(), "folio-test-"));
 const LOG  = require("path").join(TMP, "quest-log.json");
+/* and the verdicts, which are a file of their own now and just as much the
+   player's: this run rules on its own copy in the same temp directory */
+const RULE = require("path").join(TMP, "rulings.json");
 
 let pass = 0, fail = 0;
 function ok(name, cond, extra){
@@ -66,7 +69,8 @@ const SEAM = { id:"drill-seam", name:"the seam drill",
 
   const srv = spawn(process.execPath, [REPO + "/server.mjs"],
     { cwd: REPO, stdio:["ignore","pipe","pipe"],
-      env: Object.assign({}, process.env, { PORT: String(port), FOLIO_LOG: LOG }) });
+      env: Object.assign({}, process.env, { PORT: String(port), FOLIO_LOG: LOG,
+                                            FOLIO_RULINGS: RULE }) });
   let srvlog = "";
   srv.stdout.on("data", d => { srvlog += d; });
   srv.stderr.on("data", d => { srvlog += d; });
@@ -91,8 +95,10 @@ const SEAM = { id:"drill-seam", name:"the seam drill",
       const e = b.events.shift();
       if (e.method === "Runtime.exceptionThrown")
         errors.push(JSON.stringify(e.params.exceptionDetails).slice(0,300));
+      /* nothing has been ruled complete in this run, and the server says so
+         with a 404 in JSON — the designed answer, not an error of ours */
       if (e.method === "Log.entryAdded" && e.params.entry.level === "error" &&
-          !/favicon/.test(e.params.entry.text + " " + (e.params.entry.url || "")))
+          !/favicon|api\/rulings/.test(e.params.entry.text + " " + (e.params.entry.url || "")))
         errors.push(e.params.entry.text);
     }
   }, 50);

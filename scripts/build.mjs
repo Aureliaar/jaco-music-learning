@@ -9,6 +9,7 @@
      kits/<kit>/             -> dist/kits/<kit>/             (the tones' samples)
      auditor.html            -> dist/auditor.html            (the blind lineup)
      quests/quest-log.json   -> dist/quests/quest-log.json   (the seed)
+     quests/rulings.json     -> dist/quests/rulings.json     (the completions)
      folio-forest.png        -> dist/folio-forest.png        (quiet scenery)
      folio-sea.png           -> dist/folio-sea.png           (quiet scenery)
      folio-paper.png         -> dist/folio-paper.png         (the torn sheet)
@@ -45,10 +46,10 @@ const FILES = [
   ["quests/quest-log.json", "quests/quest-log.json"]
 ];
 
-/* The local log is an actively edited workspace file. Its `done` flags are
-   allowed to reflect the open composing session, while the shared copy is a
-   showcase of the completions recorded in QUESTS.md. Apply those marks only
-   to dist so an open local tab cannot clobber the published archive. */
+/* The completions the shared copy shows are the ones QUESTS.md records. They
+   are written into dist's own rulings file — never the local one — so that
+   the published archive says what it means whatever the live workspace is
+   doing that day. */
 const COMPLETED_QUESTS = [
   "ladder", "whitespace", "summit", "stones", "ouroboros",
   "callanswer", "stray", "shadow", "ostinato", "drone", "oilwater"
@@ -112,11 +113,24 @@ try {
   console.log("  (skipped " + KITS + "/ — not present)");
 }
 
+/* the rulings the shared copy carries: whatever the repository has ruled,
+   plus the showcase list above. The snapshot log is stripped of any `done`
+   flag an older copy of it still carries, so the deployed page has exactly
+   one place to learn a completion from — the same one the instrument has. */
 const sharedLogPath = path.join(DIST, "quests", "quest-log.json");
 const sharedLog = JSON.parse(await fs.readFile(sharedLogPath, "utf8"));
-for (const id of COMPLETED_QUESTS){
-  if (sharedLog.quests?.[id]) sharedLog.quests[id].done = true;
+const complete = {};
+try {
+  const local = JSON.parse(await fs.readFile(path.join(ROOT, "quests", "rulings.json"), "utf8"));
+  for (const id of Object.keys(local.complete || {})) if (local.complete[id]) complete[id] = true;
+} catch {}
+for (const id of Object.keys(sharedLog.quests || {})){
+  if (sharedLog.quests[id] && sharedLog.quests[id].done) complete[id] = true;
+  if (sharedLog.quests[id]) delete sharedLog.quests[id].done;
 }
+for (const id of COMPLETED_QUESTS) complete[id] = true;
 await fs.writeFile(sharedLogPath, JSON.stringify(sharedLog, null, 2) + "\n", "utf8");
-console.log("  marked " + COMPLETED_QUESTS.length + " completed quests in the shared snapshot");
+await fs.writeFile(path.join(DIST, "quests", "rulings.json"),
+                   JSON.stringify({ folio:"rulings", version:1, complete }, null, 2) + "\n", "utf8");
+console.log("  " + Object.keys(complete).length + " completions in the shared rulings");
 console.log("dist/ is ready");

@@ -25,7 +25,14 @@ const ROOT     = path.dirname(fileURLToPath(import.meta.url));
    log in a temp directory instead of writing over the player's own; the file
    in quests/ is their work, and a harness must never touch it. */
 const LOG_FILE = process.env.FOLIO_LOG || path.join(ROOT, "quests", "quest-log.json");
-const LOG_DIR  = path.dirname(LOG_FILE);
+/* The rulings: which quests are closed. They are not the tab's to own — a
+   quest is closed by evaluation, written here from a terminal — so they live
+   apart from the log the tab rewrites wholesale every few seconds, and the
+   tab can never take one back by saving its music over it. FOLIO_RULINGS
+   moves the file exactly as FOLIO_LOG moves the log, and for the same
+   reason: a harness writes its own and never the player's. */
+const RULE_FILE = process.env.FOLIO_RULINGS || path.join(ROOT, "quests", "rulings.json");
+const MAX_ID = 60;                        /* an id is a name, never prose */
 /* The kits the scriptorium curates: one folder per kit, the samples in it and
    a manifest.md beside them. FOLIO_KITS moves the shelf the same way FOLIO_LOG
    moves the log, and for the same reason — a harness writes its own kits in a
@@ -105,6 +112,81 @@ async function getLog(req, res){
     return;
   }
   send(req, res, 200, text, MIME[".json"], { "etag": tag });
+}
+
+/* write beside it, then rename: a reader never sees half a file */
+async function writeAtomic(file, text){
+  const tmp = file + "." + process.pid + "." + Date.now() + ".tmp";
+  try {
+    await fs.mkdir(path.dirname(file), { recursive: true });
+    await fs.writeFile(tmp, text, "utf8");
+    await fs.rename(tmp, file);
+  } catch (e){
+    try { await fs.unlink(tmp); } catch {}
+    return e;
+  }
+  return null;
+}
+
+/* ---- the rulings, read and merged one id at a time ----
+   The shape is deliberately the smallest thing that can carry a verdict:
+
+     { "folio":"rulings", "version":1, "complete": { "<quest id>": true } }
+
+   A PUT names only the ids it has something to say about, and every other id
+   on disk is left exactly as it was. That is the whole guard: a tab that has
+   never heard of a ruling written a second ago cannot un-say it, because it
+   never mentions it. Saying `false` is a retraction, and only something that
+   knows the id can send one. */
+async function getRulings(req, res){
+  let text;
+  try { text = await fs.readFile(RULE_FILE, "utf8"); }
+  catch {
+    /* JSON again, and for the same reason the log's 404 is: it tells a real
+       server with nothing ruled yet from a static host with no /api at all */
+    send(req, res, 404, '{"folio":"rulings","absent":true}\n', MIME[".json"]);
+    return;
+  }
+  const tag = etagOf(text);
+  if (req.headers["if-none-match"] === tag){
+    res.writeHead(304, { "etag": tag, "cache-control": "no-store" }).end();
+    log(req, 304);
+    return;
+  }
+  send(req, res, 200, text, MIME[".json"], { "etag": tag });
+}
+
+function completeMap(o){
+  return (o && typeof o.complete === "object" && o.complete &&
+          !Array.isArray(o.complete)) ? o.complete : null;
+}
+
+async function putRulings(req, res){
+  let text, obj;
+  try { text = await readBody(req); }
+  catch { send(req, res, 413, "too large"); return; }
+  try { obj = JSON.parse(text); }
+  catch { send(req, res, 400, "not JSON"); return; }
+  if (!obj || typeof obj !== "object" || Array.isArray(obj) || obj.folio !== "rulings"){
+    send(req, res, 400, 'not a rulings file (expects "folio": "rulings")');
+    return;
+  }
+  const inc = completeMap(obj);
+  if (!inc){ send(req, res, 400, 'not a rulings file (expects "complete")'); return; }
+  let disk = null;
+  try { disk = JSON.parse(await fs.readFile(RULE_FILE, "utf8")); } catch { disk = null; }
+  const out = {};
+  const had = completeMap(disk);
+  if (had) for (const id of Object.keys(had)) out[id] = !!had[id];
+  for (const id of Object.keys(inc)){
+    if (!id || id.length > MAX_ID) continue;
+    out[id] = !!inc[id];
+  }
+  const text2 = JSON.stringify({ folio:"rulings", version:1, complete: out }, null, 2) + "\n";
+  const err = await writeAtomic(RULE_FILE, text2);
+  if (err){ send(req, res, 500, "could not write the rulings: " + err.message); return; }
+  res.writeHead(204, { "etag": etagOf(text2) }).end();
+  log(req, 204);
 }
 
 function readBody(req){
@@ -276,7 +358,9 @@ async function putLog(req, res){
      polled since the delivery would otherwise write the drill away. So:
      before overwriting, read what is on disk, and keep any drill whose id the
      incoming body does not mention. Nothing else on disk is preserved; a
-     workspace, a done flag and `active` all belong to the page. */
+     workspace and `active` belong to the page. The rulings are not in this
+     file at all any more — they have one of their own, which is why a tab
+     that saves its music can no longer save a verdict away with it. */
   let disk = null;
   try { disk = JSON.parse(await fs.readFile(LOG_FILE, "utf8")); } catch { disk = null; }
   if (disk && Array.isArray(disk.drills)){
@@ -286,18 +370,9 @@ async function putLog(req, res){
     if (keep.length) obj.drills = incoming.concat(keep);
   }
 
-  /* write beside it, then rename: a reader never sees a half-written log */
   const text2 = JSON.stringify(obj, null, 2) + "\n";
-  const tmp = LOG_FILE + "." + process.pid + "." + Date.now() + ".tmp";
-  try {
-    await fs.mkdir(LOG_DIR, { recursive: true });
-    await fs.writeFile(tmp, text2, "utf8");
-    await fs.rename(tmp, LOG_FILE);
-  } catch (e){
-    try { await fs.unlink(tmp); } catch {}
-    send(req, res, 500, "could not write the log: " + e.message);
-    return;
-  }
+  const err = await writeAtomic(LOG_FILE, text2);
+  if (err){ send(req, res, 500, "could not write the log: " + err.message); return; }
   /* the tag of what was just written, so the page's next poll is a 304 */
   res.writeHead(204, { "etag": etagOf(text2) }).end();
   log(req, 204);
@@ -362,6 +437,13 @@ const server = http.createServer((req, res) => {
     send(req, res, 405, "method not allowed");
     return;
   }
+  if (pathname === "/api/rulings"){
+    if (req.method === "GET" || req.method === "HEAD"){ getRulings(req, res); return; }
+    if (req.method === "PUT"){ putRulings(req, res); return; }
+    res.setHeader("allow", "GET, PUT");
+    send(req, res, 405, "method not allowed");
+    return;
+  }
   if (pathname === "/api/kits" || pathname.indexOf("/api/kits/") === 0){
     kits(req, res, pathname); return;
   }
@@ -398,6 +480,7 @@ server.listen(PORT, HOST, () => {
     console.log("  " + (url || "(no LAN address found)") + "   ← on this network");
   }
   console.log("The quest log is " + LOG_FILE);
+  console.log("The rulings are " + RULE_FILE);
   console.log("The kits are in " + KITS_DIR);
   console.log("Ctrl+C to stop.");
 });

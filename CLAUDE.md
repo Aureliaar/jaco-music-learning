@@ -48,10 +48,11 @@ controls, laid over the folio (the hint strip it replaced is gone).
   an accident to be "fixed" with a bundler or a namespace object.
 - `server.mjs` — static serve (repo root + `js/` + `quest-backgrounds/`) +
   GET/PUT `/api/quest-log` (ETag, atomic writes, drill-preservation on
-  stale PUTs) + `/api/kits` (list, GET/PUT/DELETE per file; whitelisted
+  stale PUTs) + GET/PUT `/api/rulings` (ETag, atomic writes, **per-id
+  merge**) + `/api/kits` (list, GET/PUT/DELETE per file; whitelisted
   paths, RIFF-checked bodies, 256KB cap). `FOLIO_LOG` moves the log,
-  `FOLIO_KITS` moves the kit shelf — that is how the harnesses avoid the
-  player's own data.
+  `FOLIO_RULINGS` moves the rulings, `FOLIO_KITS` moves the kit shelf —
+  that is how the harnesses avoid the player's own data.
 - `kits/<name>/` — sample kits: WAVs + `manifest.md` (one line per
   sample: root, rate, bytes, loop, decay, source). The 64KB honor budget
   is WAIVED by player ruling (2026-08-02) where it costs quality or adds
@@ -61,7 +62,15 @@ controls, laid over the folio (the hint strip it replaced is gone).
   sampled from anywhere; re-bake with `node kits/bake.mjs`.
 - `quests/quest-log.json` — all workspaces (v2 schema: free + per-quest
   patterns + `drills` array). The single file to READ to see the player's
-  music. **No test may read or write it.**
+  music. **No test may read or write it.** It no longer carries `done` —
+  an old log that still does is read permissively, as a seed.
+- `quests/rulings.json` — **the rulings: which quests are complete**
+  (`{folio:"rulings", version:1, complete:{"<id>":true}}`). The
+  assistant's to write from a terminal; the app only ever READS it (boot
+  + the ten-second poll) and PUTs one id at a time when C / ○ is pressed.
+  A tab's autosave can no longer clobber a verdict — that is what it is
+  for. **No test may read or write it** either; migrate an old log with
+  `node scripts/migrate-rulings.mjs` (tab closed).
 - `auditor.html` — blind lineup listening; `?ids=a,b,c` picks entries.
 - `tests/` — restructured 2026-08-01, pared 2026-08-01. `tier1.js` (342
   checks) is data integrity only: a page out and back (including `tones`),
@@ -87,7 +96,12 @@ controls, laid over the folio (the hint strip it replaced is gone).
 
 1. **The sync race:** the open tab autosaves (debounced PUT of full
    state) and CLOBBERS any on-disk edit to quest-log.json — except drill
-   definitions, which server+client merge non-destructively. To deliver a
+   definitions, which server+client merge non-destructively, and the
+   completions, which are not in that file at all any more (2026-08-05):
+   they live in `quests/rulings.json`, are merged per id by the server,
+   and are read by the app on the same poll the drills ride — so a
+   ruling written on disk shows in the rail within ~10 s, no reload, and
+   nothing the tab saves can take it back. To deliver a
    drill: append to `drills` in the file; the app adopts it within ~10 s,
    no reload. To edit anything ELSE on disk: tell the player to reload the tab
    FIRST (server wins on boot). To REMOVE a drill: edit file, then tab
