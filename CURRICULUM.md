@@ -134,7 +134,7 @@ failure mode. Budget check: 64KB, no exceptions.
 
 ---
 
-## Lesson 3 — Duration: the held note
+## Lesson 3 — Duration: the held note — PASSED 2026-08-09
 
 **Toolset:** notes can sustain past one step (variable note length). That's
 the entire unlock. Entry/edit UX designed at build time, QWERTY-native.
@@ -179,6 +179,31 @@ capstone it now is; the 3.1 pass does not wait on it**). ⚔ *Ring the
 Seam* — one note sounds across the loop point.
 
 **On pass (3.2 complete):** 1 feature of any size.
+
+**Pass record (2026-08-09):** deliverable = *The Return* (F major, 92,
+32 steps — a 3.3 board page, seeded with nothing but key and tempo).
+Grid audit ran the instrument's own span math over every two-voice page
+and found not one suspension but a **chain of two**, in the bass: D4
+prepared as a third under the lead's F, held into the lead's move to G
+(a fourth against the bass — the clash), resolved down by step to C4
+(a fifth); that C immediately preparing the next — held under the
+lead's move to F, resolved down to B♭3. Each resolution is the next
+preparation. Audit convention on record: the fourth-against-the-bass
+read as dissonant (common practice); it is the hinge both clashes turn
+on. Corroborating: *the elder's heir* carries one more fully
+player-written suspension in its free half (A#2 held under the lead's
+move to C3, resolved to A2). **Deliberateness ruled by the player**:
+the figure was written by ear before it was named — the player called
+the chain "the keystone of the piece" on hearing it explained, on one
+of his favourite pages. Recognition before names; the creed held. The
+stated learning, in the player's own frame: a suspension is not merely
+voices moving at different times (oblique motion — the elder's line
+has that without one) but the three-legged event — consonant arrival,
+clash created by the *other* voice's move, resolution down by step.
+Consonance identification beyond "3/5/8 good, TT beware" is noted as
+an open gap, deferred to L5 by player ruling. Hand-me-down stays open
+as side content; the board missed the suspension, the free writing
+didn't. Pass grants the any-size feature (BUDGET.md).
 
 ---
 

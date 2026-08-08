@@ -374,6 +374,140 @@ is to resolve it. The stray from L1, no longer optional.)*
 
 ---
 
+## Lesson 3.3 quests — the long page: time enough to change
+
+*Authored 2026-08-04 at the page-length unlock, per QUEST-COPY.md.
+Sixteen steps was the whole world until today. Thirty-two is not more
+room to fill — it is time enough for the page to become something else
+before it ends: a floor that turns, a line that slows, a phrase told
+twice, a home left long enough to miss. Two voices, as in 3.2. Built
+at the player's request out of the two 3.2 pages he wants to live in
+(the drone II and the elder's line), two each extending them, two on
+sealed notes, two on open law alone.*
+
+*This board does NOT gate the lesson: the L3 pass still hangs on the
+3.2 deliverable. 3.3 is room, not a rung.*
+
+### ⚔ The Tide *(seed: E minor, 80 — the drone's home; the water moves this time)*
+- the bass strikes exactly twice
+- no silent bass step anywhere
+- the two bass notes differ
+- the lead rests at least four times
+*Teaches: the floor, turning.*
+
+### ⚔ Twice Told *(seed: E minor, 88 — the drone holds still; the lead does not)*
+- the bass strikes exactly once
+- that note rings all thirty-two
+- lead 17–32 repeats lead 1–16
+- exactly four steps differ
+*Teaches: variation.*
+
+### ⚔ The Elder Slows *(seed: D minor, 76 — six bass notes arrive sealed; the floor tires as it walks)*
+- every lead note rings two steps or more
+- the lead never strikes where the bass does
+*Teaches: writing against a line that slows.*
+*(Seeds: bass 1·5·9·13, four steps each — home, submediant, subtonic,
+home — then bass 17 and 25, eight steps each — submediant, then the
+fifth, ringing into the seam. All six sealed prl.)*
+
+### ⚔ The Elder's Heir *(seed: D minor, 76 — the floor's first half arrives sealed and stops mid-walk)*
+- bass 17–32: exactly four notes
+- each bass note rings four steps
+- every lead note rings two steps or more
+- the lead never strikes where the bass does
+*Teaches: finishing a line you didn't start.*
+*(Seeds: bass 1·5·9·13, four steps each, sealed prl — home, submediant,
+subtonic, the fifth. The walk stops on the open degree at the midpoint;
+17–32 is empty and the law hands the player the pen.)*
+
+*(⚔ The Elder's Heir — **CLOSED 2026-08-04**, the board's first and the
+first quest finished on a long page. Seeded with the player's own
+elder's line inherited whole — lead, sealed floor, piano, tempo — with
+the floor's fourth note moved to the open fifth so the walk stops
+unfinished. His continuation answers it rather than copying it, and his
+second-half gait crosses a floor still in fours.)*
+
+### ⚔ The Gates *(seed: A minor, 84 — two notes arrive sealed, first and last, wearing the same name)*
+- no other lead note wears their name
+- no bass note wears it either
+- the bass strikes at least four times
+*Teaches: departure and return.*
+*(Seeds: lead step 1, home, two steps, sealed prl; lead step 29, home
+in the same octave, four steps, sealed prl — it rings to the seam and
+hands the loop back to the first gate.)*
+
+### ⚔ Ballast *(seed: G minor, 84 — three lead notes arrive sealed by length alone; carry them where you will)*
+- every unsealed lead note: one step
+- the bass strikes under each sealed note
+- the bass strikes nowhere else
+*Teaches: where the weight goes.*
+*(Seeds: three lead notes sealed by length only — eight steps, four
+steps, two steps — free in pitch and free to move in time. They arrive
+parked at steps 1, 13 and 21; that placement is a suggestion.)*
+
+### ⚔ The Return *(seed: F major, 92)*
+- lead 25–32 repeats lead 1–8
+- bass 25–32 repeats bass 1–8
+- steps 9–24: at least six lead notes
+*Teaches: the reprise.*
+
+### ⚔ Before the Bell *(seed: A major, 100 — one phrase, two placements, the second too soon)*
+- no silent bass step anywhere
+- every bass note rings four steps
+- steps 1–8: at least four lead notes
+- steps 9–14: at least two lead notes
+*Teaches: the early entrance.*
+*(Mirror: lead, cell of 8, sites at steps 1 and 15 — the phrase returns
+two steps before the bar expects it. The cell arrives empty; no seeded
+notes. The bass is free of the mirror. Sites differ by 14, so against a
+four-step floor the two statements can never land in the same metric
+place, however the floor is phased.)*
+
+### ⚔ Four Rooms *(seed: B minor, 88 — one bass note arrives sealed in time; what follows it is the player's)*
+- the sealed note rings four different lengths
+- every unsealed bass note: one step
+- every lead note rings two steps or more
+*Teaches: the ring belongs to the room.*
+*(Mirror: bass, cell of 4, sites at steps 1, 9, 17, 25. Seed: one bass
+note on the cell's last step — page steps 4, 12, 20, 28 — written four
+steps, rhythm and length sealed, pitch open. The cell's first three
+steps arrive empty; the lead is free of the mirror. The rings can only
+be cut from the unbound steps between the sites, and "all different"
+forces the set 1-2-3-4, one per site.)*
+
+### ⚔ Prose *(seed: C major, 96)*
+- a rest ends every lead phrase
+- at least four lead phrases
+- no two phrases the same length
+- every bass note rings four or more
+*Teaches: prose, not verse.*
+
+---
+
+Completed (L3.2): ⚔ Give Way · The Drone II · The Elder's Line · The
+Stray, Planted · The Keystone — **closed 2026-08-04**, credited in
+BUDGET.md (the keystone on its repaired bass: two strikes under the
+sealed peak while it rings).
+Constraints verified against the instrument's own span math (heard
+length, wrapped at the seam), ten-loop test self-administered. The Ceiling and The Glacier
+closed 2026-08-05 — the ceiling by player ruling that "the bass strikes
+four times beneath it" is a floor and not an exact count (six stands;
+the page was not to be bent to the wording), the glacier by letter and
+spirit both, one lead note ringing eight over nine one-step bass notes.
+**Still open: Hand-Me-Down** — two of the six sealed notes still wear
+the seeded pitch; the edits since went to the bass instead. Side
+content now: **Lesson 3 PASSED 2026-08-09** — the 3.2 deliverable was
+found already written in *The Return* (a chain of two bass suspensions,
+D→C→B♭ under the moving lead; grid-audited, deliberateness claimed by
+the player — full record in CURRICULUM.md). The any-size grant is
+banked in BUDGET.md.
+
+*Flag note, 2026-08-04: a closure is only real when the workspace's own
+done flag is set — **C** on the row in the quest log (○ on the pad).
+Rulings recorded in these documents do not set it, and an earlier
+session's claim that the L3.1 flags were set turned out to be false in
+every commit. Check the rail, not the prose.*
+
 Completed (L3.1): ⚔ The Long Note · All Ring · Ring the Seam · Two
 Breaths · Steal the Beat · Threes · Daylight — **all seven closed
 2026-08-04**, credited in BUDGET.md. Apprentice's Hand is off this board

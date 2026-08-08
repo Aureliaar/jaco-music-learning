@@ -61,7 +61,14 @@ controls, laid over the folio (the hint strip it replaced is gone).
   checked-in zero-dependency `kits/bake.mjs` — arithmetic only, nothing
   sampled from anywhere; re-bake with `node kits/bake.mjs`.
 - `quests/quest-log.json` — all workspaces (v2 schema: free + per-quest
-  patterns + `drills` array). The single file to READ to see the player's
+  patterns + `drills` array). A page doc may carry `len` (16/32/64,
+  **seeded only** — no control edits it, by ruling) and `mirrors`
+  (`[{voice, cell, sites:[…]}]` — one cell of music pointed at from
+  several places; a write at any site lands at all of them, written
+  lengths and seals travel with the cell, what is *heard* is still
+  worked out per site. Field-seeded only: no UI, no bindings until the
+  arrangement lesson. Read strictly — a malformed mirror is dropped
+  whole and its notes left alone). The single file to READ to see the player's
   music. **No test may read or write it.** It no longer carries `done` —
   an old log that still does is read permissively, as a seed.
 - `quests/rulings.json` — **the rulings: which quests are complete**
