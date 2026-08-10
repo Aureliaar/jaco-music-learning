@@ -49,7 +49,7 @@ const seen = [];
      JSON.stringify(rest) === JSON.stringify(
        ["auditor.html","folio-forest.png","folio-paper.png","folio-sea.png",
         "folio.css","index.html",
-        "js/audio.js","js/boot.js","js/edit.js","js/entry.js","js/quests.js",
+        "js/audio.js","js/boot.js","js/echo.js","js/edit.js","js/entry.js","js/quests.js",
         "js/state.js","js/tones.js","js/views.js",
         "quests/quest-log.json","quests/rulings.json"]), rest);
   /* the kits travel whole — a dumb host has no /api/kits to list them, so the
@@ -69,7 +69,7 @@ const seen = [];
                    .match(/<script src="([^"]+)"/g) || [])
                   .map(t => t.slice(13, -1));
   ok("and every script index.html names is one of them",
-     named.length === 8 && named.every(n => listed.includes(n)), named);
+     named.length === 9 && named.every(n => listed.includes(n)), named);
   ok("with the stylesheet it names beside them",
      /<link[^>]+href="folio\.css"/.test(fs.readFileSync(DIST + "/index.html", "utf8")));
   ok("and the workspaces' own stills travel with them",

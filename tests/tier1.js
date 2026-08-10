@@ -270,6 +270,49 @@ eq("and so is every step of a page with no mirrors at all",
 eq("mirrorAt says how far into the cell a step is", T.mirrorAt(bound, 1, 10).off, 2);
 ok("and nothing where nothing binds", T.mirrorAt(bound, 1, 15) === null);
 
+/* ---- the echo: the hidden call a Lesson 4 drill hands its workspace ---- */
+console.log("\n== the echo beside the notes ==");
+const E = (o, extra) => V(pageOf(Object.assign({ echo: o }, extra || {})));
+const call2 = { stage:"contour", voice:0, at:0,
+                call:[{ step:0, note:"C4", len:1 }, { step:2, note:"E4", len:2 }] };
+ok("a page with no echo carries none", !("echo" in V(pageOf())));
+eq("an echo is read whole", E(call2).echo, call2);
+eq("voice and at default to the lead at the head of the page",
+   [E({ stage:"rhythm", call:[{ step:0, note:"C4" }] }).echo.voice,
+    E({ stage:"rhythm", call:[{ step:0, note:"C4" }] }).echo.at], [0, 0]);
+eq("a call event with no length rings one step",
+   E({ stage:"degrees", call:[{ step:3, note:"G4" }] }).echo.call[0].len, 1);
+eq("and its note is spelled the way the page spells notes",
+   E({ stage:"degrees", call:[{ step:0, note:"F♯3" }] }).echo.call[0].note, "F#3");
+
+console.log("\n== what an echo has to be ==");
+const noecho = (name, o, extra) => ok(name, !("echo" in E(o, extra)));
+noecho("an echo that is not an object is dropped", ["contour"]);
+noecho("a stage nobody offers is dropped", { stage:"pitch", call:[{ step:0, note:"C4" }] });
+noecho("a voice that is not a voice is dropped",
+       { stage:"contour", voice:2, call:[{ step:0, note:"C4" }] });
+noecho("an at off the end of the page is dropped",
+       { stage:"contour", at:16, call:[{ step:0, note:"C4" }] });
+noecho("an empty call is dropped", { stage:"contour", call:[] });
+noecho("a call that is not an array is dropped", { stage:"contour", call:"C4" });
+noecho("a step out of order is dropped",
+       { stage:"contour", call:[{ step:4, note:"C4" }, { step:1, note:"E4" }] });
+noecho("a step named twice is dropped",
+       { stage:"contour", call:[{ step:1, note:"C4" }, { step:1, note:"E4" }] });
+noecho("a note that will not parse is dropped",
+       { stage:"contour", call:[{ step:0, note:"H4" }] });
+noecho("a length under a step is dropped",
+       { stage:"rhythm", call:[{ step:0, note:"C4", len:0 }] });
+noecho("and a call that runs off the end of the page from `at` is dropped",
+       { stage:"rhythm", at:14, call:[{ step:0, note:"C4", len:4 }] });
+ok("a page is never rejected for its echo",
+   E({ nonsense:true }, { steps: noteAt({ 0:"C4" }) }).steps[0] === "C4");
+ok("a long page may carry a call a short one could not",
+   !!E({ stage:"rhythm", at:14, call:[{ step:0, note:"C4", len:4 }] },
+       { len:32, steps:new Array(32).fill(null), bass:new Array(32).fill(null) }).echo);
+ok("docEcho answers for a page that has one", !!T.docEcho(E(call2)));
+ok("and not for one that has not", T.docEcho(V(pageOf())) === null);
+
 console.log("\n== what a plain page writes out ==");
 const outPlain = T.docOut(V(pageOf({ steps: noteAt({ 0:"C4" }) })));
 ok("a page with nothing held writes no lead lengths", !("hold" in outPlain));
@@ -299,6 +342,14 @@ ok("a page with a mirror writes it", "mirrors" in outBound);
 eq("exactly as it was read", outBound.mirrors, ostinato);
 eq("and a page's mirrors survive being written out and read back in",
    V(JSON.parse(JSON.stringify(outBound))).mirrors, ostinato);
+ok("a page that asks nothing writes no echo", !("echo" in outPlain));
+const outEcho = T.docOut(E(call2));
+ok("a page with an echo writes it", "echo" in outEcho);
+eq("exactly as it was read", outEcho.echo, call2);
+eq("and it survives being written out and read back in",
+   V(JSON.parse(JSON.stringify(outEcho))).echo, call2);
+ok("something else wearing the name never leaves the app",
+   !("echo" in T.docOut(Object.assign(V(pageOf()), { echo:"listen" }))));
 ok("allUnbound says so of an absent array", T.allUnbound(undefined) === true);
 ok("and of an empty one", T.allUnbound([]) === true);
 ok("and not of one with a mirror in it", T.allUnbound(ostinato) === false);

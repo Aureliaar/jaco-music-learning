@@ -28,13 +28,14 @@ const DIST = path.join(ROOT, "dist");
 
 const FILES = [
   ["folio.html", "index.html"],
-  /* the instrument is eight plain scripts and one stylesheet since the split;
+  /* the instrument is nine plain scripts and one stylesheet since the split;
      folio.html names them, and they travel with it or it does nothing */
   ["folio.css", "folio.css"],
   ["js/state.js", "js/state.js"],
   ["js/views.js", "js/views.js"],
   ["js/audio.js", "js/audio.js"],
   ["js/edit.js", "js/edit.js"],
+  ["js/echo.js", "js/echo.js"],
   ["js/quests.js", "js/quests.js"],
   ["js/tones.js", "js/tones.js"],
   ["js/entry.js", "js/entry.js"],

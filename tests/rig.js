@@ -358,6 +358,11 @@ function boot(opts){
     mirrorSites: _g("mirrorSites"), mirrored: _g("mirrored"),
     sealAll: _g("sealAll"), sealedAll: _g("sealedAll"), roomAll: _g("roomAll"),
     allUnbound: _g("allUnbound"), putAt: _g("putAt"), holdAt: _g("holdAt"),
+    /* ---- the echo: the hidden call, and the answer judged ---- */
+    ECHO_FIELD: _g("ECHO_FIELD"), readEcho: _g("readEcho"), docEcho: _g("docEcho"),
+    echoNow: _g("echoNow"), echoPlay: _g("echoPlay"), echoJudge: _g("echoJudge"),
+    echoAnswer: _g("echoAnswer"), echoClear: _g("echoClear"),
+    get echoMarks(){ return _g("echoMarks"); },
     /* ---- the tones: the kits off the shelf and the sampled voice ---- */
     encodeWAV: _g("encodeWAV"), decodeWAV: _g("decodeWAV"),
     parseManifest: _g("parseManifest"), midiFreq: _g("midiFreq"),

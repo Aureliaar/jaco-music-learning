@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="folio.css">
 <!-- ================================ the map ================================
      folio.html is the markup and the list of scripts. The app itself is
-     seven plain files, loaded in this order and sharing one
+     nine plain files, loaded in this order and sharing one
      scope — no modules, no build step, so opening this file over file://
      still works exactly as it always did.
 
@@ -20,6 +20,7 @@
        js/audio.js    the two timbres, the lookahead scheduler, the transport
        js/edit.js     what the hands do: writing, length, contour, the voices,
                       the key, the tempo, the loop, the pages
+       js/echo.js     the echo: the hidden call played, the answer judged
        js/quests.js   workspaces, drills, the quest log on disk and its sync,
                       the board's tabs, the two side rails
        js/tones.js    what the voices sound like: the WAV read, the kits off
@@ -114,6 +115,7 @@
 <script src="js/views.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/edit.js"></script>
+<script src="js/echo.js"></script>
 <script src="js/quests.js"></script>
 <script src="js/tones.js"></script>
 <script src="js/entry.js"></script>

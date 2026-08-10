@@ -44,12 +44,24 @@ var SETTINGS = [
   { glyph:"↓", label:"the workspace",
     value:function(){ return workspaceName(); },
     run:function(){ railStep(1); }, head:true },
-  { glyph:"□", label:"solo",
-    value:function(){ return flag("solo", voice) ? "on" : "off"; },
-    run:function(){ toggleSolo(); renderSettings(); } },
-  { glyph:"△", label:"mute",
-    value:function(){ return flag("mute", voice) ? "on" : "off"; },
-    run:function(){ toggleMute(); renderSettings(); } },
+  /* ---- two seats, lent ----
+     In an echo workspace the folio is asking rather than playing, and these
+     two seats are the asking: □ plays the hidden call again and △ says how
+     much of the answer rang true. Nowhere else does either change — outside
+     an echo they are solo and mute, exactly as they have always been. The
+     keyboard's O and P are derived from these, not the other way round. */
+  { glyph:"□", label:function(){ return echoNow() ? "the call" : "solo"; },
+    value:function(){
+      return echoNow() ? "play it again" : (flag("solo", voice) ? "on" : "off"); },
+    run:function(){
+      if (echoNow()) echoPlay(); else toggleSolo();
+      renderSettings(); } },
+  { glyph:"△", label:function(){ return echoNow() ? "the answer" : "mute"; },
+    value:function(){
+      return echoNow() ? "judge it" : (flag("mute", voice) ? "on" : "off"); },
+    run:function(){
+      if (echoNow()) echoJudge(); else toggleMute();
+      renderSettings(); } },
   { glyph:"○", label:"close",
     value:function(){ return "back to the page"; },
     run:function(){ closeSettings(); } },
@@ -198,7 +210,8 @@ function renderSettings(){
   for (var i = 0; i < 8; i++){
     var s = slots[i], r = xslots[i];
     r.glyph.textContent = s.glyph;
-    r.label.textContent = s.label || "—";
+    /* a slot may name itself afresh on every render — the echo's two do */
+    r.label.textContent = (typeof s.label === "function" ? s.label() : s.label) || "—";
     r.value.textContent = s.run ? s.value() : "";
     r.el.className = "xslot" + (s.run ? "" : " none") + (s.head ? " head" : "");
   }
@@ -528,6 +541,12 @@ function selectById(id){
 function sayWorkspace(id){
   if (!id){ say("free play · no constraint"); return; }
   var q = questById(id);
+  /* an echo workspace says what it is on arrival, because two of its
+     controls do not mean what they mean anywhere else */
+  if (echoNow()){
+    say(q.short + " · the echo · □ the call, △ judge it");
+    return;
+  }
   say(q.short + " · its own page" + (questHasContent(id) ? "" : ", empty"));
 }
 function chooseWorkspace(){

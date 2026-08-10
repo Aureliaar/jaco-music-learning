@@ -533,6 +533,8 @@ function paintTail(b, v, k, wide, top, span, colour, bound){
   b.classList.toggle("back", v !== voice);
   b.classList.toggle("mirror", !!bound);
   b.classList.remove("outside");
+  b.classList.remove("rang");
+  b.classList.remove("astray");
   setSeal(b.firstChild, "");
 }
 
@@ -637,6 +639,9 @@ function rollLayout(){
         b.classList.toggle("back", v !== voice);
         b.classList.toggle("mirror", bound);
         b.classList.toggle("outside", i >= doc.loop);
+        /* the judgement's mark, the drawing's way of saying it */
+        b.classList.toggle("rang", echoMark(v, i) === "rang");
+        b.classList.toggle("astray", echoMark(v, i) === "astray");
         setSeal(b.firstChild, sealOf(doc, v, i));
       } else if (i < startRoll && i + head > startRoll){
         /* struck before the window opened and still ringing across its left
@@ -812,6 +817,11 @@ function renderNotes(){
          It is on the writing and on the stroke, and not on the rests: an
          empty step is faint already and a fainter one would say nothing. */
       var bound = mirrored(doc, v, i) ? " mirror" : "";
+      /* and what the last judgement said about it, where there was one: the
+         mark is on the answer's own notes and on nothing else, so it can
+         never draw the call for anybody */
+      var rang = echoMark(v, i);
+      if (rang) bound += " " + rang;
       if (n){ tx.nodeValue = display(n); el.className = "note" + back + bound; }
       else if (snd[i] >= 0){
         /* the tail of a held note: no writing at all, only the stroke,
@@ -946,6 +956,10 @@ function renderLoop(){
 var KSHOULDER = [["23%","24%"],["23%","78%"],["77%","24%"],["77%","78%"]];
 
 function keysNow(){
+  /* in an echo workspace two seats are lent — □ and △ on the crossbar, O and
+     P on the board — and the overlay is the living key help: it says what
+     they mean here rather than what they mean everywhere else */
+  var ech = echoNow();
   /* the crossbar has more than one drawing on it now, and the overlay is the
      crossbar's drawing borrowed — so it says whichever one is up, and the
      bumpers that turn from one to the other are named in both */
@@ -962,12 +976,15 @@ function keysNow(){
         ["L1 · R1","the other drawing of the crossbar"],
         ["start","put it down"],["escape","put it down"],["select","play, stop"]] }
     ]};
-    return { where:"the settings", clusters:[
+    return { where:"the settings" + (ech ? " · the echo" : ""), clusters:[
       { kind:"pad", name:"the d-pad", pos:XPOS, items:[
         ["←","the lesson before"],["↑","the workspace before"],
         ["→","the lesson after"],["↓","the workspace after"]] },
-      { kind:"pad", name:"the face buttons", pos:XPOS, items:[
-        ["□","solo"],["△","mute"],["○","put it down"],["✕","the background"]] },
+      { kind:"pad", name:"the face buttons", pos:XPOS, items: ech
+        ? [["□","play the call"],["△","judge the answer"],
+           ["○","put it down"],["✕","the background"]]
+        : [["□","solo"],["△","mute"],["○","put it down"],["✕","the background"]],
+        note: ech ? "the call is never drawn — it is only ever heard" : "" },
       { kind:"list", name:"and otherwise", items:[
         ["L1 · R1","the other drawing of the crossbar"],
         ["start","put it down"],["escape","put it down"],["select","play, stop"]] }
@@ -996,7 +1013,8 @@ function keysNow(){
      the one place that difference has ever been written down. The board's
      arrows do not trade: they are the cursor either way. */
   var rollv = (viz === "roll");
-  return { where: rollv ? "the folio · the roll" : "the folio · the column", clusters:[
+  return { where: (rollv ? "the folio · the roll" : "the folio · the column") +
+                  (ech ? " · the echo" : ""), clusters:[
     { kind:"pad", name:"the d-pad", pos:XPOS, items: rollv
       ? [["←","a step back"],["↑","nudge it up"],["→","a step on"],["↓","nudge it down"]]
       : [["←","nudge it down"],["↑","a step back"],["→","nudge it up"],["↓","a step on"]],
@@ -1025,15 +1043,19 @@ function keysNow(){
       ["page ↑ ↓","which octave the note keys are"],
       ["L","the loop"],
       ["K","the names, away and back"],
-      ["O · P","solo, mute"],
+      ["O · P", ech ? "play the call, judge the answer" : "solo, mute"],
       ["F2", rollv ? "the column instead" : "the roll instead"],
       ["F3","the quest log"],
       ["shift+B","the background"],
       ["ctrl+S · ctrl+O","out to a file, in from one"],
       ["F1 · escape","these keys, away"]] },
-    { kind:"list", name:"and on the pad", items:[
-      ["select","play, stop"],["start","the settings"],
-      ["L3","the loop"],["R3","the roll or the column"]] }
+    { kind:"list", name:"and on the pad", items: ech
+      ? [["select","play, stop"],["start","the settings"],
+         ["start then □","play the call"],["start then △","judge the answer"],
+         ["L3","the loop"],["R3","the roll or the column"]]
+      : [["select","play, stop"],["start","the settings"],
+         ["L3","the loop"],["R3","the roll or the column"]],
+      note: ech ? "the call is hidden: it is heard, never drawn" : "" }
   ]};
 }
 /* one control, drawn as the crossbar draws its slots: the glyph, and under

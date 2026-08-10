@@ -272,6 +272,28 @@
   .note.mirror{opacity:0.62;}
   .note.mirror.dim{opacity:0.5;}
 
+  /* ---- what the echo made of a note ----
+     After a judgement, and only until the next edit, each note of the
+     player's own answer carries a hairline under it: gilt and solid where it
+     rang true, ink and dotted where it went astray. Nothing is written on
+     the call — the call is never drawn at all — and nothing is written on a
+     note the judgement had no opinion about, so the marks are a handful of
+     short lines on a page and can never stack into a stripe. The two are
+     told apart by their line as well as by their colour, both are quieter
+     than the writing above them, and neither moves. */
+  .note.rang{
+    text-decoration:underline;
+    text-decoration-color:rgba(156,122,40,0.75);
+    text-underline-offset:0.24em;
+  }
+  .note.astray{
+    text-decoration:underline dotted;
+    text-decoration-color:rgba(59,47,30,0.4);
+    text-underline-offset:0.24em;
+  }
+  .bar.rang{outline:1px solid rgba(156,122,40,0.6);outline-offset:1px;}
+  .bar.astray{outline:1px dotted rgba(59,47,30,0.35);outline-offset:1px;}
+
   /* ---- the seal ----
      A note a quest has sealed carries a small gilt ring at its shoulder, in
      the column and on the head of its bar in the drawing alike: one mark,

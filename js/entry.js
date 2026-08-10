@@ -139,11 +139,21 @@ document.addEventListener("keydown", function(e){
     case "KeyK":
       e.preventDefault(); toggleNames(); return;
     /* the two keys past the end of the upper row: solo, then mute, both on
-       the voice in hand. The solo test wants one key, not a menu. */
+       the voice in hand. The solo test wants one key, not a menu.
+
+       In an echo workspace these two seats are lent: the folio is asking a
+       question there rather than playing a page, so O plays the call again
+       and P asks for the judgement. They are derived from the pad — □ and △
+       on the settings crossbar, which is where solo and mute already sit —
+       and they are themselves again the moment the page is not an echo's. */
     case "KeyO":
-      e.preventDefault(); toggleSolo(); return;
+      e.preventDefault();
+      if (echoNow()) echoPlay(); else toggleSolo();
+      return;
     case "KeyP":
-      e.preventDefault(); toggleMute(); return;
+      e.preventDefault();
+      if (echoNow()) echoJudge(); else toggleMute();
+      return;
     case "F2":
       e.preventDefault(); toggleViz(); return;
     case "Space":

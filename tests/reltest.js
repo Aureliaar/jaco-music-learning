@@ -2257,4 +2257,101 @@ ok("laid where it belongs across the whole thumbnail",
 eq("and nothing is drawn past the end of the page", T.qdabs[63].style.display, "none");
 closePages(); reset();
 
+/* ================= the echo =================
+   The schema — what an echo has to be, and what is dropped — is tier1's.
+   What is checked here is what the hands do: the two lent seats, and that
+   the judgement is a judgement of the answer and not of the call. Nothing
+   is drawn: the marks' weight is the stylesheet's. */
+console.log("\n== the echo: two seats, lent ==");
+/* an echo page: the call is C4 up to E4 up to G4, on the eighths the folio's
+   own stride writes */
+function echoPage(stage, extra){
+  page({}, Object.assign({ echo:{ stage:stage, voice:0, at:0,
+    call:[{ step:0, note:"C4", len:1 }, { step:2, note:"E4", len:1 },
+          { step:4, note:"G4", len:1 }] } }, extra || {}));
+}
+reset(); useColumn(); echoPage("contour");
+ok("the page in hand is an echo's", !!T.echoNow());
+key("KeyO");
+ok("O does not solo there", !T.flag("solo", 0), T.doc.solo);
+key("KeyP");
+ok("nor does P mute", !T.flag("mute", 0), T.doc.mute);
+ok("P judged instead, and said so", /rang true|nothing answered/.test(ids.footer.textContent),
+   ids.footer.textContent);
+reset();
+ok("and outside an echo the two seats are themselves again", !T.echoNow());
+key("KeyO");
+ok("O solos", T.flag("solo", 0));
+key("KeyO"); key("KeyP");
+ok("and P mutes", T.flag("mute", 0));
+key("KeyP");
+
+console.log("\n== the echo: what the judgement is of ==");
+echoPage("contour");
+T.cursor = 0; key("KeyZ"); key("KeyC"); key("KeyB");   /* C4 E4 G4: the shape */
+key("KeyP");
+ok("an answer of the right shape rings true", /the echo rings true/.test(ids.footer.textContent),
+   ids.footer.textContent);
+eq("and every note of it is marked as much",
+   [T.echoMarks.hit[0], T.echoMarks.hit[2], T.echoMarks.hit[4]], [true, true, true]);
+echoPage("contour");
+T.cursor = 0; key("KeyZ"); key("KeyC"); key("KeyX");   /* C4 E4 D4: the last turns */
+key("KeyP");
+ok("a shape that turns where the call did not does not", !T.echoMarks.hit[4]);
+ok("and the one before it still does", T.echoMarks.hit[2] === true);
+ok("what is said counts the player's own notes and nothing else",
+   /2 of your 3 rang true/.test(ids.footer.textContent), ids.footer.textContent);
+ok("and never names a note of the call",
+   !/[A-G]#?[0-9]/.test(ids.footer.textContent), ids.footer.textContent);
+/* the contour is the shape and only the shape: the same shape an octave up */
+echoPage("contour");
+T.cursor = 0; key("KeyQ"); key("KeyE"); key("KeyT");   /* C5 E5 G5 */
+key("KeyP");
+ok("the same shape in another octave rings true",
+   /the echo rings true/.test(ids.footer.textContent), ids.footer.textContent);
+/* the degrees are the degrees of the key, an octave out forgiven */
+echoPage("degrees");
+T.cursor = 0; key("KeyQ"); key("KeyE"); key("KeyT");
+key("KeyP");
+ok("the right degrees an octave up ring true",
+   /the echo rings true/.test(ids.footer.textContent), ids.footer.textContent);
+echoPage("degrees");
+T.cursor = 0; key("KeyZ"); key("KeyV"); key("KeyB");   /* C4 F4 G4 */
+key("KeyP");
+ok("a wrong degree in the middle does not", T.echoMarks.hit[2] === false);
+ok("and the ones either side of it still do",
+   T.echoMarks.hit[0] === true && T.echoMarks.hit[4] === true);
+/* the rhythm is the onsets and the written lengths, on any pitch at all */
+echoPage("rhythm");
+T.cursor = 0; key("KeyZ"); key("KeyZ"); key("KeyZ");   /* C4 C4 C4, on the eighths */
+key("KeyP");
+ok("the same onsets on one pitch ring true",
+   /the echo rings true/.test(ids.footer.textContent), ids.footer.textContent);
+echoPage("rhythm");
+T.cursor = 0; key("KeyZ"); key("KeyZ"); key("KeyZ");
+T.cursor = 0; key("Equal");                            /* the first note held two steps */
+key("KeyP");
+ok("a note written longer than the call's does not", T.echoMarks.hit[0] === false);
+ok("and the count said is of the player's own notes",
+   /2 of your 3 rang true/.test(ids.footer.textContent), ids.footer.textContent);
+echoPage("rhythm");
+T.cursor = 0; key("KeyZ"); key("KeyZ");                /* two of the three */
+key("KeyP");
+ok("a different number of notes is said, and never how many",
+   / a different number of notes/.test(ids.footer.textContent) &&
+   !/3/.test(ids.footer.textContent), ids.footer.textContent);
+/* the marks are a snapshot: the next edit takes them away */
+echoPage("contour");
+T.cursor = 0; key("KeyZ"); key("KeyP");
+ok("a judgement leaves marks", !!T.echoMarks);
+T.cursor = 8; key("KeyZ");
+ok("and the next note written clears them", T.echoMarks === null);
+/* nothing of the call is ever written into the page */
+echoPage("contour");
+eq("the call is nowhere in the voices", T.doc.steps.filter(Boolean).length, 0);
+T.save();
+eq("but it is autosaved with the page",
+   JSON.parse(store["folio.v1"]).echo.call.length, 3);
+reset();
+
 R.done();

@@ -742,6 +742,10 @@ function docOut(d){
   }
   if (allOwnTone(out[VOICE_TONE])) delete out[VOICE_TONE];
   if (allUnbound(out[MIRROR_FIELD])) delete out[MIRROR_FIELD];
+  /* the echo is written only where there is one, and only where it is one:
+     the validator is the single door it comes through, so anything else
+     wearing the name leaves here rather than being written back out */
+  if (!docEcho(out)) delete out[ECHO_FIELD];
   /* and the length only where the page is longer than the page always was */
   if (docLen(out) === STEPS) delete out[PAGE_FIELD];
   return out;
@@ -782,6 +786,11 @@ function validate(obj){
            tones: readTones(obj.tones),
            mirrors: readMirrors(obj[MIRROR_FIELD], N),
            mute: readFlags(obj.mute), solo: readFlags(obj.solo) };
+  /* the hidden call, if the page is an echo's: read strictly by js/echo.js,
+     which is where the whole of that idea lives, and simply absent — not
+     null, not empty — on every page that is not one */
+  var ec = readEcho(obj[ECHO_FIELD], N);
+  if (ec) out[ECHO_FIELD] = ec;
   if (N !== STEPS) out[PAGE_FIELD] = N;
   return out;
 }
@@ -793,6 +802,10 @@ function validate(obj){
    storage) still finds a pattern where it always was. */
 function save(){
   if (!storageOK) return;
+  /* the echo's marks are a snapshot of a judgement, and every modification
+     of the page comes through here: a mark never outlives the note it was
+     made about */
+  echoClear();
   stash();
   try {
     localStorage.setItem(QUEST_KEY, JSON.stringify(stateToJSON()));
