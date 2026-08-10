@@ -2373,4 +2373,55 @@ eq("but it is autosaved with the page",
    JSON.parse(store["folio.v1"]).echo.call.length, 3);
 reset();
 
+/* ---- and the one judgement the folio can make for itself ----
+   A true echo is the whole of a drill's demand, so it files the closure
+   itself, through the door the key goes through and no other: the rulings,
+   one id at a time. What must outlive any rewrite of this is exactly that —
+   only on the whole truth, only in a workspace that is a quest, once, and
+   silent where nothing can be written. */
+console.log("\n== the echo: a true one files its own verdict ==");
+const puts = [], realFetch = global.fetch;
+global.fetch = function(u, o){
+  puts.push({ url:u, body: o && o.body });
+  return Promise.resolve({ headers:{ get: function(){ return null; } } });
+};
+const echoQ = Q[0].id;
+qreset(); T.syncOn = true;
+T.switchWorkspace(echoQ); useColumn(); echoPage("contour");
+T.cursor = 0; key("KeyZ"); key("KeyC"); key("KeyX");   /* two of the three */
+key("KeyP");
+ok("a part score closes nothing", T.isDone(echoQ) === false);
+eq("and says nothing to the rulings", puts.length, 0);
+echoPage("contour");
+T.cursor = 0; key("KeyZ"); key("KeyC"); key("KeyB");   /* the shape, whole */
+key("KeyP");
+ok("a true echo closes the quest it was set in", T.isDone(echoQ) === true);
+eq("one verdict went out, to the rulings and nowhere else",
+   [puts.length, puts[0] && puts[0].url], [1, T.RULE_URL]);
+eq("and it carries that one id and nothing else",
+   JSON.parse(puts[0].body).complete, { [echoQ]: true });
+ok("the line says it is complete, the way the key says it",
+   /· complete$/.test(ids.footer.textContent), ids.footer.textContent);
+ok("and still never names a note of the call",
+   !/[A-G]#?[0-9]/.test(ids.footer.textContent), ids.footer.textContent);
+key("KeyP");
+ok("judged true again it is still complete", T.isDone(echoQ) === true);
+eq("and the server is not told twice", puts.length, 1);
+/* free play is nobody's quest: there is nothing to close and nothing said */
+T.switchWorkspace(null); useColumn(); echoPage("contour");
+T.cursor = 0; key("KeyZ"); key("KeyC"); key("KeyB");
+puts.length = 0; key("KeyP");
+ok("in free play a true echo rings and closes nothing",
+   /the echo rings true · contour$/.test(ids.footer.textContent), ids.footer.textContent);
+eq("and writes nothing anywhere", puts.length, 0);
+/* the deployed copy: read-only, and the mark is the session's own */
+qreset();                                              /* syncOn off again */
+T.switchWorkspace(echoQ); useColumn(); echoPage("contour");
+T.cursor = 0; key("KeyZ"); key("KeyC"); key("KeyB");
+key("KeyP");
+ok("where nothing can be written the mark still stands", T.isDone(echoQ) === true);
+eq("and not a word went out", puts.length, 0);
+global.fetch = realFetch;
+qreset(); reset();
+
 R.done();

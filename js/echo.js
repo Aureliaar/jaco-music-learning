@@ -222,8 +222,36 @@ function echoMark(v, i){
 /* the stage, said the way the page says things rather than the way the file
    spells it */
 function echoStageName(stage){ return stage.split("+").join(" + "); }
+/* ---- and, on a true echo, the verdict ----
+   An echo is the one quest whose demand the folio can read for itself: every
+   note answered true, and as many of them as were played. There is nothing
+   left for a hand to judge, so there is nothing left to press — the closure
+   is filed here, through the very door the key goes through (the rulings, one
+   id at a time), and no new binding and no new seat is spent on it. Only on
+   the whole truth: a part score is a part score and closes nothing.
+
+   The three things the key does are the three things done here, in the same
+   order, so that the two can never drift: the verdict is remembered, the
+   remembering is cached, and the file is told. Where nothing can be written —
+   the deployed copy, read-only — rulePush is already the one that stays
+   quiet, so the mark stands for the session and the say line is the same.
+   Already complete costs no second word to the server, and it is still said,
+   because what the player wants to hear is where the quest stands.
+
+   Returns what to add to the line, or nothing at all in free play. */
+function echoFile(){
+  var q = (typeof activeQuest === "function") ? activeQuest() : null;
+  if (!q) return "";
+  if (!isDone(q.id)){
+    rulings[q.id] = true;
+    cacheRulings();
+    rulePush(q.id, true);
+    renderQuests();
+  }
+  return q.short + " · complete";
+}
 function echoJudge(){
-  var e = echoNow(), ans, hits = [], i, n = 0, msg;
+  var e = echoNow(), ans, hits = [], i, n = 0, msg, filed;
   if (!e) return;
   ans = echoAnswer(e);
   if (!ans.length){
@@ -241,8 +269,12 @@ function echoJudge(){
     if (hits[i]) n++;
   }
   renderNotes();
-  if (n === ans.length && ans.length === e.call.length) msg = "the echo rings true";
-  else msg = n + " of your " + ans.length + " rang true" +
-             (ans.length === e.call.length ? "" : " · a different number of notes");
-  say(msg + " · " + echoStageName(e.stage));
+  if (n === ans.length && ans.length === e.call.length){
+    msg = "the echo rings true";
+    filed = echoFile();                          /* and the quest is closed with it */
+  } else {
+    msg = n + " of your " + ans.length + " rang true" +
+          (ans.length === e.call.length ? "" : " · a different number of notes");
+  }
+  say(msg + " · " + echoStageName(e.stage) + (filed ? " · " + filed : ""));
 }

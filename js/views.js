@@ -141,6 +141,11 @@ function swapScene(eff, url, key){
     s.setProperty("--questbg", 'url("' + url + '")');
   document.body.setAttribute("data-scenery", eff);
   sceneKey = key;
+  /* the scene changes how much room the working field has — on scenery the
+     title and the foot take 3.2rem of breath apiece and the two rules go
+     away — and the fit is keyed on the window alone, which has not moved. So
+     it is told the measurement is stale, and the rows are counted again. */
+  refit();
   if (cross && typeof requestAnimationFrame === "function"){
     /* two frames: the arriving ground is painted under the leaving one
        before the dissolve is asked for, or the transition has nothing to
@@ -513,6 +518,9 @@ function fitSoon(){
   }, 140);
 }
 if (window.addEventListener) window.addEventListener("resize", fitSoon);
+/* the window has not moved but what stands around the field has: forget the
+   last reading, so the next fit is a real one */
+function refit(){ fitted = { w:0, h:0, len:0 }; fitSoon(); }
 
 function midiOf(s){ var p = parseNote(s); return p ? (p.oct + 1) * 12 + p.pc : null; }
 

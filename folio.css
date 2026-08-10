@@ -101,22 +101,47 @@
      measures the room and puts the answer in --pagew; where it says nothing,
      which is the column, the quest log and every narrow screen, the measure
      is exactly what it always was. */
+  /* The folio is exactly as tall as the screen and never one pixel taller.
+     It used to be as tall as whatever stood in it, centred in a body that
+     hides its overflow — so the moment the chrome above and below grew (the
+     scenery gives the title and the footer 3.2rem of breath apiece) the whole
+     stack outgrew the window and was clipped at BOTH ends, and the thing at
+     the bottom, the footer that speaks, went under the fold. It was there at
+     90% zoom and gone at 100%, which is the same page and a shorter window.
+     Pinning the page to the window makes that impossible to say again: the
+     header, the rules and the foot are each their own size, the working field
+     takes what is left, and the footer is the last row of the screen whatever
+     any of them measure. */
   main{
     width:var(--pagew,min(46rem,92vw));
     max-width:100vw;
+    height:100%;
+    box-sizing:border-box;
+    padding-bottom:0.5rem;           /* the foot is not flush with the glass */
     display:flex;
     flex-direction:column;
     align-items:center;
+    justify-content:center;
     position:relative;
     z-index:1;
     isolation:isolate;
   }
+  /* everything that is not the working field keeps its own height and is
+     never squeezed to make room */
+  main > header, main > .divider, main > .foot{flex:0 0 auto;}
   /* the working field: everything that is written in or read off the page.
      On paper it is nothing at all — a transparent wrapper that changes no
      spacing. On scenery it is what the torn sheet covers, the title and the
      footer having stepped off it into the scene. */
   .field{
     width:100%;
+    /* the give in the page: it takes the room the title and the foot leave,
+       and it is the only thing that yields when there is not enough of it —
+       `min-height:0` is what lets a flex child be smaller than what stands
+       in it, without which the field would push the footer off the screen
+       exactly as it used to */
+    flex:1 1 auto;
+    min-height:0;
     display:flex;
     flex-direction:column;
     align-items:center;
@@ -866,7 +891,17 @@
     display:none;
     width:100%;
     max-width:44rem;                 /* same measure as the key: nothing shifts */
-    min-height:38.6rem;
+    /* The board keeps its standing height so that walking from a full lesson
+       to an empty one does not make the page jump — but never more of it than
+       the field actually has, or on a short window the log runs out over the
+       footer. Where there is not enough room the board itself is what gives
+       way and carries a thin rule of its own, exactly as the list inside it
+       already does. */
+    min-height:min(38.6rem,100%);
+    max-height:100%;
+    overflow-y:auto;
+    scrollbar-width:thin;
+    scrollbar-color:rgba(201,188,160,0.9) transparent;
     color:var(--ink);
     font-size:0.92rem;
     line-height:1.4;
