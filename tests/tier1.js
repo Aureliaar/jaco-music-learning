@@ -289,6 +289,10 @@ console.log("\n== what an echo has to be ==");
 const noecho = (name, o, extra) => ok(name, !("echo" in E(o, extra)));
 noecho("an echo that is not an object is dropped", ["contour"]);
 noecho("a stage nobody offers is dropped", { stage:"pitch", call:[{ step:0, note:"C4" }] });
+eq("the closing rung asks for two of them at once, and is read",
+   E({ stage:"degrees+rhythm", call:[{ step:0, note:"C4" }] }).echo.stage, "degrees+rhythm");
+noecho("but no other pairing of them is",
+       { stage:"contour+rhythm", call:[{ step:0, note:"C4" }] });
 noecho("a voice that is not a voice is dropped",
        { stage:"contour", voice:2, call:[{ step:0, note:"C4" }] });
 noecho("an at off the end of the page is dropped",

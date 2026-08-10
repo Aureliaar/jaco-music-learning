@@ -2340,6 +2340,25 @@ key("KeyP");
 ok("a different number of notes is said, and never how many",
    / a different number of notes/.test(ids.footer.textContent) &&
    !/3/.test(ids.footer.textContent), ids.footer.textContent);
+/* the closing rung: the degrees and the rhythm, and both have to hold */
+echoPage("degrees+rhythm");
+T.cursor = 0; key("KeyX"); key("KeyC"); key("KeyB");   /* D4 E4 G4: the first wrong */
+key("KeyP");
+ok("a wrong degree on the right step does not ring",
+   T.echoMarks.hit[0] === false, T.doc.steps.slice(0, 6));
+ok("and the right degrees on the right steps do",
+   T.echoMarks.hit[2] === true && T.echoMarks.hit[4] === true);
+ok("the stage is said the way the page says things",
+   /· degrees \+ rhythm$/.test(ids.footer.textContent), ids.footer.textContent);
+echoPage("degrees+rhythm");
+T.cursor = 0; key("KeyZ"); key("KeyC"); key("KeyB");   /* C4 E4 G4: the call, in order */
+key("KeyP");
+ok("the right degrees at the right lengths ring true",
+   /the echo rings true/.test(ids.footer.textContent), ids.footer.textContent);
+T.cursor = 0; key("Equal");                            /* the first note held two steps */
+key("KeyP");
+ok("and a right degree written too long does not",
+   T.echoMarks.hit[0] === false, ids.footer.textContent);
 /* the marks are a snapshot: the next edit takes them away */
 echoPage("contour");
 T.cursor = 0; key("KeyZ"); key("KeyP");

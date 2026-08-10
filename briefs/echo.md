@@ -24,8 +24,11 @@ On a page doc, beside `len`, `tones` and `mirrors`:
 }
 ```
 
-- `stage` — `"contour"` · `"degrees"` · `"rhythm"`. Required. One stage per
-  drill; never all at once.
+- `stage` — `"contour"` · `"degrees"` · `"rhythm"` · `"degrees+rhythm"`.
+  Required. One stage per drill: the first three ask one thing each, and the
+  fourth is the closing rung of a ladder — the two of them at once, which is
+  what the curriculum means by *never all of it together until the end*. The
+  string is literal, `+` and all.
 - `voice` — which voice answers. Optional, integer, `0 … VOICES-1`, default 0.
 - `at` — the step of the page the answer begins on. Optional, integer,
   `0 … N-1`, default 0.
@@ -95,6 +98,11 @@ snapshot of the last judgement and are cleared by the next edit.
 - **rhythm** — the onsets and the written lengths, on whatever pitch. An
   answered note is true where a call event begins on exactly that step and
   rings exactly as long. Pitch is ignored.
+- **degrees+rhythm** — the last rung, and both tests at once: a note is true
+  where it begins on exactly a call event's step, rings exactly as long, *and*
+  is that event's degree of the key, the same whole-octave offset forgiven
+  (taken from the first answered note, as the degrees stage takes it). The
+  contour is never asked here — the degrees already contain it.
 
 What a miss may say: how many of *your own* notes rang true, and that the
 count differs from the call's. Never a note name, never a step, never a

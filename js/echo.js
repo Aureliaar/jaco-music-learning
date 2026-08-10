@@ -24,8 +24,10 @@
      echo: { stage:"contour", voice:0, at:0,
              call:[ {step:0, note:"C4", len:1}, {step:2, note:"E4", len:2} ] }
 
-   `stage` is which of the three questions is being asked, and only ever one
-   of them: the shape, the degrees, or the rhythm. `voice` is the line that
+   `stage` is which question is being asked, and only ever one of them: the
+   shape, the degrees, the rhythm — or, on the closing rung of a ladder and
+   nowhere before it, the degrees and the rhythm together, which is what the
+   curriculum means by "never all of it at once until the end". `voice` is the line that
    answers, `at` the step of the page the answer begins on, and `call` the
    fragment itself — events counted from nought *inside the call*, so the
    fragment can be moved along the page by changing one number.
@@ -36,7 +38,7 @@
    this and the field is gone, the notes underneath it untouched, and the
    workspace is an ordinary drill. */
 var ECHO_FIELD = "echo";
-var ECHO_STAGES = ["contour", "degrees", "rhythm"];
+var ECHO_STAGES = ["contour", "degrees", "rhythm", "degrees+rhythm"];
 
 function echoInt(n, lo, hi, dflt){
   if (n === null || n === undefined) return dflt;
@@ -140,23 +142,29 @@ function judgeContour(e, ans){
   }
   return out;
 }
-/* the degrees of the key, and the whole answer allowed to sit an octave out:
-   the offset is taken from the first note answered and has to be a whole
-   number of octaves — seven degrees — so the shape of the degrees is what is
-   asked about and not which octave the pad happened to land in */
+/* how far out of its octave the whole answer sits: taken from the first note
+   answered, and only where it is a whole number of octaves — seven degrees —
+   so what is asked about is the degrees of the key and not which octave the
+   pad happened to land in. Anything else and the answer is read where it
+   stands. */
+function echoOffset(e, ans){
+  var a0, c0;
+  if (!ans.length) return 0;
+  a0 = degreeOfMidi(ans[0].midi);
+  c0 = degreeOfMidi(midiOf(e.call[0].note));
+  return (a0 !== null && c0 !== null && (a0 - c0) % 7 === 0) ? a0 - c0 : 0;
+}
+/* one note against one call event, in degrees of the key: out of the key is
+   a miss, whatever else is true of it */
+function sameDegree(ev, a, off){
+  var d = degreeOfMidi(a.midi), c = degreeOfMidi(midiOf(ev.note));
+  return d !== null && c !== null && d === c + off;
+}
+/* the degrees of the key, the answer read note for note against the call */
 function judgeDegrees(e, ans){
-  var out = [], i, off = 0, a0, c0, d, c;
-  if (ans.length){
-    a0 = degreeOfMidi(ans[0].midi);
-    c0 = degreeOfMidi(midiOf(e.call[0].note));
-    if (a0 !== null && c0 !== null && (a0 - c0) % 7 === 0) off = a0 - c0;
-  }
-  for (i = 0; i < ans.length; i++){
-    if (i >= e.call.length){ out.push(false); continue; }
-    d = degreeOfMidi(ans[i].midi);
-    c = degreeOfMidi(midiOf(e.call[i].note));
-    out.push(d !== null && c !== null && d === c + off);
-  }
+  var out = [], i, off = echoOffset(e, ans);
+  for (i = 0; i < ans.length; i++)
+    out.push(i < e.call.length && sameDegree(e.call[i], ans[i], off));
   return out;
 }
 /* the onsets and the written lengths, on whatever pitch: a note is true where
@@ -167,6 +175,27 @@ function judgeRhythm(e, ans){
     hit = false;
     for (k = 0; k < e.call.length; k++)
       if (e.at + e.call[k].step === ans[i].step && e.call[k].len === ans[i].len) hit = true;
+    out.push(hit);
+  }
+  return out;
+}
+/* ---- and the last rung: both at once ----
+   The curriculum's own rule is contour, then degrees, then rhythm, and never
+   all of it together *until the end* — so there is one stage that asks for
+   two of them, and it is the closing one. A note is true where the rhythm
+   test holds of it AND the degrees test does: it begins on exactly a call
+   event's step, rings exactly as long, and is that event's degree of the key,
+   the same whole-octave offset forgiven. The contour is never asked here
+   because the degrees already contain it. */
+function judgeBoth(e, ans){
+  var out = [], i, k, ev, hit, off = echoOffset(e, ans);
+  for (i = 0; i < ans.length; i++){
+    hit = false;
+    for (k = 0; k < e.call.length; k++){
+      ev = e.call[k];
+      if (e.at + ev.step === ans[i].step && ev.len === ans[i].len &&
+          sameDegree(ev, ans[i], off)) hit = true;
+    }
     out.push(hit);
   }
   return out;
@@ -190,18 +219,22 @@ function echoMark(v, i){
    marks are on the player's own notes, and nothing here ever says a name, a
    step or a direction: the drill corrects by ear, and an explanation is the
    one thing that would take that away. */
+/* the stage, said the way the page says things rather than the way the file
+   spells it */
+function echoStageName(stage){ return stage.split("+").join(" + "); }
 function echoJudge(){
   var e = echoNow(), ans, hits = [], i, n = 0, msg;
   if (!e) return;
   ans = echoAnswer(e);
   if (!ans.length){
     echoClear(); renderNotes();
-    say("nothing answered yet · " + e.stage);
+    say("nothing answered yet · " + echoStageName(e.stage));
     return;
   }
   hits = (e.stage === "contour") ? judgeContour(e, ans)
        : (e.stage === "degrees") ? judgeDegrees(e, ans)
-       : judgeRhythm(e, ans);
+       : (e.stage === "rhythm")  ? judgeRhythm(e, ans)
+       : judgeBoth(e, ans);
   echoMarks = { voice: e.voice, hit: {} };
   for (i = 0; i < ans.length; i++){
     echoMarks.hit[ans[i].step] = !!hits[i];
@@ -211,5 +244,5 @@ function echoJudge(){
   if (n === ans.length && ans.length === e.call.length) msg = "the echo rings true";
   else msg = n + " of your " + ans.length + " rang true" +
              (ans.length === e.call.length ? "" : " · a different number of notes");
-  say(msg + " · " + e.stage);
+  say(msg + " · " + echoStageName(e.stage));
 }
