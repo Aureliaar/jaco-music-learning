@@ -60,7 +60,7 @@ function closePages(){
 }
 /* a clean board: no pages up, no drills, no workspaces, no sync */
 function qreset(){
-  closePages(); reset(); useColumn(); T.resetDrills(); T.resetQuests();
+  closePages(); reset(); useColumn(); T.quizEnd(); T.resetDrills(); T.resetQuests();
   delete store[T.QUEST_KEY]; delete store[T.QUEST_KEY_V1];
   T.syncOn = false; T.syncState = "idle";
 }
@@ -767,12 +767,13 @@ key("ArrowDown"); eq("down moves one", T.qsel, 1);
 key("ArrowUp"); key("ArrowUp"); eq("up wraps to the last", T.qsel, 7);
 key("ArrowDown"); eq("down wraps to the first", T.qsel, 0);
 eq("the caret marks the selection", T.qrows[0].caret.textContent, "‸");
-/* left and right are the lessons now, not a second way to walk the list:
-   with only the eight built-ins there is one tab, so they are a no-op that
-   leaves the caret exactly where it was */
-key("ArrowRight"); eq("right is the lesson, not the selection", T.qsel, 0);
-key("ArrowLeft"); eq("and so is left", T.qsel, 0);
-eq("with one lesson on the board there is one tab", T.tabList().length, 1);
+/* left and right are the lessons now, not a second way to walk the list.
+   A bare board is two of them: the eight built-ins on Lesson 1, and Lesson
+   4's tool on its own — so right turns the page rather than the caret, and
+   the caret lands on the lesson it turned to. */
+key("ArrowRight"); eq("right is the lesson, not the selection", T.qsel, 8);
+key("ArrowLeft"); eq("and left turns it back", T.qsel, 0);
+eq("the tool gives its lesson a tab of its own", T.tabList(), [1, 4]);
 press(GP.DD); eq("d-pad down moves the selection", T.qsel, 1);
 press(GP.DU); eq("d-pad up moves the selection", T.qsel, 0);
 key("KeyZ"); key("KeyQ");
@@ -916,24 +917,25 @@ function drillIndex(id){ return T.ALL.findIndex(q => q.id === id); }
 function hairs(el, cls){ return el.children.filter(c => c.className === cls).length; }
 
 qreset();
-eq("with no drills the list is the eight", T.ALL.length, 8);
-eq("and so are the rows", T.qrowsNow.length, 8);
+/* the eight built-ins and the one tool, which is a line and not a quest */
+eq("with no drills the list is the eight and the tool", T.ALL.length, 9);
+eq("and so are the rows", T.qrowsNow.length, 9);
 eq("no divider is drawn for nothing", hairs(T.qlistEl, "qhair"), 0);
 /* the margin is one lesson deep now, so it has nothing to divide */
 eq("nor any in the margin, ever", hairs(T.railEl, "rhair"), 0);
 
 ok("a log with a drill applies", T.applyState(logWith([ITCH])));
-eq("the drill joins the list", T.ALL.length, 9);
+eq("the drill joins the list", T.ALL.length, 10);
 eq("after the eight built-ins", T.ALL[8].id, "drill-itch");
 ok("and it is marked as a drill", T.ALL[8].drill === true);
-eq("the rows follow it", T.qrowsNow.length, 9);
+eq("the rows follow it", T.qrowsNow.length, 10);
 eq("named plainly on its row", T.qrowsNow[8].el.children[2].textContent, "the itch drill");
 /* the divider that used to separate the drills from the quests inside one
    long list is a tab of its own now; the list itself is one lesson deep and
    draws no hairline until something is kept to hand */
-eq("the drills take a tab of their own", T.tabList().map(T.tabLabel), ["L1","drills"]);
+eq("the drills take a tab of their own", T.tabList().map(T.tabLabel), ["L1","L4","drills"]);
 eq("and the list draws no divider inside a tab", hairs(T.qlistEl, "qhair"), 0);
-eq("the left rail has a line for it too", T.rrowsNow.length, 10);
+eq("the left rail has a line for it too", T.rrowsNow.length, 11);
 /* the margin shows the tab the board is on, and not before */
 eq("but the margin is on Lesson 1, and shows Lesson 1", T.railOrder().length, 9);
 T.setTab(0, true);
@@ -942,8 +944,8 @@ eq("turning to the drills turns the margin with it",
 eq("and the drill's name in the margin", T.rrowsNow[9].name.textContent, "the itch drill");
 eq("with no divider needed to say so", hairs(T.railEl, "rhair"), 0);
 T.setTab(1, true);
-eq("a second drill lands after the first", (T.applyState(logWith([ITCH, SECOND])), T.ALL.length), 10);
-eq("still the two tabs", T.tabList().length, 2);
+eq("a second drill lands after the first", (T.applyState(logWith([ITCH, SECOND])), T.ALL.length), 11);
+eq("still the same tabs", T.tabList().map(T.tabLabel), ["L1","L4","drills"]);
 
 console.log("\n== a drill is a workspace like any other ==");
 qreset();
@@ -1286,31 +1288,31 @@ function questIndex(id){ return T.ALL.findIndex(q => q.id === id); }
 
 console.log("\n== the quest board is read one lesson at a time ==");
 qreset();
-eq("the eight alone are one tab", tabLabels(), ["L1"]);
+eq("the eight and the tool are two tabs", tabLabels(), ["L1","L4"]);
 eq("and the tab holds all eight", T.viewOf(1).length, 8);
 eq("a built-in is Lesson 1 by being built in", T.questGroup(T.ALL[0]), 1);
 
 T.applyState(logWith([ITCH]));
 eq("a drill with no sword is an étude", T.questGroup(T.ALL[questIndex("drill-itch")]), 0);
-eq("and takes the last tab", tabLabels(), ["L1","drills"]);
+eq("and takes the last tab", tabLabels(), ["L1","L4","drills"]);
 
 T.applyState(logWith([L2A]));
-eq("a drill that declares its lesson gets that tab", tabLabels(), ["L1","L2"]);
+eq("a drill that declares its lesson gets that tab", tabLabels(), ["L1","L2","L4"]);
 eq("and is grouped by it", T.questGroup(T.ALL[questIndex("l2-shadow-x")]), 2);
 
 T.applyState(logWith([KNOWN2]));
-eq("the Lesson 2 board is placed without a declaration", tabLabels(), ["L1","L2"]);
+eq("the Lesson 2 board is placed without a declaration", tabLabels(), ["L1","L2","L4"]);
 eq("by the table in the file", T.LESSON_OF.shadow, 2);
 
 T.applyState(logWith([L2A, SWORDLESS]));
-eq("sword and no sword sort apart", tabLabels(), ["L1","L2","drills"]);
+eq("sword and no sword sort apart", tabLabels(), ["L1","L2","L4","drills"]);
 eq("the étude is in the last tab", T.viewOf(0).map(i => T.ALL[i].id), ["drill-pull"]);
 
 /* the point of the whole exercise: Lesson 3 needs no surgery here */
 T.applyState(logWith([L2A, L3A]));
-eq("a Lesson 3 quest brings a Lesson 3 tab with it", tabLabels(), ["L1","L2","L3"]);
+eq("a Lesson 3 quest brings a Lesson 3 tab with it", tabLabels(), ["L1","L2","L3","L4"]);
 eq("in order, lessons first and the drills last",
-   (T.applyState(logWith([L3A, SWORDLESS, L2A])), tabLabels()), ["L1","L2","L3","drills"]);
+   (T.applyState(logWith([L3A, SWORDLESS, L2A])), tabLabels()), ["L1","L2","L3","L4","drills"]);
 eq("an unlabelled sword joins the newest lesson known",
    T.questGroup({ id:"nobody", name:"⚔ a quest from the future", drill:true }), 3);
 eq("and the newest lesson is read off the board", T.newestLesson(), 3);
@@ -2422,6 +2424,137 @@ key("KeyP");
 ok("where nothing can be written the mark still stands", T.isDone(echoQ) === true);
 eq("and not a word went out", puts.length, 0);
 global.fetch = realFetch;
+qreset(); reset();
+
+/* ================= up or down: the run that keeps nothing =================
+   Input semantics only: which press means which answer, what the tally does
+   about it, and the one thing that must never happen — a tool leaving a mark
+   in the quest log. Nothing here checks a word of copy or a pixel. */
+console.log("\n== up or down: entering is beginning ==");
+qreset(); T.audioInit();
+const QZ = T.QUIZ_ID;
+/* the question is pinned so the checks are about the answer, not the dice */
+function pin(q, extra){
+  T.quizEnd();                       /* and the previous question's timer with it */
+  T.setQuiz(Object.assign({ q:q, asked:0, right:0, streak:0, answered:false, timer:null },
+                          extra || {}));
+}
+eq("the tool is on Lesson 4's tab", T.questGroup(T.questById(QZ)), 4);
+ok("and it is not a quest", T.isTool(QZ) === true && !T.questById(QZ).drill);
+T.setTab(4, true);
+ok("the margin of that lesson carries it", T.railOrder().indexOf(QZ) > 0);
+sounded.length = 0;
+T.switchWorkspace(QZ);
+ok("entering it starts a run", T.quizOn() === true);
+eq("and the first question is two notes", sounded.length, 2);
+ok("both of them in the drill's own register",
+   sounded.every(s => s.freq > 100 && s.freq < 1100), sounded.map(s => s.freq));
+
+console.log("\n== up or down: the face buttons are the answer ==");
+pin({ a:60, b:67, dir:1 });
+press(GP.TR);
+eq("△ answers up, and it rang true", T.quiz.right, 1);
+eq("one asked", T.quiz.asked, 1);
+ok("and the footer says so with the tally",
+   /rang true · 1 of 1$/.test(ids.footer.textContent), ids.footer.textContent);
+pin({ a:60, b:67, dir:1 });
+press(GP.X);
+eq("✕ on a rising pair is astray", T.quiz.right, 0);
+eq("but it is still asked", T.quiz.asked, 1);
+ok("and the line says only that",
+   /astray · 0 of 1$/.test(ids.footer.textContent), ids.footer.textContent);
+ok("never which way it went",
+   !/up|down|fifth|C4|G4/.test(ids.footer.textContent), ids.footer.textContent);
+pin({ a:60, b:60, dir:0 });
+press(GP.B);
+eq("○ answers the same note again", T.quiz.right, 1);
+pin({ a:60, b:60, dir:0 });
+press(GP.TR);
+eq("and △ is wrong about it", T.quiz.right, 0);
+pin({ a:60, b:67, dir:1 });
+press(GP.TR); press(GP.X);
+eq("a second press is the hand, not the ear", T.quiz.asked, 1);
+eq("and cannot unmake the answer", T.quiz.right, 1);
+
+console.log("\n== up or down: playing it again costs nothing ==");
+pin({ a:60, b:67, dir:1 });
+sounded.length = 0;
+press(GP.SQ);
+eq("□ plays the question again", sounded.length, 2);
+eq("and advances nothing", T.quiz.asked, 0);
+press(GP.SQ); press(GP.SQ);
+eq("as often as wanted", T.quiz.asked, 0);
+ok("the question is the same one", T.quiz.q.a === 60 && T.quiz.q.b === 67);
+
+console.log("\n== up or down: the board, derived from the pad ==");
+pin({ a:60, b:67, dir:1 });
+key("ArrowUp");
+eq("↑ is △", T.quiz.right, 1);
+pin({ a:67, b:60, dir:-1 });
+key("ArrowDown");
+eq("↓ is ✕", T.quiz.right, 1);
+pin({ a:60, b:60, dir:0 });
+key("ArrowRight");
+eq("→ is ○ — level, one step on", T.quiz.right, 1);
+pin({ a:60, b:67, dir:1 });
+sounded.length = 0;
+key("KeyO");
+eq("O is □", sounded.length, 2);
+eq("and is not an answer", T.quiz.asked, 0);
+key("KeyZ"); key("KeyQ"); key("Space"); key("Minus");
+eq("nothing else on the board reaches anything", T.quiz.asked, 0);
+eq("and the sheet stays empty", T.doc.steps.filter(Boolean).length, 0);
+
+console.log("\n== up or down: the band narrows with the streak ==");
+pin({ a:60, b:67, dir:1 }, { streak:0 });
+eq("cold, it asks wide", T.quizBand(), T.QUIZ_BANDS[0]);
+pin({ a:60, b:67, dir:1 }, { streak:3 });
+eq("three right and it closes up", T.quizBand(), T.QUIZ_BANDS[1]);
+pin({ a:60, b:67, dir:1 }, { streak:6 });
+eq("six and it is asking about single steps", T.quizBand(), T.QUIZ_BANDS[2]);
+pin({ a:60, b:67, dir:1 }, { streak:99 });
+eq("and it never narrows past that", T.quizBand(), T.QUIZ_BANDS[2]);
+pin({ a:60, b:67, dir:1 }, { streak:6 });
+press(GP.TR);
+eq("a right answer lengthens the streak", T.quiz.streak, 7);
+pin({ a:60, b:67, dir:1 }, { streak:6 });
+press(GP.X);
+eq("a miss puts it back where it started", T.quiz.streak, 0);
+eq("and the band is wide again", T.quizBand(), T.QUIZ_BANDS[0]);
+/* the dice, checked as arithmetic rather than as luck */
+let inScale = true, agrees = true, again = 0;
+for (let i = 0; i < 300; i++){
+  T.setQuiz({ q:null, asked:0, right:0, streak:0, answered:false, timer:null });
+  const q = T.quizMake();
+  if (T.QUIZ_SCALE.indexOf(q.a) < 0 || T.QUIZ_SCALE.indexOf(q.b) < 0) inScale = false;
+  if (Math.sign(q.b - q.a) !== q.dir) agrees = false;
+  if (q.dir === 0) again++;
+}
+ok("every question is drawn from the one scale", inScale);
+ok("and the answer it holds is the move it made", agrees);
+ok("the same note twice is asked at a real rate", again > 20 && again < 120, again);
+
+console.log("\n== up or down: nothing is kept ==");
+T.quizEnd(); T.setQuiz(null);
+T.switchWorkspace(QZ);
+ok("the run is on again", T.quizOn() === true);
+const qlog = T.stateToJSON();
+ok("the log has no line for the tool",
+   !Object.prototype.hasOwnProperty.call(qlog.quests, QZ), Object.keys(qlog.quests));
+eq("and does not say you are in it", qlog.active, null);
+ok("its page is not among the workspaces",
+   !Object.prototype.hasOwnProperty.call(T.wsDoc, QZ), Object.keys(T.wsDoc));
+ok("but it has one of its own, apart", !!T.wsTool[QZ]);
+key("F3"); T.qsel = T.ALL.findIndex(q => q.id === QZ); key("KeyC");
+ok("C rules nothing about it", T.isDone(QZ) === false);
+key("KeyF");
+ok("and F keeps nothing to hand", T.favOf(QZ) === false);
+key("F3");
+T.switchWorkspace(null);
+ok("leaving the workspace ends the run", T.quizOn() === false);
+T.switchWorkspace(QZ); T.switchWorkspace(Q[0].id);
+ok("by whichever road it is left", T.quizOn() === false);
+T.quizEnd();
 qreset(); reset();
 
 R.done();

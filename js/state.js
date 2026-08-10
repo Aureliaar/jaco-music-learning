@@ -809,7 +809,9 @@ function save(){
   stash();
   try {
     localStorage.setItem(QUEST_KEY, JSON.stringify(stateToJSON()));
-    localStorage.setItem(STORE_KEY, JSON.stringify(docOut(doc)));
+    /* the old single autosave is the page you were writing; a tool's blank
+       sheet is not one, and must not become what an older build reads back */
+    if (!isTool(qActive)) localStorage.setItem(STORE_KEY, JSON.stringify(docOut(doc)));
   }
   catch (e){ storageOK = false; say("autosave unavailable in this window"); }
   renderRails();

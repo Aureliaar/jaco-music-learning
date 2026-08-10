@@ -95,6 +95,28 @@ document.addEventListener("keydown", function(e){
     return;
   }
 
+  /* ---- up or down: while a run is on, the board is the answer ----
+     The pad is where this lives — △ up, ✕ down, ○ again, □ the question
+     played back — and the board is derived from it. There is no contour on
+     the keyboard to borrow from, so it is borrowed from the drawing instead:
+     in the roll, time runs right and height is pitch, so the note that went
+     up is ↑, the one that went down is ↓, and the same note again is → —
+     level, one step on. O plays it again, which is the seat the echo already
+     lends its call. Nothing else reaches anything: there is no page here to
+     write on, so every other key is swallowed rather than allowed to scrawl
+     on a sheet that is about to be thrown away. F1, F3 and the crossbar are
+     above this and still answer, which is how the run is left. */
+  if (quizOn()){
+    e.preventDefault();
+    switch (code){
+      case "ArrowUp":    quizAnswer(1);  return;
+      case "ArrowDown":  quizAnswer(-1); return;
+      case "ArrowRight": quizAnswer(0);  return;
+      case "KeyO":       quizPlay();     return;
+    }
+    return;
+  }
+
   if (Object.prototype.hasOwnProperty.call(NOTE_KEYS, code)){
     e.preventDefault();
     var wrote = cursor;                 /* where the note lands, before the advance */
@@ -364,6 +386,22 @@ function pollPads(){
     gpNav(cur[GP_DD] || qy >=  STICK_DEAD, "down",  1, now, moveQuest);
     gpPrev = cur;
     return;
+  }
+
+  /* ---- up or down: the face buttons are the answer ----
+     Exactly what they already mean when a contour is being written — △ up,
+     ✕ down, ○ the same again — so there is nothing new in the hand; □ plays
+     the question again and costs nothing, which is why it is not the rest it
+     is everywhere else. Nothing else on the pad does anything here, because
+     there is no page under it to do anything to. Start is above this and
+     still raises the margin, which is how the run is left. */
+  if (quizOn()){
+    if (gpEdge(cur, GP_TRIANGLE)) quizAnswer(1);
+    if (gpEdge(cur, GP_CROSS))    quizAnswer(-1);
+    if (gpEdge(cur, GP_CIRCLE))   quizAnswer(0);
+    if (gpEdge(cur, GP_SQUARE))   quizPlay();
+    navReset();
+    gpPrev = cur; return;
   }
 
   /* L3 is the loop length, the pad's answer to L; R3 the roll, its F2 */

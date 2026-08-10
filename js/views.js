@@ -1016,6 +1016,25 @@ function keysNow(){
       ["space","play, stop"],
       ["F1","these keys, away"]] }
   ]};
+  /* a run of up or down: the sheet is empty and the folio is asking, so the
+     overlay says the four seats that mean anything and nothing else. It never
+     says which way the question actually went — the overlay is help, not a
+     hint. */
+  if (typeof quizOn === "function" && quizOn()) return {
+    where:"the folio · up or down", clusters:[
+    { kind:"pad", name:"the face buttons", pos:XPOS, items:[
+      ["□","play it again"],["△","it went up"],
+      ["○","the same note again"],["✕","it went down"]],
+      note:"answer while it is still sounding if you already know · playing it again costs nothing" },
+    { kind:"list", name:"the board", items:[
+      ["↑","it went up"],
+      ["↓","it went down"],
+      ["→","the same note again"],
+      ["O","play it again"],
+      ["start","the margin · leave the workspace and the run is over"],
+      ["F3","the quest log"],
+      ["F1 · escape","these keys, away"]] }
+  ]};
   /* the page itself. The d-pad's two pairs trade places between the two
      views — the column reads down, the drawing reads right — and this is
      the one place that difference has ever been written down. The board's

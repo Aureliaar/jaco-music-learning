@@ -363,6 +363,14 @@ function boot(opts){
     echoNow: _g("echoNow"), echoPlay: _g("echoPlay"), echoJudge: _g("echoJudge"),
     echoAnswer: _g("echoAnswer"), echoClear: _g("echoClear"),
     get echoMarks(){ return _g("echoMarks"); },
+    /* ---- up or down: the run that keeps nothing ---- */
+    TOOLS: _g("TOOLS"), QUIZ_ID: _g("QUIZ_ID"), isTool: _g("isTool"),
+    get quiz(){ return _g("quiz"); }, setQuiz: function(q){ quiz = q; },
+    quizOn: _g("quizOn"), quizStart: _g("quizStart"), quizEnd: _g("quizEnd"),
+    quizDeal: _g("quizDeal"), quizPlay: _g("quizPlay"), quizAnswer: _g("quizAnswer"),
+    quizMake: _g("quizMake"), quizBand: _g("quizBand"), quizLine: _g("quizLine"),
+    QUIZ_SCALE: _g("QUIZ_SCALE"), QUIZ_BANDS: _g("QUIZ_BANDS"),
+    get wsTool(){ return _g("wsTool"); },
     /* ---- the tones: the kits off the shelf and the sampled voice ---- */
     encodeWAV: _g("encodeWAV"), decodeWAV: _g("decodeWAV"),
     parseManifest: _g("parseManifest"), midiFreq: _g("midiFreq"),

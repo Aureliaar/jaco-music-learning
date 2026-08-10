@@ -122,6 +122,10 @@ const SEAM = { id:"drill-seam", name:"the seam drill",
      (await b.eval("document.querySelectorAll('#qlist .quest').length")) === 8);
   ok("and no divider is drawn inside a tab",
      (await b.eval("document.querySelectorAll('#qlist .qhair').length")) === 0);
+  /* L1, then Lesson 4's tool on its own tab, then the drills: two turns of
+     the page, not one */
+  await b.key("ArrowRight", RIGHT);
+  await wait(120);
   await b.key("ArrowRight", RIGHT);
   await wait(120);
   ok("the delivered drill is in the drills tab", /the itch drill/.test(await listText()));

@@ -340,8 +340,24 @@ var SEEDS = {
    ghost is not written back out, and is replaced the moment a real
    definition for that id arrives. */
 var DRILLS = [];
-var ALL = QUESTS.slice();        /* the whole list, built-ins then drills */
+var ALL = QUESTS.slice().concat(TOOLS);   /* built-ins, then drills, then tools */
 
+/* ---- and one line on the rail that is not a quest at all ----
+   A *tool* is a workspace with no work in it: you go there to do something
+   the folio does — up or down, the interval drill — and when you leave there
+   is nothing to keep. It draws a rail line and a board row because that is
+   where the hand looks for a workspace, and it is stepped over by everything
+   that treats a workspace as a piece of the player's music: it is never
+   written into the quest log, never carries a page, never a ruling, never a
+   favourite. TOOLS is declared in quiz.js, above this file. */
+function isTool(id){
+  var q = questById(id);
+  return !!(q && q.tool);
+}
+function toolById(id){
+  for (var i = 0; i < TOOLS.length; i++) if (TOOLS[i].id === id) return TOOLS[i];
+  return null;
+}
 function drillById(id){
   for (var i = 0; i < DRILLS.length; i++) if (DRILLS[i].id === id) return DRILLS[i];
   return null;
@@ -363,7 +379,7 @@ function normDrill(o){
   if (!o || typeof o !== "object" || Array.isArray(o)) return null;
   if (typeof o.id !== "string" || !o.id.trim()) return null;
   var id = o.id.trim().slice(0, 60);
-  if (builtinById(id)) return null;            /* a drill never shadows a quest */
+  if (builtinById(id) || toolById(id)) return null;   /* and never shadows a quest or a tool */
   return {
     id: id,
     name: (typeof o.name === "string" && o.name.trim()) ? o.name.trim().slice(0, 60) : id,
@@ -393,6 +409,7 @@ function rebuildList(){
   ALL.length = 0;
   for (i = 0; i < QUESTS.length; i++) ALL.push(QUESTS[i]);
   for (i = 0; i < DRILLS.length; i++) ALL.push(drillQuest(DRILLS[i]));
+  for (i = 0; i < TOOLS.length; i++) ALL.push(TOOLS[i]);
   if (qsel >= ALL.length) qsel = ALL.length - 1;
   if (qsel < 0) qsel = 0;
   if (qrows) buildQuestRows();      /* the rows exist only after the page is built */
@@ -416,6 +433,10 @@ var qActive = null;          /* the active workspace: a quest id, or null for fr
 var qState = {};             /* id -> { done:bool } */
 var wsFree = null;           /* the free-play page */
 var wsDoc = {};              /* id -> page, made the first time a quest is entered */
+/* the tools' pages are kept apart from the quests' on purpose: a tool has no
+   music in it, and this is the map that never reaches stateToJSON — so no
+   route, not one, can write a tool's blank sheet into the quest log */
+var wsTool = {};
 
 function questSlot(id){
   if (!qState[id]) qState[id] = { fav:false, order:null };
@@ -493,9 +514,13 @@ function activeQuest(){ return qActive ? questById(qActive) : null; }
 
 /* the page in front of you belongs to the active workspace: put it back
    there before anything is written out or switched away from */
-function stash(){ if (qActive) wsDoc[qActive] = doc; else wsFree = doc; }
+function stash(){
+  if (!qActive){ wsFree = doc; return; }
+  if (isTool(qActive)) wsTool[qActive] = doc; else wsDoc[qActive] = doc;
+}
 function workspaceDoc(id){
   if (!id) return wsFree || (wsFree = defaultDoc());
+  if (isTool(id)) return wsTool[id] || (wsTool[id] = defaultDoc());
   return wsDoc[id] || (wsDoc[id] = seededDoc(id));
 }
 function docHasNotes(d){
@@ -512,6 +537,10 @@ function questHasContent(id){ return docHasNotes(questPage(id)); }
 
 /* the whole of the switch: put the page back, pick up another one */
 function switchWorkspace(id){
+  /* a tool's run is bounded by the workspace and nothing else: every road out
+     of it — the margin under start, a row on the board, a click in the
+     margin — comes through here, so ending it here ends it everywhere */
+  if (quizOn() && id !== QUIZ_ID) quizEnd();
   stash();
   qActive = id || null;
   /* the caret follows the workspace, by whichever road it was reached —
@@ -530,6 +559,9 @@ function switchWorkspace(id){
   if (playing) stop();
   save();
   renderAll(); renderQuests();
+  /* and arriving in the tool is the run beginning: the first question is
+     already playing before the footer has finished saying where you are */
+  if (qActive === QUIZ_ID && !quizOn()) quizStart();
 }
 /* every way into a workspace ends the same way: put the caret on it, and
    say where you have arrived. Enter, a click on a row or a margin line, and
@@ -541,6 +573,9 @@ function selectById(id){
 function sayWorkspace(id){
   if (!id){ say("free play · no constraint"); return; }
   var q = questById(id);
+  /* a tool has already spoken for itself by the time we get here — the first
+     question is playing, and the footer is the run's, not the arrival's */
+  if (q && q.tool) return;
   /* an echo workspace says what it is on arrival, because two of its
      controls do not mean what they mean anywhere else */
   if (echoNow()){
@@ -610,8 +645,17 @@ function railTab(d){
 }
 /* C on the row, ○ on the pad: the same key it always was, writing to the
    rulings file instead of into the log — one id, and nothing else said */
+/* neither mark means anything on a tool: there is no work in it to finish
+   and nothing to keep to hand that is not already one press away */
+function notAQuest(q){
+  if (!q.tool) return false;
+  say(q.short + " · a tool, not a quest");
+  return true;
+}
 function toggleComplete(){
-  var q = selQuest(), on = !isDone(q.id);
+  var q = selQuest(), on;
+  if (notAQuest(q)) return;
+  on = !isDone(q.id);
   rulings[q.id] = on;
   cacheRulings();
   rulePush(q.id, on);
@@ -622,10 +666,14 @@ function toggleComplete(){
 /* ---- the shape of the whole state, in storage and on disk alike ---- */
 function stateToJSON(){
   stash();
-  var out = { folio:"quest-log", version:2, active:qActive,
+  /* a tool is never where the log says you were: it is a session's own
+     doing, and a reload finds you back on the page you were writing */
+  var out = { folio:"quest-log", version:2,
+              active:(qActive && !isTool(qActive)) ? qActive : null,
               free:wsFree ? docOut(wsFree) : wsFree, quests:{} };
   var i, id, s, d;
   for (i = 0; i < ALL.length; i++){
+    if (ALL[i].tool) continue;                 /* and never a line of its own */
     id = ALL[i].id; s = qState[id]; d = wsDoc[id];
     var fav = !!(s && s.fav), ord = (s && typeof s.order === "number") ? s.order : null;
     /* the verdict is not written here any more — it is the rulings file's,
@@ -695,7 +743,8 @@ function applyState(o){
       if (p) wsDoc[id] = p;
     }
   }
-  qActive = (typeof o.active === "string" && questById(o.active)) ? o.active : null;
+  qActive = (typeof o.active === "string" && questById(o.active) && !isTool(o.active))
+              ? o.active : null;
   /* the caret starts where the work is, as it goes where the work goes */
   qsel = 0;
   if (qActive)
@@ -1072,6 +1121,7 @@ function newestLesson(){
 }
 function questGroup(q){
   if (!q) return DRILL_TAB;
+  if (q.tool) return q.lesson;      /* a tool says which lesson it serves */
   if (!q.drill) return 1;
   var d = drillById(q.id), n = d ? lessonField(d) : 0;
   if (n) return n;
@@ -1145,6 +1195,7 @@ function moveTab(d){
 function toggleFavourite(){
   var q = selQuest();
   if (!q) return;
+  if (notAQuest(q)) return;
   var s = questSlot(q.id);
   s.fav = !s.fav;
   save(); renderQuests();
@@ -1362,9 +1413,10 @@ function renderQuests(){
     else { r.stat.textContent = ""; r.stat.className = "qstat"; }
     /* the mark rests hollow and faint when the quest is not kept — a mark
        that only ever appeared once set was a button nobody could find */
+    /* and no hollow mark on a tool: there is nothing there to press it for */
     if (r.fav){
-      r.fav.textContent = s.fav ? "✦" : "✧";
-      r.fav.classList.toggle("on", !!s.fav);
+      r.fav.textContent = q.tool ? "" : s.fav ? "✦" : "✧";
+      r.fav.classList.toggle("on", !q.tool && !!s.fav);
     }
   }
   renderTabs();
@@ -1384,6 +1436,14 @@ function renderQuestDetail(){
   qdname.textContent = plainName(q);
   qdtext.textContent = q.text || "";
   qdteach.textContent = q.teaches ? "Teaches: " + q.teaches : "";
+  /* a tool has no page to be told about and no verdict to wait for: what
+     there is to say about it is whether the run is on, and how it is going */
+  if (q.tool){
+    qdstate.textContent = (q.id === qActive) ? "⚔ the run is on · " + quizLine()
+                                             : "enter to begin — nothing is kept";
+    renderContour(q.id);
+    return;
+  }
   bits.push(q.id === qActive ? "⚔ you are working here"
                              : "enter to work here — its page is kept apart");
   if (isDone(q.id)) bits.push("❧ complete");
@@ -1475,6 +1535,9 @@ function renderRails(){
   railtitle.textContent = q ? plainName(q) : "Free play";
   railtext.textContent  = q ? (q.text || "") : "No constraint. Whatever you write here stays here.";
   railteach.textContent = (q && q.teaches) ? "Teaches: " + q.teaches : "";
-  railstate.textContent = q ? (isDone(q.id) ? "❧ complete" : "not yet complete")
-                            : "F3 for the quest log";
+  /* the margin's last line is the quest's standing, or — where the workspace
+     is a tool — the run's own tally, which is the whole of its display */
+  railstate.textContent = !q ? "F3 for the quest log"
+                        : q.tool ? quizLine()
+                        : isDone(q.id) ? "❧ complete" : "not yet complete";
 }
