@@ -91,6 +91,13 @@ var VOICE_HOLD = ["hold", "basshold"];
    travel back somewhere the kit exists. js/tones.js does the playing. */
 var VOICE_TONE = "tones";
 
+/* ---- and one field that is not the page's ----
+   `earlog` sits at the top of the quest log rather than in any page: every
+   answer the interval drill has been given, so that the pattern in a run can
+   be read off the file afterwards. It is read as permissively as the fields
+   above and dropped whole if it is malformed. js/quiz.js declares it and
+   says what is in each entry; nothing here reads it. */
+
 /* ---- the sealed note ----
    A quest may hand a page notes that are not the player's to unwrite. A seal
    is not a mode and not a permission system: it is a per-note fact, beside

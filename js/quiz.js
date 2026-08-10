@@ -61,7 +61,69 @@ var QUIZ_AGAIN = 0.2;          /* about one question in five is the same note tw
 var QUIZ_BANDS = [[4, 7], [2, 3], [1]];       /* in scale steps: wide, thirds, steps */
 var QUIZ_RAMP  = 3;                           /* right answers per narrowing */
 
-var quiz = null;               /* { q, asked, right, streak, answered, timer } */
+/* ---- the ear log: every answer, written down and never shown ----
+   The tally is what the player needs and it is all the player gets. It is
+   not what the *ear* needs looking at. A run of two hundred answers has a
+   pattern in it — which intervals, which direction, how fast — and that
+   pattern is the whole research value of the drill (EAR-NOTES.md): a miss
+   that repeats is a finding, and a footer cannot hold one. So every answered
+   question is written down, and none of it is ever said out loud here.
+
+   It rides the ordinary autosave out to quests/quest-log.json as one
+   top-level field of the log — not a page field, because it belongs to no
+   page and no workspace:
+
+     "earlog": [ { "d":-4, "dir":"down", "said":"up", "ok":false, "ms":310 } ]
+
+   `d` is the interval asked as a signed **scale-degree delta** inside the
+   drill's own scale — -4 is four scale steps down, 0 is the same note twice.
+   Degrees, not semitones, because degrees are what the questions are built
+   out of. `dir` is what the question did and `said` is what the hand
+   answered, both in the words the buttons are named by. `ms` is from the end
+   of the question's playback — the last note's ring, of the most recent
+   hearing, so a replay restarts the clock — to the press: a negative number
+   is an answer given while it was still sounding, which is legal and is
+   exactly the sort of thing worth knowing. It is null where no sound played.
+
+   Read permissively, as `tones` is, and dropped WHOLE if it is anything but
+   a list of well-formed entries: half a record of what an ear did is worse
+   than none, and the dropping never touches anything else in the log. The
+   most recent EAR_CAP are kept, so the file cannot grow without end. */
+var EAR_FIELD = "earlog";
+var EAR_CAP = 500;
+var EAR_DIRS = ["down", "again", "up"];       /* indexed by the direction, plus one */
+var earLog = [];
+function earName(dir){ return EAR_DIRS[dir + 1]; }
+function earNow(){
+  return (typeof performance !== "undefined" && performance.now)
+           ? performance.now() : Date.now();
+}
+function earEntry(o){
+  if (!o || typeof o !== "object" || Array.isArray(o)) return null;
+  if (typeof o.d !== "number" || !isFinite(o.d) || o.d !== Math.round(o.d)) return null;
+  if (EAR_DIRS.indexOf(o.dir) < 0 || EAR_DIRS.indexOf(o.said) < 0) return null;
+  if (typeof o.ok !== "boolean") return null;
+  if (o.ms !== null && (typeof o.ms !== "number" || !isFinite(o.ms))) return null;
+  return { d:o.d, dir:o.dir, said:o.said, ok:o.ok,
+           ms:(o.ms === null ? null : Math.round(o.ms)) };
+}
+function readEarLog(a){
+  if (!Array.isArray(a)) return [];
+  var out = [], i, e;
+  for (i = 0; i < a.length; i++){
+    e = earEntry(a[i]);
+    if (!e) return [];                        /* malformed: dropped whole */
+    out.push(e);
+  }
+  return out.slice(-EAR_CAP);
+}
+function earWrite(d, dir, said, ok, ms){
+  earLog.push({ d:d, dir:earName(dir), said:earName(said), ok:!!ok,
+                ms:(ms === null || ms === undefined) ? null : Math.round(ms) });
+  if (earLog.length > EAR_CAP) earLog.splice(0, earLog.length - EAR_CAP);
+}
+
+var quiz = null;               /* { q, asked, right, streak, answered, timer, endsAt } */
 function quizOn(){ return !!quiz; }
 function quizBand(){
   var i = Math.floor(quiz.streak / QUIZ_RAMP);
@@ -69,14 +131,15 @@ function quizBand(){
 }
 function quizPick(n){ return Math.floor(Math.random() * n); }
 
-/* a question: two notes and the answer to it, which is -1, 0 or 1. The first
-   note is drawn from the part of the scale that has room for the move, so a
-   question is never quietly shrunk by the edge of the register. */
+/* a question: two notes, the answer to it (-1, 0 or 1) and the move it made,
+   in signed scale steps, which is what the ear log records. The first note is
+   drawn from the part of the scale that has room for the move, so a question
+   is never quietly shrunk by the edge of the register. */
 function quizMake(){
   var band, size, dir, lo, hi, from;
   if (Math.random() < QUIZ_AGAIN){
     from = quizPick(QUIZ_SCALE.length);
-    return { a:QUIZ_SCALE[from], b:QUIZ_SCALE[from], dir:0 };
+    return { a:QUIZ_SCALE[from], b:QUIZ_SCALE[from], dir:0, d:0 };
   }
   band = quizBand();
   size = band[quizPick(band.length)];
@@ -84,7 +147,8 @@ function quizMake(){
   lo = (dir > 0) ? 0 : size;
   hi = (dir > 0) ? QUIZ_SCALE.length - 1 - size : QUIZ_SCALE.length - 1;
   from = lo + quizPick(hi - lo + 1);
-  return { a:QUIZ_SCALE[from], b:QUIZ_SCALE[from + dir * size], dir:dir };
+  return { a:QUIZ_SCALE[from], b:QUIZ_SCALE[from + dir * size],
+           dir:dir, d:dir * size };
 }
 
 /* the tally, said the one way it is ever said */
@@ -114,6 +178,10 @@ function quizPlay(){
   var t0 = ctx.currentTime + 0.12;
   playNote(nameOfMidi(quiz.q.a), t0, QUIZ_RING, 0, false);
   playNote(nameOfMidi(quiz.q.b), t0 + QUIZ_GAP, QUIZ_RING, 0, false);
+  /* where the sound will have finished, on the clock a keypress is read by:
+     the reaction time is measured from there, and a replay moves it, because
+     the hearing the hand answered is the last one it had */
+  quiz.endsAt = earNow() + (t0 + QUIZ_GAP + QUIZ_RING - ctx.currentTime) * 1000;
   say("listen" + quizTally());
 }
 
@@ -122,11 +190,12 @@ function quizDeal(){
   if (quiz.timer){ clearTimeout(quiz.timer); quiz.timer = null; }
   quiz.q = quizMake();
   quiz.answered = false;
+  quiz.endsAt = null;                  /* no sound, no reaction time to report */
   quizPlay();
 }
 function quizStart(){
   quizEnd();
-  quiz = { q:null, asked:0, right:0, streak:0, answered:false, timer:null };
+  quiz = { q:null, asked:0, right:0, streak:0, answered:false, timer:null, endsAt:null };
   quizDeal();
 }
 /* leaving the workspace, by whichever of the ordinary roads: the run is over
@@ -154,7 +223,13 @@ function quizAnswer(dir){
   quiz.asked++;
   if (right){ quiz.right++; quiz.streak++; } else quiz.streak = 0;
   say((right ? "rang true" : "astray") + quizTally());
+  /* written down before it is drawn: what was asked, what was said, and how
+     long the hand took about it. Not a word of this reaches the page. */
+  earWrite(quiz.q.d, quiz.q.dir, dir, right,
+           (quiz.endsAt === null || quiz.endsAt === undefined) ? null
+                                                              : earNow() - quiz.endsAt);
   renderRails();                       /* the margin carries the run's own line */
+  save();                              /* and the log rides the ordinary autosave */
   quiz.timer = setTimeout(function(){
     quiz.timer = null;
     quizDeal();

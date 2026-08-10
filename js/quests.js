@@ -697,6 +697,11 @@ function stateToJSON(){
     ds.push(def);
   }
   if (ds.length) out.drills = ds;
+  /* and the ear log, which is neither a workspace nor a page: one top-level
+     field, written only where the drill has actually heard something, so a
+     log from a folio that has never run it is the log it always was.
+     js/quiz.js says what is in it. */
+  if (earLog.length) out[EAR_FIELD] = earLog;
   return out;
 }
 function isQuestLog(o){
@@ -719,6 +724,9 @@ function applyState(o){
     }
   }
   rebuildList();
+  /* the ear log, read as permissively as everything optional here is, and
+     dropped whole if it is malformed — never partly */
+  earLog = readEarLog(o[EAR_FIELD]);
   if (o.free){ p = validate(o.free); if (p) wsFree = p; }
   if (o.quests && typeof o.quests === "object"){
     for (id in o.quests){

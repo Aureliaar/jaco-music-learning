@@ -370,6 +370,9 @@ function boot(opts){
     quizDeal: _g("quizDeal"), quizPlay: _g("quizPlay"), quizAnswer: _g("quizAnswer"),
     quizMake: _g("quizMake"), quizBand: _g("quizBand"), quizLine: _g("quizLine"),
     QUIZ_SCALE: _g("QUIZ_SCALE"), QUIZ_BANDS: _g("QUIZ_BANDS"),
+    EAR_FIELD: _g("EAR_FIELD"), EAR_CAP: _g("EAR_CAP"),
+    get earLog(){ return _g("earLog"); }, clearEarLog: function(){ earLog = []; },
+    readEarLog: _g("readEarLog"), earWrite: _g("earWrite"),
     get wsTool(){ return _g("wsTool"); },
     /* ---- the tones: the kits off the shelf and the sampled voice ---- */
     encodeWAV: _g("encodeWAV"), decodeWAV: _g("decodeWAV"),

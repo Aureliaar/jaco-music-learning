@@ -60,7 +60,8 @@ function closePages(){
 }
 /* a clean board: no pages up, no drills, no workspaces, no sync */
 function qreset(){
-  closePages(); reset(); useColumn(); T.quizEnd(); T.resetDrills(); T.resetQuests();
+  closePages(); reset(); useColumn(); T.quizEnd(); T.clearEarLog();
+  T.resetDrills(); T.resetQuests();
   delete store[T.QUEST_KEY]; delete store[T.QUEST_KEY_V1];
   T.syncOn = false; T.syncState = "idle";
 }
@@ -2555,6 +2556,64 @@ ok("leaving the workspace ends the run", T.quizOn() === false);
 T.switchWorkspace(QZ); T.switchWorkspace(Q[0].id);
 ok("by whichever road it is left", T.quizOn() === false);
 T.quizEnd();
+
+console.log("\n== up or down: every answer is written down ==");
+qreset(); T.audioInit(); T.switchWorkspace(QZ); T.clearEarLog();
+/* the question is pinned and so is the clock the reaction time is read off:
+   endsAt in the past is an answer after the sound, in the future is one given
+   while it was still ringing */
+pin({ a:60, b:67, dir:1, d:4 }, { endsAt: clock.pad - 300 });
+press(GP.TR);
+eq("one answer, one entry", T.earLog.length, 1);
+eq("the interval, in signed scale steps", T.earLog[0].d, 4);
+eq("what the question did", T.earLog[0].dir, "up");
+eq("what the hand said", T.earLog[0].said, "up");
+eq("and whether it rang true", T.earLog[0].ok, true);
+ok("with the reaction time from the end of the sound",
+   T.earLog[0].ms >= 250 && T.earLog[0].ms < 2000, T.earLog[0].ms);
+pin({ a:67, b:60, dir:-1, d:-4 }, { endsAt: clock.pad + 400 });
+press(GP.TR);
+eq("a miss is written down as one", T.earLog[1].ok, false);
+eq("beside what was actually asked", T.earLog[1].dir, "down");
+eq("and what was said instead", T.earLog[1].said, "up");
+ok("an answer given while it still sounded is a negative one",
+   T.earLog[1].ms < 0, T.earLog[1].ms);
+pin({ a:60, b:60, dir:0, d:0 }, { endsAt: null });
+press(GP.B);
+eq("the same note twice is a delta of nought", T.earLog[2].d, 0);
+eq("named as such", T.earLog[2].dir, "again");
+eq("and no sound is no reaction time", T.earLog[2].ms, null);
+sounded.length = 0; press(GP.SQ); press(GP.SQ);
+eq("playing it again writes nothing", T.earLog.length, 3);
+ok("and the footer still says only right or wrong and the tally",
+   /^(rang true|astray|listen)( · \d+ of \d+)?$/.test(ids.footer.textContent),
+   ids.footer.textContent);
+
+console.log("\n== the ear log rides the autosave, and is capped ==");
+eq("it goes out in the log's payload", T.stateToJSON()[T.EAR_FIELD].length, 3);
+eq("as a top-level field of its own", T.EAR_FIELD, "earlog");
+T.clearEarLog();
+ok("and is not written at all where nothing was heard",
+   !Object.prototype.hasOwnProperty.call(T.stateToJSON(), T.EAR_FIELD));
+for (let i = 0; i < T.EAR_CAP + 12; i++){
+  pin({ a:60, b:67, dir:1, d:4 });
+  press(GP.TR);
+}
+eq("the most recent are kept and no more", T.earLog.length, T.EAR_CAP);
+T.quizEnd();
+/* the read: permissive where it is right, whole-hearted where it is not */
+eq("a log with no ear log at all reads as none",
+   (T.applyState(logWith([])), T.earLog), []);
+const EAR_OK = [{ d:-2, dir:"down", said:"down", ok:true, ms:412 },
+                { d:0, dir:"again", said:"up", ok:false, ms:null }];
+T.applyState(logWith([], { earlog: EAR_OK }));
+eq("a well-formed one is read back as it was", T.earLog, EAR_OK);
+T.applyState(logWith([], { earlog: EAR_OK.concat([{ d:"four", dir:"up" }]) }));
+eq("one bad entry drops the whole field", T.earLog, []);
+ok("and the rest of the log is untouched", T.wsFree.title === "free");
+T.applyState(logWith([], { earlog: "not a list" }));
+eq("so does a field that is not a list at all", T.earLog, []);
+ok("the workspaces are still there", T.wsFree.title === "free");
 qreset(); reset();
 
 R.done();
