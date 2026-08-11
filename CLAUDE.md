@@ -162,16 +162,28 @@ controls, laid over the folio (the hint strip it replaced is gone).
    crossbar's ←→, and page up/down. Start still raises the settings
    crossbar, which now overlays the folio instead of replacing it.
    Range C2–C6, MIDI 36–84.
-4. **Migraine rules (revised):** only grid/stripe patterns and extreme
+4. **Build on relations, never on identities** (player ruling 2026-08-11).
+   Relational hearing here is strong — tension, territory, sameness,
+   interval character — while putting a *name* on a single sound is a
+   genuine and probably permanent weakness. So: no note-naming tasks, no
+   recall-the-label drills, no "which note was that". Quests and tools ask
+   how one thing sits against another, never what a thing is called.
+   Transcription is the one skill that only answers to volume, and volume
+   is not to be prescribed here — L4's remaining rungs are optional and
+   the lesson does not gate on them. Also: **find the feeling first, name
+   it second** — reach for a theory term only when the name saves work,
+   never teach the term and ask for the feeling it labels. Findings from
+   the listening sessions live in `EAR-NOTES.md`.
+5. **Migraine rules (revised):** only grid/stripe patterns and extreme
    contrast are forbidden. Texture/gradients fine. Nothing blinks; calm
    motion. Do not over-apply.
-5. **Agent workflow that works:** one Opus agent per feature, prompt
+6. **Agent workflow that works:** one Opus agent per feature, prompt
    includes: read folio.html first as source of truth, migraine rules,
    e.code rule, the testing policy below, commit with Co-Authored-By,
    never commit BUDGET.md/QUESTS.md/quest-log.json unless told. Agents
    verify in real headless Chrome, not by inspection (a layout bug
    shipped when one didn't).
-6. **Testing policy (2026-07-31, replaces "extend and keep all green"):**
+7. **Testing policy (2026-07-31, replaces "extend and keep all green"):**
    there is a **complexity budget: total test LOC ≤ app LOC** (folio.html
    + server.mjs), target ~0.5:1 after housekeeping. Agents RUN the fast
    harnesses (green-or-stop for failures they caused; pre-existing
@@ -189,7 +201,7 @@ controls, laid over the folio (the hint strip it replaced is gone).
    idea, parked, skepticism on record (self-use tool, not a 10k-user
    app): 2-agent TDD split — one writes tests, one writes code, minimal
    cross-reading.
-7. Windows console is cp932 — Python on quest-log.json needs
+8. Windows console is cp932 — Python on quest-log.json needs
    `encoding='utf-8'` both directions.
 
 ## Where the project stands (2026-08-01)
