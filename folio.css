@@ -227,12 +227,13 @@
     display:flex;
     flex-direction:column;
     align-items:stretch;
-    width:17.4rem;
+    width:22.6rem;
   }
   .row{
     display:grid;
-    /* fleuron, caret, step number, then a column for each voice */
-    grid-template-columns:1.5em 1.1em 2.3em 3.7em 3.7em;
+    /* fleuron, caret, step number, a column for each voice, and the chord
+       lane's own, which is wider because it carries a mark and a pitch */
+    grid-template-columns:1.5em 1.1em 2.3em 3.7em 3.7em 4.6em;
     column-gap:0.7em;
     align-items:center;
     height:2.35em;                   /* > 2.2 em, generously spaced */
@@ -296,6 +297,15 @@
      already has, never more, and nothing here moves. */
   .note.mirror{opacity:0.62;}
   .note.mirror.dim{opacity:0.5;}
+
+  /* ---- the chord lane, written ----
+     One cell, one mark: the shape's glyph and the pitch its root stands on,
+     a little smaller than the writing beside it because a chord is the
+     ground and not the tune. It borrows the held note's stroke exactly —
+     the same hairline down the column, the same foot where it stops — so
+     a held chord and a held note are read the same way and learnt once. */
+  .note.chord{font-size:0.92em;letter-spacing:0.02em;}
+  .note.chord.empty{letter-spacing:0.04em;}
 
   /* ---- what the echo made of a note ----
      After a judgement, and only until the next edit, each note of the
@@ -463,6 +473,33 @@
   .bar.mirror.back{opacity:0.3;}
   .bar.mirror.back.outside{opacity:0.14;}
   .bar.cur{box-shadow:0 0 0 1px var(--ink);}   /* the roll's answer to bold */
+  /* ---- the chord, drawn as one thing ----
+     A soft slab from the lowest tone to the highest, at a fraction of the
+     weight of a bar, with a quiet line inside it where each tone actually
+     sits. The slab is what the eye takes first and the lines are what it
+     reads second — and a tone that did not move draws at exactly the same
+     height in the next chord, which is the lesson, seen. Nothing here is
+     ever more than four lines inside one shape, so it cannot read as a
+     stripe; nothing here moves; and it lies under the two voices' bars, in
+     the drawing as in the ear. */
+  .chordbar{position:absolute;}
+  .chordbar>b{
+    position:absolute;
+    left:0;right:0;top:0;bottom:0;
+    border-radius:0.5em;
+    opacity:0.30;
+  }
+  .chordbar.back>b{opacity:0.19;}
+  .chordbar.outside>b{opacity:0.11;}
+  .chordbar.cur>b{box-shadow:0 0 0 1px rgba(59,47,30,0.45);}
+  .chordbar>i{
+    position:absolute;
+    left:0.15em;right:0.15em;
+    height:2px;margin-top:-1px;
+    background:rgba(59,47,30,0.30);
+  }
+  .chordbar.back>i{background:rgba(59,47,30,0.16);}
+  .chordbar.outside>i{background:rgba(59,47,30,0.10);}
   /* ---- the names on the drawing ----
      The roll says pitch with height and colour, which is quick to read and
      impossible to name. It is not made readable by writing a note on every

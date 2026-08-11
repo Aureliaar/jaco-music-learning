@@ -560,7 +560,8 @@ ok("it still validates", !!lv);
 eq("its lead is untouched", lv.steps, legacy.steps);
 eq("its tempo, loop and key are untouched", [lv.tempo, lv.loop, lv.key], [104, 8, "E minor"]);
 eq("it gains a silent bass", lv.bass, blank());
-eq("and neither flag set", [lv.mute, lv.solo], [[false,false],[false,false]]);
+eq("and neither flag set", [lv.mute, lv.solo],
+   [[false,false,false],[false,false,false]]);
 ok("a bass that cannot be read is silence, not a rejected file",
    JSON.stringify(T.validate(Object.assign({}, legacy, { bass:"nonsense" })).bass) ===
    JSON.stringify(blank()));
@@ -597,8 +598,10 @@ key("KeyZ");
 eq("now the note goes into the bass", T.doc.bass[2], "C4");
 eq("and the lead is untouched", T.doc.steps[2], null);
 key("Tab");
-eq("tab comes back", T.voice, 0);
-eq("the two voices are round, not a stack", T.VOICES, 2);
+eq("tab walks on to the chord lane", T.voice, T.CHORD_LANE);
+key("Tab");
+eq("and round again to the lead", T.voice, 0);
+eq("the lanes are a ring, not a stack", T.LANES, 3);
 /* clearing, the cursor, and nudge all follow the hand */
 reset();
 duet({0:"C4"}, {0:"C2"});
@@ -656,7 +659,7 @@ reset(); duet({0:"C4"}, {0:"C2"});
 key("KeyP"); /* the lead muted */
 key("Tab"); key("KeyO"); /* the bass soloed */
 ok("a soloed voice is heard even so", T.audible(1));
-key("Tab"); key("KeyO");
+key("Tab"); key("Tab"); key("KeyO");
 ok("and a muted voice soloed is heard too", T.audible(0), [T.doc.mute, T.doc.solo]);
 /* what the scheduler actually does with all that */
 function heard(){
@@ -1758,12 +1761,13 @@ eq("and once more to come back", T.voice, 0);
 T.setDoc({ version:1, title:"t", tempo:112, loop:16, key:"C major",
            steps: steps({15:"C4"}), bass: steps({15:"C4"}) });
 T.cursor = 0; T.baseOctave = 4; frame([]); frame([]);
-frames(3, [GP.L1]); frame([GP.L1, GP.X]); frames(3, []);
-eq("L1 held under \u2715 did not widen the move", T.doc.bass[0], "B3");
+frames(3, [GP.R1]); frame([GP.R1, GP.X]); frames(3, []);
+eq("R1 held under \u2715 did not widen the move", T.doc.bass[0], "B3");
 eq("it changed hands instead, which is all it does", T.voice, 1);
 eq("and the lead was left alone", T.doc.steps[0], null);
 frames(2, [GP.R1]); frames(2, []);
-eq("and back to the lead", T.voice, 0);
+frames(2, [GP.R1]); frames(2, []);
+eq("and round the ring to the lead", T.voice, 0);
 reset();
 
 console.log("\n== what a held note sounds like ==");
@@ -2615,5 +2619,176 @@ T.applyState(logWith([], { earlog: "not a list" }));
 eq("so does a field that is not a list at all", T.earLog, []);
 ok("the workspaces are still there", T.wsFree.title === "free");
 qreset(); reset();
+
+/* ================= the chord lane =================
+   Two things are worth pinning here and nothing else is: the arithmetic that
+   turns a lane of relations into a lane of pitches — which is what the
+   lesson is actually made of, and what a rewrite would silently break — and
+   the seats, pad and board, that each edit sits in. What the lane looks like
+   is bootcheck's business and the field's own shape is tier1's. */
+console.log("\n== the chord lane: from a relation to a sound ==");
+const CL = T.CHORD_LANE;
+function lane(cells, extra){
+  page({}, Object.assign({ chords: cells.concat(new Array(16 - cells.length).fill(null)) },
+                         extra || {}));
+}
+function voiced(cells){ lane(cells); return T.chordVoicings(T.doc); }
+const triadHome = T.chordRooted(T.chordCell(0, "triad"));
+eq("the rooted arrangement is the plain stack, home in the chord register",
+   triadHome, [48, 52, 55]);
+eq("and on another degree it is the plain stack there",
+   T.chordRooted(T.chordCell(5, "triad")), [57, 60, 64]);
+eq("a dyad stands two voices up", T.chordStack(T.chordCell(0, "dyad")).length, 2);
+eq("a triad three", T.chordStack(T.chordCell(0, "triad")).length, 3);
+eq("a seventh four", T.chordStack(T.chordCell(0, "seventh")).length, 4);
+eq("the sus has three and no third in them",
+   T.chordStack(T.chordCell(0, "sus")), [48, 53, 55]);
+eq("and the borrowed one leans its third out of the key by a semitone",
+   T.chordStack(T.chordCell(0, "borrowed")), [48, 51, 55]);
+eq("the shapes are a closed set", T.CHORD_SHAPES,
+   ["dyad", "triad", "seventh", "sus", "borrowed"]);
+/* ---- the whole point: a tone that is in both chords does not move ---- */
+const IvI = voiced([T.chordCell(0, "triad"), T.chordCell(5, "triad")]);
+eq("the first chord of a lane is rooted — there is nothing to be near",
+   IvI[0], triadHome);
+ok("the next one holds every tone the two of them share",
+   [48, 52].every(m => IvI[1].indexOf(m) >= 0), IvI[1]);
+eq("and moves the one that had to move by a step", IvI[1], [48, 52, 57]);
+eq("where the plain arrangement would have moved all three",
+   T.chordRooted(T.chordCell(5, "triad")), [57, 60, 64]);
+const chain = voiced([T.chordCell(0, "triad"), T.chordCell(5, "triad"),
+                      T.chordCell(3, "triad"), T.chordCell(1, "triad")]);
+function held(a, b){ return a.filter(m => b.indexOf(m) >= 0).length; }
+ok("down a whole progression the common tones go on being held",
+   held(chain[0], chain[1]) >= 1 && held(chain[1], chain[2]) >= 1 &&
+   held(chain[2], chain[3]) >= 1, chain);
+function moved(a, b){
+  return b.reduce((n, m) => n + Math.min.apply(null, a.map(x => Math.abs(x - m))), 0);
+}
+ok("and every change moves less than the plain arrangement would",
+   moved(chain[0], chain[1]) <= moved(chain[0], T.chordRooted(T.chordCell(5, "triad"))),
+   [chain[1], T.chordRooted(T.chordCell(5, "triad"))]);
+ok("every pitch it writes is inside the folio's own range",
+   chain.every(c => !c || (c[0] >= T.MIDI_LO && c[c.length - 1] <= T.MIDI_HI)), chain);
+const mixed = voiced([T.chordCell(0, "triad"), T.chordCell(5, "triad"),
+                      T.chordCell(3, "triad", "root")]);
+eq("a chord the page calls rooted is the plain stack wherever it falls",
+   mixed[2], T.chordRooted(T.chordCell(3, "triad")));
+eq("and it is what the one after it is near to",
+   voiced([T.chordCell(0, "triad"), T.chordCell(3, "triad", "root"),
+           T.chordCell(3, "triad")])[2], mixed[2]);
+eq("a lane of nothing voices nothing", voiced([]).filter(Boolean).length, 0);
+
+console.log("\n== the chord lane: the seats ==");
+reset(); useRoll();
+key("Tab"); key("Tab");
+ok("two taps of tab put the hands in the chord lane", T.onChords(), T.voice);
+eq("and the strip names it", T.LANE_NAMES[CL], "chords");
+press(GP.R1);
+ok("R1 walks on out of it", !T.onChords(), T.voice);
+press(GP.L1);
+ok("and L1 walks back into it", T.onChords(), T.voice);
+/* the face buttons, exactly as they are on a voice */
+reset(); useRoll(); T.setVoice(CL); T.cursor = 0;
+press(GP.TR);
+eq("the first press writes home", T.doc.chords[0], { deg:0, shape:"triad" });
+eq("and leaves the cursor an eighth on, as writing always does", T.cursor, 2);
+press(GP.TR);
+eq("the next is a step above the chord before it", T.doc.chords[2].deg, 1);
+press(GP.X);
+eq("and \u2715 a step below that", T.doc.chords[4].deg, 0);
+press(GP.B);
+eq("\u25cb is the same chord again", T.doc.chords[6], { deg:0, shape:"triad" });
+T.cursor = 6; press(GP.SQ);
+eq("\u25a1 is a rest, and takes the chord away", T.doc.chords[6], null);
+/* the triggers say the shape while it is written */
+reset(); useRoll(); T.setVoice(CL); T.cursor = 0;
+frame([GP.L2, GP.TR]); frames(2, []);
+eq("L2 under a face button writes the seventh", T.doc.chords[0].shape, "seventh");
+T.cursor = 0;
+frame([GP.R2, GP.TR]); frames(2, []);
+eq("R2 writes the sus", T.doc.chords[0].shape, "sus");
+T.cursor = 0;
+frame([GP.L2, GP.R2, GP.TR]); frames(2, []);
+eq("and both of them the borrowed chord, out of the key",
+   T.doc.chords[0].shape, "borrowed");
+eq("which is still three voices standing", T.chordVoicings(T.doc)[0].length, 3);
+/* held, it rings on — the same growStart contract the note lanes use */
+reset(); useRoll(); T.setVoice(CL); T.cursor = 0;
+frame([GP.TR]);
+clock.pad += T.GROW_DELAY; T.growTick();
+clock.pad += T.growStep(); T.growTick();
+ok("holding the button grows the chord it just wrote",
+   T.writtenLen(T.doc, CL, 0) > 1, T.doc.chordhold);
+frames(2, []);
+ok("and letting go of it stops the growing", T.grow === null, T.grow);
+
+console.log("\n== the chord lane: the pitch pair's three rungs ==");
+/* in the drawing the pitch pair is \u2191\u2193, and the edges have \u2190 \u2192 to themselves,
+   so all three rungs of the ladder are under the thumb at once */
+reset(); useRoll(); T.setVoice(CL);
+lane([T.chordCell(2, "triad")]); T.setVoice(CL); T.cursor = 0;
+hold(GP.DU);
+eq("bare, the pitch pair moves the root a scale step", T.doc.chords[0].deg, 3);
+hold(GP.DD); hold(GP.DD);
+eq("and down again the other way", T.doc.chords[0].deg, 1);
+frame([GP.L2, GP.DU]); frames(2, []);
+eq("one trigger walks the thickness up", T.doc.chords[0].shape, "seventh");
+frame([GP.R2, GP.DD]); frames(2, []);
+eq("either trigger walks it back down", T.doc.chords[0].shape, "triad");
+frame([GP.R2, GP.DD]); frames(2, []);
+eq("thinner again is the dyad", T.doc.chords[0].shape, "dyad");
+frame([GP.R2, GP.DD]); frames(2, []);
+eq("and the dial holds at its own end", T.doc.chords[0].shape, "dyad");
+frame([GP.L2, GP.R2, GP.DU]); frames(2, []);
+eq("both triggers say the voicing: up is the plain rooted one",
+   T.doc.chords[0].voicing, "root");
+frame([GP.L2, GP.R2, GP.DD]); frames(2, []);
+ok("and down is the nearest one, which the page keeps by saying nothing",
+   T.doc.chords[0].voicing === undefined, T.doc.chords[0]);
+eq("the root was left exactly where it was through all of it",
+   T.doc.chords[0].deg, 1);
+
+console.log("\n== the chord lane: time, unchanged from the note lanes ==");
+reset(); useRoll();
+lane([T.chordCell(0, "triad")]); T.setVoice(CL); T.cursor = 0;
+hold(GP.DR);
+eq("the time pair bare is the cursor, as it always was", T.cursor, 1);
+T.cursor = 0;
+frame([GP.R2, GP.DR]); frames(2, []);
+eq("one trigger moves the chord's end, and it rings longer",
+   T.writtenLen(T.doc, CL, 0), 2);
+frame([GP.L2, GP.DR]); frames(2, []);
+eq("the other moves its start, the far end held", T.doc.chords[1].deg, 0);
+eq("and the length went with the movement", T.writtenLen(T.doc, CL, 1), 1);
+frame([GP.L2, GP.R2, GP.DR]); frames(2, []);
+eq("both triggers carry the chord whole", T.doc.chords[2].deg, 0);
+ok("and nothing is left behind where it was", !T.doc.chords[1], T.doc.chords[1]);
+
+console.log("\n== the chord lane: the board, derived from the pad ==");
+reset(); useRoll(); T.setVoice(CL); T.cursor = 0;
+key("KeyZ");
+eq("the note row names home instead of a pitch", T.doc.chords[0], { deg:0, shape:"triad" });
+eq("and advances by an eighth exactly as writing a note does", T.cursor, 2);
+key("KeyN");
+eq("the degrees run up the row", T.doc.chords[2].deg, 5);
+key("KeyQ");
+eq("and the row above it carries on where the first left off", T.doc.chords[4].deg, 7);
+T.cursor = 0;
+key("KeyA");
+eq("A walks the shape of the chord under the cursor", T.doc.chords[0].shape, "seventh");
+key("KeyA"); key("KeyA");
+eq("round the whole ring, the two flavours included", T.doc.chords[0].shape, "borrowed");
+key("KeyA");
+eq("and round to the thin end again", T.doc.chords[0].shape, "dyad");
+key("KeyA", { shiftKey:true });
+eq("shift on the same key is the voicing", T.doc.chords[0].voicing, "root");
+key("KeyA", { shiftKey:true });
+ok("and back to the nearest one", T.doc.chords[0].voicing === undefined, T.doc.chords[0]);
+key("Equal");
+eq("the length keys are the length keys here too", T.writtenLen(T.doc, CL, 0), 2);
+key("Period");
+eq("and a period clears the chord under the cursor", T.doc.chords[0], null);
+reset();
 
 R.done();

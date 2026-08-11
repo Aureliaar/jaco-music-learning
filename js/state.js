@@ -62,6 +62,26 @@ var VOICES = 2;
 var VOICE_NAMES = ["lead", "bass"];
 var VOICE_FIELD = ["steps", "bass"];
 
+/* ---- and one lane that is not a voice, from Lesson 5 on ----
+   A voice is one line: one note at a time, named absolutely, written into
+   `steps` or `bass`. The chord lane is not that. Its cell holds a chord as
+   an object — a degree of the key and a shape — and what it actually sounds
+   is worked out from the cell before it, never stored. js/chords.js is the
+   whole of that idea; here there is only the seat it sits in.
+
+   It is a third stop on the ring the hands walk, so everything that counts
+   lanes counts LANES and everything that counts *voices* — the two lines of
+   notes, their timbres, their seals, their mirrors — goes on counting
+   VOICES. The three field lists below are the join: a lane has steps and it
+   has lengths, and the arithmetic in this file (spanOf, sounding, roomAt,
+   writtenLen) asks nothing else of a step than whether something is written
+   there. So the chord lane inherits the whole of the holds arithmetic for
+   free, and none of the note machinery has to learn what a chord is. */
+var CHORD_LANE = VOICES;                 /* 2 */
+var LANES = VOICES + 1;
+var LANE_NAMES = VOICE_NAMES.concat(["chords"]);
+var LANE_FIELD = VOICE_FIELD.concat(["chords"]);
+
 /* ---- the held note, from Lesson 3 on ----
    A step is still a sixteenth and a note still begins on one. What is new
    is that it may go on ringing over the steps after it instead of stopping
@@ -79,6 +99,9 @@ var VOICE_FIELD = ["steps", "bass"];
    A length of 1 is the plain sixteenth and is never written out: a log from
    a board on which nothing is held is byte for byte the log it always was. */
 var VOICE_HOLD = ["hold", "basshold"];
+/* the chord lane's length rides the same mechanism, in a field of its own —
+   written only where something is actually held, exactly as the two above */
+var LANE_HOLD = VOICE_HOLD.concat(["chordhold"]);
 
 /* ---- what each voice sounds like ----
    One entry per voice: null is the voice's own synth tone, the one the folio
@@ -124,6 +147,11 @@ var VOICE_TONE = "tones";
    freezes the written hold alone. */
 var VOICE_LOCK = ["lock", "basslock"];
 var LOCK_KINDS = "prl";
+/* the chord lane seals nothing: a quest hands out sealed *notes*, and there
+   is no quest yet that hands out a chord nobody may unwrite. The lane is
+   named here all the same, as nothing, so that every reader below can ask
+   for a lane's seals without first asking which lane it is. */
+var LANE_LOCK = VOICE_LOCK.concat([null]);
 
 /* ---- the mirrored span ----
    A quest may want to say that these eight steps and those eight steps are
@@ -176,10 +204,12 @@ function defaultDoc(){
     basshold: new Array(STEPS).fill(1),   /* and each bass note */
     lock: new Array(STEPS).fill(null),    /* what a lead note is sealed against */
     basslock: new Array(STEPS).fill(null),/* and a bass note */
+    chords: new Array(STEPS).fill(null),  /* the chord lane, one cell a step */
+    chordhold: new Array(STEPS).fill(1),  /* and how long each chord rings */
     tones: [null, null],                  /* what each voice sounds like */
     mirrors: [],                          /* cells bound to several places */
-    mute: [false, false],
-    solo: [false, false]
+    mute: [false, false, false],
+    solo: [false, false, false]
   };
 }
 var doc = defaultDoc();
@@ -273,32 +303,36 @@ function fit(a, n, filler){
    a page that predates the second voice: the field is made on first touch
    rather than assumed. The same for the two flag pairs. */
 function vsteps(v){
-  var f = VOICE_FIELD[v || 0], n = pageLen();
+  var f = LANE_FIELD[v || 0], n = pageLen();
   if (!doc[f] || doc[f].length !== n) doc[f] = fit(doc[f], n, null);
   return doc[f];
 }
 function docSteps(d, v){
-  var a = d && d[VOICE_FIELD[v || 0]];
+  var a = d && d[LANE_FIELD[v || 0]];
   return Array.isArray(a) ? a : null;
 }
-/* the lengths of one voice, made on first touch exactly as its steps are */
+/* the lengths of one lane, made on first touch exactly as its steps are */
 function vhold(v){
-  var f = VOICE_HOLD[v || 0], n = pageLen();
+  var f = LANE_HOLD[v || 0], n = pageLen();
   if (!Array.isArray(doc[f]) || doc[f].length !== n) doc[f] = fit(doc[f], n, 1);
   return doc[f];
 }
 function docHold(d, v){
-  var a = d && d[VOICE_HOLD[v || 0]];
+  var a = d && d[LANE_HOLD[v || 0]];
   return Array.isArray(a) ? a : null;
 }
-/* the seals beside one voice, made on first touch exactly as its lengths are */
+/* the seals beside one voice, made on first touch exactly as its lengths
+   are. A lane that seals nothing is handed a fresh page of nothing rather
+   than a field of its own: it can be read and written by the guards without
+   any of them asking which lane this is, and the page keeps no trace. */
 function vlock(v){
-  var f = VOICE_LOCK[v || 0], n = pageLen();
+  var f = LANE_LOCK[v || 0], n = pageLen();
+  if (!f) return fit([], n, null);
   if (!Array.isArray(doc[f]) || doc[f].length !== n) doc[f] = fit(doc[f], n, null);
   return doc[f];
 }
 function docLock(d, v){
-  var a = d && d[VOICE_LOCK[v || 0]];
+  var a = d && d[LANE_LOCK[v || 0]];
   return Array.isArray(a) ? a : null;
 }
 /* what the note at a step wears: the letters, or "" for a free note and for
@@ -460,10 +494,13 @@ function roomAt(d, v, i){
 }
 function flag(kind, v){ var a = doc[kind]; return !!(a && a[v]); }
 function setFlag(kind, v, on){
-  if (!Array.isArray(doc[kind])) doc[kind] = [false, false];
+  if (!Array.isArray(doc[kind])) doc[kind] = [false, false, false];
   doc[kind][v] = !!on;
 }
-function anySolo(){ return flag("solo", 0) || flag("solo", 1); }
+function anySolo(){
+  for (var v = 0; v < LANES; v++) if (flag("solo", v)) return true;
+  return false;
+}
 /* solo wins over mute, as it does on every desk ever built */
 function audible(v){ return anySolo() ? flag("solo", v) : !flag("mute", v); }
 var storageOK = true;
@@ -743,10 +780,14 @@ function docOut(d){
   if (!d || typeof d !== "object") return d;
   var out = {}, k, v;
   for (k in d) if (Object.prototype.hasOwnProperty.call(d, k)) out[k] = d[k];
-  for (v = 0; v < VOICES; v++){
-    if (allPlain(out[VOICE_HOLD[v]])) delete out[VOICE_HOLD[v]];
-    if (allFree(out[VOICE_LOCK[v]])) delete out[VOICE_LOCK[v]];
-  }
+  for (v = 0; v < LANES; v++) if (allPlain(out[LANE_HOLD[v]])) delete out[LANE_HOLD[v]];
+  for (v = 0; v < VOICES; v++) if (allFree(out[VOICE_LOCK[v]])) delete out[VOICE_LOCK[v]];
+  /* the chord lane is written only where there is one, and the third flag of
+     each pair only where it is set: a page with no chords on it leaves here
+     byte for byte the page it always was */
+  if (allFree(out[CHORD_FIELD])) delete out[CHORD_FIELD];
+  out.mute = trimFlags(out.mute);
+  out.solo = trimFlags(out.solo);
   if (allOwnTone(out[VOICE_TONE])) delete out[VOICE_TONE];
   if (allUnbound(out[MIRROR_FIELD])) delete out[MIRROR_FIELD];
   /* the echo is written only where there is one, and only where it is one:
@@ -757,10 +798,18 @@ function docOut(d){
   if (docLen(out) === STEPS) delete out[PAGE_FIELD];
   return out;
 }
+/* one flag a lane, read as permissively as everything else here. A page from
+   before the chord lane says two things about itself and gets a third, off;
+   docOut writes the third back only where it is actually set, so such a page
+   goes out saying exactly the two it came in saying. */
 function readFlags(a){
   var out = [];
-  for (var i = 0; i < VOICES; i++) out.push(!!(Array.isArray(a) && a[i]));
+  for (var i = 0; i < LANES; i++) out.push(!!(Array.isArray(a) && a[i]));
   return out;
+}
+function trimFlags(a){
+  return (Array.isArray(a) && a.length > VOICES && !a[CHORD_LANE])
+           ? a.slice(0, VOICES) : a;
 }
 function validate(obj){
   if (!obj || typeof obj !== "object" || Array.isArray(obj)) return null;
@@ -793,6 +842,11 @@ function validate(obj){
            tones: readTones(obj.tones),
            mirrors: readMirrors(obj[MIRROR_FIELD], N),
            mute: readFlags(obj.mute), solo: readFlags(obj.solo) };
+  /* the chord lane, read strictly by js/chords.js — a lane of nothing where
+     the page has none, and a lane of nothing where what it has is not a
+     chord lane, the notes underneath it untouched either way */
+  out[CHORD_FIELD] = readChords(obj[CHORD_FIELD], N);
+  out[CHORD_HOLD] = readHolds(obj[CHORD_HOLD], out[CHORD_FIELD], N);
   /* the hidden call, if the page is an echo's: read strictly by js/echo.js,
      which is where the whole of that idea lives, and simply absent — not
      null, not empty — on every page that is not one */

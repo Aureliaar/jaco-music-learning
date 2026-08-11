@@ -445,10 +445,10 @@ function freePort(start){
     "(function(){var q=document.getElementById('voices').getBoundingClientRect();" +
     "return [Math.round(q.width),Math.round(q.height)];})()");
   ok("the strip has real size on the page", vbox[0] > 80 && vbox[1] > 10, vbox);
-  /* the column now has a place for each voice */
+  /* the column now has a place for each lane */
   const cells = await b.eval(
     "document.querySelectorAll('#column .row')[0].children.length");
-  ok("each row has a cell for each voice", cells === 5, cells);
+  ok("each row has a cell for each lane", cells === 6, cells);
 
   await b.key("F2", { key:"F2", vk:113 });      /* the column, to read the notes */
   await wait(120);
@@ -505,6 +505,8 @@ function freePort(start){
   await b.key("Space", { key:" ", vk:32 });
 
   /* the pad: the bumpers change hands, △ is a move and never the voice */
+  /* three stops on the ring now: bass, chords, and round to the lead */
+  await b.key("Tab", { key:"Tab", vk:9 });
   await b.key("Tab", { key:"Tab", vk:9 });      /* back to the lead */
   await wait(60);
   const inHand = () => b.eval(
@@ -589,6 +591,7 @@ function freePort(start){
   await clearVoice();
   await b.key("Tab", { key:"Tab", vk:9 });
   await clearVoice();
+  await b.key("Tab", { key:"Tab", vk:9 });
   await b.key("Tab", { key:"Tab", vk:9 });          /* back in the lead */
   /* the lead: C4 E4 G4, written straight ahead — and entry lays eighths, so
      they land on steps 1, 3 and 5 rather than on the first three steps */
@@ -893,6 +896,7 @@ function freePort(start){
   await clearVoice();
   await b.key("Tab", { key:"Tab", vk:9 });
   await clearVoice();
+  await b.key("Tab", { key:"Tab", vk:9 });
   await b.key("Tab", { key:"Tab", vk:9 });          /* back in the lead */
   await setOctave(4);
 

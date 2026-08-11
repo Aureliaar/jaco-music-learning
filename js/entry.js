@@ -117,7 +117,28 @@ document.addEventListener("keydown", function(e){
     return;
   }
 
-  if (Object.prototype.hasOwnProperty.call(NOTE_KEYS, code)){
+  /* ---- the chord lane, on the board ----
+     The pad shapes and the board names; a chord root has no pitch name here,
+     so the two note rows name the degrees of the key instead — by physical
+     position, the same two rows, an octave each — and A is the shape the pad
+     holds a trigger for. Everything else falls through to the switch below
+     and is what it always was: the arrows walk, − and + are the length,
+     period is a rest, tab is the next lane. js/chords.js says why. */
+  if (onChords()){
+    if (Object.prototype.hasOwnProperty.call(CHORD_KEYS, code)){
+      e.preventDefault();
+      var wroteC = cursor;
+      chordDegree(CHORD_KEYS[code]);
+      growStart(voice, wroteC, code, undefined);
+      return;
+    }
+    if (code === "KeyA"){
+      e.preventDefault();
+      if (e.shiftKey) chordFlip(); else chordShape(1);
+      return;
+    }
+  }
+  else if (Object.prototype.hasOwnProperty.call(NOTE_KEYS, code)){
     e.preventDefault();
     var wrote = cursor;                 /* where the note lands, before the advance */
     enterNote(NOTE_KEYS[code]);
@@ -280,7 +301,19 @@ function gpNav(active, key, d, now, mover){
 function padStart(n){ moveEdge(false, n); }
 function padEnd(n){ moveEdge(true, n); }
 
+/* ---- and the same pair, in the chord lane ----
+   The pitch pair carries the agreed three-rung ladder there: bare it moves
+   the root a scale step, one trigger walks the thickness, both flip the
+   voicing between the nearest arrangement and the plain rooted one. It is
+   this one handler because the pitch pair is this one handler — which pair
+   that is trades with the view above, and the ladder trades with it. */
 function padNudge(n){
+  if (onChords()){
+    if (l2Down && r2Down) chordVoice(n);
+    else if (l2Down || r2Down) chordThicken(n);
+    else chordNudge(n);
+    return;
+  }
   if (l2Down && r2Down){ nudge(n, true); return; }
   nudge(n);
 }
@@ -411,7 +444,9 @@ function pollPads(){
   /* ---- the bumpers: the voice ----
      L1 the line before, R1 the line after, round the ring the strip above
      the page names. One tap, from anywhere on the page, into either
-     neighbour — which is still true of a third voice when one arrives. They
+     neighbour — which was written before there was a third stop and is
+     still true now that there is one: the chord lane is the third name in
+     that strip and is one tap from the bass either way round. They
      have no second job, so a tap is simply a tap: nothing here waits for a
      release to find out what the hand meant. */
   if (gpEdge(cur, GP_L1)) prevVoice();
@@ -437,7 +472,13 @@ function pollPads(){
   if (gpEdge(cur, GP_TRIANGLE) || gpEdge(cur, GP_CROSS)){
     var dir = gpEdge(cur, GP_TRIANGLE) ? 1 : -1;
     var moveAt = cursor;                  /* where it lands, before the advance */
-    if (lead === 3) relStep(dir, true);                    /* a semitone out of key */
+    /* the chord lane reads the same four buttons the same way — the root a
+       step up, a step down — and the triggers say the shape while it is
+       written instead of widening a move: L2 the seventh, R2 the sus, both
+       the borrowed chord, out of the key, which is what both of them mean
+       everywhere else on this pad */
+    if (onChords()) chordEnter(dir, lead);
+    else if (lead === 3) relStep(dir, true);               /* a semitone out of key */
     else relStep(dir * wide, false);
     /* the shape is given, and the length with it: keep the button down and
        the note just written goes on ringing, exactly as keeping the key
@@ -446,7 +487,7 @@ function pollPads(){
   }
   if (gpEdge(cur, GP_CIRCLE)){
     var againAt = cursor;
-    relRepeat();
+    if (onChords()) chordRepeat(); else relRepeat();
     growStart(voice, againAt, undefined, GP_CIRCLE);
   }
   if (gpEdge(cur, GP_SQUARE)) clearStep();                 /* a rest, and on */

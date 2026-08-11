@@ -19,8 +19,10 @@ var settingsEl = document.getElementById("settings");
 var xbarPad = document.getElementById("xbarpad");
 var xbarFace = document.getElementById("xbarface");
 var voicesEl = document.getElementById("voices");
-var vnames = [document.getElementById("vname0"), document.getElementById("vname1")];
-var vmarks = [document.getElementById("vmark0"), document.getElementById("vmark1")];
+var vnames = [document.getElementById("vname0"), document.getElementById("vname1"),
+              document.getElementById("vname2")];
+var vmarks = [document.getElementById("vmark0"), document.getElementById("vmark1"),
+              document.getElementById("vmark2")];
 var qlist  = document.getElementById("qlist");
 var qtabs  = document.getElementById("qtabs");
 var keyhelpEl = document.getElementById("keyhelp");
@@ -270,11 +272,18 @@ for (var i = 0; i < MAX_STEPS; i++){
   var sl = mkSeal(), sl2 = mkSeal();
   no.className = "note empty"; no.appendChild(tx); no.appendChild(sl);
   no2.className = "note empty dim"; no2.appendChild(tx2); no2.appendChild(sl2);
+  /* and the chord lane's own column beside the two voices: one cell, one
+     mark. It wears no seal — nothing seals a chord — so it is a text node
+     and nothing else, which is also why a chord can never be drawn here as
+     a stack of note heads: there is one place for one glyph. */
+  var no3 = document.createElement("span");
+  var tx3 = document.createTextNode("·");
+  no3.className = "note chord empty dim"; no3.appendChild(tx3);
   row.appendChild(fl); row.appendChild(ca); row.appendChild(nu);
-  row.appendChild(no); row.appendChild(no2);
+  row.appendChild(no); row.appendChild(no2); row.appendChild(no3);
   column.appendChild(row);
   rows.push({ el: row, fleuron: fl, caret: ca, num: nu, note: no, note2: no2,
-              notes: [no, no2], texts: [tx, tx2], seals: [sl, sl2] });
+              notes: [no, no2, no3], texts: [tx, tx2, tx3], seals: [sl, sl2, null] });
 }
 
 /* ---- the roll, built once; bars and home rules are laid out on edit ----
@@ -304,6 +313,38 @@ for (i = 0; i * 4 <= MAX_STEPS; i++){
   bl.style.display = "none";
   rollfield.appendChild(bl);
   beatlines.push(bl);
+}
+/* ---- the chord lane, in the drawing ----
+   One object a chord, and never three note heads at three heights: a soft
+   slab of the root's own colour from the lowest tone it is sounding to the
+   highest, as long as the chord rings, with a quiet line inside it at each
+   pitch it actually holds. The lines are what makes voice leading visible —
+   a tone that did not move draws at exactly the same height in the chord
+   after it, which is the whole of the lesson, seen. They are inside the one
+   element, so what the eye picks up first is the slab and what it reads
+   second is where the tones are; and there are never more than four of
+   them, in one object, so nothing here can stack up into a stripe.
+
+   They are built before the note bars and so lie under them: the chords are
+   the ground the two voices stand on, in the drawing as in the ear. */
+var chordBars = [], chordWashes = [], chordTones = [];
+for (i = 0; i < MAX_STEPS; i++){
+  var cbar = document.createElement("div");
+  cbar.className = "chordbar";
+  cbar.style.display = "none";
+  /* the slab's colour is worn by a layer of its own rather than by the
+     element, so that the tones inside it keep their own weight instead of
+     being faded along with the ground they are drawn on */
+  var cwash = document.createElement("b");
+  cbar.appendChild(cwash);
+  var ctones = [];
+  for (var ct = 0; ct < 4; ct++){
+    var cline = document.createElement("i");
+    cbar.appendChild(cline);
+    ctones.push(cline);
+  }
+  rollfield.appendChild(cbar);
+  chordBars.push(cbar); chordWashes.push(cwash); chordTones.push(ctones);
 }
 var rollWash = document.createElement("div");
 rollWash.className = "rollwash";
@@ -562,6 +603,17 @@ function rollLayout(){
       if (m !== null){ if (m < lo) lo = m; if (m > hi) hi = m; }
     }
   }
+  /* the chord lane is inside the window too — a chord drawn off the foot of
+     the page would be a chord you could not see */
+  var cvo = chordVoicings(doc), cst = vsteps(CHORD_LANE), ck;
+  for (i = 0; i < N; i++){
+    if (!cvo[i]) continue;
+    for (ck = 0; ck < cvo[i].length; ck++){
+      m = cvo[i][ck];
+      if (m < lo) lo = m;
+      if (m > hi) hi = m;
+    }
+  }
   if (lo > hi){ lo = 48; hi = 71; }          /* empty page: around middle C */
   lo -= 3; hi += 3;
   while (hi - lo + 1 < 24){ lo--; hi++; }
@@ -662,6 +714,33 @@ function rollLayout(){
         paintTail(seamBars[v], v, 0, len - head, top, span, colour, bound);
     }
   }
+  /* ---- and the chord lane, one slab a chord ---- */
+  for (i = 0; i < MAX_STEPS; i++) chordBars[i].style.display = "none";
+  for (i = 0; i < N; i++){
+    if (!cst[i] || !cvo[i]) continue;
+    var kc = rollSlot(i);
+    if (kc < 0) continue;
+    var clen = spanOf(doc, CHORD_LANE, i);
+    var chead = (i < doc.loop) ? Math.min(clen, doc.loop - i) : clen;
+    var cbot = cvo[i][0], ctop = cvo[i][cvo[i].length - 1], cspan = ctop - cbot + 1;
+    var cb = chordBars[kc], cj, ci;
+    cb.style.display = "block";
+    cb.style.left = (kc * w + w * 0.112) + "%";
+    cb.style.width = (Math.min(chead, winRoll - kc) * w - w * 0.224) + "%";
+    cb.style.top = ((hi - ctop) / span * 100) + "%";
+    cb.style.height = (cspan / span * 100) + "%";
+    chordWashes[kc].style.backgroundColor = PC_COLOR[chordRootMidi(cst[i]) % 12];
+    cb.classList.toggle("back", voice !== CHORD_LANE);
+    cb.classList.toggle("outside", i >= doc.loop);
+    for (cj = 0; cj < chordTones[kc].length; cj++){
+      ci = chordTones[kc][cj];
+      if (cj >= cvo[i].length){ ci.style.display = "none"; continue; }
+      ci.style.display = "block";
+      /* the middle of the tone's own row, so the line is where the pitch is
+         and not where the row it sits in begins */
+      ci.style.top = ((ctop - cvo[i][cj] + 0.5) / cspan * 100) + "%";
+    }
+  }
   rollIntervals(hi, span);
   placeGuide();
 }
@@ -745,6 +824,7 @@ function rollCursor(){
     /* the ring marks the step under the cursor in the voice in hand only */
     bars[k].classList.toggle("cur", on && voice === 0);
     bars2[k].classList.toggle("cur", on && voice === 1);
+    chordBars[k].classList.toggle("cur", on && voice === CHORD_LANE);
     baseCells[k].classList.toggle("cur", on);
     /* the base strip counts in the page's own numbers, so where in the page
        the window is sitting is legible off the drawing itself */
@@ -756,6 +836,7 @@ function rollLoop(){
     var out = rollStep(k) >= doc.loop;
     bars[k].classList.toggle("outside", out);
     bars2[k].classList.toggle("outside", out);
+    chordBars[k].classList.toggle("outside", out);
     ivls[k].classList.toggle("outside", out);
   }
 }
@@ -842,6 +923,28 @@ function renderNotes(){
       setSeal(rows[k].seals[v], sealOf(doc, v, i));
     }
   }
+  /* ---- the chord lane's own column ----
+     One cell, one mark: the shape's glyph and the pitch its root sits on,
+     which is the same thing the drawing's home rules are named with. A held
+     chord is the same single stroke a held note is — the cell is joined to
+     where it stops and nothing is repeated down the page — and there is no
+     seal here, because nothing seals a chord. */
+  var cs = vsteps(CHORD_LANE), csnd = sounding(doc, CHORD_LANE);
+  var cends = ringEnds(doc, CHORD_LANE), cback = (voice === CHORD_LANE) ? "" : " dim";
+  for (var kc = 0; kc < winCol; kc++){
+    var ic = colStep(kc), cc = cs[ic];
+    var cel = rows[kc].notes[2], ctx2 = rows[kc].texts[2];
+    if (cc){
+      ctx2.nodeValue = chordGlyph(cc) + " " + pitchName(nameOfMidi(chordRootMidi(cc)));
+      cel.className = "note chord" + cback;
+    } else if (csnd[ic] >= 0){
+      ctx2.nodeValue = "";
+      cel.className = "note chord hold" + (cends[ic] ? " last" : "") + cback;
+    } else {
+      ctx2.nodeValue = "·";
+      cel.className = "note chord empty" + cback;
+    }
+  }
   /* the column counts in the page's own numbers: on a long page the numbers
      down the margin are 17 … 32, which is the plainest thing on the screen
      saying where in the piece you are — and the heavier rule falls on the
@@ -856,7 +959,7 @@ function renderNotes(){
 }
 /* the strip above the page: which line is in hand, and what each is doing */
 function renderVoices(){
-  for (var v = 0; v < VOICES; v++){
+  for (var v = 0; v < LANES; v++){
     vnames[v].classList.toggle("on", v === voice);
     var st = voiceState(v);
     /* the third state is a voice that is not muted but is not being heard
@@ -1035,11 +1138,69 @@ function keysNow(){
       ["F3","the quest log"],
       ["F1 · escape","these keys, away"]] }
   ]};
+  var rollv = (viz === "roll");
+  /* ---- the page, with the chord lane in hand ----
+     The same four face buttons and the same d-pad, saying what they say
+     here. The pitch pair carries the three rungs the lane is edited by, and
+     the pair that is "pitch" trades with the view exactly as it does for a
+     note, so the overlay says whichever one is under the thumb now. Not a
+     chord is named anywhere in it: every line is how this one sits against
+     the one before it. */
+  if (onChords()) return {
+    where: (rollv ? "the folio · the roll" : "the folio · the column") + " · the chords",
+    clusters:[
+    { kind:"pad", name:"the d-pad", pos:XPOS, items: rollv
+      ? [["←","a step back"],["↑","its root up a step"],
+         ["→","a step on"],["↓","its root down a step"]]
+      : [["←","its root down a step"],["↑","a step back"],
+         ["→","its root up a step"],["↓","a step on"]],
+      /* the two pairs trade with the view, and so does what the triggers
+         make of them: in the drawing the pitch pair is ↑ ↓ and the whole
+         ladder is under the thumb, and in the column ← → is the pitch pair
+         but one trigger there is already the note's two edges — as it is on
+         a voice — so the middle rung is reached in the drawing, or on the
+         board. Said here rather than tidied away, because this is the page
+         that has to be true. */
+      note: rollv
+        ? "↑ ↓ with one trigger · thicker, thinner — two voices, three, four · " +
+          "with both · nearest, or plainly rooted"
+        : "← → with both · nearest, or plainly rooted · with one trigger · " +
+          "the chord's start, or its end · thicker and thinner are ↑ ↓ in the " +
+          "drawing, and A on the board" },
+    { kind:"pad", name:"the face buttons", pos:XPOS, items:[
+      ["□","a rest"],["△","the root up a step"],
+      ["○","the same chord again"],["✕","the root down a step"]],
+      note:"held, the chord goes on ringing" },
+    { kind:"pad", name:"the shoulders", pos:KSHOULDER, items:[
+      ["L1","the voice before"],["L2","and a seventh"],
+      ["R1","the voice after"],["R2","no third"]],
+      note:"both triggers, writing · borrowed, out of the key · " +
+           (rollv ? "← →" : "↑ ↓") + " with both · carry the chord, its length with it" +
+           (rollv ? " · either trigger alone under ← → moves its start, or its end" : "") },
+    { kind:"list", name:"the board", items:[
+      ["z … ,  ·  q … i","home, and the degrees above it — two rows, an octave each"],
+      ["A","its shape, round the ring · shift, nearest or rooted"],
+      ["← ↑","a step back"],
+      ["→ ↓","a step on"],
+      ["− +","shorter, longer · shift, all the way"],
+      ["period","clear the step"],
+      ["space","play, stop"],
+      ["tab","the next lane · shift, the one before"],
+      ["L","the loop"],
+      ["K","the names, away and back"],
+      ["O · P","solo, mute"],
+      ["F2", rollv ? "the column instead" : "the roll instead"],
+      ["F3","the quest log"],
+      ["F1 · escape","these keys, away"]],
+      note:"what a chord sounds is worked out from the one before it — nothing here spells one out" },
+    { kind:"list", name:"and on the pad", items:[
+      ["select","play, stop"],["start","the settings"],
+      ["L3","the loop"],["R3","the roll or the column"]] }
+  ]};
   /* the page itself. The d-pad's two pairs trade places between the two
      views — the column reads down, the drawing reads right — and this is
      the one place that difference has ever been written down. The board's
      arrows do not trade: they are the cursor either way. */
-  var rollv = (viz === "roll");
   return { where: (rollv ? "the folio · the roll" : "the folio · the column") +
                   (ech ? " · the echo" : ""), clusters:[
     { kind:"pad", name:"the d-pad", pos:XPOS, items: rollv

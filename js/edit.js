@@ -145,7 +145,7 @@ function setLen(v, i, n, quiet){
   n = Math.max(1, Math.min(cap, n));
   if (n === was){
     if (!quiet)
-      say(display(s[i]) + " at step " + (i + 1) + " · " +
+      say(stepText(v, i) + " at step " + (i + 1) + " · " +
           (n === 1 ? "one step" : n + " steps") +
           (n === cap ? " · as long as it will go here" : ""));
     return false;
@@ -153,9 +153,9 @@ function setLen(v, i, n, quiet){
   holdAt(v, i, n);
   renderNotes(); save();
   if (!quiet){
-    showGuide(midiOf(s[i]));
-    audition(s[i], n);
-    say(display(s[i]) + " at step " + (i + 1) + " · " +
+    stepGuide(v, i);
+    stepAudition(v, i, n);
+    say(stepText(v, i) + " at step " + (i + 1) + " · " +
         (n === 1 ? "one step" : n + " steps") +
         (n < was ? " · shorter" : " · ringing on"));
   }
@@ -206,7 +206,7 @@ function growTick(){
   holdAt(v, i, n);
   renderNotes(); save();
   if (n > ADVANCE){ cursor = (i + n) % pageLen(); renderCursor(); }
-  say(display(s[i]) + " at step " + (i + 1) + " · " + n + " steps");
+  say(stepText(v, i) + " at step " + (i + 1) + " · " + n + " steps");
 }
 
 /* ---- the two ends of a note, moved one at a time ----
@@ -220,9 +220,16 @@ function growTick(){
 
    Neither edge may run over another note of the same voice, and neither
    may leave a note with less than the step it begins on. */
+/* ---- and the same three verbs, whichever lane the hands are in ----
+   A chord has two edges, a length and a place on the page exactly as a note
+   does, and every one of those is the same decision about time. So the three
+   verbs below are shared: they ask state.js what is written at a step, which
+   has never been a question about what KIND of thing is written there, and
+   they ask chords.js for the three things that do differ — what to call it,
+   what to sound, and where to lay the guide. */
 function moveEdge(end, d){
   var i = headAt(voice, cursor);
-  if (i < 0){ say("step " + (cursor + 1) + " is empty — no note to move"); return; }
+  if (i < 0){ say("step " + (cursor + 1) + " is empty — no " + laneThing(voice) + " to move"); return; }
   if (end){ setLen(voice, i, writtenLen(doc, voice, i) + d); return; }
   var s = vsteps(voice), len = writtenLen(doc, voice, i);
   var j = i + d;
@@ -232,10 +239,10 @@ function moveEdge(end, d){
   }
   if (s[j]){ say("step " + (j + 1) + " is taken"); return; }
   if (len - d < 1){
-    say(display(s[i]) + " is one step long — its start cannot pass its end");
+    say(stepText(voice, i) + " is one step long — its start cannot pass its end");
     return;
   }
-  var name = s[i], n = Math.min(pageLen(), len - d);
+  var n = Math.min(pageLen(), len - d);
   /* this mover trades length for position — it holds the far end still — so
      a note with its length sealed cannot be moved this way, and one pinned
      to its step cannot be moved at all */
@@ -244,9 +251,9 @@ function moveEdge(end, d){
   /* the cursor stays on the note it was on, wherever the note has got to */
   if (headAt(voice, cursor) !== j){ cursor = j; renderCursor(); }
   save();
-  showGuide(midiOf(name));
-  audition(name, n);
-  say(display(name) + " begins at step " + (j + 1) + " · " +
+  stepGuide(voice, j);
+  stepAudition(voice, j, n);
+  say(stepText(voice, j) + " begins at step " + (j + 1) + " · " +
       (n === 1 ? "one step" : n + " steps"));
 }
 
@@ -266,7 +273,7 @@ function moveEdge(end, d){
    written there in the first place. Move it back and it rings as it did. */
 function moveNote(d){
   var i = headAt(voice, cursor);
-  if (i < 0){ say("step " + (cursor + 1) + " is empty — no note to move"); return; }
+  if (i < 0){ say("step " + (cursor + 1) + " is empty — no " + laneThing(voice) + " to move"); return; }
   var j = i + d;
   if (j < 0 || j >= pageLen()){
     say("that note is already at the " + (d < 0 ? "head" : "foot") + " of the page");
@@ -274,7 +281,7 @@ function moveNote(d){
   }
   var s = vsteps(voice);
   if (s[j]){ say("step " + (j + 1) + " is taken"); return; }
-  var name = s[i], len = writtenLen(doc, voice, i);
+  var len = writtenLen(doc, voice, i);
   /* through the guarded door: the length rides whole, so only a pinned
      step refuses — the carry is exactly what a length seal permits */
   if (!carryNote(voice, i, j, len)) return;
@@ -283,9 +290,9 @@ function moveNote(d){
      out from under it */
   if (headAt(voice, cursor) !== j){ cursor = j; renderCursor(); }
   save();
-  showGuide(midiOf(name));
-  audition(name, spanOf(doc, voice, j));
-  say(display(name) + " at step " + (j + 1) + " · " +
+  stepGuide(voice, j);
+  stepAudition(voice, j, spanOf(doc, voice, j));
+  say(stepText(voice, j) + " at step " + (j + 1) + " · " +
       (len === 1 ? "one step" : len + " steps"));
 }
 
@@ -380,13 +387,17 @@ function nudge(n, chromatic){
    running, and the other line is still on the page in front of you, only
    quieter. Solo and mute are what the ear needs to check its work: the
    brother's solo test is one keystroke. */
-function voiceName(v){ return VOICE_NAMES[v]; }
+function voiceName(v){ return LANE_NAMES[v]; }
+/* what is written in a lane, in a word: it is a note in a voice and a chord
+   in the chord lane, and the two verbs that can find nothing at a step say
+   so in the lane's own noun */
+function laneThing(v){ return (v === CHORD_LANE) ? "chord" : "note"; }
 function voiceState(v){
   if (anySolo()) return flag("solo", v) ? "solo" : "silent under the solo";
   return flag("mute", v) ? "muted" : "";
 }
 function setVoice(v){
-  voice = ((v % VOICES) + VOICES) % VOICES;
+  voice = ((v % LANES) + LANES) % LANES;
   renderNotes(); renderCursor(); renderMeta(); renderVoices();
   var st = voiceState(voice);
   say("the " + voiceName(voice) + (st ? " · " + st : ""));

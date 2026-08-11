@@ -112,7 +112,8 @@ const ELEMENT_IDS =
    "roll","rollfield","rollbase",
    "qfree","qfreesigil","qdname","qdtext","qdteach","qdstate","qpreview",
    "railquests","rtabs","railtitle","railtext","railteach","railstate",
-   "settings","xbarpad","xbarface","voices","vname0","vname1","vmark0","vmark1",
+   "settings","xbarpad","xbarface","voices",
+   "vname0","vname1","vname2","vmark0","vmark1","vmark2",
    "scenery","scenefade"];
 
 /* ---------- the fake pad ---------- */
@@ -220,6 +221,17 @@ function boot(opts){
     audible: _g("audible"), vsteps: _g("vsteps"), flag: _g("flag"),
     voiceState: _g("voiceState"), renderVoices: _g("renderVoices"),
     VOICES: _g("VOICES"), VOICE_NAMES: _g("VOICE_NAMES"), TONE: _g("TONE"),
+    /* the chord lane: the third stop on the ring, and the arithmetic that
+       turns a lane of relations into a lane of pitches */
+    LANES: _g("LANES"), CHORD_LANE: _g("CHORD_LANE"),
+    LANE_NAMES: _g("LANE_NAMES"), LANE_HOLD: _g("LANE_HOLD"),
+    CHORD_FIELD: _g("CHORD_FIELD"), CHORD_HOLD: _g("CHORD_HOLD"),
+    CHORD_SHAPES: _g("CHORD_SHAPES"), CHORD_THICK: _g("CHORD_THICK"),
+    CHORD_KEYS: _g("CHORD_KEYS"), CHORD_GLYPH: _g("CHORD_GLYPH"),
+    readChords: _g("readChords"), chordVoicings: _g("chordVoicings"),
+    chordRooted: _g("chordRooted"), chordStack: _g("chordStack"),
+    chordCell: _g("chordCell"), chordAt: _g("chordAt"), onChords: _g("onChords"),
+    chordRootMidi: _g("chordRootMidi"), chordSay: _g("chordSay"),
     bars2: _g("bars2"), qdabs2: _g("qdabs2"),
     enterNote: _g("enterNote"), clearStep: _g("clearStep"), moveCursor: _g("moveCursor"),
     jump: _g("jump"), renderCursor: _g("renderCursor"),

@@ -523,9 +523,11 @@ function workspaceDoc(id){
   if (isTool(id)) return wsTool[id] || (wsTool[id] = defaultDoc());
   return wsDoc[id] || (wsDoc[id] = seededDoc(id));
 }
+/* is there music on this page? the chord lane counts: a page of chords with
+   no melody over it yet is a page somebody has been working on */
 function docHasNotes(d){
   if (!d) return false;
-  for (var v = 0; v < VOICES; v++){
+  for (var v = 0; v < LANES; v++){
     var s = docSteps(d, v);
     if (!s) continue;
     for (var i = 0; i < docLen(d); i++) if (s[i]) return true;

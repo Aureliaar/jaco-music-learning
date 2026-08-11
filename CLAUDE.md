@@ -53,7 +53,12 @@ controls, laid over the folio (the hint strip it replaced is gone).
   validator, the autosave) · `views.js` (column, roll, scenery, renderers,
   the key overlay, `say()`) · `audio.js` (timbres, lookahead scheduler,
   transport) · `edit.js` (writing, length, contour, voices, key, tempo,
-  loop, the pages) · `quiz.js` (the up-or-down ear quiz: the TOOLS rail
+  loop, the pages) · `chords.js` (**the chord lane, L5**: the `chords` field
+  read strictly, the shapes, the near/rooted voicing arithmetic, and the
+  lane's own writing — the lane is the third stop on the voice ring,
+  `CHORD_LANE`, and inherits the holds arithmetic whole because state.js
+  asks only whether something is written at a step) · `quiz.js` (the
+  up-or-down ear quiz: the TOOLS rail
   kind, the ramp, and the `earlog` field — a per-answer record riding the
   autosave, last 500, for the assistant's error-pattern reads; player-
   requested 2026-08-11) · `quests.js` (workspaces, drills, the log on disk and
@@ -88,7 +93,11 @@ controls, laid over the folio (the hint strip it replaced is gone).
   lengths and seals travel with the cell, what is *heard* is still
   worked out per site. Field-seeded only: no UI, no bindings until the
   arrangement lesson. Read strictly — a malformed mirror is dropped
-  whole and its notes left alone). The single file to READ to see the player's
+  whole and its notes left alone) and `chords` (the L5 chord lane:
+  `[{deg, shape, voicing}|null, …]`, one cell a step, with `chordhold`
+  beside it — a degree of the key and a shape, never a chord name; the
+  pitches are computed from the cell before it and never stored. Read
+  strictly, dropped whole, and written only where a page has one). The single file to READ to see the player's
   music. **No test may read or write it.** It no longer carries `done` —
   an old log that still does is read permissively, as a seed.
 - `quests/rulings.json` — **the rulings: which quests are complete**

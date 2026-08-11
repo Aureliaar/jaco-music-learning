@@ -76,7 +76,17 @@ var TONE = [
      cutoff, but nothing left for the room to grab whole. */
   { type:"sine",     cut:820,  q:0.9, level:0.30,  attack:0.014,
     release:0.070,   hold:0.17, decay:[0.60, 1.4, 4.0],
-    wave:[1, 0.22, 0.09] }
+    wave:[1, 0.22, 0.09] },
+  /* ---- and the chord lane, from Lesson 5 ----
+     Three or four of these sound at once, so the first thing it is is
+     QUIET: a third of the lead's level each, which lands a full chord at
+     about the weight of one melody note and keeps the tune on top of it
+     where it belongs. Soft-edged besides — a slow attack, a long release,
+     a slow decay — because a chord is the ground the other two stand on
+     and a ground that speaks first is a ground in the way. */
+  { type:"triangle", cut:1500, q:0.6, level:0.085, attack:0.030,
+    release:0.120,   hold:0.22, decay:[0.90, 1.6, 5.0], track:5.0,
+    wave:[1, 0.13, 0.05] }
 ];
 /* the spectrum is built once per tone, on the context the notes play on */
 function toneWave(t){
@@ -176,6 +186,14 @@ function scheduler(){
         var len = spanOf(doc, v, schedStep);
         playNote(n, nextStepTime, dur * len, v, len > 1);
       }
+    }
+    /* and the chord lane, which is one cell and several pitches: what those
+       pitches are is worked out from the lane, not read off it, so it is
+       asked here once a step and never stored anywhere */
+    if (audible(CHORD_LANE) && chordAt(doc, schedStep)){
+      var ps = chordVoicings(doc)[schedStep], clen = spanOf(doc, CHORD_LANE, schedStep);
+      for (var ci = 0; ps && ci < ps.length; ci++)
+        playNote(nameOfMidi(ps[ci]), nextStepTime, dur * clen, CHORD_LANE, clen > 1);
     }
     queue.push({ step: schedStep, time: nextStepTime });
     nextStepTime += dur;

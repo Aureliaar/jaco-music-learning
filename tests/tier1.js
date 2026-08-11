@@ -61,8 +61,8 @@ eq("and sixteen for the second voice", d0.bass.length, 16);
 eq("with a length beside every lead step", d0.hold.length, 16);
 eq("and beside every bass step", d0.basshold.length, 16);
 eq("every length is one", d0.hold.join(), blank().map(() => 1).join());
-eq("mute is a flag per voice", d0.mute, [false, false]);
-eq("and solo likewise", d0.solo, [false, false]);
+eq("mute is a flag per lane", d0.mute, [false, false, false]);
+eq("and solo likewise", d0.solo, [false, false, false]);
 
 ok("nothing is not a page", V(null) === null);
 ok("a string is not a page", V("steps") === null);
@@ -108,9 +108,9 @@ eq("a second voice that cannot be read is silence, not a rejection",
    V(pageOf({ bass:["nonsense"] })).bass.join(), blank().join());
 ok("and the lead is never risked for it",
    V(pageOf({ steps: noteAt({ 0:"C4" }), bass:"rubbish" })).steps[0] === "C4");
-eq("mute that is not an array is two falses", V(pageOf({ mute:7 })).mute, [false, false]);
-eq("solo likewise", V(pageOf({ solo:null })).solo, [false, false]);
-eq("a truthy flag is read as a flag", V(pageOf({ solo:[1, 0] })).solo, [true, false]);
+eq("mute that is not an array is falses", V(pageOf({ mute:7 })).mute, [false, false, false]);
+eq("solo likewise", V(pageOf({ solo:null })).solo, [false, false, false]);
+eq("a truthy flag is read as a flag", V(pageOf({ solo:[1, 0] })).solo, [true, false, false]);
 
 console.log("\n== the marks from the removed rhythm experiment ==");
 const marked = V(pageOf({ steps: noteAt({ 0:"C4", 1:"x", 2:"E4" }) }));
@@ -269,6 +269,58 @@ eq("and so is every step of a page with no mirrors at all",
    T.mirrorSites(V(pageOf()), 0, 7), [7]);
 eq("mirrorAt says how far into the cell a step is", T.mirrorAt(bound, 1, 10).off, 2);
 ok("and nothing where nothing binds", T.mirrorAt(bound, 1, 15) === null);
+
+/* ---- the chord lane: a degree and a shape a cell, from Lesson 5 ---- */
+console.log("\n== the chord lane beside the notes ==");
+const C = (o, extra) => V(pageOf(Object.assign({ chords: o }, extra || {})));
+const cLane = [{ deg:0, shape:"triad" }, null, { deg:3, shape:"seventh", voicing:"root" }];
+eq("a page with no chord lane has a lane of nothing",
+   V(pageOf()).chords.filter(Boolean).length, 0);
+eq("and it goes out saying nothing about one",
+   Object.prototype.hasOwnProperty.call(T.docOut(V(pageOf())), "chords"), false);
+eq("nor about its lengths",
+   Object.prototype.hasOwnProperty.call(T.docOut(V(pageOf())), "chordhold"), false);
+eq("and its two flags are the two flags it came in with", T.docOut(V(pageOf())).mute,
+   [false, false]);
+eq("a lane is read cell for cell", C(cLane).chords.slice(0, 3), cLane);
+eq("the cells past the end of it are empty", C(cLane).chords.length, 16);
+eq("and it comes back out as it went in", T.docOut(C(cLane)).chords.slice(0, 3), cLane);
+eq("the near voicing is the default and is never written",
+   Object.prototype.hasOwnProperty.call(
+     T.docOut(C([{ deg:0, shape:"triad", voicing:"near" }])).chords[0], "voicing"), false);
+eq("the rooted one is written every time",
+   T.docOut(C([{ deg:2, shape:"sus", voicing:"root" }])).chords[0].voicing, "root");
+eq("a held chord keeps its length", C(cLane, { chordhold:[4,1,1] }).chordhold[0], 4);
+eq("and that length is written out beside it",
+   T.docOut(C(cLane, { chordhold:[4,1,1] })).chordhold[0], 4);
+eq("a lane with nothing held writes no lengths at all",
+   Object.prototype.hasOwnProperty.call(T.docOut(C(cLane)), "chordhold"), false);
+eq("a length where there is no chord is not a length",
+   C([null, { deg:0, shape:"triad" }], { chordhold:[8,1] }).chordhold[0], 1);
+eq("the chord lane's own mute is written where it is set",
+   T.docOut(C(cLane, { mute:[false,false,true] })).mute, [false,false,true]);
+
+console.log("\n== what a chord lane has to be ==");
+const noLane = (name, o) => eq(name, C(o).chords.filter(Boolean).length, 0);
+noLane("a shape nobody offers drops the whole lane",
+       [{ deg:0, shape:"triad" }, { deg:1, shape:"eleventh" }]);
+noLane("so does a missing shape", [{ deg:0 }]);
+noLane("a degree that is not a whole number drops it", [{ deg:1.5, shape:"triad" }]);
+noLane("a degree off the end of the key drops it", [{ deg:99, shape:"triad" }]);
+noLane("a degree that is not a number drops it", [{ deg:"home", shape:"triad" }]);
+noLane("a voicing nobody offers drops it",
+       [{ deg:0, shape:"triad", voicing:"second inversion" }]);
+noLane("a cell that is not an object drops it", ["triad"]);
+noLane("a lane longer than the page drops whole", new Array(17).fill({ deg:0, shape:"triad" }));
+noLane("a lane that is not a list at all is no lane", "chords");
+ok("and a page is never rejected for its chords",
+   C([{ deg:0, shape:"nonsense" }], { steps: noteAt({ 0:"C4" }) }).steps[0] === "C4");
+ok("its notes are exactly where they were",
+   C("rubbish", { steps: noteAt({ 0:"C4", 4:"E4" }) }).steps.filter(Boolean).length === 2);
+eq("a long page carries a long lane",
+   C(new Array(32).fill({ deg:0, shape:"triad" }),
+     { len:32, steps:new Array(32).fill(null), bass:new Array(32).fill(null) })
+     .chords.filter(Boolean).length, 32);
 
 /* ---- the echo: the hidden call a Lesson 4 drill hands its workspace ---- */
 console.log("\n== the echo beside the notes ==");
