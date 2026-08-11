@@ -5,10 +5,27 @@ grows one primitive per lesson. The tool is the cage; the music is the
 point. Read `CURRICULUM.md` (lessons + quest system), `QUESTS.md` (L1
 board + rules), `BUDGET.md` (HUD budget ledger) before proposing anything.
 
+**Second purpose (2026-08-11): this project is also an untrained-ear lab**
+for TheoryOfMagic's scored-encounters design — read
+`E:\experiments\TheoryOfMagic\Docs\design\wiki\music-mechanics.md`. Part of
+all this is sussing out what to ask a real composer for that game's design,
+and its doctrine leans on assumptions about what the *untrained* ear can do
+(e.g. "same-vs-different recognition is the strongest untrained faculty").
+The player's own pre-training ear is the one instrument that can test those
+assumptions, and it is being destroyed by the curriculum on purpose — so
+**capture untrained-ear findings in `EAR-NOTES.md` the moment they surface**
+(dated, with the drill that surfaced them). First finding already logged:
+interval *direction* is not natively readable, let alone magnitude.
+
 ## Running
 
 - `folio.cmd` (or `node server.mjs`) → http://localhost:4173 — the synced
-  instrument. `server.mjs` is zero-dependency Node.
+  instrument. `server.mjs` is zero-dependency Node. `ecosystem.config.cjs`
+  runs it under pm2 as `folio-dev` (logs in `tmp/`); pm2 does not survive
+  a reboot here unless resurrected. **A down server may be deliberate** —
+  disk writes to the log and the rulings migration want the server off and
+  the tab closed — so ask before restarting it; never assume it's an
+  accident.
 - `http://localhost:4173/auditor.html` — blind lineup-listening page
   (Italian). NOTE: plays the lead voice only (pre-L2); optional now that
   evaluation is self-administered.
@@ -36,7 +53,10 @@ controls, laid over the folio (the hint strip it replaced is gone).
   validator, the autosave) · `views.js` (column, roll, scenery, renderers,
   the key overlay, `say()`) · `audio.js` (timbres, lookahead scheduler,
   transport) · `edit.js` (writing, length, contour, voices, key, tempo,
-  loop, the pages) · `quests.js` (workspaces, drills, the log on disk and
+  loop, the pages) · `quiz.js` (the up-or-down ear quiz: the TOOLS rail
+  kind, the ramp, and the `earlog` field — a per-answer record riding the
+  autosave, last 500, for the assistant's error-pattern reads; player-
+  requested 2026-08-11) · `quests.js` (workspaces, drills, the log on disk and
   its sync, tabs, rails) · `entry.js` (keyboard by `e.code`, gamepad) ·
   `tones.js` (what the voices sound like: the WAV read, the kits off the
   shelf, the sampled voice — no room, no F4) ·

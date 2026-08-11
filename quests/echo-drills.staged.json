@@ -1,0 +1,792 @@
+{
+ "folio": "echo-drills-staged",
+ "source": "echo-material.json candidate a",
+ "drills": [
+  {
+   "id": "which-way",
+   "name": "which way",
+   "lesson": 4,
+   "summary": "- two notes, played hidden\n- answer the shape, not the notes\n- up or down, nothing else",
+   "teaches": "the ear's first question.",
+   "pattern": {
+    "version": 1,
+    "title": "which way",
+    "tempo": 88,
+    "loop": 16,
+    "key": "C major",
+    "steps": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "bass": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "hold": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "basshold": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "echo": {
+     "stage": "contour",
+     "voice": 0,
+     "at": 0,
+     "call": [
+      {
+       "step": 0,
+       "note": "C4",
+       "len": 1
+      },
+      {
+       "step": 2,
+       "note": "G4",
+       "len": 1
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "three-ways",
+   "name": "three ways",
+   "lesson": 4,
+   "summary": "- three notes, played hidden\n- answer the shape only\n- a note repeated is still a move",
+   "teaches": "standing still is a direction.",
+   "pattern": {
+    "version": 1,
+    "title": "three ways",
+    "tempo": 92,
+    "loop": 16,
+    "key": "G major",
+    "steps": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "bass": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "hold": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "basshold": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "echo": {
+     "stage": "contour",
+     "voice": 0,
+     "at": 0,
+     "call": [
+      {
+       "step": 0,
+       "note": "G4",
+       "len": 1
+      },
+      {
+       "step": 2,
+       "note": "D5",
+       "len": 1
+      },
+      {
+       "step": 4,
+       "note": "G5",
+       "len": 1
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "the-long-way",
+   "name": "the long way",
+   "lesson": 4,
+   "summary": "- five or six notes, played hidden\n- answer the shape only\n- one wrong move, start over",
+   "teaches": "a line held as a drawing.",
+   "pattern": {
+    "version": 1,
+    "title": "the long way",
+    "tempo": 96,
+    "loop": 16,
+    "key": "D minor",
+    "steps": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "bass": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "hold": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "basshold": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "echo": {
+     "stage": "contour",
+     "voice": 0,
+     "at": 0,
+     "call": [
+      {
+       "step": 0,
+       "note": "D4",
+       "len": 1
+      },
+      {
+       "step": 2,
+       "note": "F4",
+       "len": 1
+      },
+      {
+       "step": 4,
+       "note": "A4",
+       "len": 1
+      },
+      {
+       "step": 6,
+       "note": "F4",
+       "len": 1
+      },
+      {
+       "step": 8,
+       "note": "D4",
+       "len": 1
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "home-and-back",
+   "name": "home and back",
+   "lesson": 4,
+   "summary": "- three notes, played hidden\n- answer the notes themselves\n- every length the same",
+   "teaches": "five notes go a long way.",
+   "pattern": {
+    "version": 1,
+    "title": "home and back",
+    "tempo": 96,
+    "loop": 16,
+    "key": "F major",
+    "steps": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "bass": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "hold": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "basshold": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "echo": {
+     "stage": "degrees",
+     "voice": 0,
+     "at": 0,
+     "call": [
+      {
+       "step": 0,
+       "note": "F4",
+       "len": 1
+      },
+      {
+       "step": 2,
+       "note": "A4",
+       "len": 1
+      },
+      {
+       "step": 4,
+       "note": "C5",
+       "len": 1
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "the-pull",
+   "name": "the pull",
+   "lesson": 4,
+   "summary": "- four notes, played hidden\n- answer the notes themselves\n- every length the same",
+   "teaches": "the seventh has an errand.",
+   "pattern": {
+    "version": 1,
+    "title": "the pull",
+    "tempo": 92,
+    "loop": 16,
+    "key": "C major",
+    "steps": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "bass": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "hold": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "basshold": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "echo": {
+     "stage": "degrees",
+     "voice": 0,
+     "at": 0,
+     "call": [
+      {
+       "step": 0,
+       "note": "C4",
+       "len": 1
+      },
+      {
+       "step": 2,
+       "note": "E4",
+       "len": 1
+      },
+      {
+       "step": 4,
+       "note": "B4",
+       "len": 1
+      },
+      {
+       "step": 6,
+       "note": "C5",
+       "len": 1
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "one-note-drum",
+   "name": "one note drum",
+   "lesson": 4,
+   "summary": "- sixteen steps, played hidden\n- one pitch the whole way\n- answer the lengths and the gaps",
+   "teaches": "rhythm is a second ear.",
+   "pattern": {
+    "version": 1,
+    "title": "one note drum",
+    "tempo": 100,
+    "loop": 16,
+    "key": "A minor",
+    "steps": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "bass": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "hold": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "basshold": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "echo": {
+     "stage": "rhythm",
+     "voice": 0,
+     "at": 0,
+     "call": [
+      {
+       "step": 0,
+       "note": "A4",
+       "len": 4
+      },
+      {
+       "step": 4,
+       "note": "A4",
+       "len": 2
+      },
+      {
+       "step": 6,
+       "note": "A4",
+       "len": 2
+      },
+      {
+       "step": 10,
+       "note": "A4",
+       "len": 3
+      },
+      {
+       "step": 13,
+       "note": "A4",
+       "len": 3
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "the-sentence",
+   "name": "the sentence",
+   "lesson": 4,
+   "summary": "- sixteen steps, played hidden\n- answer the notes and their lengths\n- write it after it stops, not during",
+   "teaches": "audiation.",
+   "pattern": {
+    "version": 1,
+    "title": "the sentence",
+    "tempo": 92,
+    "loop": 16,
+    "key": "G major",
+    "steps": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "bass": [
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null,
+     null
+    ],
+    "hold": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "basshold": [
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    "echo": {
+     "stage": "degrees+rhythm",
+     "voice": 0,
+     "at": 0,
+     "call": [
+      {
+       "step": 0,
+       "note": "G4",
+       "len": 4
+      },
+      {
+       "step": 4,
+       "note": "B4",
+       "len": 2
+      },
+      {
+       "step": 6,
+       "note": "D5",
+       "len": 4
+      },
+      {
+       "step": 10,
+       "note": "B4",
+       "len": 2
+      },
+      {
+       "step": 12,
+       "note": "G4",
+       "len": 4
+      }
+     ]
+    }
+   }
+  }
+ ]
+}

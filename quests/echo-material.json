@@ -1,0 +1,927 @@
+{
+  "folio": "echo-material",
+  "version": 1,
+  "phase": "4.1",
+  "notation": {
+    "what": "The calls for Lesson 4.1 (the echo). Material only: what the folio should PLAY. This file is deliberately schema-neutral — it is not the echo engine's storage format (that lives in briefs/echo.md, written by another hand). Encode from here into whatever the engine wants.",
+    "rung": "One drill on the ladder. Ordered. Each carries a seeded key and tempo, a stage, and several candidate calls so a repeat attempt can draw a fresh one.",
+    "stage": "contour = answer the shape only (up/down/again). degrees = answer the pitches, all lengths equal. rhythm = one fixed pitch, answer the lengths and the gaps. degrees+rhythm = both, the closing rung. Never all three asked as three separate problems at once.",
+    "tonicOctave": "Which octave the tonic sits in for these calls. deg 0 is that tonic. Absolute pitch = tonic pitch class in that octave, then walk the seeded scale. Every call here lands inside MIDI 36-84 (C2-C6).",
+    "events": "The call, in order. Each event is either a sounding note {deg,len} or a silence {rest:true,len}. deg is a scale degree relative to the tonic: 0 tonic, 1..6 the scale steps above it, 7 the tonic an octave up, -1 the scale step below the tonic (in a major key that is the leading tone). No chromatics anywhere in 4.1. len is in steps (sixteenths); 1 is the plain step, larger is a written hold.",
+    "steps": "Total length of the call in steps: the sum of every event's len. Never more than 16 — the page is sixteen steps.",
+    "shape": "The contour of the sounding notes, one character per move, so n notes give n-1 characters: u up, d down, s again (same pitch). Derived, kept here so a contour-stage check needs no arithmetic. null where the call is one pitch throughout.",
+    "voice": "Every call is the lead voice alone. The bass is silent in 4.1.",
+    "lengths": "Ruling 2026-08-11: the contour and degrees rungs write every note len 1, on the odd grid positions (steps 0,2,4,...) - length is a tool the ear is not being asked about yet, so the calls do not use it. Only one-note-drum and the-sentence carry written lengths, because there length is the question."
+  },
+  "rungs": [
+    {
+      "id": "which-way",
+      "title": "Which Way",
+      "order": 1,
+      "stage": "contour",
+      "key": "C major",
+      "tempo": 88,
+      "tonicOctave": 4,
+      "notes": "Two notes, a fifth or an octave apart, plain grid steps. Nothing here is close enough to mistake.",
+      "calls": [
+        {
+          "id": "which-way-a",
+          "events": [
+            {
+              "deg": 0,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 4,
+              "len": 1
+            }
+          ],
+          "steps": 3,
+          "shape": "u"
+        },
+        {
+          "id": "which-way-b",
+          "events": [
+            {
+              "deg": 4,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 0,
+              "len": 1
+            }
+          ],
+          "steps": 3,
+          "shape": "d"
+        },
+        {
+          "id": "which-way-c",
+          "events": [
+            {
+              "deg": 0,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 7,
+              "len": 1
+            }
+          ],
+          "steps": 3,
+          "shape": "u"
+        },
+        {
+          "id": "which-way-d",
+          "events": [
+            {
+              "deg": 7,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 0,
+              "len": 1
+            }
+          ],
+          "steps": 3,
+          "shape": "d"
+        }
+      ]
+    },
+    {
+      "id": "three-ways",
+      "title": "Three Ways",
+      "order": 2,
+      "stage": "contour",
+      "key": "G major",
+      "tempo": 92,
+      "tonicOctave": 4,
+      "notes": "Three notes, every move a fourth or wider, and one call where a note simply happens twice - 'again' is a move too, and the ear has to count it as one.",
+      "calls": [
+        {
+          "id": "three-ways-a",
+          "events": [
+            {
+              "deg": 0,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 4,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 7,
+              "len": 1
+            }
+          ],
+          "steps": 5,
+          "shape": "uu"
+        },
+        {
+          "id": "three-ways-b",
+          "events": [
+            {
+              "deg": 7,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 3,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 0,
+              "len": 1
+            }
+          ],
+          "steps": 5,
+          "shape": "dd"
+        },
+        {
+          "id": "three-ways-c",
+          "events": [
+            {
+              "deg": 0,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 4,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 0,
+              "len": 1
+            }
+          ],
+          "steps": 5,
+          "shape": "ud"
+        },
+        {
+          "id": "three-ways-d",
+          "events": [
+            {
+              "deg": 0,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 0,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 4,
+              "len": 1
+            }
+          ],
+          "steps": 5,
+          "shape": "su"
+        }
+      ]
+    },
+    {
+      "id": "the-long-way",
+      "title": "The Long Way",
+      "order": 3,
+      "stage": "contour",
+      "key": "D minor",
+      "tempo": 96,
+      "tonicOctave": 4,
+      "notes": "Five or six notes. Moves narrow to thirds - never a step - because the call is now long enough that the memory, not the interval, is the difficulty.",
+      "calls": [
+        {
+          "id": "the-long-way-a",
+          "events": [
+            {
+              "deg": 0,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 2,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 4,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 2,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 0,
+              "len": 1
+            }
+          ],
+          "steps": 9,
+          "shape": "uudd"
+        },
+        {
+          "id": "the-long-way-b",
+          "events": [
+            {
+              "deg": 7,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 4,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 6,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 2,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 0,
+              "len": 1
+            }
+          ],
+          "steps": 9,
+          "shape": "dudd"
+        },
+        {
+          "id": "the-long-way-c",
+          "events": [
+            {
+              "deg": 0,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 0,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 4,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 2,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 7,
+              "len": 1
+            }
+          ],
+          "steps": 9,
+          "shape": "sudu"
+        },
+        {
+          "id": "the-long-way-d",
+          "events": [
+            {
+              "deg": 4,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 2,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 0,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 2,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 4,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 7,
+              "len": 1
+            }
+          ],
+          "steps": 11,
+          "shape": "dduuu"
+        }
+      ]
+    },
+    {
+      "id": "home-and-back",
+      "title": "Home and Back",
+      "order": 4,
+      "stage": "degrees",
+      "key": "F major",
+      "tempo": 96,
+      "tonicOctave": 4,
+      "notes": "First rung where the pitches themselves are asked. Degrees restricted to 0,1,2,4,5 - the major pentatonic, the set the L1-L3 pages already lean on. No leading tone here, nothing to pull.",
+      "calls": [
+        {
+          "id": "home-and-back-a",
+          "events": [
+            {
+              "deg": 0,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 2,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 4,
+              "len": 1
+            }
+          ],
+          "steps": 5,
+          "shape": "uu"
+        },
+        {
+          "id": "home-and-back-b",
+          "events": [
+            {
+              "deg": 0,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 4,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 2,
+              "len": 1
+            }
+          ],
+          "steps": 5,
+          "shape": "ud"
+        },
+        {
+          "id": "home-and-back-c",
+          "events": [
+            {
+              "deg": 5,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 4,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 2,
+              "len": 1
+            }
+          ],
+          "steps": 5,
+          "shape": "dd"
+        },
+        {
+          "id": "home-and-back-d",
+          "events": [
+            {
+              "deg": 0,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 1,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 2,
+              "len": 1
+            }
+          ],
+          "steps": 5,
+          "shape": "uu"
+        }
+      ]
+    },
+    {
+      "id": "the-pull",
+      "title": "The Pull",
+      "order": 5,
+      "stage": "degrees",
+      "key": "C major",
+      "tempo": 92,
+      "tonicOctave": 4,
+      "notes": "Four notes, and the pentatonic fence comes down: every call touches degree 6 or degree -1, the scale step that sits a semitone off the tonic. Major key on purpose - the natural minor the instrument writes has no such step, and 4.1 spends no chromatics. Ruling 2026-08-11: every degrees rung this early starts ON the tonic - sussing an unanchored first note is a later skill. Candidate d leads for that reason; a and c start off-tonic and wait.",
+      "calls": [
+        {
+          "id": "the-pull-d",
+          "events": [
+            {
+              "deg": 0,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 2,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 6,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 7,
+              "len": 1
+            }
+          ],
+          "steps": 7,
+          "shape": "uuu"
+        },
+        {
+          "id": "the-pull-a",
+          "events": [
+            {
+              "deg": 4,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 5,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 6,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 7,
+              "len": 1
+            }
+          ],
+          "steps": 7,
+          "shape": "uuu"
+        },
+        {
+          "id": "the-pull-b",
+          "events": [
+            {
+              "deg": 2,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 1,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": -1,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 0,
+              "len": 1
+            }
+          ],
+          "steps": 7,
+          "shape": "ddu"
+        },
+        {
+          "id": "the-pull-c",
+          "events": [
+            {
+              "deg": 7,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 6,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 4,
+              "len": 1
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 2,
+              "len": 1
+            }
+          ],
+          "steps": 7,
+          "shape": "ddd"
+        }
+      ]
+    },
+    {
+      "id": "one-note-drum",
+      "title": "One Note Drum",
+      "order": 6,
+      "stage": "rhythm",
+      "key": "A minor",
+      "tempo": 100,
+      "tonicOctave": 4,
+      "notes": "One pitch, sixteen steps, the whole page. Written lengths and rests only — the L3 holds vocabulary, nothing the instrument cannot already say. Candidate c is the threes figure the L3 board taught, so one rung in four is already half known.",
+      "calls": [
+        {
+          "id": "one-note-drum-a",
+          "events": [
+            {
+              "deg": 0,
+              "len": 4
+            },
+            {
+              "deg": 0,
+              "len": 2
+            },
+            {
+              "deg": 0,
+              "len": 2
+            },
+            {
+              "rest": true,
+              "len": 2
+            },
+            {
+              "deg": 0,
+              "len": 3
+            },
+            {
+              "deg": 0,
+              "len": 3
+            }
+          ],
+          "steps": 16,
+          "shape": null
+        },
+        {
+          "id": "one-note-drum-b",
+          "events": [
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 0,
+              "len": 3
+            },
+            {
+              "deg": 0,
+              "len": 1
+            },
+            {
+              "deg": 0,
+              "len": 4
+            },
+            {
+              "rest": true,
+              "len": 2
+            },
+            {
+              "deg": 0,
+              "len": 2
+            },
+            {
+              "deg": 0,
+              "len": 3
+            }
+          ],
+          "steps": 16,
+          "shape": null
+        },
+        {
+          "id": "one-note-drum-c",
+          "events": [
+            {
+              "deg": 0,
+              "len": 3
+            },
+            {
+              "deg": 0,
+              "len": 3
+            },
+            {
+              "deg": 0,
+              "len": 3
+            },
+            {
+              "deg": 0,
+              "len": 3
+            },
+            {
+              "rest": true,
+              "len": 1
+            },
+            {
+              "deg": 0,
+              "len": 3
+            }
+          ],
+          "steps": 16,
+          "shape": null
+        },
+        {
+          "id": "one-note-drum-d",
+          "events": [
+            {
+              "deg": 0,
+              "len": 2
+            },
+            {
+              "rest": true,
+              "len": 2
+            },
+            {
+              "deg": 0,
+              "len": 2
+            },
+            {
+              "deg": 0,
+              "len": 2
+            },
+            {
+              "deg": 0,
+              "len": 6
+            },
+            {
+              "deg": 0,
+              "len": 2
+            }
+          ],
+          "steps": 16,
+          "shape": null
+        }
+      ]
+    },
+    {
+      "id": "the-sentence",
+      "title": "The Sentence",
+      "order": 7,
+      "stage": "degrees+rhythm",
+      "key": "G major",
+      "tempo": 92,
+      "tonicOctave": 4,
+      "notes": "The closing rung: pitch and length in one call, sixteen steps, contour no longer asked separately because degrees already contain it. Short vocabulary on both axes — five notes, three lengths — so the difficulty is holding it, not decoding it.",
+      "calls": [
+        {
+          "id": "the-sentence-a",
+          "events": [
+            {
+              "deg": 0,
+              "len": 4
+            },
+            {
+              "deg": 2,
+              "len": 2
+            },
+            {
+              "deg": 4,
+              "len": 4
+            },
+            {
+              "deg": 2,
+              "len": 2
+            },
+            {
+              "deg": 0,
+              "len": 4
+            }
+          ],
+          "steps": 16,
+          "shape": "uudd"
+        },
+        {
+          "id": "the-sentence-b",
+          "events": [
+            {
+              "deg": 4,
+              "len": 3
+            },
+            {
+              "deg": 5,
+              "len": 1
+            },
+            {
+              "deg": 4,
+              "len": 2
+            },
+            {
+              "deg": 2,
+              "len": 2
+            },
+            {
+              "deg": 0,
+              "len": 4
+            },
+            {
+              "rest": true,
+              "len": 4
+            }
+          ],
+          "steps": 16,
+          "shape": "uddd"
+        },
+        {
+          "id": "the-sentence-c",
+          "events": [
+            {
+              "deg": 0,
+              "len": 2
+            },
+            {
+              "deg": 2,
+              "len": 2
+            },
+            {
+              "deg": 4,
+              "len": 4
+            },
+            {
+              "deg": 6,
+              "len": 2
+            },
+            {
+              "deg": 7,
+              "len": 6
+            }
+          ],
+          "steps": 16,
+          "shape": "uuuu"
+        }
+      ]
+    }
+  ]
+}
