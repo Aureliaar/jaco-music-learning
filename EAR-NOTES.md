@@ -91,3 +91,22 @@ over pitch-shape mechanics for untrained players.
 does? Do descents landing *off* the tonic read more clearly than
 tonic-landings? Does the far threshold move if the piece's range is widened
 first (territorial vs metric)?
+
+**2026-08-28 · the stacked walk beats its skeleton, immediately.** First
+day of real chord-lane listening (L5 free play). The player laid a triad
+on every other step and walked the degree straight up — deg 0 through 8,
+the whole chord-scale in order — then judged it against "the equivalent
+of just the roots": *"this to me sounds a lot better."* Unprompted
+experiment, clean design: same contour, same rhythm, the only variable is
+one line versus three built-from-the-key.
+
+What the ear is getting: roots-only varies in height alone; the walked
+triads also vary in internal spacing step to step (the key's uneven
+steps baked into each stack), so shape shifts under the climb. The
+untrained ear registers that second channel instantly and prefers it —
+consistent with the interval-quality-is-immediate finding above
+(vertical spacing read as color, no training required). Notably the
+player had *proposed* the scale-of-chords idea in conversation minutes
+earlier and distrusted it as a sampling artifact; the grid experiment is
+what settled it. Relational hearing again: the finding arrived as a
+comparison, never as a name.
