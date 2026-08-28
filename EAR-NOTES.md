@@ -145,15 +145,27 @@ unlosable and reads as low-stakes; stakes enter exactly when an
 independent line can disagree with the frame — the held note across a
 chord change is the smallest possible wrongness generator.
 
-**2026-08-29 · the sequence, found by hand.** Mid–wide-field, the
+**2026-08-29 · the sequence, found by hand.** In wide-field the
 player built cells whose roots (1-based) run 5·6·4·5·3·4·2 — a
-two-chord move (up a seat, fall a third) copied one seat lower each
-repeat — then asked *"does it have a name?"* It does: a sequence, one
-of the oldest devices there is, arrived at by taste before the name.
-Predicted by the relational profile twice over: the repeated object is
-not a chord but an interval pattern *between* chords (+1, −3), root-
-agnostic by construction; and the same page's second half runs the
-trick inverted (5·7 climbing against a fixed 5) apparently unnoticed.
-The pleasure mechanism fits the running theory — the copy makes each
-landing predicted, and prediction-confirmed-at-a-new-height is a
-relation, not a sound.
+two-chord move (root up one degree, then down a third) copied one
+degree lower each repeat: a sequence, one of the oldest devices there
+is, arrived at by taste before the name. Predicted by the relational
+profile twice over: the repeated object is not a chord but an interval
+pattern *between* chords (+1, −3), root-agnostic by construction; and
+the same page's second half runs the device inverted (root walking up
+in alternation with a fixed V) apparently unnoticed. The pleasure
+mechanism fits the running theory — the copy makes each landing
+predicted, and prediction-confirmed-at-a-new-height is a relation, not
+a sound.
+
+**2026-08-29 · the neighbor dip.** The part the player actually
+flagged as liked ("*this middle part - does it have a name?*") was
+elsewhere on the same page: ii struck four times on alternating cells,
+one dip to I, back to ii, then the same plateau one degree up on iii.
+The named thing inside it is neighbor motion (I as neighbor chord —
+leave by a step, return at once); the repetition itself is just static
+harmony re-articulated. Notable for the profile: what drew their ear
+was again a relation — the dip-and-return that makes a repeated chord
+feel re-chosen rather than stuck — and they found the plateau pacing
+(harmonic rhythm stretched, then stepwise motion between plateaus)
+without being shown it.
