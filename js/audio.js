@@ -98,8 +98,13 @@ var TONE = [
      it where it belongs. Soft-edged besides — a slow attack, a long release,
      a slow decay — because a chord is the ground the other two stand on
      and a ground that speaks first is a ground in the way. */
-  { type:"triangle", cut:1500, q:0.6, level:0.115, attack:0.030,
-    release:0.120,   hold:0.22, decay:[0.90, 1.6, 5.0], track:5.0,
+  /* Second correction by ear (2026-08-28, the player): still reading as
+     very muted against single notes. Loudness lives in the mids the dark
+     cutoff was holding back, so this pass opens the filter a little as
+     well as raising the level — presence through brightness costs less
+     ground-ness than gain alone would. */
+  { type:"triangle", cut:1800, q:0.6, level:0.14, attack:0.030,
+    release:0.120,   hold:0.22, decay:[0.90, 1.6, 5.0], track:6.0,
     wave:[1, 0.13, 0.05] }
 ];
 /* the spectrum is built once per tone, on the context the notes play on */
