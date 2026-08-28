@@ -119,3 +119,14 @@ what the ear enjoys is the changing distance between them: closing,
 meeting, reopening. Third finding in one sitting where the pleasure
 lives in a *relation between streams* rather than in either stream —
 the relational-hearing profile predicting taste, not just perception.
+
+**A/B confirmed, then a third stream.** The player ran the suggested
+control: same two walks in parallel motion — *"it has none of that cool
+'fuga' feel."* Their own word, and a precise one: the pleasure of the
+crossing version is pursuit, one line fleeing while the other closes.
+Then they added a simple ostinato bassline (L2 material) *"and it added
+something"*: the two walks both go somewhere, the loop refuses to — a
+fixed point both moving lines are now measured against. Three streams,
+three live pairwise relations, assembled unprompted in one free-play
+sitting. The relational-taste finding keeps compounding: every addition
+they liked today added a *relation*, not a sound.
