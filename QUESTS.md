@@ -489,17 +489,23 @@ Delivered 2026-08-28, the first board after the chord lane landed
 for all of 5.1, as the curriculum says, so ⚔ Bassline First and the
 Return-chain suspension reprise wait for 5.2. The borrowed shape is
 deliberately absent; it gets its own board (the Nine Lives seed) once
-these close. Seeds are key and tempo only, every lane blank: placing
+these close. Shapes are staged (player ruling 2026-08-28): triads only
+for the first three quests, sus entering at The Held Breath, seventh
+and borrowed held back so their arrival is an event — the dial stays
+unlocked, the quests just don't ask. Seeds are key and tempo only,
+every lane blank: placing
 the first chord is the point, and a chord-bearing seed cannot ship
 until the tab runs the code that knows the field anyway.
 
 ### ⚔ Two-Chord World *(seed: A minor, 88)*
+- triads only
 - only two chord roots, all page
 - no step without chord sound
 - ten loops without tiring
 *Teaches: how little harmony needs.*
 
 ### ⚔ Common Tone *(seed: F major, 96)*
+- triads only
 - at least four different roots
 - every chord change shares a pitch
 *Teaches: the note that stays.*
@@ -509,6 +515,7 @@ have a note in common and some have none; the ear learns the
 difference before anything names it.)*
 
 ### ⚔ The Odd One Out *(seed: G major, 100)*
+- triads only
 - at least four different roots
 - all chords nearest, except one
 - the odd one found by ear

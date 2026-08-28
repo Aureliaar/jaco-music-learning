@@ -1,7 +1,7 @@
 {
   "folio": "quest-log",
   "version": 2,
-  "active": "which-way",
+  "active": "two-chord-world",
   "free": {
     "version": 1,
     "title": "untitled folio",
@@ -4516,6 +4516,112 @@
             }
           ]
         }
+      }
+    },
+    "two-chord-world": {
+      "pattern": {
+        "version": 1,
+        "title": "two-chord world",
+        "tempo": 88,
+        "loop": 16,
+        "key": "A minor",
+        "steps": [
+          null,
+          "D4",
+          "C4",
+          null,
+          "B3",
+          null,
+          "A3",
+          null,
+          "F3",
+          null,
+          "E3",
+          null,
+          "D3",
+          null,
+          null,
+          null
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "tones": [
+          "piano",
+          null
+        ],
+        "mute": [
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false
+        ],
+        "chords": [
+          {
+            "deg": -1,
+            "shape": "triad"
+          },
+          {
+            "deg": -1,
+            "shape": "triad"
+          },
+          {
+            "deg": 0,
+            "shape": "triad"
+          },
+          {
+            "deg": -1,
+            "shape": "triad"
+          },
+          {
+            "deg": -1,
+            "shape": "triad",
+            "voicing": "root"
+          },
+          null,
+          {
+            "deg": -2,
+            "shape": "triad"
+          },
+          null,
+          {
+            "deg": 1,
+            "shape": "triad"
+          },
+          null,
+          {
+            "deg": 0,
+            "shape": "triad"
+          },
+          null,
+          {
+            "deg": -1,
+            "shape": "triad"
+          },
+          null,
+          {
+            "deg": 0,
+            "shape": "triad"
+          },
+          null
+        ]
       }
     }
   },
@@ -12172,7 +12278,6 @@
       "name": "two-chord world",
       "summary": "- only two chord roots, all page\n- no step without chord sound\n- ten loops without tiring",
       "teaches": "how little harmony needs.",
-      "lesson": 5,
       "pattern": {
         "version": 1,
         "title": "two-chord world",
@@ -12215,22 +12320,137 @@
           null,
           null
         ],
+        "hold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "basshold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "lock": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "basslock": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "tones": [
+          null,
+          null
+        ],
+        "mirrors": [],
         "mute": [
+          false,
           false,
           false
         ],
         "solo": [
           false,
+          false,
           false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
         ]
-      }
+      },
+      "lesson": 5
     },
     {
       "id": "common-tone",
       "name": "common tone",
       "summary": "- at least four different roots\n- every chord change shares a pitch",
       "teaches": "the note that stays.",
-      "lesson": 5,
       "pattern": {
         "version": 1,
         "title": "common tone",
@@ -12273,22 +12493,137 @@
           null,
           null
         ],
+        "hold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "basshold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "lock": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "basslock": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "tones": [
+          null,
+          null
+        ],
+        "mirrors": [],
         "mute": [
+          false,
           false,
           false
         ],
         "solo": [
           false,
+          false,
           false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
         ]
-      }
+      },
+      "lesson": 5
     },
     {
       "id": "odd-one-out",
       "name": "the odd one out",
       "summary": "- at least four different roots\n- all chords nearest, except one\n- the odd one found by ear",
       "teaches": "what voice leading is for.",
-      "lesson": 5,
       "pattern": {
         "version": 1,
         "title": "the odd one out",
@@ -12331,22 +12666,137 @@
           null,
           null
         ],
+        "hold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "basshold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "lock": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "basslock": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "tones": [
+          null,
+          null
+        ],
+        "mirrors": [],
         "mute": [
+          false,
           false,
           false
         ],
         "solo": [
           false,
+          false,
           false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
         ]
-      }
+      },
+      "lesson": 5
     },
     {
       "id": "held-breath",
       "name": "the held breath",
       "summary": "- at least two sus cells\n- each sus, then a triad, same root",
       "teaches": "the suspension, at last.",
-      "lesson": 5,
       "pattern": {
         "version": 1,
         "title": "the held breath",
@@ -12389,22 +12839,137 @@
           null,
           null
         ],
+        "hold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "basshold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "lock": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "basslock": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "tones": [
+          null,
+          null
+        ],
+        "mirrors": [],
         "mute": [
+          false,
           false,
           false
         ],
         "solo": [
           false,
+          false,
           false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
         ]
-      }
+      },
+      "lesson": 5
     },
     {
       "id": "the-wheel",
       "name": "the wheel",
       "summary": "- at least four different roots\n- the last chord is not home\n- stopping must feel like an interruption",
       "teaches": "the loop that leans forward.",
-      "lesson": 5,
       "pattern": {
         "version": 1,
         "title": "the wheel",
@@ -12447,15 +13012,131 @@
           null,
           null
         ],
+        "hold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "basshold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "lock": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "basslock": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "tones": [
+          null,
+          null
+        ],
+        "mirrors": [],
         "mute": [
+          false,
           false,
           false
         ],
         "solo": [
           false,
+          false,
           false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
         ]
-      }
+      },
+      "lesson": 5
     }
   ],
   "earlog": [
