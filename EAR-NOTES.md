@@ -173,4 +173,13 @@ motion is what i'm finding cool about it*" — not the neighbor itself
 but its placement, immediately before the rise, where the down-move
 reads as a wind-up for the up-move. The timing has no name in theory;
 the sensitivity is to a directional relation (contrary approach makes
-the arrival feel launched), which is the profile again.
+the arrival feel launched), which is the profile again. Second
+refinement, unprompted: "*is this whole thing kinda the change of bpm
+tho? feels like we suddenly doubled*" — they detected harmonic rhythm
+as perceived tempo with the BPM never moving (chain: chord per cell;
+plateaus: every other cell; second half: per cell again = the felt
+doubling). The dip is also the one adjacent-cell strike inside the
+plateaus — a single double-speed beat right before the rate doubles
+for real, so the wind-up works in pitch and in rate at once. Harmonic
+rhythm ≠ tempo is a distinction many trained players never make
+explicit; the untrained ear surfaced it as a question about BPM.
