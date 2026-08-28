@@ -502,6 +502,16 @@ one-chord ground had been stood on. Three on-ramp quests added, each
 introducing exactly one new thing; the board is eight, in the play
 order below.
 
+**Re-sequenced again later the same day (player ruling, curriculum):
+triads and bass/lead integration come before any further shape.** 5.1
+and 5.2 are 135-only; the other shapes (145, 125, 1357) get their own
+5.3 board. Consequence here: ⚔ Lean and Land and ⚔ Held Breath are
+re-homed to 5.3 — skip them on this board — and ⚔ The Wheel, which
+needs no sus, closes 5.1. Their entries stay below for when 5.3 is
+assembled; the live drills are left in place (removing a delivered
+drill needs a reload window and isn't worth one — they simply aren't
+gating).
+
 ### ⚔ The Ground *(seed: E minor, 80 — the drone's home, now plural)*
 - triads only
 - one root, all page

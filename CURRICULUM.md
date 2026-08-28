@@ -272,10 +272,16 @@ time behind its prerequisite).
 **Toolset:** a chord-capable track (3–4 simultaneous notes). Biggest single
 unlock in the curriculum.
 
-**Phases:** **5.1** — chord track + one melodic voice only (the L2/L3
-bass rests); progressions as loops, the four-chord engine and how to make
-it not sound like one. **5.2** — full stack: chords + bass + melody, all
-prior skills in one piece.
+**Phases** (re-sequenced 2026-08-28, player direction: triads and line
+integration before any further shape): **5.1** — chord track + one
+melodic voice only (the L2/L3 bass rests), **triads (135) only**;
+progressions as loops, the four-chord engine and how to make it not
+sound like one. **5.2** — full stack: chords + bass + melody, all prior
+skills in one piece, still 135 only. **5.3** — the other shapes (145,
+125, 1357), each met in isolation, only after two-voice writing over
+triads is comfortable. The sus pair on the live 5.1 board
+(lean-and-land, held-breath) is re-homed to 5.3; the-wheel needs no sus
+and moves up to close 5.1.
 
 **Craft focus:** voice leading by ear — smallest movement between chords,
 common tones (notes that keep ringing through a change — L3 made this
