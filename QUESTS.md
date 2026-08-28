@@ -482,6 +482,58 @@ forces the set 1-2-3-4, one per site.)*
 - every bass note rings four or more
 *Teaches: prose, not verse.*
 
+## Lesson 5.1 quests — the chord lane: two voices, one of them plural
+
+Delivered 2026-08-28, the first board after the chord lane landed
+(`0f402d4`). Five quests, L2-sized, chords + lead only — the bass rests
+for all of 5.1, as the curriculum says, so ⚔ Bassline First and the
+Return-chain suspension reprise wait for 5.2. The borrowed shape is
+deliberately absent; it gets its own board (the Nine Lives seed) once
+these close. Seeds are key and tempo only, every lane blank: placing
+the first chord is the point, and a chord-bearing seed cannot ship
+until the tab runs the code that knows the field anyway.
+
+### ⚔ Two-Chord World *(seed: A minor, 88)*
+- only two chord roots, all page
+- no step without chord sound
+- ten loops without tiring
+*Teaches: how little harmony needs.*
+
+### ⚔ Common Tone *(seed: F major, 96)*
+- at least four different roots
+- every chord change shares a pitch
+*Teaches: the note that stays.*
+*(The nearest voicing keeps a shared pitch on the same key when one
+exists — so this constrains which roots may follow which. Some moves
+have a note in common and some have none; the ear learns the
+difference before anything names it.)*
+
+### ⚔ The Odd One Out *(seed: G major, 100)*
+- at least four different roots
+- all chords nearest, except one
+- the odd one found by ear
+*Teaches: what voice leading is for.*
+*(The near/root flip is the pair the lane was built to make audible.
+The last bullet is a recognition gate — the player's own ear, eyes off
+the grid.)*
+
+### ⚔ The Held Breath *(seed: D minor, 84 — give way's home)*
+- at least two sus cells
+- each sus, then a triad, same root
+*Teaches: the suspension, at last.*
+*(The Latecomer's ghost, laid to rest: what failed in L2 as a
+three-event choreography is now one shape in one cell, honestly
+scorable from the grid. Placement does the resolving; the ear does the
+discovering.)*
+
+### ⚔ The Wheel *(seed: E minor, 92)*
+- at least four different roots
+- the last chord is not home
+- stopping must feel like an interruption
+*Teaches: the loop that leans forward.*
+*(Ouroboros's gate, now harmonic — the curriculum's cycle test made
+into a quest.)*
+
 ---
 
 Completed (L3.2): ⚔ Give Way · The Drone II · The Elder's Line · The

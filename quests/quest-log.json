@@ -1,7 +1,7 @@
 {
   "folio": "quest-log",
   "version": 2,
-  "active": "the-return",
+  "active": "which-way",
   "free": {
     "version": 1,
     "title": "untitled folio",
@@ -11,77 +11,37 @@
     "steps": [
       null,
       null,
-      "C3",
       null,
       null,
       null,
-      "C3",
-      null,
-      null,
-      "A2",
       null,
       null,
       null,
-      "B2",
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       null,
       null
     ],
     "bass": [
-      "F2",
+      "C4",
+      "B3",
+      "D4",
+      "B3",
+      "C4",
+      null,
+      "F4",
+      null,
+      "C4",
+      null,
+      "A3",
+      null,
+      "C4",
       null,
       null,
-      null,
-      "G2",
-      null,
-      null,
-      null,
-      "F2",
-      null,
-      null,
-      null,
-      "E2",
-      null,
-      null,
-      null
-    ],
-    "hold": [
-      1,
-      1,
-      3,
-      1,
-      1,
-      1,
-      3,
-      1,
-      1,
-      4,
-      1,
-      1,
-      1,
-      4,
-      1,
-      1
-    ],
-    "basshold": [
-      4,
-      1,
-      1,
-      1,
-      4,
-      1,
-      1,
-      1,
-      4,
-      1,
-      1,
-      1,
-      4,
-      1,
-      1,
-      1
-    ],
-    "tones": [
-      "music-box",
       null
     ],
     "mute": [
@@ -3966,6 +3926,597 @@
         ],
         "len": 32
       }
+    },
+    "which-way": {
+      "pattern": {
+        "version": 1,
+        "title": "which way",
+        "tempo": 88,
+        "loop": 16,
+        "key": "C major",
+        "steps": [
+          "C4",
+          null,
+          null,
+          null,
+          "G4",
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "hold": [
+          3,
+          1,
+          1,
+          1,
+          3,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "mute": [
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false
+        ],
+        "echo": {
+          "stage": "contour",
+          "voice": 0,
+          "at": 0,
+          "call": [
+            {
+              "step": 0,
+              "note": "C4",
+              "len": 1
+            },
+            {
+              "step": 2,
+              "note": "G4",
+              "len": 1
+            }
+          ]
+        }
+      }
+    },
+    "three-ways": {
+      "pattern": {
+        "version": 1,
+        "title": "three ways",
+        "tempo": 92,
+        "loop": 16,
+        "key": "G major",
+        "steps": [
+          "G4",
+          null,
+          null,
+          "B4",
+          null,
+          null,
+          "D5",
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "hold": [
+          2,
+          1,
+          1,
+          2,
+          1,
+          1,
+          3,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "mute": [
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false
+        ],
+        "echo": {
+          "stage": "contour",
+          "voice": 0,
+          "at": 0,
+          "call": [
+            {
+              "step": 0,
+              "note": "G4",
+              "len": 1
+            },
+            {
+              "step": 2,
+              "note": "D5",
+              "len": 1
+            },
+            {
+              "step": 4,
+              "note": "G5",
+              "len": 1
+            }
+          ]
+        }
+      }
+    },
+    "the-long-way": {
+      "pattern": {
+        "version": 1,
+        "title": "the long way",
+        "tempo": 96,
+        "loop": 16,
+        "key": "D minor",
+        "steps": [
+          "D4",
+          null,
+          "E4",
+          null,
+          "F4",
+          null,
+          "E4",
+          null,
+          "D4",
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "mute": [
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false
+        ],
+        "echo": {
+          "stage": "contour",
+          "voice": 0,
+          "at": 0,
+          "call": [
+            {
+              "step": 0,
+              "note": "D4",
+              "len": 1
+            },
+            {
+              "step": 2,
+              "note": "F4",
+              "len": 1
+            },
+            {
+              "step": 4,
+              "note": "A4",
+              "len": 1
+            },
+            {
+              "step": 6,
+              "note": "F4",
+              "len": 1
+            },
+            {
+              "step": 8,
+              "note": "D4",
+              "len": 1
+            }
+          ]
+        }
+      }
+    },
+    "home-and-back": {
+      "pattern": {
+        "version": 1,
+        "title": "home and back",
+        "tempo": 96,
+        "loop": 16,
+        "key": "F major",
+        "steps": [
+          "F4",
+          null,
+          "A4",
+          null,
+          "C5",
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "mute": [
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false
+        ],
+        "echo": {
+          "stage": "degrees",
+          "voice": 0,
+          "at": 0,
+          "call": [
+            {
+              "step": 0,
+              "note": "F4",
+              "len": 1
+            },
+            {
+              "step": 2,
+              "note": "A4",
+              "len": 1
+            },
+            {
+              "step": 4,
+              "note": "C5",
+              "len": 1
+            }
+          ]
+        }
+      }
+    },
+    "the-pull": {
+      "pattern": {
+        "version": 1,
+        "title": "the pull",
+        "tempo": 92,
+        "loop": 16,
+        "key": "C major",
+        "steps": [
+          "C4",
+          null,
+          "E4",
+          null,
+          "B4",
+          null,
+          "C5",
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "mute": [
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false
+        ],
+        "echo": {
+          "stage": "degrees",
+          "voice": 0,
+          "at": 0,
+          "call": [
+            {
+              "step": 0,
+              "note": "C4",
+              "len": 1
+            },
+            {
+              "step": 2,
+              "note": "E4",
+              "len": 1
+            },
+            {
+              "step": 4,
+              "note": "B4",
+              "len": 1
+            },
+            {
+              "step": 6,
+              "note": "C5",
+              "len": 1
+            }
+          ]
+        }
+      }
+    },
+    "one-note-drum": {
+      "pattern": {
+        "version": 1,
+        "title": "one note drum",
+        "tempo": 100,
+        "loop": 16,
+        "key": "A minor",
+        "steps": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "mute": [
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false
+        ],
+        "echo": {
+          "stage": "rhythm",
+          "voice": 0,
+          "at": 0,
+          "call": [
+            {
+              "step": 0,
+              "note": "A4",
+              "len": 4
+            },
+            {
+              "step": 4,
+              "note": "A4",
+              "len": 2
+            },
+            {
+              "step": 6,
+              "note": "A4",
+              "len": 2
+            },
+            {
+              "step": 10,
+              "note": "A4",
+              "len": 3
+            },
+            {
+              "step": 13,
+              "note": "A4",
+              "len": 3
+            }
+          ]
+        }
+      }
+    },
+    "the-sentence": {
+      "pattern": {
+        "version": 1,
+        "title": "the sentence",
+        "tempo": 92,
+        "loop": 16,
+        "key": "G major",
+        "steps": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "mute": [
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false
+        ],
+        "echo": {
+          "stage": "degrees+rhythm",
+          "voice": 0,
+          "at": 0,
+          "call": [
+            {
+              "step": 0,
+              "note": "G4",
+              "len": 4
+            },
+            {
+              "step": 4,
+              "note": "B4",
+              "len": 2
+            },
+            {
+              "step": 6,
+              "note": "D5",
+              "len": 4
+            },
+            {
+              "step": 10,
+              "note": "B4",
+              "len": 2
+            },
+            {
+              "step": 12,
+              "note": "G4",
+              "len": 4
+            }
+          ]
+        }
+      }
     }
   },
   "drills": [
@@ -4193,11 +4744,49 @@
         "mirrors": [],
         "mute": [
           false,
+          false,
           false
         ],
         "solo": [
           false,
+          false,
           false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
         ]
       },
       "lesson": 3
@@ -4328,11 +4917,49 @@
         "mirrors": [],
         "mute": [
           false,
+          false,
           false
         ],
         "solo": [
           false,
+          false,
           false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
         ]
       },
       "lesson": 3
@@ -4463,11 +5090,49 @@
         "mirrors": [],
         "mute": [
           false,
+          false,
           false
         ],
         "solo": [
           false,
+          false,
           false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
         ]
       },
       "lesson": 3
@@ -4598,11 +5263,49 @@
         "mirrors": [],
         "mute": [
           false,
+          false,
           false
         ],
         "solo": [
           false,
+          false,
           false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
         ]
       },
       "lesson": 3
@@ -4733,11 +5436,49 @@
         "mirrors": [],
         "mute": [
           false,
+          false,
           false
         ],
         "solo": [
           false,
+          false,
           false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
         ]
       },
       "lesson": 3
@@ -4868,11 +5609,49 @@
         "mirrors": [],
         "mute": [
           false,
+          false,
           false
         ],
         "solo": [
           false,
+          false,
           false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
         ]
       },
       "lesson": 3
@@ -5003,11 +5782,49 @@
         "mirrors": [],
         "mute": [
           false,
+          false,
           false
         ],
         "solo": [
           false,
+          false,
           false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
         ]
       },
       "lesson": 3
@@ -5138,11 +5955,49 @@
         "mirrors": [],
         "mute": [
           false,
+          false,
           false
         ],
         "solo": [
           false,
+          false,
           false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
         ]
       },
       "lesson": 3
@@ -5273,11 +6128,49 @@
         "mirrors": [],
         "mute": [
           false,
+          false,
           false
         ],
         "solo": [
           false,
+          false,
           false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
         ]
       },
       "lesson": 3
@@ -5408,11 +6301,49 @@
         "mirrors": [],
         "mute": [
           false,
+          false,
           false
         ],
         "solo": [
           false,
+          false,
           false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
         ]
       },
       "lesson": 3
@@ -5543,11 +6474,49 @@
         "mirrors": [],
         "mute": [
           false,
+          false,
           false
         ],
         "solo": [
           false,
+          false,
           false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
         ]
       },
       "lesson": 3
@@ -5678,11 +6647,49 @@
         "mirrors": [],
         "mute": [
           false,
+          false,
           false
         ],
         "solo": [
           false,
+          false,
           false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
         ]
       },
       "lesson": 3
@@ -5813,11 +6820,49 @@
         "mirrors": [],
         "mute": [
           false,
+          false,
           false
         ],
         "solo": [
           false,
+          false,
           false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
         ]
       },
       "lesson": 3
@@ -5948,11 +6993,49 @@
         "mirrors": [],
         "mute": [
           false,
+          false,
           false
         ],
         "solo": [
           false,
+          false,
           false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
         ]
       },
       "lesson": 3
@@ -6083,11 +7166,49 @@
         "mirrors": [],
         "mute": [
           false,
+          false,
           false
         ],
         "solo": [
           false,
+          false,
           false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
         ]
       },
       "lesson": 3
@@ -6218,11 +7339,49 @@
         "mirrors": [],
         "mute": [
           false,
+          false,
           false
         ],
         "solo": [
           false,
+          false,
           false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
         ]
       },
       "lesson": 3
@@ -6353,11 +7512,49 @@
         "mirrors": [],
         "mute": [
           false,
+          false,
           false
         ],
         "solo": [
           false,
+          false,
           false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
         ]
       },
       "lesson": 3
@@ -6488,11 +7685,49 @@
         "mirrors": [],
         "mute": [
           false,
+          false,
           false
         ],
         "solo": [
           false,
+          false,
           false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
         ]
       },
       "lesson": 3
@@ -6719,11 +7954,81 @@
         "mirrors": [],
         "mute": [
           false,
+          false,
           false
         ],
         "solo": [
           false,
+          false,
           false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
         ],
         "len": 32
       },
@@ -6951,11 +8256,81 @@
         "mirrors": [],
         "mute": [
           false,
+          false,
           false
         ],
         "solo": [
           false,
+          false,
           false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
         ],
         "len": 32
       },
@@ -7183,11 +8558,81 @@
         "mirrors": [],
         "mute": [
           false,
+          false,
           false
         ],
         "solo": [
           false,
+          false,
           false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
         ],
         "len": 32
       },
@@ -7415,11 +8860,81 @@
         "mirrors": [],
         "mute": [
           false,
+          false,
           false
         ],
         "solo": [
           false,
+          false,
           false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
         ],
         "len": 32
       },
@@ -7647,11 +9162,81 @@
         "mirrors": [],
         "mute": [
           false,
+          false,
           false
         ],
         "solo": [
           false,
+          false,
           false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
         ],
         "len": 32
       },
@@ -7879,11 +9464,81 @@
         "mirrors": [],
         "mute": [
           false,
+          false,
           false
         ],
         "solo": [
           false,
+          false,
           false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
         ],
         "len": 32
       },
@@ -8111,11 +9766,81 @@
         "mirrors": [],
         "mute": [
           false,
+          false,
           false
         ],
         "solo": [
           false,
+          false,
           false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
         ],
         "len": 32
       },
@@ -8343,11 +10068,81 @@
         "mirrors": [],
         "mute": [
           false,
+          false,
           false
         ],
         "solo": [
           false,
+          false,
           false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
         ],
         "len": 32
       },
@@ -8584,11 +10379,81 @@
         ],
         "mute": [
           false,
+          false,
           false
         ],
         "solo": [
           false,
+          false,
           false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
         ],
         "len": 32
       },
@@ -8827,15 +10692,1975 @@
         ],
         "mute": [
           false,
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false,
+          false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "len": 32
+      },
+      "lesson": 3
+    },
+    {
+      "id": "which-way",
+      "name": "which way",
+      "summary": "- two notes, played hidden\n- answer the shape, not the notes\n- up or down, nothing else",
+      "teaches": "the ear's first question.",
+      "pattern": {
+        "version": 1,
+        "title": "which way",
+        "tempo": 88,
+        "loop": 16,
+        "key": "C major",
+        "steps": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "hold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "basshold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "lock": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "basslock": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "tones": [
+          null,
+          null
+        ],
+        "mirrors": [],
+        "mute": [
+          false,
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false,
+          false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "echo": {
+          "stage": "contour",
+          "voice": 0,
+          "at": 0,
+          "call": [
+            {
+              "step": 0,
+              "note": "C4",
+              "len": 1
+            },
+            {
+              "step": 2,
+              "note": "G4",
+              "len": 1
+            }
+          ]
+        }
+      },
+      "lesson": 4
+    },
+    {
+      "id": "three-ways",
+      "name": "three ways",
+      "summary": "- three notes, played hidden\n- answer the shape only\n- a note repeated is still a move",
+      "teaches": "standing still is a direction.",
+      "pattern": {
+        "version": 1,
+        "title": "three ways",
+        "tempo": 92,
+        "loop": 16,
+        "key": "G major",
+        "steps": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "hold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "basshold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "lock": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "basslock": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "tones": [
+          null,
+          null
+        ],
+        "mirrors": [],
+        "mute": [
+          false,
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false,
+          false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "echo": {
+          "stage": "contour",
+          "voice": 0,
+          "at": 0,
+          "call": [
+            {
+              "step": 0,
+              "note": "G4",
+              "len": 1
+            },
+            {
+              "step": 2,
+              "note": "D5",
+              "len": 1
+            },
+            {
+              "step": 4,
+              "note": "G5",
+              "len": 1
+            }
+          ]
+        }
+      },
+      "lesson": 4
+    },
+    {
+      "id": "the-long-way",
+      "name": "the long way",
+      "summary": "- five or six notes, played hidden\n- answer the shape only\n- one wrong move, start over",
+      "teaches": "a line held as a drawing.",
+      "pattern": {
+        "version": 1,
+        "title": "the long way",
+        "tempo": 96,
+        "loop": 16,
+        "key": "D minor",
+        "steps": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "hold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "basshold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "lock": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "basslock": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "tones": [
+          null,
+          null
+        ],
+        "mirrors": [],
+        "mute": [
+          false,
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false,
+          false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "echo": {
+          "stage": "contour",
+          "voice": 0,
+          "at": 0,
+          "call": [
+            {
+              "step": 0,
+              "note": "D4",
+              "len": 1
+            },
+            {
+              "step": 2,
+              "note": "F4",
+              "len": 1
+            },
+            {
+              "step": 4,
+              "note": "A4",
+              "len": 1
+            },
+            {
+              "step": 6,
+              "note": "F4",
+              "len": 1
+            },
+            {
+              "step": 8,
+              "note": "D4",
+              "len": 1
+            }
+          ]
+        }
+      },
+      "lesson": 4
+    },
+    {
+      "id": "home-and-back",
+      "name": "home and back",
+      "summary": "- three notes, played hidden\n- answer the notes themselves\n- every length the same",
+      "teaches": "five notes go a long way.",
+      "pattern": {
+        "version": 1,
+        "title": "home and back",
+        "tempo": 96,
+        "loop": 16,
+        "key": "F major",
+        "steps": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "hold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "basshold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "lock": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "basslock": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "tones": [
+          null,
+          null
+        ],
+        "mirrors": [],
+        "mute": [
+          false,
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false,
+          false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "echo": {
+          "stage": "degrees",
+          "voice": 0,
+          "at": 0,
+          "call": [
+            {
+              "step": 0,
+              "note": "F4",
+              "len": 1
+            },
+            {
+              "step": 2,
+              "note": "A4",
+              "len": 1
+            },
+            {
+              "step": 4,
+              "note": "C5",
+              "len": 1
+            }
+          ]
+        }
+      },
+      "lesson": 4
+    },
+    {
+      "id": "the-pull",
+      "name": "the pull",
+      "summary": "- four notes, played hidden\n- answer the notes themselves\n- every length the same",
+      "teaches": "the seventh has an errand.",
+      "pattern": {
+        "version": 1,
+        "title": "the pull",
+        "tempo": 92,
+        "loop": 16,
+        "key": "C major",
+        "steps": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "hold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "basshold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "lock": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "basslock": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "tones": [
+          null,
+          null
+        ],
+        "mirrors": [],
+        "mute": [
+          false,
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false,
+          false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "echo": {
+          "stage": "degrees",
+          "voice": 0,
+          "at": 0,
+          "call": [
+            {
+              "step": 0,
+              "note": "C4",
+              "len": 1
+            },
+            {
+              "step": 2,
+              "note": "E4",
+              "len": 1
+            },
+            {
+              "step": 4,
+              "note": "B4",
+              "len": 1
+            },
+            {
+              "step": 6,
+              "note": "C5",
+              "len": 1
+            }
+          ]
+        }
+      },
+      "lesson": 4
+    },
+    {
+      "id": "one-note-drum",
+      "name": "one note drum",
+      "summary": "- sixteen steps, played hidden\n- one pitch the whole way\n- answer the lengths and the gaps",
+      "teaches": "rhythm is a second ear.",
+      "pattern": {
+        "version": 1,
+        "title": "one note drum",
+        "tempo": 100,
+        "loop": 16,
+        "key": "A minor",
+        "steps": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "hold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "basshold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "lock": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "basslock": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "tones": [
+          null,
+          null
+        ],
+        "mirrors": [],
+        "mute": [
+          false,
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false,
+          false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "echo": {
+          "stage": "rhythm",
+          "voice": 0,
+          "at": 0,
+          "call": [
+            {
+              "step": 0,
+              "note": "A4",
+              "len": 4
+            },
+            {
+              "step": 4,
+              "note": "A4",
+              "len": 2
+            },
+            {
+              "step": 6,
+              "note": "A4",
+              "len": 2
+            },
+            {
+              "step": 10,
+              "note": "A4",
+              "len": 3
+            },
+            {
+              "step": 13,
+              "note": "A4",
+              "len": 3
+            }
+          ]
+        }
+      },
+      "lesson": 4
+    },
+    {
+      "id": "the-sentence",
+      "name": "the sentence",
+      "summary": "- sixteen steps, played hidden\n- answer the notes and their lengths\n- write it after it stops, not during",
+      "teaches": "audiation.",
+      "pattern": {
+        "version": 1,
+        "title": "the sentence",
+        "tempo": 92,
+        "loop": 16,
+        "key": "G major",
+        "steps": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "hold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "basshold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "lock": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "basslock": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "tones": [
+          null,
+          null
+        ],
+        "mirrors": [],
+        "mute": [
+          false,
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false,
+          false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "echo": {
+          "stage": "degrees+rhythm",
+          "voice": 0,
+          "at": 0,
+          "call": [
+            {
+              "step": 0,
+              "note": "G4",
+              "len": 4
+            },
+            {
+              "step": 4,
+              "note": "B4",
+              "len": 2
+            },
+            {
+              "step": 6,
+              "note": "D5",
+              "len": 4
+            },
+            {
+              "step": 10,
+              "note": "B4",
+              "len": 2
+            },
+            {
+              "step": 12,
+              "note": "G4",
+              "len": 4
+            }
+          ]
+        }
+      },
+      "lesson": 4
+    },
+    {
+      "id": "two-chord-world",
+      "name": "two-chord world",
+      "summary": "- only two chord roots, all page\n- no step without chord sound\n- ten loops without tiring",
+      "teaches": "how little harmony needs.",
+      "lesson": 5,
+      "pattern": {
+        "version": 1,
+        "title": "two-chord world",
+        "tempo": 88,
+        "loop": 16,
+        "key": "A minor",
+        "steps": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "mute": [
+          false,
           false
         ],
         "solo": [
           false,
           false
+        ]
+      }
+    },
+    {
+      "id": "common-tone",
+      "name": "common tone",
+      "summary": "- at least four different roots\n- every chord change shares a pitch",
+      "teaches": "the note that stays.",
+      "lesson": 5,
+      "pattern": {
+        "version": 1,
+        "title": "common tone",
+        "tempo": 96,
+        "loop": 16,
+        "key": "F major",
+        "steps": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
         ],
-        "len": 32
-      },
-      "lesson": 3
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "mute": [
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false
+        ]
+      }
+    },
+    {
+      "id": "odd-one-out",
+      "name": "the odd one out",
+      "summary": "- at least four different roots\n- all chords nearest, except one\n- the odd one found by ear",
+      "teaches": "what voice leading is for.",
+      "lesson": 5,
+      "pattern": {
+        "version": 1,
+        "title": "the odd one out",
+        "tempo": 100,
+        "loop": 16,
+        "key": "G major",
+        "steps": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "mute": [
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false
+        ]
+      }
+    },
+    {
+      "id": "held-breath",
+      "name": "the held breath",
+      "summary": "- at least two sus cells\n- each sus, then a triad, same root",
+      "teaches": "the suspension, at last.",
+      "lesson": 5,
+      "pattern": {
+        "version": 1,
+        "title": "the held breath",
+        "tempo": 84,
+        "loop": 16,
+        "key": "D minor",
+        "steps": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "mute": [
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false
+        ]
+      }
+    },
+    {
+      "id": "the-wheel",
+      "name": "the wheel",
+      "summary": "- at least four different roots\n- the last chord is not home\n- stopping must feel like an interruption",
+      "teaches": "the loop that leans forward.",
+      "lesson": 5,
+      "pattern": {
+        "version": 1,
+        "title": "the wheel",
+        "tempo": 92,
+        "loop": 16,
+        "key": "E minor",
+        "steps": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "mute": [
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false
+        ]
+      }
+    }
+  ],
+  "earlog": [
+    {
+      "d": -4,
+      "dir": "down",
+      "said": "down",
+      "ok": true,
+      "ms": 1560
+    },
+    {
+      "d": -4,
+      "dir": "down",
+      "said": "down",
+      "ok": true,
+      "ms": 2408
+    },
+    {
+      "d": 4,
+      "dir": "up",
+      "said": "up",
+      "ok": true,
+      "ms": 125
+    },
+    {
+      "d": -3,
+      "dir": "down",
+      "said": "down",
+      "ok": true,
+      "ms": 142
+    },
+    {
+      "d": -2,
+      "dir": "down",
+      "said": "down",
+      "ok": true,
+      "ms": 679
+    },
+    {
+      "d": 3,
+      "dir": "up",
+      "said": "up",
+      "ok": true,
+      "ms": 2799
+    },
+    {
+      "d": 0,
+      "dir": "again",
+      "said": "again",
+      "ok": true,
+      "ms": 283
+    },
+    {
+      "d": 0,
+      "dir": "again",
+      "said": "again",
+      "ok": true,
+      "ms": 304
+    },
+    {
+      "d": -1,
+      "dir": "down",
+      "said": "down",
+      "ok": true,
+      "ms": 438
+    },
+    {
+      "d": -1,
+      "dir": "down",
+      "said": "down",
+      "ok": true,
+      "ms": 588
+    },
+    {
+      "d": -1,
+      "dir": "down",
+      "said": "down",
+      "ok": true,
+      "ms": 188
+    },
+    {
+      "d": -1,
+      "dir": "down",
+      "said": "down",
+      "ok": true,
+      "ms": 435
+    },
+    {
+      "d": 0,
+      "dir": "again",
+      "said": "again",
+      "ok": true,
+      "ms": 130
+    },
+    {
+      "d": -1,
+      "dir": "down",
+      "said": "down",
+      "ok": true,
+      "ms": 627
+    },
+    {
+      "d": 1,
+      "dir": "up",
+      "said": "up",
+      "ok": true,
+      "ms": 259
+    },
+    {
+      "d": -1,
+      "dir": "down",
+      "said": "up",
+      "ok": false,
+      "ms": 2100
+    },
+    {
+      "d": 4,
+      "dir": "up",
+      "said": "down",
+      "ok": false,
+      "ms": 436
+    },
+    {
+      "d": 4,
+      "dir": "up",
+      "said": "up",
+      "ok": true,
+      "ms": 211
+    },
+    {
+      "d": 7,
+      "dir": "up",
+      "said": "up",
+      "ok": true,
+      "ms": 217
+    },
+    {
+      "d": -4,
+      "dir": "down",
+      "said": "down",
+      "ok": true,
+      "ms": 137
+    },
+    {
+      "d": -2,
+      "dir": "down",
+      "said": "down",
+      "ok": true,
+      "ms": 1278
+    },
+    {
+      "d": 0,
+      "dir": "again",
+      "said": "again",
+      "ok": true,
+      "ms": 425
+    },
+    {
+      "d": 2,
+      "dir": "up",
+      "said": "down",
+      "ok": false,
+      "ms": 1029
+    },
+    {
+      "d": 7,
+      "dir": "up",
+      "said": "up",
+      "ok": true,
+      "ms": 683474
+    },
+    {
+      "d": 0,
+      "dir": "again",
+      "said": "again",
+      "ok": true,
+      "ms": 335
+    },
+    {
+      "d": 7,
+      "dir": "up",
+      "said": "up",
+      "ok": true,
+      "ms": 737
+    },
+    {
+      "d": 0,
+      "dir": "again",
+      "said": "again",
+      "ok": true,
+      "ms": 333
+    },
+    {
+      "d": 3,
+      "dir": "up",
+      "said": "up",
+      "ok": true,
+      "ms": 1550
+    },
+    {
+      "d": -2,
+      "dir": "down",
+      "said": "down",
+      "ok": true,
+      "ms": 467
     }
   ]
 }
