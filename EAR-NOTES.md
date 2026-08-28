@@ -110,3 +110,12 @@ player had *proposed* the scale-of-chords idea in conversation minutes
 earlier and distrusted it as a sampling artifact; the grid experiment is
 what settled it. Relational hearing again: the finding arrived as a
 comparison, never as a name.
+
+**Same session, minutes later: crossing is cool.** The player set the
+tune walking down a full octave against the climbing chord-scale —
+contrary directions, crossing mid-page — and liked it unprompted
+(*"crossing them's kinda cool though"*). Both lines are plain stairs;
+what the ear enjoys is the changing distance between them: closing,
+meeting, reopening. Third finding in one sitting where the pleasure
+lives in a *relation between streams* rather than in either stream —
+the relational-hearing profile predicting taste, not just perception.
