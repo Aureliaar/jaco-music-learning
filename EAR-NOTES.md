@@ -130,3 +130,17 @@ fixed point both moving lines are now measured against. Three streams,
 three live pairwise relations, assembled unprompted in one free-play
 sitting. The relational-taste finding keeps compounding: every addition
 they liked today added a *relation*, not a sound.
+
+**2026-08-29 · a chord cannot be wrong alone.** Player, after a session
+on the chord lane: *"the chords tool doesn't really ever sound wrong.
+it can be not excellent, but very rarely wrong."* Accurate, and the
+reason generalizes: a single note has no frame and can only be wrong
+against something; a chord carries its own frame — a three-note excerpt
+of the key that justifies itself. Wrongness needs two frames
+disagreeing. The lane compounds it with three rails (in-key deg dial,
+curated shapes, near-voicing smoothing every join): solo chord-lane
+output is always grammatical; the live axis is excellent vs dull.
+Mechanic consequence (ToM-relevant): a chords-only instrument is
+unlosable and reads as low-stakes; stakes enter exactly when an
+independent line can disagree with the frame — the held note across a
+chord change is the smallest possible wrongness generator.
