@@ -168,4 +168,9 @@ harmony re-articulated. Notable for the profile: what drew their ear
 was again a relation — the dip-and-return that makes a repeated chord
 feel re-chosen rather than stuck — and they found the plateau pacing
 (harmonic rhythm stretched, then stepwise motion between plateaus)
-without being shown it.
+without being shown it. Refinement, in their words: "*dip before
+motion is what i'm finding cool about it*" — not the neighbor itself
+but its placement, immediately before the rise, where the down-move
+reads as a wind-up for the up-move. The timing has no name in theory;
+the sensitivity is to a directional relation (contrary approach makes
+the arrival feel launched), which is the profile again.
