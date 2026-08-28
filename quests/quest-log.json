@@ -1,7 +1,7 @@
 {
   "folio": "quest-log",
   "version": 2,
-  "active": "two-chord-world",
+  "active": null,
   "free": {
     "version": 1,
     "title": "untitled folio",
@@ -9,40 +9,40 @@
     "loop": 16,
     "key": "C major",
     "steps": [
-      null,
-      null,
-      null,
-      null,
-      null,
-      null,
-      null,
-      null,
-      null,
-      null,
-      null,
-      null,
-      null,
-      null,
-      null,
-      null
-    ],
-    "bass": [
-      "C4",
       "B3",
-      "D4",
-      "B3",
-      "C4",
-      null,
-      "F4",
-      null,
-      "C4",
       null,
       "A3",
       null,
-      "C4",
+      "G3",
       null,
+      "F3",
       null,
+      "E3",
+      null,
+      "D3",
+      null,
+      "C3",
+      null,
+      "B2",
       null
+    ],
+    "bass": [
+      "E2",
+      "E2",
+      "E2",
+      "D2",
+      "E2",
+      "E2",
+      "E2",
+      "D2",
+      "E2",
+      "E2",
+      "E2",
+      "D2",
+      "E2",
+      "E2",
+      "E2",
+      "D2"
     ],
     "mute": [
       false,
@@ -51,6 +51,69 @@
     "solo": [
       false,
       false
+    ],
+    "chords": [
+      {
+        "deg": 0,
+        "shape": "triad",
+        "inversion": 0,
+        "octave": 0
+      },
+      {
+        "deg": 1,
+        "shape": "triad",
+        "inversion": 0,
+        "octave": 0
+      },
+      null,
+      {
+        "deg": 2,
+        "shape": "triad",
+        "inversion": 0,
+        "octave": 0
+      },
+      null,
+      {
+        "deg": 3,
+        "shape": "triad",
+        "inversion": 0,
+        "octave": 0
+      },
+      null,
+      {
+        "deg": 4,
+        "shape": "triad",
+        "inversion": 0,
+        "octave": 0
+      },
+      null,
+      {
+        "deg": 5,
+        "shape": "triad",
+        "inversion": 0,
+        "octave": 0
+      },
+      null,
+      {
+        "deg": 6,
+        "shape": "triad",
+        "inversion": 0,
+        "octave": 0
+      },
+      null,
+      {
+        "deg": 7,
+        "shape": "triad",
+        "inversion": 0,
+        "octave": 0
+      },
+      null,
+      {
+        "deg": 8,
+        "shape": "triad",
+        "inversion": 0,
+        "octave": 0
+      }
     ]
   },
   "quests": {
@@ -4518,6 +4581,59 @@
         }
       }
     },
+    "the-ground": {
+      "pattern": {
+        "version": 1,
+        "title": "the ground",
+        "tempo": 80,
+        "loop": 16,
+        "key": "E minor",
+        "steps": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "mute": [
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false
+        ]
+      }
+    },
     "home-and-away": {
       "pattern": {
         "version": 1,
@@ -4808,42 +4924,38 @@
         "key": "F major",
         "steps": [
           null,
+          "F4",
           null,
+          "C4",
+          "D4",
           null,
+          "E4",
           null,
+          "F4",
+          "E4",
           null,
+          "D4",
           null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
+          "C4",
           null,
           null
         ],
         "bass": [
           null,
           null,
+          "D3",
+          null,
+          "E3",
+          null,
+          "F3",
+          null,
+          "G3",
+          "A3",
+          null,
+          "A#3",
           null,
           null,
           null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null,
-          null
-        ],
-        "tones": [
-          "piano",
           null
         ],
         "mute": [
@@ -5001,35 +5113,7 @@
             "octave": 0
           },
           {
-            "deg": -1,
-            "shape": "triad",
-            "inversion": 0,
-            "octave": 0
-          },
-          null,
-          {
-            "deg": -2,
-            "shape": "triad",
-            "inversion": 0,
-            "octave": 0
-          },
-          null,
-          {
-            "deg": -1,
-            "shape": "triad",
-            "inversion": 0,
-            "octave": 0
-          },
-          null,
-          {
-            "deg": 0,
-            "shape": "triad",
-            "inversion": 0,
-            "octave": 0
-          },
-          null,
-          {
-            "deg": 1,
+            "deg": 2,
             "shape": "triad",
             "inversion": 0,
             "octave": 0
@@ -5041,19 +5125,7 @@
             "octave": 0
           },
           {
-            "deg": -1,
-            "shape": "triad",
-            "inversion": 0,
-            "octave": 0
-          },
-          {
             "deg": -2,
-            "shape": "triad",
-            "inversion": 0,
-            "octave": 0
-          },
-          {
-            "deg": -3,
             "shape": "triad",
             "inversion": 0,
             "octave": 0
@@ -5065,11 +5137,89 @@
             "octave": 0
           },
           {
-            "deg": -5,
+            "deg": -3,
             "shape": "triad",
             "inversion": 0,
             "octave": 0
-          }
+          },
+          {
+            "deg": -2,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
+          },
+          {
+            "deg": -1,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
+          },
+          {
+            "deg": 0,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
+          },
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
+      }
+    },
+    "lean-and-land": {
+      "pattern": {
+        "version": 1,
+        "title": "lean and land",
+        "tempo": 88,
+        "loop": 16,
+        "key": "G major",
+        "steps": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "mute": [
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false
         ]
       }
     },
@@ -14211,6 +14361,127 @@
         ]
       },
       "lesson": 5
+    },
+    {
+      "id": "the-crossing",
+      "name": "the crossing",
+      "summary": "- kept from free play, 2026-08-28\n- not a quest: nothing to satisfy",
+      "teaches": "nothing new. it is yours.",
+      "lesson": 5,
+      "pattern": {
+        "version": 1,
+        "title": "the crossing",
+        "tempo": 112,
+        "loop": 16,
+        "key": "C major",
+        "steps": [
+          "B3",
+          null,
+          "A3",
+          null,
+          "G3",
+          null,
+          "F3",
+          null,
+          "E3",
+          null,
+          "D3",
+          null,
+          "C3",
+          null,
+          "B2",
+          null
+        ],
+        "bass": [
+          "E2",
+          "E2",
+          "E2",
+          "D2",
+          "E2",
+          "E2",
+          "E2",
+          "D2",
+          "E2",
+          "E2",
+          "E2",
+          "D2",
+          "E2",
+          "E2",
+          "E2",
+          "D2"
+        ],
+        "mute": [
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false
+        ],
+        "chords": [
+          {
+            "deg": 0,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
+          },
+          {
+            "deg": 1,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
+          },
+          null,
+          {
+            "deg": 2,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
+          },
+          null,
+          {
+            "deg": 3,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
+          },
+          null,
+          {
+            "deg": 4,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
+          },
+          null,
+          {
+            "deg": 5,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
+          },
+          null,
+          {
+            "deg": 6,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
+          },
+          null,
+          {
+            "deg": 7,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
+          },
+          null,
+          {
+            "deg": 8,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
+          }
+        ]
+      }
     }
   ],
   "earlog": [
