@@ -79,12 +79,15 @@ var TONE = [
     wave:[1, 0.22, 0.09] },
   /* ---- and the chord lane, from Lesson 5 ----
      Three or four of these sound at once, so the first thing it is is
-     QUIET: a third of the lead's level each, which lands a full chord at
-     about the weight of one melody note and keeps the tune on top of it
-     where it belongs. Soft-edged besides — a slow attack, a long release,
+     QUIET: but voices on different pitches add by power, not amplitude —
+     a third of the lead's level each landed a triad near half a melody
+     note's weight, and the player heard the gap at once (2026-08-28). Per
+     voice it is now the lead's level over √3, shaded down a touch, which
+     puts a triad just under one melody note and keeps the tune on top of
+     it where it belongs. Soft-edged besides — a slow attack, a long release,
      a slow decay — because a chord is the ground the other two stand on
      and a ground that speaks first is a ground in the way. */
-  { type:"triangle", cut:1500, q:0.6, level:0.085, attack:0.030,
+  { type:"triangle", cut:1500, q:0.6, level:0.115, attack:0.030,
     release:0.120,   hold:0.22, decay:[0.90, 1.6, 5.0], track:5.0,
     wave:[1, 0.13, 0.05] }
 ];
