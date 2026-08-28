@@ -183,3 +183,15 @@ plateaus — a single double-speed beat right before the rate doubles
 for real, so the wind-up works in pitch and in rate at once. Harmonic
 rhythm ≠ tempo is a distinction many trained players never make
 explicit; the untrained ear surfaced it as a question about BPM.
+Third finding from the same page, after half an hour looping: "*it got
+hectic and kind of anxiety inducing. probably the lack of held notes?
+density too high across 3 diff tracks?*" Both self-diagnoses verified
+against the data: zero holds on any track (fifty one-cell attacks per
+loop, nothing ever rings, so nothing serves as ground) and — the
+sharper half they nearly named — the attacks are *synchronized*, lead
+copying the chord lane's rhythm nearly cell for cell, so density lands
+in stacked transients rather than interleaved motion. Mechanic note
+(ToM): arousal from a loop tracks onset density and onset coincidence,
+not note count; sustains are what convert foreground into ground, and
+a texture with no ground becomes anxiogenic on repetition even when
+every pitch is right.
