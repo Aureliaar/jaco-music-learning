@@ -1,8 +1,7 @@
 /* The CommonJS CDP driver the real-browser harnesses ask for.
 
-   bootcheck.js, drilltest.js and statictest.js were rescued from a session
-   scratchpad that had a `cdp.js` beside them; only the ESM `cdp.mjs` came
-   across. This is that driver, restored against the API those three use:
+   e2e.js keeps this tiny driver separate so the seven journeys can read like
+   journeys instead of a WebSocket implementation:
 
      const b = await launch({ profile, port })
      b.send(method, params)      raw CDP
