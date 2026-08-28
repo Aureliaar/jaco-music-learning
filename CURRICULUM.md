@@ -280,8 +280,9 @@ sound like one. **5.2** — full stack: chords + bass + melody, all prior
 skills in one piece, still 135 only. **5.3** — the other shapes (145,
 125, 1357), each met in isolation, only after two-voice writing over
 triads is comfortable. The sus pair on the live 5.1 board
-(lean-and-land, held-breath) is re-homed to 5.3; the-wheel needs no sus
-and moves up to close 5.1.
+(lean-and-land, held-breath) is re-homed to 5.3; the board closes
+instead with a length arc (two loop-32 quests and a loop-64 — the long
+dials' first real material).
 
 **Craft focus:** voice leading by ear — smallest movement between chords,
 common tones (notes that keep ringing through a change — L3 made this

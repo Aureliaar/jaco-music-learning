@@ -506,11 +506,12 @@ order below.
 triads and bass/lead integration come before any further shape.** 5.1
 and 5.2 are 135-only; the other shapes (145, 125, 1357) get their own
 5.3 board. Consequence here: ⚔ Lean and Land and ⚔ Held Breath are
-re-homed to 5.3 — skip them on this board — and ⚔ The Wheel, which
-needs no sus, closes 5.1. Their entries stay below for when 5.3 is
-assembled; the live drills are left in place (removing a delivered
-drill needs a reload window and isn't worth one — they simply aren't
-gating).
+re-homed to 5.3 — their drills pulled from the log (reload to adopt),
+their entries kept below for when 5.3 is assembled. And per the same
+redo order, the board grows a **length arc** after ⚔ The Wheel: the
+loop-32 and loop-64 dials have barely been used, so the last three
+quests are the first material sized for them — still 135-only, the new
+element in each is room itself.
 
 ### ⚔ The Ground *(seed: E minor, 80 — the drone's home, now plural)*
 - triads only
@@ -557,6 +558,53 @@ difference before anything names it.)*
 The last bullet is a recognition gate — the player's own ear, eyes off
 the grid.)*
 
+### ⚔ The Wheel *(seed: E minor, 92)*
+- at least four different roots
+- the last chord is not home
+- stopping must feel like an interruption
+*Teaches: the loop that leans forward.*
+*(Ouroboros's gate, now harmonic — the curriculum's cycle test made
+into a quest.)*
+
+### ⚔ The Wide Field *(seed: C major, 96 · loop 32)*
+- triads only
+- loop of 32
+- at most three roots
+- first half ends away
+- second half ends home
+*Teaches: the question that takes a whole half to answer.*
+*(The first page with room in it. Sixteen steps force every thought to
+be a short one; thirty-two lets a departure stand long enough to be
+missed. The root cap keeps the new element — length — the only new
+element.)*
+
+### ⚔ Twice Around *(seed: A minor, 88 · loop 32)*
+- triads only
+- loop of 32
+- second half repeats the first, changed in exactly one cell
+*Teaches: what one change does to a repeat.*
+*(ABAB's enormous repetition tension, now harmonic and at scale: the
+second lap promises the first, and the single altered cell is the
+loudest thing on the page precisely because everything around it kept
+its word.)*
+
+### ⚔ Quarters *(seed: D major, 90 · loop 64)*
+- triads only
+- loop of 64
+- four quarters of sixteen
+- first and last quarters begin home
+- the third quarter never touches home
+*Teaches: a page with rooms in it.*
+*(The 64 dial's first real use. Each quarter is a full old-sized page,
+so the piece is four pages that must belong to each other — and the
+third's ban on home makes the last quarter's return something the
+whole minute was for. Closes the board.)*
+
+---
+
+**Held for the 5.3 shapes board** *(pulled from the live log
+2026-08-28, entries kept)*:
+
 ### ⚔ Lean and Land *(seed: G major, 88)*
 - one root, all page
 - exactly two cells: sus, then triad
@@ -573,14 +621,6 @@ to settle, then does — the whole concept in one flip of the ear.)*
 three-event choreography is now one shape in one cell, honestly
 scorable from the grid. Placement does the resolving; the ear does the
 discovering.)*
-
-### ⚔ The Wheel *(seed: E minor, 92)*
-- at least four different roots
-- the last chord is not home
-- stopping must feel like an interruption
-*Teaches: the loop that leans forward.*
-*(Ouroboros's gate, now harmonic — the curriculum's cycle test made
-into a quest.)*
 
 ---
 
