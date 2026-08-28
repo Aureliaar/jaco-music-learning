@@ -4518,6 +4518,140 @@
         }
       }
     },
+    "home-and-away": {
+      "pattern": {
+        "version": 1,
+        "title": "home and away",
+        "tempo": 92,
+        "loop": 16,
+        "key": "C major",
+        "steps": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "mute": [
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false
+        ],
+        "chords": [
+          {
+            "deg": 0,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
+          },
+          {
+            "deg": 4,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
+          },
+          {
+            "deg": 4,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
+          },
+          null,
+          {
+            "deg": 0,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
+          },
+          null,
+          null,
+          {
+            "deg": 4,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
+          },
+          null,
+          {
+            "deg": 0,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
+          },
+          null,
+          {
+            "deg": 4,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
+          },
+          null,
+          {
+            "deg": 0,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
+          },
+          {
+            "deg": 4,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
+          },
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          3,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          2,
+          1,
+          1,
+          2,
+          1
+        ]
+      }
+    },
     "two-chord-world": {
       "pattern": {
         "version": 1,
@@ -4527,18 +4661,18 @@
         "key": "A minor",
         "steps": [
           null,
-          "D4",
-          "C4",
           null,
-          "B3",
           null,
-          "A3",
           null,
-          "F3",
           null,
-          "E3",
           null,
-          "D3",
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
           null,
           null,
           null
@@ -4576,51 +4710,472 @@
         "chords": [
           {
             "deg": -1,
-            "shape": "triad"
-          },
-          {
-            "deg": -1,
-            "shape": "triad"
-          },
-          {
-            "deg": 0,
-            "shape": "triad"
-          },
-          {
-            "deg": -1,
-            "shape": "triad"
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
           },
           {
             "deg": -1,
             "shape": "triad",
+            "inversion": 0,
+            "octave": 0
+          },
+          {
+            "deg": 0,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
+          },
+          {
+            "deg": -8,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 1
+          },
+          {
+            "deg": 0,
+            "shape": "triad",
             "voicing": "root"
           },
           null,
-          {
-            "deg": -2,
-            "shape": "triad"
-          },
           null,
           {
-            "deg": 1,
-            "shape": "triad"
-          },
-          null,
-          {
-            "deg": 0,
-            "shape": "triad"
+            "deg": -1,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
           },
           null,
           {
             "deg": -1,
-            "shape": "triad"
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
+          },
+          {
+            "deg": 0,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
+          },
+          {
+            "deg": 0,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
+          },
+          {
+            "deg": -1,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
+          },
+          null,
+          null,
+          {
+            "deg": 0,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
+          }
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          3,
+          1,
+          1,
+          2,
+          1,
+          1,
+          1,
+          1,
+          3,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    "common-tone": {
+      "pattern": {
+        "version": 1,
+        "title": "common tone",
+        "tempo": 96,
+        "loop": 16,
+        "key": "F major",
+        "steps": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "tones": [
+          "piano",
+          null
+        ],
+        "mute": [
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false
+        ],
+        "chords": [
+          {
+            "deg": 0,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
+          },
+          {
+            "deg": -7,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 1
+          },
+          {
+            "deg": -8,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 1
+          },
+          {
+            "deg": -9,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 1
+          },
+          null,
+          {
+            "deg": -10,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 1
+          },
+          null,
+          {
+            "deg": -11,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 1
+          },
+          null,
+          {
+            "deg": -12,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 1
+          },
+          null,
+          {
+            "deg": -13,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 1
+          },
+          {
+            "deg": -12,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 1
+          },
+          null,
+          null,
+          {
+            "deg": -13,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 1
+          }
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          3,
+          1,
+          1,
+          1
+        ]
+      }
+    },
+    "odd-one-out": {
+      "pattern": {
+        "version": 1,
+        "title": "the odd one out",
+        "tempo": 100,
+        "loop": 16,
+        "key": "G major",
+        "steps": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "mute": [
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false
+        ],
+        "chords": [
+          {
+            "deg": 0,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
+          },
+          {
+            "deg": -1,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
+          },
+          null,
+          {
+            "deg": -2,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
+          },
+          null,
+          {
+            "deg": -1,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
           },
           null,
           {
             "deg": 0,
-            "shape": "triad"
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
           },
+          null,
+          {
+            "deg": 1,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
+          },
+          {
+            "deg": 0,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
+          },
+          {
+            "deg": -1,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
+          },
+          {
+            "deg": -2,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
+          },
+          {
+            "deg": -3,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
+          },
+          {
+            "deg": -4,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
+          },
+          {
+            "deg": -5,
+            "shape": "triad",
+            "inversion": 0,
+            "octave": 0
+          }
+        ]
+      }
+    },
+    "held-breath": {
+      "pattern": {
+        "version": 1,
+        "title": "the held breath",
+        "tempo": 84,
+        "loop": 16,
+        "key": "D minor",
+        "steps": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
           null
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "mute": [
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false
+        ]
+      }
+    },
+    "the-wheel": {
+      "pattern": {
+        "version": 1,
+        "title": "the wheel",
+        "tempo": 92,
+        "loop": 16,
+        "key": "E minor",
+        "steps": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "mute": [
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false
         ]
       }
     }
@@ -12274,9 +12829,355 @@
       "lesson": 4
     },
     {
+      "id": "the-ground",
+      "name": "the ground",
+      "summary": "- triads only\n- one root, all page\n- no step without chord sound",
+      "teaches": "the ground under the tune.",
+      "pattern": {
+        "version": 1,
+        "title": "the ground",
+        "tempo": 80,
+        "loop": 16,
+        "key": "E minor",
+        "steps": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "hold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "basshold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "lock": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "basslock": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "tones": [
+          null,
+          null
+        ],
+        "mirrors": [],
+        "mute": [
+          false,
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false,
+          false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "lesson": 5
+    },
+    {
+      "id": "home-and-away",
+      "name": "home and away",
+      "summary": "- triads only\n- two roots only, a fifth apart\n- one of them home\n- begin home, end away",
+      "teaches": "I and V, felt before named.",
+      "pattern": {
+        "version": 1,
+        "title": "home and away",
+        "tempo": 92,
+        "loop": 16,
+        "key": "C major",
+        "steps": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "hold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "basshold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "lock": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "basslock": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "tones": [
+          null,
+          null
+        ],
+        "mirrors": [],
+        "mute": [
+          false,
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false,
+          false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "lesson": 5
+    },
+    {
       "id": "two-chord-world",
       "name": "two-chord world",
-      "summary": "- only two chord roots, all page\n- no step without chord sound\n- ten loops without tiring",
+      "summary": "- triads only\n- only two chord roots, all page\n- no step without chord sound\n- ten loops without tiring",
       "teaches": "how little harmony needs.",
       "pattern": {
         "version": 1,
@@ -12449,7 +13350,7 @@
     {
       "id": "common-tone",
       "name": "common tone",
-      "summary": "- at least four different roots\n- every chord change shares a pitch",
+      "summary": "- triads only\n- at least four different roots\n- every chord change shares a pitch",
       "teaches": "the note that stays.",
       "pattern": {
         "version": 1,
@@ -12622,12 +13523,185 @@
     {
       "id": "odd-one-out",
       "name": "the odd one out",
-      "summary": "- at least four different roots\n- all chords nearest, except one\n- the odd one found by ear",
+      "summary": "- triads only\n- at least four different roots\n- all chords nearest, except one\n- the odd one found by ear",
       "teaches": "what voice leading is for.",
       "pattern": {
         "version": 1,
         "title": "the odd one out",
         "tempo": 100,
+        "loop": 16,
+        "key": "G major",
+        "steps": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "bass": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "hold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "basshold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "lock": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "basslock": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "tones": [
+          null,
+          null
+        ],
+        "mirrors": [],
+        "mute": [
+          false,
+          false,
+          false
+        ],
+        "solo": [
+          false,
+          false,
+          false
+        ],
+        "chords": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ],
+        "chordhold": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ]
+      },
+      "lesson": 5
+    },
+    {
+      "id": "lean-and-land",
+      "name": "lean and land",
+      "summary": "- one root, all page\n- exactly two cells: sus, then triad",
+      "teaches": "what the sus shape is.",
+      "pattern": {
+        "version": 1,
+        "title": "lean and land",
+        "tempo": 88,
         "loop": 16,
         "key": "G major",
         "steps": [

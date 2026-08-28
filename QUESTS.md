@@ -485,17 +485,40 @@ forces the set 1-2-3-4, one per site.)*
 ## Lesson 5.1 quests — the chord lane: two voices, one of them plural
 
 Delivered 2026-08-28, the first board after the chord lane landed
-(`0f402d4`). Five quests, L2-sized, chords + lead only — the bass rests
-for all of 5.1, as the curriculum says, so ⚔ Bassline First and the
-Return-chain suspension reprise wait for 5.2. The borrowed shape is
-deliberately absent; it gets its own board (the Nine Lives seed) once
-these close. Shapes are staged (player ruling 2026-08-28): triads only
-for the first three quests, sus entering at The Held Breath, seventh
-and borrowed held back so their arrival is an event — the dial stays
-unlocked, the quests just don't ask. Seeds are key and tempo only,
-every lane blank: placing
-the first chord is the point, and a chord-bearing seed cannot ship
-until the tab runs the code that knows the field anyway.
+(`0f402d4`). Chords + lead only — the bass rests for all of 5.1, as the
+curriculum says, so ⚔ Bassline First and the Return-chain suspension
+reprise wait for 5.2. The borrowed shape is deliberately absent; it
+gets its own board (the Nine Lives seed) once these close. Shapes are
+staged (player ruling 2026-08-28): triads first, sus introduced in
+isolation before it is asked for, seventh and borrowed held back so
+their arrival is an event — the dial stays unlocked, the quests just
+don't ask. Seeds are key and tempo only, every lane blank: placing the
+first chord is the point, and a chord-bearing seed cannot ship until
+the tab runs the code that knows the field anyway.
+
+**Re-graded same day (player ruling): the five-quest ramp was too
+steep** — four-root quests and an unexplained sus arrived before the
+one-chord ground had been stood on. Three on-ramp quests added, each
+introducing exactly one new thing; the board is eight, in the play
+order below.
+
+### ⚔ The Ground *(seed: E minor, 80 — the drone's home, now plural)*
+- triads only
+- one root, all page
+- no step without chord sound
+*Teaches: the ground under the tune.*
+*(One chord, the whole loop, a melody over it — the drone lesson
+replayed with a plural voice. Nothing changes; that is the point:
+before harmony can move, it has to stand.)*
+
+### ⚔ Home and Away *(seed: C major, 92)*
+- triads only
+- two roots only, a fifth apart
+- one of them home
+- begin home, end away
+*Teaches: I and V, felt before named.*
+*(The oldest pair in the music the player already loves. Ending away
+makes the loop's seam pull home — the wheel's first spoke, met early.)*
 
 ### ⚔ Two-Chord World *(seed: A minor, 88)*
 - triads only
@@ -523,6 +546,14 @@ difference before anything names it.)*
 *(The near/root flip is the pair the lane was built to make audible.
 The last bullet is a recognition gate — the player's own ear, eyes off
 the grid.)*
+
+### ⚔ Lean and Land *(seed: G major, 88)*
+- one root, all page
+- exactly two cells: sus, then triad
+*Teaches: what the sus shape is.*
+*(The sus, met in isolation before anything asks for it: one root, two
+cells, and the only decision is where they sit. The middle note refuses
+to settle, then does — the whole concept in one flip of the ear.)*
 
 ### ⚔ The Held Breath *(seed: D minor, 84 — give way's home)*
 - at least two sus cells
