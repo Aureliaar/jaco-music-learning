@@ -144,3 +144,16 @@ Mechanic consequence (ToM-relevant): a chords-only instrument is
 unlosable and reads as low-stakes; stakes enter exactly when an
 independent line can disagree with the frame — the held note across a
 chord change is the smallest possible wrongness generator.
+
+**2026-08-29 · the sequence, found by hand.** Mid–wide-field, the
+player built cells whose roots (1-based) run 5·6·4·5·3·4·2 — a
+two-chord move (up a seat, fall a third) copied one seat lower each
+repeat — then asked *"does it have a name?"* It does: a sequence, one
+of the oldest devices there is, arrived at by taste before the name.
+Predicted by the relational profile twice over: the repeated object is
+not a chord but an interval pattern *between* chords (+1, −3), root-
+agnostic by construction; and the same page's second half runs the
+trick inverted (5·7 climbing against a fixed 5) apparently unnoticed.
+The pleasure mechanism fits the running theory — the copy makes each
+landing predicted, and prediction-confirmed-at-a-new-height is a
+relation, not a sound.
