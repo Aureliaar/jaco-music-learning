@@ -167,6 +167,24 @@ function staticServer(root, seen){
   });
 
   await journey("2. the keyboard writes lead, bass, chords, and a hold", async () => {
+    /* A local virtual port, without depending on machine MIDI hardware.  The
+       ordinary boot above already exercised the absent-port fallback; this
+       half of the same composing journey proves that all three written lanes
+       reach their default channels, that renderer selection moves a voice to
+       its reserved channel seat, and that stop clears the rack. */
+    await browser.eval(`(function(){
+      window.__midiSent=[]; window.__midiClears=0;
+      midiHealthSet=function(){};
+      midiRackReady=true;
+      window.__midiOut={name:"Folio to REAPER",state:"connected",connection:"open",
+        open:function(){return Promise.resolve(this);},
+        clear:function(){window.__midiClears++;},
+        send:function(bytes,when){window.__midiSent.push({bytes:[].slice.call(bytes),when:when||0});}};
+      Object.defineProperty(navigator,"requestMIDIAccess",{configurable:true,value:function(){
+        return Promise.resolve({outputs:new Map([["folio",window.__midiOut]]),onstatechange:null});
+      }});
+      return true;
+    })()`);
     await browser.key("Home", { key:"Home", vk:36 });
     await browser.key("KeyZ", { key:"z", vk:90 });
     await browser.key("Home", { key:"Home", vk:36 });
@@ -184,6 +202,39 @@ function staticServer(root, seen){
     expect(state.bass[0] === "D4", "the second voice did not receive its note", state);
     expect(state.chord && state.chord.deg === 0, "the chord lane did not receive its degree", state);
     expect(state.cursor === 2 && state.voice === 2 && state.rows >= 16, "entry did not leave the expected page state", state);
+    const routed = await browser.eval(`new Promise(function(resolve){
+      play();
+      setTimeout(function(){
+        stop();
+        var ons=window.__midiSent.filter(function(e){return (e.bytes[0]&240)===144;});
+        var panic=window.__midiSent.filter(function(e){return (e.bytes[0]&240)===176&&
+          (e.bytes[1]===120||e.bytes[1]===123);});
+        resolve({channels:ons.map(function(e){return e.bytes[0]&15;}),
+          velocities:ons.map(function(e){return e.bytes[2];}),panic:panic.length,
+          clears:window.__midiClears,connected:midiConnected()});
+      },250);
+    })`);
+    expect(routed.connected && [0,1,2].every(ch => routed.channels.includes(ch)),
+      "the three Folio lanes did not reach the REAPER channels", routed);
+    expect([82,88,68].every(v => routed.velocities.includes(v)),
+      "the level-matched MIDI velocities changed", routed);
+    const selected = await browser.eval(`(function(){
+      var before=window.__midiSent.length;
+      var changed=midiSelectInstrument(1,3);
+      var invalid=midiSelectInstrument(1,5);
+      midiNote("D4",ctx.currentTime+0.01,0.1,1);
+      return {changed:changed,invalid:invalid,slot:MIDI_SLOTS[1],
+        sent:window.__midiSent.slice(before).map(function(e){return e.bytes;})};
+    })()`);
+    expect(selected.changed && !selected.invalid && selected.slot === 3 &&
+      selected.sent.some(b => (b[0]&240)===144 && (b[0]&15)===10),
+      "Folio did not send the bass renderer selection", selected);
+    expect(routed.clears > 0 && routed.panic >= 6,
+      "stop did not clear queued notes and silence all rack channels", routed);
+    await browser.eval(`(function(){
+      midiPanic(); midiRackReady=false; midiOut=null; midiAccess=null; midiAsked=true;
+      try{localStorage.removeItem(MIDI_PERMISSION);}catch(e){}
+    })()`);
   });
 
   await journey("3. the gamepad remains a complete primary surface", async () => {

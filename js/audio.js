@@ -20,6 +20,147 @@ var AHEAD = 0.1;
 var ATTACK = 0.008, RELEASE = 0.040, TAIL = 0.006;
 var LEVEL = 0.22;
 
+/* ================= external renderer =================
+   Folio is still the clock, the transport and the thing in the player's
+   hands.  On the local server only, a remembered Web MIDI permission lets a
+   transient MIDI endpoint hand the three existing lanes to a monitored REAPER rack:
+   slot zero is lead on channel 1, bass on 2, chords on 3. Further renderer
+   slots occupy the next channel triplets. The
+   rack launcher owns a tiny local health endpoint, so when the rack closes
+   this file simply falls through to the own tones below even though the stable
+   MIDI port remains. Nothing in a page document knows or stores a renderer. */
+var MIDI_PORT = "Folio to REAPER";
+var MIDI_HEALTH = "/api/renderer";
+var MIDI_PERMISSION = "folio-midi-permission";
+var MIDI_LATENCY = "folio-midi-latency-ms";
+var MIDI_VELOCITY = [82, 88, 68];       /* the level-matched lineup's values */
+var MIDI_SLOTS = [0, 0, 0];             /* renderer seats; no player UI yet */
+var MIDI_SLOT_COUNT = Math.floor(16 / LANES);
+var midiAccess = null, midiOut = null;
+var midiAsked = false, midiConnecting = false;
+var midiRackReady = false;
+
+function midiLocal(){
+  return location.protocol === "http:" &&
+    (location.hostname === "localhost" || location.hostname === "127.0.0.1" ||
+     location.hostname === "[::1]");
+}
+function midiStored(key){
+  try { return localStorage.getItem(key); } catch (e) { return null; }
+}
+function midiStore(key, value){
+  try { localStorage.setItem(key, value); } catch (e) {}
+}
+function midiConnected(){
+  return !!(midiRackReady && midiOut && midiOut.state !== "disconnected" &&
+            midiOut.connection !== "closed");
+}
+function midiHealthSet(ready){
+  ready = !!ready;
+  if (ready === midiRackReady) return;
+  if (!ready && midiOut) midiPanic(midiOut);
+  midiRackReady = ready;
+  if (playing) say(midiConnected() ? "playing · reaper" : "playing · own tone");
+  else if (midiConnected()) say("reaper sound connected");
+}
+function midiHealthPoll(){
+  if (!midiLocal() || !window.fetch) return;
+  fetch(MIDI_HEALTH, {cache:"no-store"}).then(function(response){
+    if (!response.ok) throw new Error("renderer status " + response.status);
+    return response.json();
+  }).then(function(status){
+    midiHealthSet(status && status.ready);
+  }).catch(function(){
+    midiHealthSet(false);
+  }).then(function(){
+    setTimeout(midiHealthPoll, 1000);
+  });
+}
+function midiVisualDelay(){
+  if (!midiConnected()) return 0;
+  var ms = Number(midiStored(MIDI_LATENCY));
+  return isFinite(ms) ? Math.max(0, Math.min(500, ms)) / 1000 : 0;
+}
+function midiPanic(out){
+  out = out || midiOut;
+  if (!out) return;
+  try { if (out.clear) out.clear(); } catch (e) {}
+  for (var ch = 0; ch < 16; ch++){
+    try { out.send([0xB0 | ch, 123, 0]); } catch (e) {} /* all notes off */
+    try { out.send([0xB0 | ch, 120, 0]); } catch (e) {} /* all sound off */
+  }
+}
+/* Hidden renderer seam for the later instrument page.  Selection is local
+   runtime state, not composition data: callers choose a voice and a rack seat.
+   Notes for seat N travel on MIDI channel `voice + N * 3`; REAPER needs only a
+   monitored instrument track on that channel, with no stateful MIDI effect. */
+function midiSelectInstrument(v, slot){
+  v = Math.floor(Number(v));
+  slot = Math.floor(Number(slot));
+  if (!isFinite(v) || v < 0 || v >= LANES ||
+      !isFinite(slot) || slot < 0 || slot >= MIDI_SLOT_COUNT) return false;
+  if (MIDI_SLOTS[v] === slot) return true;
+  if (midiConnected()) midiPanic();
+  MIDI_SLOTS[v] = slot;
+  return true;
+}
+function midiRefresh(){
+  if (!midiAccess) return;
+  var found = null;
+  try {
+    midiAccess.outputs.forEach(function(out){
+      if (!found && String(out.name || "").trim().toLowerCase() === MIDI_PORT.toLowerCase() &&
+          out.state !== "disconnected") found = out;
+    });
+  } catch (e) {}
+  if (found === midiOut) return;
+  if (midiOut) midiPanic(midiOut);
+  midiOut = null;
+  if (!found){
+    if (playing) say("playing · own tone");
+    return;
+  }
+  function arrived(){
+    midiOut = found;
+    if (midiConnected())
+      say(playing ? "playing · reaper" : "reaper sound connected");
+  }
+  try {
+    var opened = found.open && found.open();
+    if (opened && opened.then) opened.then(arrived).catch(function(){});
+    else arrived();
+  } catch (e) {}
+}
+function midiConnect(){
+  if (!midiLocal() || midiAccess || midiConnecting || midiAsked ||
+      !navigator.requestMIDIAccess) return;
+  midiAsked = true;
+  midiConnecting = true;
+  navigator.requestMIDIAccess().then(function(access){
+    midiConnecting = false;
+    midiAccess = access;
+    midiStore(MIDI_PERMISSION, "yes");
+    access.onstatechange = midiRefresh;
+    midiRefresh();
+  }).catch(function(){ midiConnecting = false; });
+}
+function midiNote(name, at, dur, v){
+  if (!midiConnected()) return false;
+  var voiceChannel = Math.max(0, Math.min(LANES - 1, v || 0));
+  var note = midiOf(name), ch = voiceChannel + MIDI_SLOTS[voiceChannel] * LANES;
+  if (note === null || note === undefined) return false;
+  var when = performance.now() + Math.max(0, at - ctx.currentTime) * 1000;
+  var off = when + Math.max(1, dur * 1000 - TAIL * 1000);
+  try {
+    midiOut.send([0x90 | ch, note, MIDI_VELOCITY[ch] || 80], when);
+    midiOut.send([0x80 | ch, note, 0], off);
+    return true;
+  } catch (e) {
+    midiOut = null;
+    return false;
+  }
+}
+
 function stepDur(){ return 60 / doc.tempo / 4; }   /* 112 bpm 16ths = 0.1339 s */
 
 function audio(){
@@ -37,9 +178,14 @@ function audio(){
 /* the autoplay policy does not count gamepad buttons as a user gesture, so
    a pad-only session leaves the context suspended and every note lands on a
    frozen clock; the first real key or pointer press unlocks it for the pad */
-function unlockAudio(){ audio(); }
+function unlockAudio(){ audio(); midiConnect(); }
 window.addEventListener("pointerdown", unlockAudio, true);
 window.addEventListener("keydown", unlockAudio, true);
+/* Once Chrome has granted the local page permission, later sessions can
+   reconnect without spending the player's first press on setup. */
+if (midiLocal() && midiStored(MIDI_PERMISSION) === "yes")
+  setTimeout(midiConnect, 0);
+if (midiLocal()) setTimeout(midiHealthPoll, 0);
 
 /* ---- the two timbres ----
    The lead is the voice the folio has always had: a triangle under a gentle
@@ -125,6 +271,10 @@ function toneWave(t){
 function playNote(name, at, dur, v, held){
   var f = noteToFreq(name);
   if (!f) return;
+  /* REAPER is a renderer, never a second layer.  A successful MIDI send is
+     the note; only an absent or failed port reaches Folio's sample/synth
+     path, which is the complete offline fallback. */
+  if (midiNote(name, at, dur, v)) return;
   /* the sampled voice first, and only if this voice's tone is a kit: the
      page says what each voice sounds like, and tones.js says no over file://,
      before a sample has decoded, on a kit this folio has not got, and
@@ -214,7 +364,7 @@ function scheduler(){
       for (var ci = 0; ps && ci < ps.length; ci++)
         playNote(nameOfMidi(ps[ci]), nextStepTime, dur * clen, CHORD_LANE, clen > 1);
     }
-    queue.push({ step: schedStep, time: nextStepTime });
+    queue.push({ step: schedStep, time: nextStepTime + midiVisualDelay() });
     nextStepTime += dur;
     schedStep = (schedStep + 1) % doc.loop;
   }
@@ -233,13 +383,14 @@ function play(){
   timer = setInterval(scheduler, LOOKAHEAD_MS);
   say(ctx.state !== "running"
       ? "playing · press any key or click once to enable sound"
-      : "playing");
+      : (midiConnected() ? "playing · reaper" : "playing · own tone"));
 }
 
 function stop(){
   playing = false;
   if (timer){ clearInterval(timer); timer = null; }
   queue.length = 0;
+  midiPanic();
   if (ctx){
     var t = ctx.currentTime;
     master.gain.cancelScheduledValues(t);

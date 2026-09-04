@@ -74,6 +74,22 @@ const MIME = {
 function log(req, status){
   console.log(req.method + " " + req.url + " " + status);
 }
+
+function getRenderer(req, res){
+  let settled = false;
+  const finish = ready => {
+    if (settled) return;
+    settled = true;
+    send(req, res, 200, JSON.stringify({ ready: !!ready }), "application/json; charset=utf-8");
+  };
+  const probe = http.get({ host:"127.0.0.1", port:4174, path:"/", timeout:250 }, response => {
+    const ready = response.statusCode === 200;
+    response.resume();
+    finish(ready);
+  });
+  probe.on("timeout", () => probe.destroy());
+  probe.on("error", () => finish(false));
+}
 function send(req, res, status, body, type, extra){
   const buf = Buffer.isBuffer(body) ? body : Buffer.from(body ?? "");
   res.writeHead(status, Object.assign({
@@ -441,6 +457,12 @@ const server = http.createServer((req, res) => {
     if (req.method === "GET" || req.method === "HEAD"){ getRulings(req, res); return; }
     if (req.method === "PUT"){ putRulings(req, res); return; }
     res.setHeader("allow", "GET, PUT");
+    send(req, res, 405, "method not allowed");
+    return;
+  }
+  if (pathname === "/api/renderer"){
+    if (req.method === "GET" || req.method === "HEAD"){ getRenderer(req, res); return; }
+    res.setHeader("allow", "GET");
     send(req, res, 405, "method not allowed");
     return;
   }

@@ -1,0 +1,13 @@
+desc:Folio channel to one
+
+// Hidden inert slider gives the project chunk one stable serialized value.
+slider1:0<0,0,1>-
+
+@block
+while (midirecv(offset, msg1, msg2, msg3)) (
+  status = msg1 & $xF0;
+  // The REAPER track has already selected the Folio voice channel. Preserve
+  // the message kind and data, changing only the channel SINE receives.
+  (status >= $x80 && status <= $xE0) ? msg1 = status;
+  midisend(offset, msg1, msg2, msg3);
+);
