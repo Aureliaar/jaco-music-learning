@@ -159,7 +159,7 @@ function staticServer(root, seen){
               width:Math.round(field.width), height:Math.round(field.height),
               meta:document.getElementById('metatext').textContent};
     })()`);
-    expect(view.title === "Folio" && view.length === 16 && view.rows >= view.length && view.scripts === 11,
+    expect(view.title === "Folio" && view.length === 16 && view.rows >= view.length && view.scripts === 12,
       "the page did not boot the complete instrument", view);
     expect(view.width > 500 && view.height > 300, "the working folio collapsed", view);
     expect(/112.*C major/.test(view.meta), "the seeded tempo and key are not visible", view.meta);
@@ -167,6 +167,93 @@ function staticServer(root, seen){
   });
 
   await journey("2. the keyboard writes lead, bass, chords, and a hold", async () => {
+    /* Both halves of the renderer contract, before the composing proper.
+       Journey 1's ordinary boot already played Folio's own tone with no
+       renderer at all; this half opens the same instrument with the launch
+       promise `?renderer=reaper` in front of an absent rack, and proves that
+       the promise is kept honestly rather than quietly traded for a different
+       instrument. No renderer service listens during the suite, so the page
+       is looking at a genuinely missing rack. */
+    await browser.goto(base + "/?renderer=reaper");
+    await wait(1400);
+    const promised = await browser.eval(`(function(){
+      var panel=document.getElementById('rackfault');
+      window.__fellThrough=0;
+      window.samplePlay=function(){window.__fellThrough++;return true;};
+      playNote("C4",0,0.1,0);
+      play();
+      audition("C4",1);
+      return {required:MIDI_REQUIRED, fault:midiFault, state:midiState,
+              shown:!!panel && !panel.hidden,
+              name:document.getElementById('rackfaultname').textContent,
+              text:document.getElementById('rackfaulttext').textContent,
+              playing:playing, fellThrough:window.__fellThrough};
+    })()`);
+    expect(promised.required && promised.fault === "service-absent" && promised.shown,
+      "required-REAPER Folio did not show its missing rack", promised);
+    expect(/did not answer/.test(promised.name) && /safe/.test(promised.text),
+      "the renderer error does not name the boundary or reassure about the music", promised);
+    expect(!promised.playing && promised.fellThrough === 0,
+      "required-REAPER Folio played without its promised renderer", promised);
+    await browser.shot(path.join(__dirname, "e2e-rack.png"));
+    /* Editing and autosave stay available underneath the panel. */
+    await browser.key("Home", { key:"Home", vk:36 });
+    await browser.key("KeyZ", { key:"z", vk:90 });
+    const edited = await browser.eval(`(function(){
+      var wrote=doc.steps[0];
+      doc.steps[0]=null; doc.hold[0]=1; renderAll();
+      return {wrote:wrote};
+    })()`);
+    expect(edited.wrote === "C4", "the renderer error stopped the player writing", edited);
+    /* A rack that answers clears the panel without reloading the music, and
+       a rack that goes during playback takes the transport with it. The page
+       learns both through its ordinary one-second poll of the real status
+       endpoint, so this is the recovery path the player actually gets. */
+    await browser.eval(`(function(){
+      window.__rack="ready"; window.__midiSent=[];
+      var real=window.fetch.bind(window);
+      window.fetch=function(url,options){
+        if(String(url).indexOf("/api/renderer")>=0)
+          return Promise.resolve({ok:true,json:function(){
+            return Promise.resolve({ready:window.__rack==="ready",state:window.__rack,detail:""});}});
+        return real(url,options);
+      };
+      midiOut={name:"Folio to REAPER",state:"connected",connection:"open",
+        clear:function(){},
+        send:function(bytes,when){window.__midiSent.push({bytes:[].slice.call(bytes),when:when||0});}};
+      midiPermission="granted";
+      return true;
+    })()`);
+    const cleared = await eventually(async () => {
+      const seen = await browser.eval(`({fault:midiFault,
+        hidden:document.getElementById('rackfault').hidden,
+        length:docLen(), first:doc.steps[0]})`);
+      return (!seen.fault && seen.hidden) ? seen : null;
+    }, 6000, "a healthy rack did not clear the renderer error");
+    expect(cleared.length === 16 && cleared.first === null,
+      "clearing the renderer error reloaded the music", cleared);
+    const during = await browser.eval(`(function(){
+      window.__midiSent=[]; play();
+      return {playing:playing, fault:midiFault};
+    })()`);
+    expect(during.playing && !during.fault,
+      "a ready rack did not let the transport start", during);
+    await browser.eval(`(function(){window.__rack="renderer-lost";return true;})()`);
+    const lost = await eventually(async () => {
+      const seen = await browser.eval(`(function(){
+        var panic=window.__midiSent.filter(function(e){return (e.bytes[0]&240)===176&&
+          (e.bytes[1]===120||e.bytes[1]===123);});
+        return {fault:midiFault, playing:playing, panic:panic.length,
+          shown:!document.getElementById('rackfault').hidden,
+          text:document.getElementById('rackfaulttext').textContent};
+      })()`);
+      return seen.fault === "renderer-lost" ? seen : null;
+    }, 6000, "a renderer lost mid-playback was never noticed");
+    expect(!lost.playing && lost.shown && lost.panic >= 6,
+      "a renderer lost mid-playback did not stop the transport and silence the rack", lost);
+    await browser.goto(base + "/");
+    await wait(700);
+
     /* A local virtual port, without depending on machine MIDI hardware.  The
        ordinary boot above already exercised the absent-port fallback; this
        half of the same composing journey proves that all three written lanes
@@ -231,6 +318,34 @@ function staticServer(root, seen){
       "Folio did not send the bass renderer selection", selected);
     expect(routed.clears > 0 && routed.panic >= 6,
       "stop did not clear queued notes and silence all rack channels", routed);
+    const clocked = await browser.eval(`new Promise(function(resolve){
+      window.__midiSent=[];
+      var oldLoop=doc.loop, oldChord=doc.chords[3], oldHold=doc.chordhold[3];
+      doc.loop=4; doc.chords[3]=JSON.parse(JSON.stringify(doc.chords[0])); doc.chordhold[3]=1;
+      play();
+      /* A hidden Chrome tab starves this timer. The audio-clock pulse must
+         carry scheduling across the loop without its help. */
+      if(timer){clearInterval(timer);timer=null;}
+      setTimeout(function(){
+        stop();
+        var sent=window.__midiSent.slice(), ons=sent.filter(function(e){
+          return (e.bytes[0]&240)===144 && (e.bytes[0]&15)===2;
+        });
+        var gaps=[];
+        sent.forEach(function(off){
+          if((off.bytes[0]&240)!==128 || (off.bytes[0]&15)!==2) return;
+          var next=sent.find(function(on){return (on.bytes[0]&240)===144 &&
+            (on.bytes[0]&15)===2 && on.bytes[1]===off.bytes[1] && on.when>=off.when;});
+          if(next) gaps.push(next.when-off.when);
+        });
+        doc.loop=oldLoop; doc.chords[3]=oldChord; doc.chordhold[3]=oldHold;
+        resolve({ons:ons.length,gaps:gaps,clock:!!audioClockNode});
+      },750);
+    })`);
+    expect(clocked.clock && clocked.ons >= 9,
+      "the audio clock did not carry MIDI through a starved page timer", clocked);
+    expect(clocked.gaps.length && clocked.gaps.every(g => g >= 20),
+      "a MIDI note-off still crowds the following loop attack", clocked);
     await browser.eval(`(function(){
       midiPanic(); midiRackReady=false; midiOut=null; midiAccess=null; midiAsked=true;
       try{localStorage.removeItem(MIDI_PERMISSION);}catch(e){}
@@ -238,14 +353,75 @@ function staticServer(root, seen){
   });
 
   await journey("3. the gamepad remains a complete primary surface", async () => {
-    const GP = { X:0, B:1, SQ:2, TR:3, L1:4, R1:5, SEL:8, START:9 };
+    const GP = { X:0, B:1, SQ:2, TR:3, L1:4, R1:5, L2:6, R2:7, SEL:8, START:9, DU:12, DD:13 };
     await browser.padInstall(); await browser.pad([]);
     await browser.tap(GP.START);
-    const crossbar = await browser.eval(`(function(){var s=document.querySelectorAll('#settings .xslot');
-      return {on:document.getElementById('settings').classList.contains('on'), count:s.length,
-        sized:[].every.call(s,function(e){var r=e.getBoundingClientRect();return r.width>40&&r.height>10;})};})()`);
-    expect(crossbar.on && crossbar.count === 8 && crossbar.sized, "start did not raise a laid-out crossbar", crossbar);
+    /* start is a list of places, not an action bar: it opens a screen, the
+       strip names all five, and the page underneath is still drawn — dimmed
+       to a watermark rather than taken away, so the ear keeps its subject. */
+    const screens = await browser.eval(`(function(){
+      var chips=document.querySelectorAll('#sstrip .schip'),
+          rows=document.querySelectorAll('#sv-voices .vrow');
+      return {open:screenOpen(), id:screenId(), chips:chips.length, rows:rows.length,
+        veiled:document.body.classList.contains('veiled'),
+        drawn:document.getElementById('roll').classList.contains('on') ||
+              document.getElementById('column').style.display==='flex',
+        sized:[].every.call(rows,function(e){var r=e.getBoundingClientRect();
+              return r.width>200&&r.height>16;})};})()`);
+    expect(screens.open && screens.chips === 5 && screens.rows === 3 && screens.sized,
+      "start did not open a laid-out screen", screens);
+    expect(screens.veiled && screens.drawn,
+      "the page stopped being drawn behind the screen", screens);
+    /* L1 and R1 turn the strip and turning enters nothing */
+    await browser.tap(GP.R1);
+    const turned = await browser.eval("({id:screenId(), open:screenOpen()})");
+    expect(turned.open && turned.id !== screens.id, "the bumpers did not turn the strip", turned);
+    /* the board is no longer a page: a quest IS a workspace, so the log went
+       to the two margins the page already has and the drawing stands through
+       it. Both margins must be laid out, and neither may be over the sheet —
+       the whole point of the screen is that the folio stays readable. */
+    await browser.eval('openScreens("quests")');
+    const board = await browser.eval(`(function(){
+      var b=document.getElementById('quests').getBoundingClientRect(),
+          d=document.getElementById('qdetail').getBoundingClientRect(),
+          f=document.getElementById('field').getBoundingClientRect();
+      return {id:screenId(), veiled:document.body.classList.contains('veiled'),
+        drawn:document.getElementById('roll').classList.contains('on') ||
+              document.getElementById('column').style.display==='flex',
+        sized:b.width>150&&b.height>100&&d.width>120&&d.height>40,
+        clear:b.right<=f.left+1&&d.left>=f.right-1};})()`);
+    expect(board.id === "quests" && board.drawn && board.veiled,
+      "the quest board stopped the drawing instead of standing beside it", board);
+    expect(board.sized && board.clear,
+      "the board and its reading are not laid out clear of the sheet", board);
     await browser.tap(GP.START);
+    expect(!(await browser.eval("screenOpen()")), "start did not put the screens down");
+    await browser.key("Home", { key:"Home", vk:36 });
+    await browser.tap(GP.DU);                  // bare vertical moves only the root
+    const bareRoot = await browser.eval(`({chord:doc.chords[0], next:doc.chords[1], cursor:cursor,
+      length:writtenLen(doc, CHORD_LANE, 0)})`);
+    expect(bareRoot.chord.deg === 1 && bareRoot.chord.shape === "triad" &&
+           bareRoot.chord.voicing === undefined && bareRoot.chord.inversion === 0 &&
+           bareRoot.chord.octave === 0 && bareRoot.length === 1 &&
+           !bareRoot.next && bareRoot.cursor === 0,
+      "bare d-pad up changed more than the chord's root", bareRoot);
+    await browser.tap(GP.DD);                  // put the seed back
+    await browser.tap(GP.L2, GP.DU);          // d-pad changes this chord's root
+    const rooted = await browser.eval(`({chord:doc.chords[0], next:doc.chords[1], cursor:cursor})`);
+    expect(rooted.chord.deg === 1 && rooted.chord.shape === "triad" && !rooted.next && rooted.cursor === 0,
+      "L2 plus d-pad up did not edit the same chord's root", rooted);
+    await browser.tap(GP.L2, GP.DD);          // put the seed back
+    await browser.tap(GP.R2, GP.DU);          // d-pad changes this chord's type
+    const shaped = await browser.eval(`({chord:doc.chords[0], next:doc.chords[1], cursor:cursor})`);
+    expect(shaped.chord.deg === 0 && shaped.chord.shape === "seventh" && !shaped.next && shaped.cursor === 0,
+      "R2 plus d-pad up did not edit the same chord's type", shaped);
+    await browser.tap(GP.R2, GP.DD);          // put the seed back
+    await browser.tap(GP.L2, GP.TR);          // right-hand symbol still writes/overwrites
+    const written = await browser.eval(`({chord:doc.chords[0], cursor:cursor})`);
+    expect(written.chord.shape === "seventh" && written.cursor > 0,
+      "L2 plus the right-hand up symbol did not write a chord", written);
+    await browser.key("Home", { key:"Home", vk:36 });
+    await browser.key("KeyZ", { key:"z", vk:90 });       // restore the seed
     await browser.tap(GP.R1);                 // chords -> lead
     await browser.key("End", { key:"End", vk:35 });
     const before = await browser.eval("JSON.stringify(doc.steps)");
@@ -296,6 +472,42 @@ function staticServer(root, seen){
     expect(readJSON(RULES).complete.ladder === true, "saving music erased an independent ruling");
   });
 
+  await journey("5b. a chord mirror delivered in a drill fans one written chord out to every site", async () => {
+    /* the L5 mirrored boards bind the chord lane: a cell of eight pointed at
+       from four places. One chord written at the first site must be the
+       chord at all four, drawn at the mirror weight, and survive the trip
+       through the log. */
+    const nulls = () => new Array(32).fill(null), ones = () => new Array(32).fill(1);
+    const disk = readJSON(LOG);
+    disk.drills.push({ id:"mirror-drill", name:"the mirror drill", summary:"- chords 1–8 return every eight steps",
+      teaches:"the vamp.", lesson:5,
+      pattern:{ version:1, title:"the mirror drill", tempo:96, loop:32, key:"C major", len:32,
+        steps:nulls(), bass:nulls(), hold:ones(), basshold:ones(), lock:nulls(), basslock:nulls(),
+        tones:[null,null], mirrors:[{ voice:2, cell:8, sites:[0,8,16,24] }],
+        mute:[false,false,false], solo:[false,false,false], chords:nulls(), chordhold:ones() } });
+    writeJSON(LOG, disk);
+    await eventually(async () => browser.eval(`DRILLS.some(function(d){return d.id==='mirror-drill';})`),
+      13000, "the open tab did not adopt the mirrored drill");
+    await browser.eval(`(function(){ switchWorkspace('mirror-drill'); voice = CHORD_LANE; cursor = 0; renderAll(); return true; })()`);
+    const seeded = await browser.eval(`({mirrors:JSON.stringify(doc.mirrors), len:doc.len, chords:doc.chords.filter(Boolean).length})`);
+    expect(seeded.mirrors === JSON.stringify([{ voice:2, cell:8, sites:[0,8,16,24] }]) && seeded.len === 32 && seeded.chords === 0,
+      "the chord mirror was not read off the delivered seed", seeded);
+    await browser.key("Home", { key:"Home", vk:36 });
+    await browser.key("KeyZ", { key:"z", vk:90 });
+    const fanned = await browser.eval(`({at:[0,8,16,24].map(function(i){return doc.chords[i] && doc.chords[i].deg;}),
+      elsewhere:doc.chords.filter(Boolean).length, cursor:cursor,
+      drawn:[].some.call(document.querySelectorAll('#column .row .note.chord'), function(e){return e.classList.contains('mirror');})})`);
+    expect(fanned.at.every(d => d === 0) && fanned.elsewhere === 4 && fanned.cursor > 0,
+      "one chord at the first site did not become the chord at all four", fanned);
+    expect(fanned.drawn, "the bound chord was not drawn at the mirror weight", fanned);
+    await eventually(() => {
+      const slot = readJSON(LOG).quests["mirror-drill"], ws = slot && slot.pattern;
+      return ws && ws.chords && [0,8,16,24].every(i => ws.chords[i] && ws.chords[i].deg === 0);
+    }, 5000, "the mirrored chords never reached the log");
+    await browser.eval(`(function(){ switchWorkspace(null); return true; })()`);
+    expect(errors.length === 0, "the browser raised during the chord mirror journey", errors);
+  });
+
   await journey("6. a sample can enter, appear on the shelf, and play back byte-for-byte", async () => {
     const wave = validWave();
     const put = await fetch(base + "/api/kits/e2e/tone.wav", { method:"PUT", body:wave });
@@ -312,6 +524,7 @@ function staticServer(root, seen){
       "the kit endpoint accepted a path outside its shelf");
   });
 
+  await wait(1200);                    // let the calm scenery transition settle
   await browser.shot(SCREENSHOT);
   clearInterval(drain);
   browser.close();

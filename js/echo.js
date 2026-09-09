@@ -32,6 +32,15 @@
    fragment itself — events counted from nought *inside the call*, so the
    fragment can be moved along the page by changing one number.
 
+   An event may name a `voice` of its own, and then the call is more than one
+   line: everything in it is PLAYED, and only the events belonging to the
+   echo's own `voice` are answered and judged. That is what a call taken off
+   a recording needs — the ground moves under the melody, and an ear asked to
+   write the melody out of silence is being asked a different question than
+   the one the recording poses. Events without a voice are the echo's own, so
+   every call written before this reads exactly as it did. Order and
+   uniqueness are per line, since two voices sound together by definition.
+
    Read strictly and dropped whole, for the same reason a mirror is: a length
    read wrong costs a little sound, but an echo read wrong would mark a page
    right or wrong on arithmetic nobody meant. Anything that is not exactly
@@ -51,22 +60,24 @@ function readEcho(o, N){
   var v = echoInt(o.voice, 0, VOICES - 1, 0);
   var at = echoInt(o.at, 0, N - 1, 0);
   if (v === null || at === null) return null;
-  if (!Array.isArray(o.call) || !o.call.length || o.call.length > N) return null;
-  var call = [], i, e, step, len, p, last = -1;
+  if (!Array.isArray(o.call) || !o.call.length || o.call.length > N * VOICES) return null;
+  var call = [], i, e, step, len, p, ev, last = [];
+  for (i = 0; i < VOICES; i++) last.push(-1);
   for (i = 0; i < o.call.length; i++){
     e = o.call[i];
     if (!e || typeof e !== "object" || Array.isArray(e)) return null;
     step = echoInt(e.step, 0, N - 1, null);
     len = echoInt(e.len, 1, N, 1);
-    if (step === null || len === null) return null;
-    if (step <= last) return null;                 /* in order, and never twice */
+    ev = echoInt(e.voice, 0, VOICES - 1, v);
+    if (step === null || len === null || ev === null) return null;
+    if (step <= last[ev]) return null;             /* in order, and never twice */
     p = parseNote(e.note);
     if (!p) return null;
     if (at + step + len > N) return null;          /* the call fits the page */
-    last = step;
+    last[ev] = step;
     /* the note written the one way the page writes notes, whatever spelling
        the definition arrived in */
-    call.push({ step: step, note: NAMES[p.pc] + p.oct, len: len });
+    call.push({ step: step, note: NAMES[p.pc] + p.oct, len: len, voice: ev });
   }
   return { stage: o.stage, voice: v, at: at, call: call };
 }
@@ -110,9 +121,28 @@ function echoPlay(){
   t0 = ctx.currentTime + 0.12;
   for (i = 0; i < e.call.length; i++){
     ev = e.call[i];
-    playNote(ev.note, t0 + ev.step * dur, dur * ev.len, e.voice, ev.len > 1);
+    playNote(ev.note, t0 + ev.step * dur, dur * ev.len,
+             (ev.voice === undefined) ? e.voice : ev.voice, ev.len > 1);
   }
   say("the call · listen");
+}
+
+/* the events of one line of the call: what is asked of the voice that
+   answers, which on a single-voice call is the whole of it. Every judgement
+   is made against this and never against the accompaniment — a call may
+   carry a bass, and the bass was never the question. */
+function echoCall(e){
+  var out = [], i;
+  for (i = 0; i < e.call.length; i++)
+    if (e.call[i].voice === undefined || e.call[i].voice === e.voice)
+      out.push(e.call[i]);
+  return out;
+}
+/* and how far that line reaches: the window the answer is read out of, which
+   is the answering voice's own — an accompaniment running on past the melody
+   does not widen the question */
+function echoLine(e){
+  return { stage: e.stage, voice: e.voice, at: e.at, call: echoCall(e) };
 }
 
 /* ---- the answer, as it stands on the page ----
@@ -253,6 +283,8 @@ function echoFile(){
 function echoJudge(){
   var e = echoNow(), ans, hits = [], i, n = 0, msg, filed;
   if (!e) return;
+  e = echoLine(e);                     /* the line that answers, and only it */
+  if (!e.call.length) return;
   ans = echoAnswer(e);
   if (!ans.length){
     echoClear(); renderNotes();

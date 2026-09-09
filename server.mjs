@@ -75,20 +75,44 @@ function log(req, status){
   console.log(req.method + " " + req.url + " " + status);
 }
 
+/* The renderer's own status service owns the state; this is only a proxy, so
+   that the page can ask one origin. Nothing answering on 4174 means no
+   renderer was requested of this machine — which is exactly right for ordinary
+   Folio, and is the page's business to read differently when it was launched
+   with `?renderer=reaper`. */
 function getRenderer(req, res){
   let settled = false;
-  const finish = ready => {
+  const finish = (state, detail, voices) => {
     if (settled) return;
     settled = true;
-    send(req, res, 200, JSON.stringify({ ready: !!ready }), "application/json; charset=utf-8");
+    send(req, res, 200, JSON.stringify({
+      ready: state === "ready",
+      state,
+      detail: detail || "",
+      /* what the rack says it holds, passed through untouched: this server
+         knows nothing about instruments and must not start guessing. The
+         status service reads the rack project; a rack that is not up sends
+         nothing, and the page draws no rail rather than an empty one. */
+      voices: Array.isArray(voices) ? voices : null
+    }), "application/json; charset=utf-8");
   };
   const probe = http.get({ host:"127.0.0.1", port:4174, path:"/", timeout:250 }, response => {
-    const ready = response.statusCode === 200;
-    response.resume();
-    finish(ready);
+    let body = "";
+    response.setEncoding("utf8");
+    response.on("data", chunk => { if (body.length < 4096) body += chunk; });
+    response.on("end", () => {
+      let status = null;
+      try { status = JSON.parse(body); } catch (e) {}
+      if (status && typeof status.state === "string")
+        finish(status.state, typeof status.detail === "string" ? status.detail : "",
+               status.voices);
+      /* an older status service that only carried an HTTP code */
+      else finish(response.statusCode === 200 ? "ready" : "starting", "");
+    });
+    response.on("error", () => finish("reaper-failed", "the renderer status service failed"));
   });
   probe.on("timeout", () => probe.destroy());
-  probe.on("error", () => finish(false));
+  probe.on("error", () => finish("not-requested", "no renderer service is running"));
 }
 function send(req, res, status, body, type, extra){
   const buf = Buffer.isBuffer(body) ? body : Buffer.from(body ?? "");

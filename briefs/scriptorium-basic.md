@@ -94,5 +94,5 @@ cluster description accordingly.
   Pre-existing failures: report verbatim, never fix, never paper over.
 - NEVER read or write `quests/quest-log.json`; harnesses seed their own
   log via FOLIO_LOG.
-- Never commit BUDGET.md, QUESTS.md, quest-log.json. Commit with
-  Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>.
+- Never commit BUDGET.md, QUESTS.md, quest-log.json. Use the repository's
+  normal commit authorship; do not add an agent co-author.

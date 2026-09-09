@@ -10,6 +10,9 @@
     --rule:#C9BCA0;
     --gilt:#9C7A28;
     --wash:#E0D2B4;
+    /* one shade under the wash: the desk the folio lies on while a screen
+       is up. Never used on the sheet itself. */
+    --desk:#D6C8A6;
     --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
   }
   html{
@@ -478,7 +481,8 @@
      weight of a bar, with a quiet line inside it where each tone actually
      sits. The slab is what the eye takes first and the lines are what it
      reads second — and a tone that did not move draws at exactly the same
-     height in the next chord, which is the lesson, seen. Nothing here is
+     height in the next chord, which is the lesson, seen. The root is the
+     darker line with one quiet bead at its edge. Nothing here is
      ever more than four lines inside one shape, so it cannot read as a
      stripe; nothing here moves; and it lies under the two voices' bars, in
      the drawing as in the ear. */
@@ -491,6 +495,10 @@
   }
   .chordbar.back>b{opacity:0.19;}
   .chordbar.outside>b{opacity:0.11;}
+  /* a slab of a mirrored cell, at the same lighter weight the bars wear */
+  .chordbar.mirror>b{opacity:0.19;}
+  .chordbar.mirror.back>b{opacity:0.12;}
+  .chordbar.mirror.outside>b{opacity:0.07;}
   .chordbar.cur>b{box-shadow:0 0 0 1px rgba(59,47,30,0.45);}
   .chordbar>i{
     position:absolute;
@@ -498,7 +506,17 @@
     height:2px;margin-top:-1px;
     background:rgba(59,47,30,0.30);
   }
+  .chordbar>i.root{
+    height:3px;margin-top:-1.5px;
+    background:rgba(59,47,30,0.66);
+  }
+  .chordbar>i.root::before{
+    content:"";position:absolute;left:-0.12em;top:50%;
+    width:0.34em;height:0.34em;transform:translateY(-50%);
+    border-radius:50%;background:rgba(59,47,30,0.72);
+  }
   .chordbar.back>i{background:rgba(59,47,30,0.16);}
+  .chordbar.back>i.root{background:rgba(59,47,30,0.38);}
   .chordbar.outside>i{background:rgba(59,47,30,0.10);}
   /* ---- the names on the drawing ----
      The roll says pitch with height and colour, which is quick to read and
@@ -606,36 +624,29 @@
   .rollbase span{text-align:center;color:var(--faded);font-size:0.85em;}
   .rollbase span.cur{color:var(--ink);font-size:1.05em;}
 
-  /* ---- the settings crossbar (raised over the page, never instead of it) ----
-     Start raises it, as start raises the system menu in the game, and while
-     it is up the eight crossbar slots are items rather than notes. It does
-     not take the folio away: the page stays exactly where it was, drawn and
-     readable, and the crossbar is laid over the head of the screen — where
-     the title stands — on a soft borderless breath. Turning a setting and
-     watching what it does to the music are the same movement, so the music
-     has to stay in view while it is done.
-
-     Drawn the way the hand holds them: two clusters, each a diamond — the
-     d-pad on the left, the face buttons on the right. Diamonds, deliberately,
-     so that nothing here is a grid. */
-  .settings{
+  /* ---- the screens (what start opens) ----
+     Start is a list of places, not an action bar: the folio, the voices, the
+     quests, the settings, the mirrors. The strip naming them stands where the
+     title stands, on the page's own ground gathered under the words and gone
+     at its own edges — a breath, not a panel, and nothing rectangular about
+     it. The folio underneath is never taken away: it dims to a watermark, so
+     that what the ear is being asked to judge is still under the eye while a
+     dial is turned. The folio screen is the one that lifts the watermark
+     again, and then the only thing standing over the page is the strip. */
+  .schrome{
     display:none;
     position:fixed;
     top:0.9rem;
     left:50%;
     transform:translateX(-50%);
     z-index:6;
-    width:min(35rem,96vw);
+    width:min(44rem,96vw);
+    text-align:center;
     color:var(--ink);
-    font-size:0.84rem;
-    line-height:1.35;
-    pointer-events:none;             /* only the eight slots answer the mouse */
+    pointer-events:none;
   }
-  .settings.on{display:block;}
-  /* what the crossbar stands on: the page's own ground, gathered under the
-     words and gone at its own edges. A breath, not a panel — no border, no
-     rule, and nothing rectangular about it. */
-  .settings::before{
+  .schrome.on{display:block;}
+  .schrome::before{
     content:"";
     position:absolute;
     inset:-1.3rem -2.8rem;
@@ -649,16 +660,14 @@
       rgba(234,224,204,0.14) 94%,
       rgba(234,224,204,0) 100%);
   }
-  /* on scenery it takes the marginalia's treatment instead: pale ink over the
-     same darkening breath the rails and the title already stand on */
-  body:not([data-scenery="paper"]) .settings{
+  body:not([data-scenery="paper"]) .schrome{
     --ink:#EDE5D2;
     --faded:rgba(236,229,212,0.68);
     --rule:rgba(236,229,212,0.30);
     --gilt:#D9BA6E;
     --wash:rgba(236,229,212,0.16);
   }
-  body:not([data-scenery="paper"]) .settings::before{
+  body:not([data-scenery="paper"]) .schrome::before{
     background:radial-gradient(ellipse closest-side at center,
       rgba(13,18,16,0.60) 0%,
       rgba(13,18,16,0.56) 44%,
@@ -667,275 +676,205 @@
       rgba(13,18,16,0.10) 92%,
       rgba(13,18,16,0) 100%);
   }
-  /* the title gives way while the crossbar stands over it, and comes back
-     when it goes: one slow settling of the ink, nothing that blinks, and the
-     folio underneath is not touched at all. It goes all the way out rather
-     than merely dim — a half-faded meta line showing through the slots is two
-     lines of small type in one place, which reads as a fault rather than as
-     depth. Nothing moves: the header keeps its box, and everything it was
-     saying is either on the crossbar itself or on the voice strip below. */
-  header{transition:opacity 0.3s ease-out;}
-  body[data-settings] header{opacity:0;}
-  /* the crossbar's own tabs: which drawing the eight slots are.
-     L1 and R1 turn it; the mouse may tap a name. */
-  .xchips{
-    display:flex;justify-content:center;gap:1.2rem;
-    margin:0 0 0.6rem;
-    font-size:0.86em;letter-spacing:0.06em;
+  /* the five names. L1 and R1 turn them; the mouse may tap one. The one that
+     is not built yet is named all the same and stands paler, so that the
+     shape of the menu will not change on the day it arrives. */
+  .sstrip{
+    display:flex;justify-content:center;align-items:baseline;
+    gap:2.2rem;
+    font-variant:small-caps;letter-spacing:0.22em;font-size:1rem;
     color:var(--faded);
   }
-  .xchip{cursor:pointer;}
-  .xchip.on{color:var(--gilt);}
-  .xbars{
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    gap:1.4rem;
-    flex-wrap:wrap;
-    margin:0;
+  .schip{
+    padding:0 0.2em 0.28rem;
+    border-bottom:1px solid transparent;
+    cursor:pointer;pointer-events:auto;
   }
-  .xbar{
-    position:relative;
-    width:16.4rem;
-    height:7.6rem;
+  .schip.on{color:var(--ink);border-bottom-color:var(--gilt);}
+  .schip.soon{opacity:0.45;}
+  .swhere{
+    margin:0.5rem 0 0;
+    font-size:0.86rem;letter-spacing:0.05em;line-height:1.5;
+    color:var(--faded);
   }
-  .xslot{
-    position:absolute;
-    width:7.6rem;
-    margin-left:-3.8rem;
-    text-align:center;
-    padding:0.2rem 0.25rem;
-    border-radius:0.5rem;
-    cursor:pointer;
-    pointer-events:auto;
+  /* the title gives way while a screen stands over it, and comes back when it
+     goes: one slow settling of the ink, nothing that blinks. It goes all the
+     way out rather than merely dim — a half-faded meta line showing through
+     is two lines of small type in one place, which reads as a fault rather
+     than as depth. Nothing moves: the header keeps its box. */
+  header{transition:opacity 0.3s ease-out;}
+  body[data-screen] header{opacity:0;}
+  /* the watermark: the page is still there, still playing, still the thing
+     being judged — it simply stops competing with the screen in front of it.
+     A fade of the ink, never a dark sheet laid over the paper: a flood fill
+     is the contrast jump this palette does not do. */
+  #voices,#column,#roll,.rail{transition:opacity 0.3s ease-out;}
+  /* A tenth of the ink was not a watermark, it was an absence: the drawing
+     was gone and the only thing saying you had left the page was that there
+     was nothing to see. It washes out now instead — the bars and the shape
+     of the phrase stay readable, they simply stop competing with the column
+     that the caret is walking. */
+  body.veiled #voices,body.veiled #column,body.veiled #roll{opacity:0.32;}
+  body.veiled .rail{opacity:0.30;}
+  /* the one thing kept legible through the wash: the row the playhead is on.
+     It is what says the page is still running while you are away from it, so
+     its flat wash is deepened by exactly as much as the wash takes away. */
+  body.veiled .row.play{background-color:rgba(156,122,40,0.55);}
+  /* the marks you write WITH leave, because you are not writing: the bold on
+     the cursor row is the only bold in the app and it has no business being
+     the loudest thing on a page you cannot type into. */
+  body.veiled .row.cursor .note{font-weight:400;}
+  /* the scenery corner is page furniture too, and the settings screen says
+     the same thing in words while it is up */
+  .scenery{transition:opacity 0.3s ease-out;}
+  /* all the way out, not merely dimmed: the corner sits where the right
+     margin now reads the quest in hand, and two things in one corner reads
+     as a fault. The settings screen says the same thing in words while any
+     screen is up, so nothing is lost by putting it away. */
+  body.veiled .scenery{opacity:0;pointer-events:none;}
+  /* ---- the desk under the sheet ----
+     The second half of saying you are not on the page, and the half that
+     costs the page nothing: the ground steps down one shade to a desk and
+     the folio becomes a lit sheet lying on it, edge and all. Nothing loses
+     ink for this and there is no flood fill over the paper — it is the same
+     parchment one dab darker, which is a step this palette already takes
+     between --ground and --wash. Paper only: on a scene the ground is a
+     photograph already veiled, and a second veil over it would be a fog. */
+  body,main{transition:background-color 0.3s ease-out,box-shadow 0.3s ease-out;}
+  body[data-scenery="paper"][data-screen]{background-color:var(--desk);}
+  body[data-scenery="paper"][data-screen] main{
+    background-color:var(--ground);
+    border-radius:3px;
+    box-shadow:0 3px 30px rgba(59,47,30,0.16);
   }
-  /* the slots the mode is chiefly for — the workspace, up and down — marked
-     as the playhead row is: a flat wash, no glow */
-  .xslot.head{background-color:var(--wash);}
-  /* the glyph sits on the line with the name rather than over it: two lines
-     to a slot instead of three, which is what lets the whole crossbar stand
-     in the head of the page without reaching the folio */
-  .xslot .xg{color:var(--gilt);font-size:1.05em;margin-right:0.35em;}
-  .xslot .xl{letter-spacing:0.04em;}
-  .xslot .xv{
-    display:block;color:var(--faded);font-size:0.86em;
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  }
-  .xslot.none .xl{color:var(--faded);}
-  .xslot.none .xg{opacity:0.45;}
-  .xbar .xhub{
-    position:absolute;left:50%;top:50%;
-    width:2.6rem;height:1px;margin:0 0 0 -1.3rem;
-    background:var(--rule);opacity:0.6;
-  }
-  @media (max-width:44rem){
-    .xbars{gap:0.6rem;}
-    .xbar{width:14.2rem;}
-    .xslot{width:6.8rem;margin-left:-3.4rem;}
-  }
-
-  /* ---- the key overlay (the crossbar's drawing, borrowed) ----
-     F1 raises it, F1 and escape put it down, and the quiet mark in the
-     top-right corner does both for a hand on a mouse. It stands over the
-     folio on the same soft borderless breath the crossbar stands on — the
-     page it describes stays visible behind and around it — and it borrows
-     the crossbar's slots outright: the same diamonds, the same glyph and
-     name, so that the drawing of the controls is one drawing in this app and
-     not two. No panel, no border, nothing rectangular, nothing that blinks.
-     The breath is carried as the box's own background rather than on a
-     ::before, so that it holds under the copy even where a short window has
-     to scroll the overlay. */
-  .keyhelp{
+  /* the screens that draw something of their own are laid over the folio,
+     never in place of it — the board is the one exception, and it is the
+     page's own section rather than one of these. Fixed, so the page beneath
+     keeps its own layout and nothing moves when a screen goes up or down. */
+  .sviews{
     display:none;
     position:fixed;
     top:50%;
     left:50%;
     transform:translate(-50%,-50%);
-    z-index:7;
-    box-sizing:border-box;
-    width:min(56rem,94vw);
-    padding:1.2rem 1rem 1.4rem;
-    color:var(--ink);
-    font-size:0.84rem;
-    line-height:1.35;
-    text-align:center;
-  }
-  .keyhelp.on{display:block;}
-  /* what it stands on, as the crossbar stands on it: the page's own ground,
-     gathered under the words and gone at its own edges. One ellipse cannot
-     cover a wide block of copy without either leaving its ends bare or
-     ending in a straight edge, so the breath is two of them side by side —
-     a capsule, dense down the middle where the words are and out of density
-     well before the box ends, which is why the fade is never a border. */
-  .keyhelp::before{
-    content:"";
-    position:absolute;
-    inset:-2.6rem -3.4rem;
-    z-index:-1;
-    pointer-events:none;
-    background:
-      radial-gradient(ellipse 36% 66% at 28% 50%,
-        rgba(234,224,204,0.99) 0%,
-        rgba(234,224,204,0.98) 58%,
-        rgba(234,224,204,0.90) 76%,
-        rgba(234,224,204,0.50) 90%,
-        rgba(234,224,204,0) 100%),
-      radial-gradient(ellipse 36% 66% at 72% 50%,
-        rgba(234,224,204,0.99) 0%,
-        rgba(234,224,204,0.98) 58%,
-        rgba(234,224,204,0.90) 76%,
-        rgba(234,224,204,0.50) 90%,
-        rgba(234,224,204,0) 100%),
-      radial-gradient(ellipse 56% 50% at 50% 50%,
-        rgba(234,224,204,0.97) 0%,
-        rgba(234,224,204,0.92) 66%,
-        rgba(234,224,204,0.50) 86%,
-        rgba(234,224,204,0) 100%);
-  }
-  /* on scenery it takes the marginalia's treatment, exactly as the crossbar
-     does: pale ink over the same darkening breath */
-  body:not([data-scenery="paper"]) .keyhelp{
-    --ink:#EDE5D2;
-    --faded:rgba(236,229,212,0.70);
-    --rule:rgba(236,229,212,0.30);
-    --gilt:#D9BA6E;
-    color:var(--ink);
-  }
-  body:not([data-scenery="paper"]) .keyhelp::before{
-    background:
-      radial-gradient(ellipse 36% 66% at 28% 50%,
-        rgba(13,18,16,0.88) 0%,
-        rgba(13,18,16,0.85) 58%,
-        rgba(13,18,16,0.68) 76%,
-        rgba(13,18,16,0.36) 90%,
-        rgba(13,18,16,0) 100%),
-      radial-gradient(ellipse 36% 66% at 72% 50%,
-        rgba(13,18,16,0.88) 0%,
-        rgba(13,18,16,0.85) 58%,
-        rgba(13,18,16,0.68) 76%,
-        rgba(13,18,16,0.36) 90%,
-        rgba(13,18,16,0) 100%),
-      radial-gradient(ellipse 56% 50% at 50% 50%,
-        rgba(13,18,16,0.80) 0%,
-        rgba(13,18,16,0.70) 66%,
-        rgba(13,18,16,0.36) 86%,
-        rgba(13,18,16,0) 100%);
-  }
-  .keyhelp h2{
-    margin:0 0 0.9rem;
-    font-size:1.05rem;
-    font-weight:400;
-    font-variant:small-caps;
-    letter-spacing:0.14em;
-    color:var(--ink);
-  }
-  .kbars{
-    display:flex;
-    flex-wrap:wrap;
-    justify-content:center;
-    align-items:flex-start;
-    gap:0.9rem 1.6rem;
-  }
-  .kgroup{max-width:100%;}
-  .kgroup h3{
-    margin:0 0 0.2rem;
-    font-size:0.72rem;
-    font-weight:400;
-    font-variant:small-caps;
-    letter-spacing:0.16em;
-    color:var(--faded);
-  }
-  /* the slots here are read, not pressed: no cursor, and no target */
-  .keyhelp .xslot{cursor:default;pointer-events:none;padding:0.15rem 0.2rem;}
-  .keyhelp .xg{display:block;margin:0 0 0.08rem;font-size:1.2em;}
-  .keyhelp .xv{white-space:normal;overflow:visible;text-overflow:clip;}
-  .kgroup.list{text-align:left;flex:0 1 auto;}
-  .klist{columns:2;column-gap:1.5rem;}
-  .kline{
-    break-inside:avoid;
-    -webkit-column-break-inside:avoid;
-    display:flex;
-    align-items:baseline;
-    gap:0.5rem;
-    padding:0.05rem 0;
-  }
-  .kline b{
-    flex:0 0 auto;
-    min-width:6.4rem;
-    text-align:right;
-    font-weight:400;
-    color:var(--ink);
-    opacity:0.86;
-  }
-  .kline span{color:var(--faded);}
-  .knote{
-    margin:0.3rem auto 0;
-    max-width:17rem;
-    color:var(--faded);
-    font-size:0.76rem;
-    line-height:1.3;
-  }
-  .kgroup.list .knote{margin-left:0;}
-  /* the mark that opens it, under the scenery control in the same corner:
-     small caps, no box, and it says which key does the same thing */
-  .keymark{
-    position:fixed;
-    top:2.5rem;
-    right:1.05rem;
     z-index:5;
-    appearance:none;
-    -webkit-appearance:none;
-    border:0;
-    background:transparent;
-    color:var(--faded);
-    font:inherit;
-    font-size:0.72rem;
-    font-variant:small-caps;
-    letter-spacing:0.12em;
-    padding:0.2rem 0.4rem;
-    opacity:0.85;
+    box-sizing:border-box;
+    width:min(44rem,92vw);
+    /* lit and rimmed, exactly as the board in the margin is: the page under
+       it is washed but still drawn, and a row of words laid straight on top
+       of a note was two things in one place. The panel is the same parchment
+       one step up from the desk, not a flood fill over the paper. */
+    padding:1.1rem 1.5rem 1.3rem;
+    border:1px solid var(--gilt);
+    border-radius:0.8rem;
+    background-color:var(--ground);
+    box-shadow:0 3px 26px rgba(59,47,30,0.16);
+    color:var(--ink);
+    font-size:0.92rem;
+    line-height:1.5;
+  }
+  .sviews.on{display:block;}
+  .sview{display:none;}
+  .sview.on{display:block;}
+  /* ---- the voices screen: one row a voice ----
+     Its name, the rail of instruments it can wear, and whether it is heard.
+     The row the caret is on is the voice the hands are in — walking is
+     arriving here as it is everywhere else in the folio. */
+  .vrow{
+    display:grid;
+    grid-template-columns:6.5rem minmax(0,1fr) 5rem;
+    align-items:baseline;
+    gap:1.2rem;
+    padding:0.7rem 1rem;
+    border-radius:0.6rem;
     cursor:pointer;
   }
-  .keymark:hover{opacity:1;color:var(--ink);}
-  .keymark:focus-visible{outline:1px solid var(--gilt);outline-offset:2px;}
-  body:not([data-scenery="paper"]) .keymark{color:rgba(236,229,212,0.66);}
-  body:not([data-scenery="paper"]) .keymark::before{
-    content:"";
-    position:absolute;
-    inset:-0.8rem -1.5rem;
-    z-index:-1;
-    pointer-events:none;
-    background:radial-gradient(ellipse closest-side at center,
-      rgba(13,18,16,0.36) 0%,
-      rgba(13,18,16,0.28) 48%,
-      rgba(13,18,16,0.12) 76%,
-      rgba(13,18,16,0) 100%);
+  .vrow.on{background-color:var(--wash);}
+  .vrn{font-variant:small-caps;letter-spacing:0.2em;font-size:1.05rem;color:var(--faded);}
+  .vrow.on .vrn{color:var(--ink);}
+  .vseats{display:flex;flex-wrap:wrap;gap:0.5rem;align-items:baseline;}
+  .vseat{
+    padding:0.1rem 0.6rem;
+    border:1px solid transparent;
+    border-radius:0.5rem;
+    color:var(--faded);
+    white-space:nowrap;
+  }
+  .vseat{cursor:pointer;pointer-events:auto;}
+  .vseat.on{color:var(--ink);border-color:var(--rule);}
+  .vrow.on .vseat.on{border-color:var(--gilt);}
+  .vseat.away{font-style:italic;}
+  .vseat.none{border:0;font-style:italic;}
+  .vrst{text-align:right;color:var(--faded);letter-spacing:0.04em;}
+  .vrst.heard{color:var(--gilt);}
+  /* while an echo is asking, □ and △ are the asking: no row claims them */
+  .vrow.lent .vrst{opacity:0.55;}
+  /* ---- the settings screen ---- */
+  .srow{
+    display:grid;
+    grid-template-columns:12rem minmax(0,1fr);
+    align-items:baseline;
+    gap:1.4rem;
+    padding:0.6rem 1rem;
+    border-radius:0.6rem;
+    cursor:pointer;
+  }
+  .srow.on{background-color:var(--wash);}
+  .srk{font-variant:small-caps;letter-spacing:0.16em;color:var(--faded);}
+  .srow.on .srk{color:var(--ink);}
+  .sropts{display:flex;flex-wrap:wrap;gap:0.5rem;align-items:baseline;}
+  .sropt{
+    padding:0.1rem 0.6rem;
+    border:1px solid transparent;
+    border-radius:0.5rem;
+    color:var(--faded);
+    white-space:nowrap;
+  }
+  .sropt{cursor:pointer;pointer-events:auto;}
+  .sropt.on{color:var(--ink);border-color:var(--rule);}
+  .srow.on .sropt.on{border-color:var(--gilt);}
+  .sract{color:var(--faded);}
+  .srow.on .sract{color:var(--ink);}
+  /* ---- the mirrors screen: named before it exists ---- */
+  .smirr p{
+    margin:2rem auto 0;
+    text-align:center;
+    max-width:30rem;
+    color:var(--faded);
+    font-style:italic;
+    line-height:1.7;
   }
   @media (max-width:44rem){
-    .keymark{top:1.9rem;right:0.5rem;}
-    .keyhelp{font-size:0.78rem;}
-    .klist{columns:1;}
-  }
-  /* a short window: the overlay is one piece and does not scroll, so it is
-     the type that gives way rather than the end of the list */
-  @media (max-height:44rem){
-    .keyhelp{font-size:0.74rem;}
-    .keyhelp h2{margin-bottom:0.5rem;}
+    .sstrip{gap:1.1rem;font-size:0.9rem;letter-spacing:0.14em;}
+    .vrow{grid-template-columns:5rem minmax(0,1fr);}
+    .vrst{grid-column:2;text-align:left;}
+    .srow{grid-template-columns:1fr;gap:0.3rem;}
   }
 
-  /* ---- quest log (also a page: replaces the column, no overlay) ---- */
+  /* ---- the quests screen: the board, in the margin ----
+     A quest IS a workspace, so the left margin's list and the quest log were
+     always one list drawn twice. The board no longer stands where the drawing
+     stands: it is that margin promoted — the lesson tags, free play, the
+     quests, the caret walking them — and the right margin reads the one under
+     the caret in full, which is the job that margin already had. The drawing
+     between them is never covered and never taken away.
+     It is the one lit and rimmed thing on the sheet while it is up, and that
+     is what says which column is live. The margin's own quiet copy stands
+     down while it is here; two lists of the same thing is a pinboard. */
   .quests{
     display:none;
-    width:100%;
-    max-width:44rem;                 /* same measure as the key: nothing shifts */
-    /* The board keeps its standing height so that walking from a full lesson
-       to an empty one does not make the page jump — but never more of it than
-       the field actually has, or on a short window the log runs out over the
-       footer. Where there is not enough room the board itself is what gives
-       way and carries a thin rule of its own, exactly as the list inside it
-       already does. */
-    min-height:min(38.6rem,100%);
-    max-height:100%;
+    position:fixed;
+    left:0.8rem;
+    top:1rem;
+    max-height:calc(100vh - 2rem);
+    z-index:5;
+    box-sizing:border-box;
+    width:20rem;
+    padding:0.85rem 1rem 1rem;
+    border:1px solid var(--gilt);
+    border-radius:0.8rem;
+    background-color:var(--ground);
+    box-shadow:0 3px 26px rgba(59,47,30,0.16);
     overflow-y:auto;
     scrollbar-width:thin;
     scrollbar-color:rgba(201,188,160,0.9) transparent;
@@ -944,14 +883,9 @@
     line-height:1.4;
   }
   .quests.on{display:block;}
-  .quests h2{
-    margin:0 0 0.6rem;
-    font-weight:400;
-    font-variant:small-caps;
-    letter-spacing:0.14em;
-    font-size:1.05rem;
-    color:var(--ink);
-  }
+  /* the quiet margins stand down while the board is up: the left one is the
+     same list and the right one is the same constraint */
+  body[data-screen="quests"] .rail{display:none;}
   /* ---- the tabs ----
      The board outgrew a single list at Lesson 2 and will outgrow it again, so
      the log is read one lesson at a time. A row of underlined words was the
@@ -1063,15 +997,37 @@
   .qhair i{display:block;height:1px;background:var(--rule);opacity:0.7;flex:1;}
   /* the selected quest, read in full: constraint, what it teaches, and the
      shape of whatever is saved in its workspace */
-  .qdetail{margin:1rem 0 0;padding:0.9rem 0.5em 0;border-top:1px solid var(--rule);}
-  .qdname{letter-spacing:0.04em;margin-bottom:0.35rem;}
-  .qdtext{color:var(--ink);line-height:1.62;max-width:38rem;white-space:pre-line;}
-  .qdteach{color:var(--faded);font-style:italic;margin-top:0.35rem;line-height:1.6;}
-  .qdstate{color:var(--faded);font-size:0.88rem;margin-top:0.5rem;}
+  /* the right margin, reading the quest under the caret in full: the same
+     words the margin already carries while you write, at the same size and
+     in the same place, so that entering the quest changes what is written
+     there and not where it is */
+  .qdetail{
+    display:none;
+    position:fixed;
+    right:0.8rem;
+    top:1rem;
+    max-height:calc(100vh - 2rem);
+    z-index:5;
+    box-sizing:border-box;
+    width:17rem;
+    padding:0.2rem 0.4rem;
+    overflow-y:auto;
+    scrollbar-width:thin;
+    scrollbar-color:rgba(201,188,160,0.9) transparent;
+    color:var(--faded);
+    font-size:0.88rem;
+    line-height:1.6;
+  }
+  .qdetail.on{display:block;}
+  .qdname{letter-spacing:0.04em;margin-bottom:0.4rem;color:var(--ink);
+    font-variant:small-caps;font-size:1.02em;
+    border-bottom:1px solid var(--rule);padding-bottom:0.3rem;}
+  .qdtext{color:var(--ink);line-height:1.62;white-space:pre-line;}
+  .qdteach{color:var(--faded);font-style:italic;margin-top:0.5rem;line-height:1.6;}
+  .qdstate{color:var(--faded);font-size:0.92em;margin-top:0.7rem;}
   /* the contour: the roll's language, shrunk — coloured dabs, no rules at all */
-  .qpreview{position:relative;height:3.4rem;margin-top:0.7rem;width:22rem;max-width:100%;}
+  .qpreview{position:relative;height:3.4rem;margin-top:0.7rem;width:100%;}
   .qdab{position:absolute;border-radius:999px;}
-  .quests p{margin:0.9rem 0 0;color:var(--faded);font-size:0.88rem;line-height:1.6;}
 
   /* ---- the side rails: the margins put to work ----
      Left: where every workspace is, and which one you are in. Right: the
@@ -1152,8 +1108,22 @@
   .rail .rteach{margin-top:0.6rem;font-style:italic;}
   .rail .rstate{margin-top:0.8rem;}
   /* a narrow window keeps the column and drops the rails whole, rather
-     than squeezing the page */
-  @media (max-width:80rem){ .rail{display:none;} }
+     than squeezing the page. The board goes with them: there is no margin to
+     stand in, so it comes back to the middle as an overlay — over a washed
+     page, never in place of it, which is what every other screen does. */
+  @media (max-width:80rem){
+    .rail{display:none;}
+    .quests{
+      left:50%;
+      transform:translateX(-50%);
+      width:min(28rem,94vw);
+      /* clear of the strip, which is centred and therefore in the way the
+         moment the board comes to the middle */
+      top:5.4rem;
+      max-height:calc(100vh - 7rem);
+    }
+    .qdetail{display:none !important;}
+  }
 
   /* On scenery the margins do not get paper of their own: one sheet on the
      scene is a folio, three sheets are a pinboard. The marginalia instead
@@ -1193,6 +1163,40 @@
   }
   body:not([data-scenery="paper"]) .rail.left{left:0.6rem;}
   body:not([data-scenery="paper"]) .rail.right{right:0.6rem;}
+  /* The right margin's reading of the quest in hand is marginalia like the
+     rest of it: on a scene it takes the same pale ink over the same soft
+     breath, or it is dark ink on a dark photograph and cannot be read at
+     all. The board on the left keeps its lit card — it is the one thing the
+     caret is walking, and the whole screen turns on saying so. */
+  body:not([data-scenery="paper"]) .qdetail{
+    --ink:#EDE5D2;
+    --faded:rgba(236,229,212,0.66);
+    --rule:rgba(236,229,212,0.30);
+    --gilt:#D9BA6E;
+    color:var(--faded);
+    right:0.6rem;
+    top:50%;
+    bottom:auto;
+    max-height:calc(100vh - 2rem);
+    transform:translateY(-50%);
+    padding:1.35rem 1.3rem;
+    overflow:visible;
+    isolation:isolate;
+  }
+  body:not([data-scenery="paper"]) .qdetail::before{
+    content:"";
+    position:absolute;
+    inset:-3rem -3.2rem;
+    z-index:-1;
+    background:radial-gradient(ellipse closest-side at center,
+      rgba(13,18,16,0.42) 0%,
+      rgba(13,18,16,0.36) 40%,
+      rgba(13,18,16,0.24) 64%,
+      rgba(13,18,16,0.12) 82%,
+      rgba(13,18,16,0.04) 93%,
+      rgba(13,18,16,0) 100%);
+    pointer-events:none;
+  }
 
   /* The title and the footer take the marginalia's treatment rather than the
      page's: on scenery they step off the sheet and stand in the scene, pale

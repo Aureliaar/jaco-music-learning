@@ -15,7 +15,7 @@ var column = document.getElementById("column");
 var footer = document.getElementById("footer");
 var meta   = document.getElementById("metatext");
 var questsEl = document.getElementById("quests");
-var settingsEl = document.getElementById("settings");
+var schromeEl = document.getElementById("schrome");
 var xbarPad = document.getElementById("xbarpad");
 var xbarFace = document.getElementById("xbarface");
 var voicesEl = document.getElementById("voices");
@@ -25,10 +25,9 @@ var vmarks = [document.getElementById("vmark0"), document.getElementById("vmark1
               document.getElementById("vmark2")];
 var qlist  = document.getElementById("qlist");
 var qtabs  = document.getElementById("qtabs");
-var keyhelpEl = document.getElementById("keyhelp");
-var keymarkEl = document.getElementById("keymark");
 var qfree  = document.getElementById("qfree");
 var qfreesigil = document.getElementById("qfreesigil");
+var qdetailEl = document.getElementById("qdetail");
 var qdname = document.getElementById("qdname");
 var qdtext = document.getElementById("qdtext");
 var qdteach = document.getElementById("qdteach");
@@ -314,14 +313,21 @@ for (i = 0; i * 4 <= MAX_STEPS; i++){
   rollfield.appendChild(bl);
   beatlines.push(bl);
 }
+/* The moving wash is the page beneath the music, not a veil over it. Keep it
+   before every musical mark in paint order so the struck or ringing chord is
+   still fully readable when the playhead reaches it. */
+var rollWash = document.createElement("div");
+rollWash.className = "rollwash";
+rollfield.appendChild(rollWash);
 /* ---- the chord lane, in the drawing ----
    One object a chord, and never three note heads at three heights: a soft
    slab of the root's own colour from the lowest tone it is sounding to the
    highest, as long as the chord rings, with a quiet line inside it at each
    pitch it actually holds. The lines are what makes voice leading visible —
    a tone that did not move draws at exactly the same height in the chord
-   after it, which is the whole of the lesson, seen. They are inside the one
-   element, so what the eye picks up first is the slab and what it reads
+   after it, which is the whole of the lesson, seen. The root wears a darker
+   line and one small bead, wherever the inversion has placed it. They are
+   inside the one element, so what the eye picks up first is the slab and what it reads
    second is where the tones are; and there are never more than four of
    them, in one object, so nothing here can stack up into a stripe.
 
@@ -346,9 +352,6 @@ for (i = 0; i < MAX_STEPS; i++){
   rollfield.appendChild(cbar);
   chordBars.push(cbar); chordWashes.push(cwash); chordTones.push(ctones);
 }
-var rollWash = document.createElement("div");
-rollWash.className = "rollwash";
-rollfield.appendChild(rollWash);
 var rollCur = document.createElement("div");
 rollCur.className = "rollcur";
 rollfield.appendChild(rollCur);
@@ -731,11 +734,14 @@ function rollLayout(){
     cb.style.height = (cspan / span * 100) + "%";
     chordWashes[kc].style.backgroundColor = PC_COLOR[chordRootMidi(cst[i]) % 12];
     cb.classList.toggle("back", voice !== CHORD_LANE);
+    cb.classList.toggle("mirror", mirrored(doc, CHORD_LANE, i));
     cb.classList.toggle("outside", i >= doc.loop);
     for (cj = 0; cj < chordTones[kc].length; cj++){
       ci = chordTones[kc][cj];
       if (cj >= cvo[i].length){ ci.style.display = "none"; continue; }
       ci.style.display = "block";
+      ci.classList.toggle("root",
+        ((cvo[i][cj] % 12) + 12) % 12 === ((chordRootMidi(cst[i]) % 12) + 12) % 12);
       /* the middle of the tone's own row, so the line is where the pitch is
          and not where the row it sits in begins */
       ci.style.top = ((ctop - cvo[i][cj] + 0.5) / cspan * 100) + "%";
@@ -841,16 +847,15 @@ function rollLoop(){
   }
 }
 
-/* the quest log is a page: while it is open, both views of the pattern
-   stand down. The settings crossbar is not one of them: it is raised *over*
-   the page rather than in place of it, so the folio, the voice strip and
-   everything else stay exactly where they were while the thumb turns a
-   setting. */
+/* No screen stands where the drawing stands any more, the board included:
+   the quest log went to the margins, which is where its list already was, so
+   whichever screen is up is raised *over* the page and the folio, the voice
+   strip and everything else stay exactly where they were. What says you are
+   not writing is the wash on the page and the rim on the column that is
+   live — not the page being taken away. */
 function applyViz(){
-  var page = questsEl.classList.contains("on");
-  column.style.display = (!page && viz === "column") ? "flex" : "none";
-  roll.classList.toggle("on", !page && viz === "roll");
-  voicesEl.classList.toggle("off", page);   /* the strip belongs to the page */
+  column.style.display = (viz === "column") ? "flex" : "none";
+  roll.classList.toggle("on", viz === "roll");
   /* the sheet is as wide as what is on it: the drawing may want more than
      the page's own measure, and nothing else ever does */
   applyWidth();
@@ -934,9 +939,11 @@ function renderNotes(){
   for (var kc = 0; kc < winCol; kc++){
     var ic = colStep(kc), cc = cs[ic];
     var cel = rows[kc].notes[2], ctx2 = rows[kc].texts[2];
+    /* a bound chord is written a shade lighter, as a bound note is */
+    var cbound = mirrored(doc, CHORD_LANE, ic) ? " mirror" : "";
     if (cc){
       ctx2.nodeValue = chordGlyph(cc) + " " + pitchName(nameOfMidi(chordRootMidi(cc)));
-      cel.className = "note chord" + cback;
+      cel.className = "note chord" + cbound + cback;
     } else if (csnd[ic] >= 0){
       ctx2.nodeValue = "";
       cel.className = "note chord hold" + (cends[ic] ? " last" : "") + cback;
@@ -962,15 +969,14 @@ function renderVoices(){
   for (var v = 0; v < LANES; v++){
     vnames[v].classList.toggle("on", v === voice);
     var st = voiceState(v);
-    /* the third state is a voice that is not muted but is not being heard
-       either, because the other one is soloed: it says so in a word rather
-       than in a dash, which said nothing to anybody */
-    vmarks[v].textContent = st === "solo" ? "solo"
-                          : st === "muted" ? "muted"
-                          : st ? "silent" : "";
-    vmarks[v].className = "vmark" + (st === "solo" ? " solo" : "");
+    /* one word, or none: a voice is heard or it is muted, and there is no
+       third thing for it to be since solo became a verb that mutes the rest */
+    vmarks[v].textContent = st;
+    vmarks[v].className = "vmark";
   }
-  voicesEl.classList.toggle("off", questsEl.classList.contains("on"));
+  /* the strip stands through every screen now: it washes out with the rest
+     of the page rather than being put away */
+  voicesEl.classList.remove("off");
 }
 function renderCursor(){
   /* the windows follow the cursor, and if either moved the page under it is
@@ -1043,292 +1049,12 @@ function renderLoop(){
   }
   rollLoop();
 }
-/* ================= the key overlay =================
-   There was a page of the key once, two columns of prose about every binding
-   there is, and it went stale faster than the bindings did; then a strip of
-   it under the footer, which could only ever be a run-on line. This is
-   neither. It is the settings crossbar's own drawing, borrowed: the controls
-   where the hands actually find them — the d-pad a compass, the face buttons
-   a cluster, the shoulders drawn where the fingers sit — each named with
-   what it does beneath it, and the board's own keys in a group of their own.
-
-   F1 raises it and F1 puts it down; so does escape, and so does the quiet
-   mark in the top-right corner for a hand on a mouse. It is laid *over* the
-   folio, exactly as the crossbar is, so the page it is describing stays in
-   view; and while it is up nothing reaches the pattern, which is the
-   discipline the crossbar and the quest log already keep.
-
-   It says what the mode you are in can do and nothing else, so it cannot
-   grow into the page of prose it replaced. Everything in it is named by
-   position, as everything in this app is: the letters are places on the
-   board, not what a keyboard prints. */
-/* where the four shoulders sit: the bumpers above, the triggers below, the
-   left hand's pair on the left and the right hand's on the right */
-var KSHOULDER = [["23%","24%"],["23%","78%"],["77%","24%"],["77%","78%"]];
-
-function keysNow(){
-  /* in an echo workspace two seats are lent — □ and △ on the crossbar, O and
-     P on the board — and the overlay is the living key help: it says what
-     they mean here rather than what they mean everywhere else */
-  var ech = echoNow();
-  /* the crossbar has more than one drawing on it now, and the overlay is the
-     crossbar's drawing borrowed — so it says whichever one is up, and the
-     bumpers that turn from one to the other are named in both */
-  if (settingsEl.classList.contains("on")){
-    if (XBAR_MODES[xbarMode].name === "scriptorium") return {
-      where:"the settings · the scriptorium", clusters:[
-      { kind:"pad", name:"the d-pad", pos:XPOS, items:[
-        ["←","the bass's tone before"],["↑","the lead's tone before"],
-        ["→","the bass's tone after"],["↓","the lead's tone after"]],
-        note:"stepping onto a tone is wearing it · the page keeps its own, and so does every workspace" },
-      { kind:"pad", name:"the face buttons", pos:XPOS, items:[
-        ["□","—"],["△","—"],["○","put it down"],["✕","—"]] },
-      { kind:"list", name:"and otherwise", items:[
-        ["L1 · R1","the other drawing of the crossbar"],
-        ["start","put it down"],["escape","put it down"],["select","play, stop"]] }
-    ]};
-    return { where:"the settings" + (ech ? " · the echo" : ""), clusters:[
-      { kind:"pad", name:"the d-pad", pos:XPOS, items:[
-        ["←","the lesson before"],["↑","the workspace before"],
-        ["→","the lesson after"],["↓","the workspace after"]] },
-      { kind:"pad", name:"the face buttons", pos:XPOS, items: ech
-        ? [["□","play the call"],["△","judge the answer"],
-           ["○","put it down"],["✕","the background"]]
-        : [["□","solo"],["△","mute"],["○","put it down"],["✕","the background"]],
-        note: ech ? "the call is never drawn — it is only ever heard" : "" },
-      { kind:"list", name:"and otherwise", items:[
-        ["L1 · R1","the other drawing of the crossbar"],
-        ["start","put it down"],["escape","put it down"],["select","play, stop"]] }
-    ]};
-  }
-  if (questsEl.classList.contains("on")) return { where:"the quest log", clusters:[
-    { kind:"pad", name:"the d-pad · the arrows", pos:XPOS, items:[
-      ["←","the lesson before"],["↑","up the list"],
-      ["→","the lesson after"],["↓","down the list"]],
-      note:"← and → are the board's own; the pad walks the list" },
-    { kind:"pad", name:"the face buttons", pos:XPOS, items:[
-      ["□","keep it to hand"],["△","—"],["○","complete"],["✕","work here"]],
-      note:"R3 closes the log" },
-    { kind:"list", name:"the board", items:[
-      ["enter","work here, or back to free play"],
-      ["C","complete"],
-      ["F","keep it to hand"],
-      ["shift ↑ ↓","move it up the list, or down"],
-      ["F3 · escape","close the log"],
-      ["ctrl+S","the log, out to a file"],
-      ["space","play, stop"],
-      ["F1","these keys, away"]] }
-  ]};
-  /* a run of up or down: the sheet is empty and the folio is asking, so the
-     overlay says the four seats that mean anything and nothing else. It never
-     says which way the question actually went — the overlay is help, not a
-     hint. */
-  if (typeof quizOn === "function" && quizOn()) return {
-    where:"the folio · up or down", clusters:[
-    { kind:"pad", name:"the face buttons", pos:XPOS, items:[
-      ["□","play it again"],["△","it went up"],
-      ["○","the same note again"],["✕","it went down"]],
-      note:"answer while it is still sounding if you already know · playing it again costs nothing" },
-    { kind:"list", name:"the board", items:[
-      ["↑","it went up"],
-      ["↓","it went down"],
-      ["→","the same note again"],
-      ["O","play it again"],
-      ["start","the margin · leave the workspace and the run is over"],
-      ["F3","the quest log"],
-      ["F1 · escape","these keys, away"]] }
-  ]};
-  var rollv = (viz === "roll");
-  /* ---- the page, with the chord lane in hand ----
-     The same four face buttons and the same d-pad, saying what they say
-     here. The pitch pair carries the three rungs the lane is edited by, and
-     the pair that is "pitch" trades with the view exactly as it does for a
-     note, so the overlay says whichever one is under the thumb now. Not a
-     chord is named anywhere in it: every line is how this one sits against
-     the one before it. */
-  if (onChords()) return {
-    where: (rollv ? "the folio · the roll" : "the folio · the column") + " · the chords",
-    clusters:[
-    { kind:"pad", name:"the d-pad", pos:XPOS, items: rollv
-      ? [["←","a step back"],["↑","its root up a step"],
-         ["→","a step on"],["↓","its root down a step"]]
-      : [["←","its root down a step"],["↑","a step back"],
-         ["→","its root up a step"],["↓","a step on"]],
-      /* the two pairs trade with the view, and so does what the triggers
-         make of them: in the drawing the pitch pair is ↑ ↓ and the whole
-         ladder is under the thumb, and in the column ← → is the pitch pair
-         but one trigger there is already the note's two edges — as it is on
-         a voice — so the middle rung is reached in the drawing, or on the
-         board. Said here rather than tidied away, because this is the page
-         that has to be true. */
-      note: rollv
-        ? "↑ ↓ with one trigger · thicker, thinner — two voices, three, four · " +
-          "with both · nearest, or plainly rooted"
-        : "← → with both · nearest, or plainly rooted · with one trigger · " +
-          "the chord's start, or its end · thicker and thinner are ↑ ↓ in the " +
-          "drawing, and A on the board" },
-    { kind:"pad", name:"the face buttons", pos:XPOS, items:[
-      ["□","a rest"],["△","the root up a step"],
-      ["○","the same chord again"],["✕","the root down a step"]],
-      note:"held, the chord goes on ringing" },
-    { kind:"pad", name:"the shoulders", pos:KSHOULDER, items:[
-      ["L1","the voice before"],["L2","and a seventh"],
-      ["R1","the voice after"],["R2","no third"]],
-      note:"both triggers, writing · borrowed, out of the key · " +
-           (rollv ? "← →" : "↑ ↓") + " with both · carry the chord, its length with it" +
-           (rollv ? " · either trigger alone under ← → moves its start, or its end" : "") },
-    { kind:"list", name:"the board", items:[
-      ["z … ,  ·  q … i","home, and the degrees above it — two rows, an octave each"],
-      ["A","its shape, round the ring · shift, nearest or rooted"],
-      ["← ↑","a step back"],
-      ["→ ↓","a step on"],
-      ["− +","shorter, longer · shift, all the way"],
-      ["period","clear the step"],
-      ["space","play, stop"],
-      ["tab","the next lane · shift, the one before"],
-      ["L","the loop"],
-      ["K","the names, away and back"],
-      ["O · P","solo, mute"],
-      ["F2", rollv ? "the column instead" : "the roll instead"],
-      ["F3","the quest log"],
-      ["F1 · escape","these keys, away"]],
-      note:"what a chord sounds is worked out from the one before it — nothing here spells one out" },
-    { kind:"list", name:"and on the pad", items:[
-      ["select","play, stop"],["start","the settings"],
-      ["L3","the loop"],["R3","the roll or the column"]] }
-  ]};
-  /* the page itself. The d-pad's two pairs trade places between the two
-     views — the column reads down, the drawing reads right — and this is
-     the one place that difference has ever been written down. The board's
-     arrows do not trade: they are the cursor either way. */
-  return { where: (rollv ? "the folio · the roll" : "the folio · the column") +
-                  (ech ? " · the echo" : ""), clusters:[
-    { kind:"pad", name:"the d-pad", pos:XPOS, items: rollv
-      ? [["←","a step back"],["↑","nudge it up"],["→","a step on"],["↓","nudge it down"]]
-      : [["←","nudge it down"],["↑","a step back"],["→","nudge it up"],["↓","a step on"]],
-      note:"nudge · the note under the cursor, a scale step, staying where it is" },
-    { kind:"pad", name:"the face buttons", pos:XPOS, items:[
-      ["□","a rest"],["△","up a step"],["○","the same note again"],["✕","down a step"]],
-      note:"held, the note goes on ringing" },
-    { kind:"pad", name:"the shoulders", pos:KSHOULDER, items:[
-      ["L1","the voice before"],["L2","widen it to a third"],
-      ["R1","the voice after"],["R2","widen it to a fifth"]],
-      note: rollv
-        ? "both triggers · ↑ ↓ out of the key, a semitone · ← → carry the note, its length with it · either trigger alone under ← → moves the note's start, or its end"
-        : "both triggers · ← → out of the key, a semitone · ↑ ↓ carry the note, its length with it · either trigger alone under ← → moves the note's start, or its end" },
-    { kind:"list", name:"the board", items:[
-      ["z … ,  ·  q … i","the notes, two rows, an octave each"],
-      ["s d g h j  ·  2 3 5 6 7","the notes between"],
-      ["← ↑","a step back"],
-      ["→ ↓","a step on"],
-      ["home · end","the first step of the page, the last"],
-      ["shift ← ↑","a window back"],
-      ["shift → ↓","a window on"],
-      ["− +","shorter, longer · shift, all the way"],
-      ["period","clear the step"],
-      ["space","play, stop"],
-      ["tab","the next voice · shift, the one before"],
-      ["page ↑ ↓","which octave the note keys are"],
-      ["L","the loop"],
-      ["K","the names, away and back"],
-      ["O · P", ech ? "play the call, judge the answer" : "solo, mute"],
-      ["F2", rollv ? "the column instead" : "the roll instead"],
-      ["F3","the quest log"],
-      ["shift+B","the background"],
-      ["ctrl+S · ctrl+O","out to a file, in from one"],
-      ["F1 · escape","these keys, away"]] },
-    { kind:"list", name:"and on the pad", items: ech
-      ? [["select","play, stop"],["start","the settings"],
-         ["start then □","play the call"],["start then △","judge the answer"],
-         ["L3","the loop"],["R3","the roll or the column"]]
-      : [["select","play, stop"],["start","the settings"],
-         ["L3","the loop"],["R3","the roll or the column"]],
-      note: ech ? "the call is hidden: it is heard, never drawn" : "" }
-  ]};
-}
-/* one control, drawn as the crossbar draws its slots: the glyph, and under
-   it what it does. Where the cluster is a shape, it is placed in it. */
-function keySlot(item, p){
-  var el = document.createElement("div"), g, v;
-  el.className = "xslot";
-  if (p){
-    el.style.left = p[0]; el.style.top = p[1];
-    el.style.transform = "translateY(-50%)";
-  }
-  g = document.createElement("span"); g.className = "xg"; g.textContent = item[0];
-  v = document.createElement("span"); v.className = "xv"; v.textContent = item[1];
-  el.appendChild(g); el.appendChild(v);
-  return el;
-}
-function renderKeys(){
-  if (!keyhelpEl) return;
-  while (keyhelpEl.firstChild) keyhelpEl.removeChild(keyhelpEl.firstChild);
-  var k = keysNow(), i, j, c, box, bars, bar, hub, list, line, b, s, el;
-  el = document.createElement("h2");
-  el.textContent = "the keys · " + k.where;
-  keyhelpEl.appendChild(el);
-  bars = document.createElement("div");
-  bars.className = "kbars";
-  keyhelpEl.appendChild(bars);
-  for (i = 0; i < k.clusters.length; i++){
-    c = k.clusters[i];
-    box = document.createElement("div");
-    box.className = "kgroup " + c.kind;
-    el = document.createElement("h3"); el.textContent = c.name;
-    box.appendChild(el);
-    if (c.kind === "list"){
-      list = document.createElement("div"); list.className = "klist";
-      for (j = 0; j < c.items.length; j++){
-        line = document.createElement("div"); line.className = "kline";
-        b = document.createElement("b"); b.textContent = c.items[j][0];
-        s = document.createElement("span"); s.textContent = c.items[j][1];
-        line.appendChild(b); line.appendChild(s);
-        list.appendChild(line);
-      }
-      box.appendChild(list);
-    } else {
-      bar = document.createElement("div"); bar.className = "xbar";
-      hub = document.createElement("div"); hub.className = "xhub";
-      bar.appendChild(hub);
-      for (j = 0; j < c.items.length; j++)
-        bar.appendChild(keySlot(c.items[j], c.pos[j]));
-      box.appendChild(bar);
-    }
-    if (c.note){
-      el = document.createElement("p"); el.className = "knote";
-      el.textContent = c.note;
-      box.appendChild(el);
-    }
-    bars.appendChild(box);
-  }
-}
-function keysOpen(){ return !!keyhelpEl && keyhelpEl.classList.contains("on"); }
-function setKeys(on){
-  if (!keyhelpEl) return;
-  keyhelpEl.classList.toggle("on", on);
-  keyhelpEl.setAttribute("aria-hidden", on ? "false" : "true");
-  if (keymarkEl) keymarkEl.setAttribute("aria-expanded", on ? "true" : "false");
-  if (on) renderKeys();
-  else while (keyhelpEl.firstChild) keyhelpEl.removeChild(keyhelpEl.firstChild);
-}
-function toggleKeys(){ setKeys(!keysOpen()); }
-function closeKeys(){ if (keysOpen()) setKeys(false); }
-if (keymarkEl && keymarkEl.addEventListener)
-  keymarkEl.addEventListener("click", function(){
-    toggleKeys();
-    /* the mark keeps no focus: with it, space and enter would be the button's
-       before they were the transport's */
-    if (keymarkEl.blur) keymarkEl.blur();
-  });
 
 var lastSaid = "‸ cursor row";
 function say(msg){
   lastSaid = msg;
-  /* the overlay describes the mode, and the mode can change under it */
-  if (keysOpen()) renderKeys();
   footer.textContent = msg + (
-    questsEl.classList.contains("on")   ? " · F3 to close" + syncNote() :
-    settingsEl.classList.contains("on") ? " · start, or ○, to close" : "");
+    questsEl.classList.contains("on") ? syncNote() : "");
 }
 function renderAll(){
   /* a page of a different length has a different amount of itself in view —

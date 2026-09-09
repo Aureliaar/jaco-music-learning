@@ -5,8 +5,8 @@ THE CODE IS THE SOURCE OF TRUTH — read `js/entry.js` for what the pad and the
 board actually do today, not this brief and not any other document. Read
 `js/echo.js` and `js/quiz.js` as the two most recent additions: they are the
 house style for a new file. Read `CURRICULUM.md` §Lesson 5 for what the
-lesson teaches, and `CLAUDE.md` rules 3 (the gamepad is primary), 4 (build on
-relations, never on identities) and 6 (testing policy).
+lesson teaches, and `AGENTS.md` rules 3 (the gamepad is primary), 4 (build on
+relations, never on identities) and 7 (testing policy).
 
 ## What it is
 
@@ -115,7 +115,7 @@ Chord *names* anywhere in the UI or the copy. Inversion controls beyond the
 near/root flip. A chord palette, picker, or menu. Anything that asks the player
 to identify a chord. Progression templates. Bass auto-generation.
 
-## Testing (binding — CLAUDE.md rule 6)
+## Testing (binding — AGENTS.md rule 7)
 
 Total test LOC ≤ app LOC; check before you start and after you finish.
 
@@ -149,9 +149,9 @@ height-capped, `.field` flexes, the footer is always in view) — do not undo it
 
 Zero dependency, plain `<script src>` globals in the order `folio.html` lists,
 no modules, no bundler, no build step; `file://` must keep working. Update
-`folio.html`'s MAP comment and `CLAUDE.md`'s architecture list if you add a
-file. Commit in the style of recent history, ending with
-`Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>`.
+`folio.html`'s MAP comment and `AGENTS.md`'s architecture list if you add a
+file. Use the repository's normal commit authorship; do not add an agent
+co-author.
 
 **Never touch** `BUDGET.md`, `QUESTS.md`, `quests/quest-log.json`,
 `quests/rulings.json`. The dev server on :4173 is the player's live instrument

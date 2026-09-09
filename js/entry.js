@@ -28,20 +28,15 @@ document.addEventListener("keydown", function(e){
   }
   if (e.altKey) return;
 
-  /* F1 was the page of the key, and then the strip under the footer; it is
-     the key overlay now — the crossbar's drawing of the controls, raised
-     over the folio and put down again by the same press. The press goes on
-     being swallowed whatever it does: left to the browser, F1 opens its own
-     help window and takes the folio out of focus, which stops the animation
-     frame and the playhead and the pad poll with it. */
-  if (code === "F1"){ e.preventDefault(); toggleKeys(); return; }
-  /* while it is up it is a page like the others: nothing written on the
-     board reaches the pattern, and the way out is escape or F1 again */
-  if (keysOpen()){
-    e.preventDefault();
-    if (code === "Escape") closeKeys();
-    return;
-  }
+  /* F1 is swallowed and does nothing. It was the page of the key, then the
+     strip under the footer, then the key overlay; all three are deleted
+     (2026-09-07 ruling). A screen that has to explain the controls is an
+     admission the controls failed — what a control does is said on the
+     screen the control lives on. The press is still taken, because left to
+     the browser F1 opens its own help window and takes the folio out of
+     focus, which stops the animation frame and the playhead and the pad
+     poll with it. */
+  if (code === "F1"){ e.preventDefault(); return; }
   if (code === "F3"){ e.preventDefault(); toggleQuests(); return; }
   /* F4 was the room the kits were made in. There is no room: the kits are
      baked and checked in, and what a voice sounds like is a rail on the
@@ -63,11 +58,26 @@ document.addEventListener("keydown", function(e){
     return;
   }
 
-  /* the settings crossbar is a page as well; it belongs to the pad, so the
-     keyboard only needs the way out of it */
-  if (settingsEl.classList.contains("on")){
+  /* the screens are pages: nothing written on the board reaches the pattern
+     while one is up. The quests screen has always had keys of its own — the
+     board is read as much as it is walked — and they are below; every other
+     screen belongs to the pad, so the keyboard needs only the arrows, the
+     way in and the way out. */
+  if (screenOpen() && !screenIs("quests")){
     e.preventDefault();
-    if (code === "Escape") closeSettings();
+    switch (code){
+      case "Escape":     closeScreens(); return;
+      case "ArrowUp":    screenWalk(-1);  return;
+      case "ArrowDown":  screenWalk(1);   return;
+      case "ArrowLeft":  screenTurn(-1);  return;
+      case "ArrowRight": screenTurn(1);   return;
+      case "Enter": case "NumpadEnter": screenAct(); return;
+      /* the two seats the voices screen lends, in the places the page
+         already lends them: O is solo and P is mute, exactly as they are
+         while writing */
+      case "KeyO":       screenTriangle(); return;
+      case "KeyP":       screenSquare();   return;
+    }
     return;
   }
 
@@ -233,9 +243,8 @@ window.addEventListener("drop", function(e){
     12 d-up    13 d-down   14 d-left   15 d-right
 
    The pad writes contours: the bare face buttons are the move — up, down,
-   again, rest — and everything else is navigation. Start raises the
-   settings crossbar, whose eight slots are read left, up, right, down, the
-   d-pad cluster then the face cluster.
+   again, rest — and everything else is navigation. Start opens the screens
+   (js/screens.js), which are a list of places rather than an action bar.
 
    The four shoulders are sorted by the hand. A trigger is an analogue thing
    made to be leaned on, so the two triggers are the *modifiers*, held: L2
@@ -243,7 +252,6 @@ window.addEventListener("drop", function(e){
    key. A bumper is made to be tapped, so the two bumpers are the *voice*:
    L1 back a line, R1 on a line. Neither pair does two jobs, so nothing here
    has to arbitrate between a tap and a hold. */
-var GP_SLOTS = [14, 12, 15, 13, 2, 3, 1, 0];   /* ←↑→↓ then □△○✕ */
 var GP_CROSS = 0, GP_CIRCLE = 1, GP_SQUARE = 2, GP_TRIANGLE = 3;  /* face buttons */
 var GP_L1 = 4, GP_R1 = 5, GP_L2 = 6, GP_R2 = 7,
     GP_SELECT = 8, GP_START = 9, GP_L3 = 10, GP_R3 = 11,
@@ -302,15 +310,12 @@ function padStart(n){ moveEdge(false, n); }
 function padEnd(n){ moveEdge(true, n); }
 
 /* ---- and the same pair, in the chord lane ----
-   The pitch pair carries the agreed three-rung ladder there: bare it moves
-   the root a scale step, one trigger walks the thickness, both flip the
-   voicing between the nearest arrangement and the plain rooted one. It is
-   this one handler because the pitch pair is this one handler — which pair
-   that is trades with the view above, and the ladder trades with it. */
+   Bare, the pitch pair still moves the root. Both triggers still flip the
+   voicing on that pair. A single trigger's edit lives on the literal d-pad
+   ↑ and ↓ instead and is routed below: L2 changes root, R2 changes shape. */
 function padNudge(n){
   if (onChords()){
     if (l2Down && r2Down) chordVoice(n);
-    else if (l2Down || r2Down) chordThicken(n);
     else chordNudge(n);
     return;
   }
@@ -365,61 +370,40 @@ function pollPads(){
      page is up. It is the one button that does not care where you are. */
   if (gpEdge(cur, GP_SELECT)){ if (playing) stop(); else play(); }
 
-  /* the key overlay is a page as well, and the pad honours it: nothing here
-     reaches the pattern while it is up, and ○ or start puts it down exactly
-     as either puts the crossbar down. No new chord was invented for it —
-     raising it is F1, on the board. */
-  if (keysOpen()){
-    if (gpEdge(cur, GP_CIRCLE) || gpEdge(cur, GP_START)) closeKeys();
-    navReset();
-    gpPrev = cur; return;
-  }
+  /* ---- start: the screens ----
+     Start opens the place it was last left in and puts everything down again
+     from wherever it has got to. While a screen is up nothing on the pad
+     reaches the pattern.
 
-  /* start raises the settings crossbar, and puts it down again. While it is
-     up the eight slots are items, read in the crossbar's own order, and
-     nothing else on the pad reaches the pattern.
+     L1 and R1 turn the strip, and turning never enters anything. ↑ and ↓
+     walk the screen's rows and hold to repeat as every other list on this pad
+     does, so they are driven by gpNav rather than by the edge loop. ← and →
+     turn the value under the caret and leave the screen standing; ✕ finishes
+     whatever the row is for and lands the hands back on the page; ○ is back,
+     except on the board, where it is still the mark of a finished quest.
 
-     ↑ and ↓ are the workspace rail in the left margin, and they hold to
-     repeat as every other list on the pad does — so they are driven by
-     gpNav rather than by the edge loop, which skips them. */
-  if (settingsEl.classList.contains("on")){
-    if (gpEdge(cur, GP_START)){ closeSettings(); navReset(); gpPrev = cur; return; }
-    /* the bumpers turn the crossbar itself: which drawing the slots are */
-    if (gpEdge(cur, GP_L1)) stepXbarMode(-1);
-    if (gpEdge(cur, GP_R1)) stepXbarMode(1);
-    for (i = 0; i < 8; i++){
-      if (i === 1 || i === 3) continue;         /* the rail, held below */
-      if (gpEdge(cur, GP_SLOTS[i])){ runSetting(i); break; }
-    }
-    if (settingsEl.classList.contains("on")){
+     select is above all of this and still plays: turning an instrument and
+     hearing what it did to the music are one movement. */
+  if (screenOpen()){
+    if (gpEdge(cur, GP_START)){ closeScreens(); navReset(); gpPrev = cur; return; }
+    if (gpEdge(cur, GP_L1)) turnScreen(-1);
+    if (gpEdge(cur, GP_R1)) turnScreen(1);
+    if (gpEdge(cur, GP_CROSS))    screenAct();
+    if (gpEdge(cur, GP_CIRCLE))   screenBack();
+    if (gpEdge(cur, GP_SQUARE))   screenSquare();
+    if (gpEdge(cur, GP_TRIANGLE)) screenTriangle();
+    if (screenOpen()){
       var sy = (gp.axes && gp.axes.length > 1) ? gp.axes[1] : 0;
-      gpNav(cur[GP_DU] || sy <= -STICK_DEAD, "up",   -1, now, xbarStep);
-      gpNav(cur[GP_DD] || sy >=  STICK_DEAD, "down",  1, now, xbarStep);
-    } else navReset();                          /* ○ put it down */
+      gpNav(cur[GP_DU] || sy <= -STICK_DEAD, "up",   -1, now, screenWalk);
+      gpNav(cur[GP_DD] || sy >=  STICK_DEAD, "down",  1, now, screenWalk);
+      gpNav(cur[GP_DL], "left",  -1, now, screenTurn);
+      gpNav(cur[GP_DR], "right",  1, now, screenTurn);
+    } else navReset();                          /* ✕ or ○ put it down */
     gpPrev = cur; return;
   }
-  /* raising it hands the d-pad to the margin, so whatever hold the page had
-     is forgotten first — the first step of the rail should be a step */
-  if (gpEdge(cur, GP_START)){ toggleSettings(); navReset(); gpPrev = cur; return; }
-
-  if (questsEl.classList.contains("on")){
-    /* The log is a keyboard page that the pad can read over your shoulder:
-       d-pad up and down walk the caret, ✕ enters the quest's page (or comes
-       back to free play), ○ marks it complete, R3 closes it as escape does.
-       □ keeps the quest to hand, as F does on the keyboard. Nothing more:
-       the pad's way round the board is the left margin under start, where
-       turning a lesson and walking into a workspace are two directions of
-       one stick; moving a quest up the list is still shift on the board. */
-    if (gpEdge(cur, GP_CROSS))    chooseWorkspace();
-    if (gpEdge(cur, GP_CIRCLE))   toggleComplete();
-    if (gpEdge(cur, GP_SQUARE))   toggleFavourite();
-    if (gpEdge(cur, GP_R3))       toggleQuests();
-    var qy = (gp.axes && gp.axes.length > 1) ? gp.axes[1] : 0;
-    gpNav(cur[GP_DU] || qy <= -STICK_DEAD, "up",   -1, now, moveQuest);
-    gpNav(cur[GP_DD] || qy >=  STICK_DEAD, "down",  1, now, moveQuest);
-    gpPrev = cur;
-    return;
-  }
+  /* raising one hands the d-pad to that screen, so whatever hold the page had
+     is forgotten first — the first step in a list should be a step */
+  if (gpEdge(cur, GP_START)){ openScreens(); navReset(); gpPrev = cur; return; }
 
   /* ---- up or down: the face buttons are the answer ----
      Exactly what they already mean when a contour is being written — △ up,
@@ -465,18 +449,14 @@ function pollPads(){
   r2Down = !!cur[GP_R2] || !!gpPrev[GP_R2];
 
   /* the face buttons are motion rather than pitch; ○ and □ ignore the
-     triggers */
+     triggers. These right-hand symbols always add or overwrite: on the
+     chord lane the triggers choose the shape of the chord being written. */
   var ax, ay, rx, ry;
   var lead = (l2Down ? 1 : 0) + (r2Down ? 2 : 0);
   var wide = (lead === 1) ? 2 : (lead === 2) ? 4 : 1;      /* third, fifth, step */
   if (gpEdge(cur, GP_TRIANGLE) || gpEdge(cur, GP_CROSS)){
     var dir = gpEdge(cur, GP_TRIANGLE) ? 1 : -1;
     var moveAt = cursor;                  /* where it lands, before the advance */
-    /* the chord lane reads the same four buttons the same way — the root a
-       step up, a step down — and the triggers say the shape while it is
-       written instead of widening a move: L2 the seventh, R2 the sus, both
-       the borrowed chord, out of the key, which is what both of them mean
-       everywhere else on this pad */
     if (onChords()) chordEnter(dir, lead);
     else if (lead === 3) relStep(dir, true);               /* a semitone out of key */
     else relStep(dir * wide, false);
@@ -528,7 +508,25 @@ function pollPads(){
   var carry = (lead === 3) ? padMove : null;
   ax = (gp.axes && gp.axes.length > 0) ? gp.axes[0] : 0;
   ay = (gp.axes && gp.axes.length > 1) ? gp.axes[1] : 0;    /* left stick Y, +1 = down */
-  if (edge){
+  if (onChords() && lead === 0){
+    /* A chord's unmodified vertical pair has one dependable meaning in both
+       drawings: move only its root. Horizontal is time. Changing the view
+       must never make bare ↑ or ↓ alter anything else. */
+    gpNav(cur[GP_DU], "up",     1, now, chordNudge);
+    gpNav(cur[GP_DD], "down",  -1, now, chordNudge);
+    gpNav(cur[GP_DL], "left",  -1, now);
+    gpNav(cur[GP_DR], "right",  1, now);
+  } else if (onChords() && (lead === 1 || lead === 2)){
+    /* The principal distinction: symbols on the right write; d-pad gestures
+       change. The vertical pair is stable across both drawings. L2 changes
+       this chord's root, R2 its complete shape ring. The horizontal pair
+       keeps the written edge belonging to that trigger. */
+    var chordEdit = (lead === 1) ? chordNudge : chordShape;
+    gpNav(cur[GP_DU], "up",     1, now, chordEdit);
+    gpNav(cur[GP_DD], "down",  -1, now, chordEdit);
+    gpNav(cur[GP_DL], "left",  -1, now, edge);
+    gpNav(cur[GP_DR], "right",  1, now, edge);
+  } else if (edge){
     /* the edge is the whole of the gesture on this pair: the stick is not a
        second copy of it, and up and down keep whatever the view gives them */
     gpNav(cur[GP_DL], "left",  -1, now, edge);
