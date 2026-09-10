@@ -75,6 +75,14 @@ interval *direction* is not natively readable, let alone magnitude.
   closing the stopped rack restores own-tone fallback. The complete contract,
   fixed channel/patch map, lifecycle, rebuild path, and diagnosis are in
   `rack/README.md`; read that before changing either side of the bridge.
+- **Seeing what the player sees:** the `experiments-hub` MCP server (user
+  scope for Claude Code, `~/.codex/config.toml` for Codex) has
+  `list_browser_tabs`, `read_console`, `screenshot_tab` and `evaluate_in_tab`
+  over the Hub window (`browser: "hub"`) and each managed profile, plus
+  `get_logs` (a server the Hub started) and `hub_log` (hubd itself). Over
+  HTTP the same views are at `http://localhost:7777/api/inspect/*`; the route
+  list is in the header of `aureontools/hub/hub-inspect.mjs`. Inspect, don't
+  restart: never close or restart the player's browser to look at it.
 
 ## Architecture (all zero-dependency)
 
