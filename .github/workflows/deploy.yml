@@ -1,33 +1,26 @@
-name: Deploy to Cloudflare Workers
+name: Deploy
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+  workflow_dispatch:
+
+# A newer push supersedes a deploy still waiting to start, but never cancels one mid-upload.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    name: Deploy
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          # wrangler 4.x requires Node >= 22.
-          node-version: '22'
-
-      # No dependencies: the build is a copy into ./dist of the two files
-      # that are allowed to leave the repository.
-      - name: Build
-        run: node scripts/build.mjs
-
-      - name: Deploy to Cloudflare Workers
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          # The action's default wrangler can't deploy an assets-only Worker
-          # (no `main` script). Pin a modern one.
-          wranglerVersion: '4.103.0'
+          node-version: 22
+      # No dependencies to install: the build is a copy into ./dist, and wrangler comes from npx.
+      - run: npm run deploy
+        env:
+          npm_config_yes: true
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
