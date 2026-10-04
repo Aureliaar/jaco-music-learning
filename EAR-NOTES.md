@@ -195,3 +195,27 @@ in stacked transients rather than interleaved motion. Mechanic note
 not note count; sustains are what convert foreground into ground, and
 a texture with no ground becomes anxiogenic on repetition even when
 every pitch is right.
+
+**2026-10-04 · sixteen of the same bar, filed as a hook.** Surfaced by
+the Toby Fox restatement study (`research/toby-fox-restatement/`), not
+a drill, and against the method note: the structure was named before
+the player listened. Megalovania's first 32 s is one bar sixteen times,
+in three independent transcriptions: an eight-note tail that never
+changes over a two-note head walking D→C→B→B♭, with layers arriving at
+0:08 and 0:16. Player: *"Wait, what? One bar repeats 16 times in
+different ways and that's the iconic first 30s of megalovania?"* A
+track they know; the repetition had not registered as repetition.
+
+Reading (tentative, pending their own description): register 3 at its
+purest, with same/different judged on the bar against its floor rather
+than on the line. The tail's notes are identical but their relation to
+the head is not (over D mostly octaves and fifths, over B two tritones,
+over B♭ a major seventh), so by the relational profile every bar is a
+different event before the texture changes at all. Mechanic note (ToM):
+one changing relation per cycle can carry sixteen literal repeats
+without loop fatigue.
+
+`OPEN`, cheap, play first and describe before naming: solo the riff in
+the bars 1–16 excerpt. Do bars 1 and 4 sound like the same tune? Bars 1
+and 5 (identical notes)? If 1-vs-5 reads "again" and 1-vs-4 does not,
+the head carries the difference.
