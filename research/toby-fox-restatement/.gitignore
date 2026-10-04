@@ -1,0 +1,3 @@
+midi/
+stats_*.json
+__pycache__/
