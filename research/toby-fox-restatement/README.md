@@ -90,6 +90,16 @@ then has somewhere to go.
 - **Mostly one octave.** When the top line moves, it moves one octave (32) far more often than
   two (4). Any non-octave shift is counted separately, as a key change.
 
+### Zoom: Megalovania's first 32 seconds
+All 16 bars carry the same one-bar riff in all three transcriptions. Only its first two notes
+change, walking down D → C → B → B♭ over each 4 bars; the other eight notes repeat literally,
+sixteen times. Everything else is arrangement. A low layer comes in at 0:08. At 0:16 the same
+8 bars return with the riff doubled two octaves up in strings, plus guitar, organ and drums.
+`excerpt_midi.py` writes those 16 bars as a MIDI file to open in a DAW: tracks are named by role,
+and the sections are markers.
+
+![Megalovania 0:00–0:32 annotated](fig6_megalovania_intro.png)
+
 ![Megalovania](fig1_megalovania.png)
 ![Ruins](fig2_ruins.png)
 ![Bonetrousle](fig3_bonetrousle.png)
@@ -166,5 +176,7 @@ python3 stats.py          # stats_<corpus>.json, ~2 min
 python3 significance.py   # the tests above + the 32–45% range
 python3 timeline.py       # every multi-transcription song on a seconds clock
 python3 figures.py && python3 fig_compare.py
+python3 fig_megalovania_intro.py   # the annotated 0:00–0:32 zoom
+python3 excerpt_midi.py            # those 16 bars as a MIDI file with markers (into midi/)
 python3 form.py midi/undertale/UT_Ruins_Lu9.mid   # one song's form map
 ```
