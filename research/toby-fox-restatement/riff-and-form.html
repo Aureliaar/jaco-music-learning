@@ -1,0 +1,482 @@
+<title>Riff and Form</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a workbench read top to bottom - the bar (micro), the floors it stands on, the form (macro) - with one transport bar and two timelines comparing your form to the transcription. Folio migraine rules: sparse rulings, never grids or stripes; nothing blinks. */
+:root {
+  --bg: #e9e8e0; --surface: #f4f3ee; --ink: #2d2c27; --muted: #6c695f; --rule: #d3d0c3;
+  --riff: #2f6c70; --layer: #a26f26; --other: #8f82a8; --bass: #59784a; --floor: #c9c5b6;
+  --focus: #2f6c70;
+  --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #1c1d1b; --surface: #252623; --ink: #dad6ca; --muted: #9a968a; --rule: #3a3b37;
+  --riff: #74b2b5; --layer: #d3a159; --other: #b3a7c9; --bass: #94b07f; --floor: #4a4b45; --focus: #74b2b5; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #1c1d1b; --surface: #252623; --ink: #dad6ca; --muted: #9a968a; --rule: #3a3b37;
+  --riff: #74b2b5; --layer: #d3a159; --other: #b3a7c9; --bass: #94b07f; --floor: #4a4b45; --focus: #74b2b5; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--body); }
+.wrap { max-width: 980px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 64px; display: grid; gap: 28px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(28px, 5vw, 40px); font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 20px; font-weight: 700; }
+p { margin: 0; max-width: 66ch; }
+.lede { color: var(--muted); }
+.eyebrow { font: 600 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+section { display: grid; gap: 12px; }
+.panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+.row { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+button, select, input { font: inherit; color: var(--ink); }
+button { background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; padding: 5px 11px; cursor: pointer; }
+button:hover { border-color: var(--muted); }
+button.primary { background: var(--riff); border-color: var(--riff); color: var(--surface); font-weight: 700; }
+select { background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; padding: 3px 6px; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.note { font-family: var(--mono); font-size: 13px; }
+.small { font-size: 13px; color: var(--muted); }
+.stat { font: 600 13px var(--mono); }
+.stat b { color: var(--riff); }
+
+/* transport */
+.transport { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 2; background: var(--bg); padding-block: 10px; border-bottom: 1px solid var(--rule); }
+.now { font: 13px var(--mono); color: var(--muted); min-height: 1.5em; }
+
+/* the bar */
+.cell-wrap { overflow-x: auto; }
+svg.cell { width: 100%; min-width: 520px; height: auto; display: block; touch-action: manipulation; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); }
+.sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 6px; }
+
+/* timelines */
+.tl { display: grid; gap: 6px; }
+.tl-row { display: grid; grid-template-columns: 112px 1fr; gap: 10px; align-items: center; }
+.tl-label { font-size: 13px; color: var(--muted); }
+.bars { display: flex; gap: 1px; height: 22px; min-width: 0; }
+.bars i { flex: 1 1 0; min-width: 0; border-radius: 2px; background: var(--floor); position: relative; }
+.bars i.riff { background: var(--riff); }
+.bars i.dbl { background: linear-gradient(var(--layer) 0 35%, var(--riff) 35% 100%); }
+.bars i.other { background: var(--other); opacity: .75; }
+.bars i.gap { margin-left: 3px; }
+.bars i.on { outline: 2px solid var(--ink); outline-offset: 1px; z-index: 1; }
+
+/* floors & form */
+.floors, .form { display: grid; gap: 10px; }
+.floor { display: grid; grid-template-columns: minmax(120px, 180px) 1fr auto; gap: 10px; align-items: center; }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.chips select { font-family: var(--mono); font-size: 13px; padding: 2px 3px; }
+.sec { border: 1px solid var(--rule); border-radius: 8px; padding: 12px; display: grid; gap: 10px; background: var(--surface); }
+.sec.playing { border-color: var(--riff); }
+.sec-head { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
+.sec-head input[type=text] { font-weight: 700; border: 1px solid transparent; background: transparent; border-radius: 4px; padding: 2px 4px; min-width: 0; flex: 1 1 180px; }
+.sec-head input[type=text]:hover, .sec-head input[type=text]:focus { border-color: var(--rule); }
+.tag { font: 12px var(--mono); padding: 2px 7px; border-radius: 999px; border: 1px solid var(--rule); color: var(--muted); white-space: nowrap; }
+.tag.other { border-color: var(--other); color: var(--other); }
+.ctl { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; font-size: 14px; }
+.ctl label { display: inline-flex; gap: 6px; align-items: center; }
+.ctl input[type=number] { width: 3.5em; background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; padding: 2px 4px; }
+.mini { padding: 2px 8px; font-size: 13px; }
+.spacer { flex: 1; }
+.notes { display: grid; gap: 8px; }
+.notes p { font-size: 14px; }
+@media (max-width: 560px) {
+  .tl-row { grid-template-columns: 1fr; gap: 4px; }
+  .floor { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header style="display:grid;gap:10px">
+    <span class="eyebrow">Toby Fox · Megalovania · from a fan transcription</span>
+    <h1>Riff and Form</h1>
+    <p class="lede">Megalovania is built from one bar. This bench keeps that bar, the bass walks it stands on, and the song's form live at once. Change the bar and every section that uses it changes. Change a section and the bar stays the same.</p>
+  </header>
+
+  <div class="transport row" role="group" aria-label="Transport">
+    <button id="play" class="primary" type="button">Play form</button>
+    <button id="stop" type="button">Stop</button>
+    <label class="small" for="tempo">Tempo</label>
+    <input id="tempo" type="range" min="80" max="160" step="1" value="120" style="width:120px">
+    <span id="tempoVal" class="stat">120 BPM</span>
+    <label class="small"><input id="loop" type="checkbox" checked> loop</label>
+    <span class="spacer"></span>
+    <span id="now" class="now" aria-live="polite">Stopped</span>
+  </div>
+
+  <section aria-labelledby="h-tl">
+    <div class="row"><h2 id="h-tl">The whole loop, bar by bar</h2></div>
+    <div class="tl">
+      <div class="tl-row"><span class="tl-label">As transcribed</span><div id="tlRef" class="bars" aria-label="Transcribed form"></div></div>
+      <div class="tl-row"><span class="tl-label">Your form</span><div id="tlMine" class="bars" aria-label="Your form"></div></div>
+    </div>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--riff)"></i>the riff</span>
+      <span><i class="sw" style="background:linear-gradient(var(--layer) 0 35%, var(--riff) 35% 100%)"></i>the riff, doubled higher</span>
+      <span><i class="sw" style="background:var(--other);opacity:.75"></i>a different tune in the original (not included)</span>
+      <span><i class="sw" style="background:var(--floor)"></i>floor only (bass and drums)</span>
+    </div>
+    <p class="stat" id="counts"></p>
+  </section>
+
+  <section aria-labelledby="h-bar">
+    <h2 id="h-bar">The bar</h2>
+    <p class="small">Sixteen sixteenth-notes. The first two notes are the <b>head</b>: they always take the pitch of the floor under the bar. The rest is the <b>tail</b>. Click a column to move its note to that pitch, click the note again to remove it.</p>
+    <div class="panel">
+      <div class="cell-wrap"><svg id="cell" class="cell" viewBox="0 0 640 260" role="img" aria-label="The riff's tail on a one-bar roll"></svg></div>
+      <div class="row">
+        <button id="auditionBar" type="button">Hear the bar over D</button>
+        <button id="resetTail" type="button">Restore Megalovania's tail</button>
+        <span id="tailNames" class="note small"></span>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-floors">
+    <h2 id="h-floors">Floors</h2>
+    <p class="small">A floor is the bass walk under the bar, one note per bar. Megalovania uses four, built from only five notes: B♭, B, C, C♯ and D. The last two rows are the short walks where the riff comes back in before the loop restarts.</p>
+    <div id="floors" class="floors panel"></div>
+  </section>
+
+  <section aria-labelledby="h-form">
+    <div class="row"><h2 id="h-form">The form</h2><span class="spacer"></span>
+      <label class="small" for="preset">Start from</label>
+      <select id="preset">
+        <option value="mega">Megalovania, as transcribed</option>
+        <option value="bare">Just the bar, four times</option>
+      </select>
+      <button id="loadPreset" type="button">Load</button>
+    </div>
+    <p class="small">Each section plays its floor a number of times. Its treatment is Toby's five moves: a new instrument (voice), a new octave, a doubling on top, and adding or stripping bass and drums.</p>
+    <div id="form" class="form"></div>
+    <div class="row"><button id="addSec" type="button">Add a section</button></div>
+  </section>
+
+  <section class="notes" aria-labelledby="h-notes">
+    <h2 id="h-notes">What the transcription shows</h2>
+    <p>The riff plays in 32 of the loop's 78 bars in Jay Reichard's transcription (36 in fakt13's and Zumi's, which also put it under bars 21–24). The other bars carry three different tunes, but all of them stand on the same four floors, so the bar's harmony never leaves.</p>
+    <p>At bar 49 the riff comes back over a floor it has never stood on, B♭ C B B · B♭ C D D. In its first bar the head stays on D while the bass plays B♭. At bar 71 it returns again and strips back to the riff alone just before the loop restarts.</p>
+    <p class="small">Source: Jay Reichard's MIDI transcription on VGMusic, cross-checked against fakt13's and Zumi's. Only the riff is reproduced here. The other tunes, drum fills and the original sounds are left out; the instruments are simple browser synths.</p>
+  </section>
+</div>
+
+<script>
+(() => {
+const PC = ['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
+const FLOOR_PCS = [2, 1, 0, 11, 10, 9, 7, 5, 4];          // choices offered in floor chips
+const name = m => PC[((m % 12) + 12) % 12] + (Math.floor(m / 12) - 1);
+const headMidi = pc => 45 + ((pc - 9 + 12) % 12);           // A2..G♯3, so D -> D3 (50)
+const BASS_STEPS = [0, 2, 4, 5, 7, 9, 11, 13, 14];
+const MEGA_TAIL = [null, null, 62, null, 57, null, null, 56, null, 55, null, 53, null, 50, 53, 55];
+const ROWS = [62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48, 47, 46]; // D4 down to B♭2
+
+const MEGA_FLOORS = [
+  { id: 'walk', name: 'The walk down', roots: [2, 0, 11, 10] },
+  { id: 'brass', name: 'Brass floor', roots: [10, 0, 2, 1] },
+  { id: 'choir', name: 'Choir floor', roots: [10, 0, 11, 11, 10, 0, 2, 2] },
+  { id: 'guitar', name: 'Guitar floor', roots: [10, 0, 2, 0, 10, 0, 2, 2, 10, 0, 2, 0, 10, 0] },
+  { id: 'reentry', name: 'Re-entry', roots: [2, 2] },
+  { id: 'tothetop', name: 'Back to the top', roots: [10, 0, 2, 2, 10, 0] },
+];
+const sec = (o) => Object.assign({ name: 'Section', floor: 'walk', reps: 1, riff: true, voice: 'saw', oct: 0, dbl: 0,
+  bass: true, drums: true, other: false, heads: null }, o);
+const MEGA_FORM = [
+  sec({ name: 'Riff alone', reps: 1, bass: false, drums: false }),
+  sec({ name: '+ bass', reps: 1, drums: false }),
+  sec({ name: '+ strings two octaves up, + drums', reps: 2, dbl: 24 }),
+  sec({ name: 'Square-lead tune', reps: 2, riff: false, other: true }),
+  sec({ name: 'Brass tune', floor: 'brass', reps: 4, riff: false, other: true }),
+  sec({ name: 'Choir', floor: 'choir', reps: 1, riff: false, other: true }),
+  sec({ name: 'Riff over the choir floor', floor: 'choir', reps: 1, heads: [2, 0, 11, 11, 10, 0, 2, 2] }),
+  sec({ name: 'Guitar tune', floor: 'guitar', reps: 1, riff: false, other: true }),
+  sec({ name: 'Riff re-enters', floor: 'reentry', reps: 1 }),
+  sec({ name: 'Riff alone, back to the top', floor: 'tothetop', reps: 1, bass: false, drums: false, heads: [10, 0, 2, 2, 10, 0] }),
+];
+const BARE_FORM = [sec({ name: 'The bar over the walk', reps: 4 })];
+const clone = x => JSON.parse(JSON.stringify(x));
+
+let state = { tail: MEGA_TAIL.slice(), floors: clone(MEGA_FLOORS), form: clone(MEGA_FORM) };
+const REF = { floors: clone(MEGA_FLOORS), form: clone(MEGA_FORM) };
+try { const s = JSON.parse(localStorage.getItem('riff-and-form') || 'null'); if (s && s.tail && s.floors && s.form) state = s; } catch (e) {}
+const save = () => { try { localStorage.setItem('riff-and-form', JSON.stringify(state)); } catch (e) {} };
+
+// bars: flatten a form into one entry per bar
+function bars(form, floors) {
+  const out = [];
+  form.forEach((s, si) => {
+    const f = floors.find(f => f.id === s.floor) || floors[0];
+    if (!f || !f.roots.length) return;
+    for (let r = 0; r < Math.max(1, s.reps | 0); r++) f.roots.forEach((root, i) => {
+      const head = s.heads && s.heads.length ? s.heads[(r * f.roots.length + i) % s.heads.length] : root;
+      out.push({ si, root, head, s, first: r === 0 && i === 0 });
+    });
+  });
+  return out;
+}
+
+/* ---------- timelines ---------- */
+function drawTimeline(el, list, playingBar) {
+  el.innerHTML = '';
+  list.forEach((b, i) => {
+    const t = document.createElement('i');
+    t.className = b.s.riff ? (b.s.dbl ? 'dbl' : 'riff') : (b.s.other ? 'other' : '');
+    if (b.first && i) t.classList.add('gap');
+    if (i === playingBar) t.classList.add('on');
+    t.title = `bar ${i + 1} · ${b.s.name} · floor ${PC[b.root]}`;
+    el.appendChild(t);
+  });
+}
+function counts() {
+  const ref = bars(REF.form, REF.floors), mine = bars(state.form, state.floors);
+  const r = l => l.filter(b => b.s.riff).length;
+  document.getElementById('counts').innerHTML =
+    `Transcribed: the riff in <b>${r(ref)}</b> of ${ref.length} bars. Yours: <b>${r(mine)}</b> of ${mine.length}.`;
+}
+
+/* ---------- the bar ---------- */
+const svg = document.getElementById('cell');
+const X0 = 54, CW = (640 - X0 - 10) / 16, Y0 = 12, RH = (260 - Y0 - 22) / ROWS.length;
+function drawCell(playStep = -1) {
+  const h = [];
+  // sparse rulings: one per beat, one per C and D (never a grid)
+  for (let b = 0; b <= 4; b++) h.push(`<line x1="${X0 + b * 4 * CW}" y1="${Y0}" x2="${X0 + b * 4 * CW}" y2="${Y0 + ROWS.length * RH}" stroke="var(--rule)" stroke-width="${b % 4 ? 1 : 1.5}"/>`);
+  ROWS.forEach((m, r) => {
+    if (m % 12 === 0 || m % 12 === 2) {
+      const y = Y0 + r * RH + RH / 2;
+      h.push(`<line x1="${X0}" y1="${y}" x2="${X0 + 16 * CW}" y2="${y}" stroke="var(--rule)" stroke-width="1"/>`);
+      h.push(`<text x="${X0 - 8}" y="${y + 4}" text-anchor="end" font-family="var(--mono)" font-size="11" fill="var(--muted)">${name(m)}</text>`);
+    }
+  });
+  for (let b = 0; b < 4; b++) h.push(`<text x="${X0 + b * 4 * CW + 3}" y="${Y0 + ROWS.length * RH + 16}" font-family="var(--mono)" font-size="11" fill="var(--muted)">beat ${b + 1}</text>`);
+  if (playStep >= 0) h.push(`<rect x="${X0 + playStep * CW}" y="${Y0}" width="${CW}" height="${ROWS.length * RH}" fill="var(--riff)" opacity=".10"/>`);
+  // head: follows the floor; drawn at D for the bench
+  [0, 1].forEach(st => {
+    const r = ROWS.indexOf(50);
+    h.push(`<rect x="${X0 + st * CW + 2}" y="${Y0 + r * RH + 2}" width="${CW - 4}" height="${RH - 4}" rx="4" fill="none" stroke="var(--riff)" stroke-width="2" stroke-dasharray="0"/>`);
+  });
+  h.push(`<text x="${X0 + 2}" y="${Y0 + ROWS.indexOf(50) * RH + RH + 13}" font-family="var(--body)" font-size="11" fill="var(--muted)">head (= floor)</text>`);
+  state.tail.forEach((m, st) => {
+    if (m == null || st < 2) return;
+    const r = ROWS.indexOf(m); if (r < 0) return;
+    h.push(`<rect x="${X0 + st * CW + 2}" y="${Y0 + r * RH + 2}" width="${CW - 4}" height="${RH - 4}" rx="4" fill="var(--riff)"/>`);
+  });
+  // invisible hit areas, columns 2..15
+  for (let st = 2; st < 16; st++) ROWS.forEach((m, r) =>
+    h.push(`<rect data-st="${st}" data-m="${m}" x="${X0 + st * CW}" y="${Y0 + r * RH}" width="${CW}" height="${RH}" fill="transparent" style="cursor:pointer"><title>${name(m)}, step ${st + 1}</title></rect>`));
+  svg.innerHTML = h.join('');
+  document.getElementById('tailNames').textContent = 'Tail: ' + state.tail.slice(2).filter(m => m != null).map(m => PC[m % 12]).join(' ');
+}
+svg.addEventListener('click', e => {
+  const t = e.target.closest('[data-st]'); if (!t) return;
+  const st = +t.dataset.st, m = +t.dataset.m;
+  state.tail[st] = state.tail[st] === m ? null : m;
+  save(); drawCell(); preview(m);
+});
+
+/* ---------- floors ---------- */
+function drawFloors() {
+  const el = document.getElementById('floors'); el.innerHTML = '';
+  state.floors.forEach((f, fi) => {
+    const row = document.createElement('div'); row.className = 'floor';
+    const nm = document.createElement('input'); nm.type = 'text'; nm.value = f.name; nm.id = 'floor-name-' + f.id;
+    nm.setAttribute('aria-label', 'Floor name'); nm.className = 'note';
+    nm.style.cssText = 'background:transparent;border:1px solid var(--rule);border-radius:6px;padding:3px 6px;min-width:0';
+    nm.onchange = () => { f.name = nm.value; save(); drawForm(); };
+    const chips = document.createElement('div'); chips.className = 'chips';
+    f.roots.forEach((pc, i) => {
+      const s = document.createElement('select'); s.id = `floor-${f.id}-${i}`; s.setAttribute('aria-label', `${f.name}, bar ${i + 1}`);
+      const opts = FLOOR_PCS.includes(pc) ? FLOOR_PCS : FLOOR_PCS.concat(pc);
+      s.innerHTML = opts.map(p => `<option value="${p}"${p === pc ? ' selected' : ''}>${PC[p]}</option>`).join('');
+      s.onchange = () => { f.roots[i] = +s.value; save(); refresh(); };
+      chips.appendChild(s);
+    });
+    const ctl = document.createElement('div'); ctl.className = 'row';
+    const add = btn('+ bar', () => { f.roots.push(f.roots[f.roots.length - 1] ?? 2); save(); refresh(); });
+    const rem = btn('− bar', () => { if (f.roots.length > 1) { f.roots.pop(); save(); refresh(); } });
+    ctl.append(add, rem);
+    row.append(nm, chips, ctl); el.appendChild(row);
+  });
+  const add = btn('Add a floor', () => {
+    const id = 'f' + Date.now().toString(36);
+    state.floors.push({ id, name: 'New floor', roots: [2, 0, 11, 10] }); save(); refresh();
+  });
+  el.appendChild(add);
+}
+function btn(text, fn, cls = 'mini') { const b = document.createElement('button'); b.type = 'button'; b.className = cls; b.textContent = text; b.onclick = fn; return b; }
+
+/* ---------- form ---------- */
+function opt(list, val) { return list.map(([v, t]) => `<option value="${v}"${String(v) === String(val) ? ' selected' : ''}>${t}</option>`).join(''); }
+function drawForm() {
+  const el = document.getElementById('form'); el.innerHTML = '';
+  let start = 1;
+  state.form.forEach((s, si) => {
+    const f = state.floors.find(f => f.id === s.floor) || state.floors[0];
+    const n = (f ? f.roots.length : 0) * Math.max(1, s.reps | 0);
+    const box = document.createElement('div'); box.className = 'sec'; box.dataset.si = si;
+    box.innerHTML = `
+      <div class="sec-head">
+        <span class="tag">bars ${start}–${start + n - 1}</span>
+        <input type="text" id="sec-name-${si}" aria-label="Section name" value="${s.name.replace(/"/g, '&quot;')}">
+        ${s.other && !s.riff ? '<span class="tag other">another tune here in the original</span>' : ''}
+        ${s.heads ? '<span class="tag" title="The transcription puts different heads over this floor">heads from the transcription</span>' : ''}
+      </div>
+      <div class="ctl">
+        <label>Floor <select id="sec-floor-${si}">${opt(state.floors.map(f => [f.id, f.name]), s.floor)}</select></label>
+        <label>× <input id="sec-reps-${si}" type="number" min="1" max="8" value="${s.reps}" aria-label="Repeats"></label>
+        <label><input id="sec-riff-${si}" type="checkbox"${s.riff ? ' checked' : ''}> riff</label>
+        <label>voice <select id="sec-voice-${si}">${opt([['saw', 'saw lead'], ['square', 'square'], ['soft', 'soft flute']], s.voice)}</select></label>
+        <label>octave <select id="sec-oct-${si}">${opt([[-12, 'down'], [0, 'home'], [12, 'up']], s.oct)}</select></label>
+        <label>doubled <select id="sec-dbl-${si}">${opt([[0, 'no'], [12, '+1 octave'], [24, '+2 octaves']], s.dbl)}</select></label>
+        <label><input id="sec-bass-${si}" type="checkbox"${s.bass ? ' checked' : ''}> bass</label>
+        <label><input id="sec-drums-${si}" type="checkbox"${s.drums ? ' checked' : ''}> drums</label>
+      </div>`;
+    const tools = document.createElement('div'); tools.className = 'row';
+    tools.append(
+      btn('Play this', () => play(si, true)),
+      btn('↑', () => move(si, -1)), btn('↓', () => move(si, 1)),
+      btn('Duplicate', () => { state.form.splice(si + 1, 0, clone(s)); save(); refresh(); }),
+      btn('Remove', () => { state.form.splice(si, 1); save(); refresh(); }));
+    tools.children[1].setAttribute('aria-label', 'Move up'); tools.children[2].setAttribute('aria-label', 'Move down');
+    box.appendChild(tools);
+    const on = (k, fn) => box.querySelector(`#sec-${k}-${si}`).addEventListener('change', e => { fn(e.target); save(); refresh(); });
+    on('name', t => s.name = t.value);
+    on('floor', t => { s.floor = t.value; s.heads = null; });
+    on('reps', t => s.reps = Math.min(8, Math.max(1, +t.value || 1)));
+    on('riff', t => s.riff = t.checked);
+    on('voice', t => s.voice = t.value);
+    on('oct', t => s.oct = +t.value);
+    on('dbl', t => s.dbl = +t.value);
+    on('bass', t => s.bass = t.checked);
+    on('drums', t => s.drums = t.checked);
+    el.appendChild(box);
+    start += n;
+  });
+}
+function move(si, d) { const j = si + d; if (j < 0 || j >= state.form.length) return; [state.form[si], state.form[j]] = [state.form[j], state.form[si]]; save(); refresh(); }
+function refresh() { drawFloors(); drawForm(); drawTimeline(document.getElementById('tlRef'), bars(REF.form, REF.floors), -1); drawTimeline(document.getElementById('tlMine'), bars(state.form, state.floors), playing ? curBar : -1); counts(); }
+
+/* ---------- audio ---------- */
+let ctx, master, noiseBuf;
+function audio() {
+  if (ctx) return ctx;
+  ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 4;
+  master = ctx.createGain(); master.gain.value = 0.55; master.connect(comp); comp.connect(ctx.destination);
+  noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+  const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  return ctx;
+}
+const hz = m => 440 * Math.pow(2, (m - 69) / 12);
+function tone(m, t, dur, kind, vol) {
+  const g = ctx.createGain(), f = ctx.createBiquadFilter();
+  const types = { saw: ['sawtooth', 2600], square: ['square', 2200], soft: ['triangle', 4000], strings: ['sawtooth', 1800], bass: ['square', 520] };
+  const [wave, cut] = types[kind];
+  f.type = 'lowpass'; f.frequency.value = cut; f.Q.value = 0.7;
+  const oscs = kind === 'strings' ? [-6, 6] : [0];
+  oscs.forEach(det => { const o = ctx.createOscillator(); o.type = wave; o.frequency.value = hz(m); o.detune.value = det; o.connect(f); o.start(t); o.stop(t + dur + 0.12); });
+  const a = kind === 'strings' ? 0.025 : 0.004;
+  g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + a);
+  g.gain.setTargetAtTime(vol * 0.55, t + a, dur * 0.4); g.gain.setTargetAtTime(0.0001, t + dur, 0.03);
+  f.connect(g); g.connect(master);
+}
+function drum(kind, t) {
+  const g = ctx.createGain(); g.connect(master);
+  if (kind === 'kick') {
+    const o = ctx.createOscillator(); o.frequency.setValueAtTime(130, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.18);
+    g.gain.setValueAtTime(0.9, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.28); o.connect(g); o.start(t); o.stop(t + 0.3);
+  } else {
+    const n = ctx.createBufferSource(); n.buffer = noiseBuf; const f = ctx.createBiquadFilter();
+    f.type = kind === 'hat' ? 'highpass' : 'bandpass'; f.frequency.value = kind === 'hat' ? 7000 : 1800;
+    const len = kind === 'hat' ? 0.04 : 0.16;
+    g.gain.setValueAtTime(kind === 'hat' ? 0.18 : 0.45, t); g.gain.exponentialRampToValueAtTime(0.001, t + len);
+    n.connect(f); f.connect(g); n.start(t); n.stop(t + len + 0.02);
+  }
+}
+function scheduleBar(b, t0, step) {
+  const s = b.s, head = headMidi(b.head) + s.oct;
+  const notes = state.tail.map((m, st) => st < 2 ? head : (m == null ? null : m + s.oct));
+  if (s.riff) notes.forEach((m, st) => {
+    if (m == null) return;
+    let nx = st + 1; while (nx < 16 && notes[nx] == null) nx++;
+    const dur = Math.min(nx - st, 3) * step * 0.92;
+    tone(m, t0 + st * step, dur, s.voice, 0.16);
+    if (s.dbl) tone(m + s.dbl, t0 + st * step, dur, 'strings', 0.08);
+  });
+  if (s.bass) BASS_STEPS.forEach(st => tone(headMidi(b.root) - 12, t0 + st * step, step * 1.6, 'bass', 0.22));
+  if (s.drums) for (let st = 0; st < 16; st++) {
+    if (st === 0 || st === 8 || st === 10) drum('kick', t0 + st * step);
+    if (st === 4 || st === 12) drum('snare', t0 + st * step);
+    if (st % 2 === 0) drum('hat', t0 + st * step);
+  }
+}
+function preview(m) { audio(); if (ctx.state === 'suspended') ctx.resume(); tone(m, ctx.currentTime + 0.01, 0.18, 'saw', 0.14); }
+
+let playing = false, timer = null, list = [], nextBar = 0, nextTime = 0, curBar = -1, onlySec = -1, uiTimer = null, barTimes = [];
+function play(si = -1, only = false) {
+  audio(); if (ctx.state === 'suspended') ctx.resume();
+  stop(true);
+  onlySec = only ? si : -1;
+  playing = true; nextBar = 0; nextTime = ctx.currentTime + 0.08; barTimes = [];
+  timer = setInterval(tick, 25); tick();
+  uiTimer = setInterval(ui, 60);
+}
+function currentList() { const all = bars(state.form, state.floors); return onlySec >= 0 ? all.map((b, i) => ({ ...b, i })).filter(b => b.si === onlySec) : all.map((b, i) => ({ ...b, i })); }
+function tick() {
+  const bpm = +document.getElementById('tempo').value, step = 60 / bpm / 4;
+  list = currentList();
+  while (playing && nextTime < ctx.currentTime + 0.15) {
+    if (nextBar >= list.length) {
+      if (document.getElementById('loop').checked && list.length) nextBar = 0; else { setTimeout(() => stop(), Math.max(0, (nextTime - ctx.currentTime) * 1000)); playing = false; break; }
+    }
+    const b = list[nextBar];
+    scheduleBar(b, nextTime, step);
+    barTimes.push({ t: nextTime, step, i: b.i, b });
+    nextTime += 16 * step; nextBar++;
+  }
+}
+function ui() {
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  let cur = null; for (const x of barTimes) if (x.t <= now) cur = x;
+  barTimes = barTimes.filter(x => x.t > now - 4);
+  if (!cur) return;
+  const st = Math.min(15, Math.floor((now - cur.t) / cur.step));
+  if (cur.i !== curBar) {
+    curBar = cur.i;
+    drawTimeline(document.getElementById('tlMine'), bars(state.form, state.floors), curBar);
+    document.querySelectorAll('.sec').forEach(e => e.classList.toggle('playing', +e.dataset.si === cur.b.si));
+    document.getElementById('now').textContent = `bar ${cur.i + 1} · ${cur.b.s.name} · floor ${PC[cur.b.root]}${cur.b.s.riff ? ` · head ${PC[cur.b.head]}` : ''}`;
+  }
+  drawCell(cur.b.s.riff ? st : -1);
+}
+function stop(quiet) {
+  playing = false; clearInterval(timer); clearInterval(uiTimer); curBar = -1;
+  if (master && !quiet) { const g = master.gain; g.setTargetAtTime(0.0001, ctx.currentTime, 0.02); setTimeout(() => { if (!playing) g.setValueAtTime(0.55, ctx.currentTime); }, 200); }
+  document.querySelectorAll('.sec').forEach(e => e.classList.remove('playing'));
+  document.getElementById('now').textContent = 'Stopped';
+  drawTimeline(document.getElementById('tlMine'), bars(state.form, state.floors), -1); drawCell();
+}
+
+/* ---------- wiring ---------- */
+document.getElementById('play').onclick = () => play(-1, false);
+document.getElementById('stop').onclick = () => stop();
+document.getElementById('tempo').oninput = e => document.getElementById('tempoVal').textContent = e.target.value + ' BPM';
+document.getElementById('resetTail').onclick = () => { state.tail = MEGA_TAIL.slice(); save(); drawCell(); };
+document.getElementById('auditionBar').onclick = () => {
+  audio(); if (ctx.state === 'suspended') ctx.resume();
+  const step = 60 / +document.getElementById('tempo').value / 4;
+  scheduleBar({ s: sec({ bass: false, drums: false }), root: 2, head: 2 }, ctx.currentTime + 0.05, step);
+};
+document.getElementById('loadPreset').onclick = () => {
+  stop(true);
+  const p = document.getElementById('preset').value;
+  state.floors = clone(MEGA_FLOORS);
+  state.form = clone(p === 'mega' ? MEGA_FORM : BARE_FORM);
+  save(); refresh();
+};
+document.getElementById('addSec').onclick = () => { state.form.push(sec({ name: 'New section' })); save(); refresh(); };
+
+drawCell(); refresh();
+})();
+</script>
