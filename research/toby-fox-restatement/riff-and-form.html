@@ -2,52 +2,50 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
-/* Layout: a workbench read top to bottom - the bar (micro), the floors it stands on, the form (macro) - with one transport bar and two timelines comparing your form to the transcription. Folio migraine rules: sparse rulings, never grids or stripes; nothing blinks. */
+/* Layout: a workbench read top to bottom - transport, the two timelines, the form as a lane of blocks you drag (with the palette, the moves and the floor shelf beside it), then the bar itself. Folio migraine rules: sparse rulings, never grids or stripes; nothing blinks; motion is calm. */
 :root {
   --bg: #e9e8e0; --surface: #f4f3ee; --ink: #2d2c27; --muted: #6c695f; --rule: #d3d0c3;
   --riff: #2f6c70; --layer: #a26f26; --other: #8f82a8; --bass: #59784a; --floor: #c9c5b6;
-  --focus: #2f6c70;
+  --focus: #2f6c70; --lift: rgba(45, 44, 39, .14);
   --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
   --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
   --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --bg: #1c1d1b; --surface: #252623; --ink: #dad6ca; --muted: #9a968a; --rule: #3a3b37;
-  --riff: #74b2b5; --layer: #d3a159; --other: #b3a7c9; --bass: #94b07f; --floor: #4a4b45; --focus: #74b2b5; color-scheme: dark } }
+  --riff: #74b2b5; --layer: #d3a159; --other: #b3a7c9; --bass: #94b07f; --floor: #4a4b45; --focus: #74b2b5; --lift: rgba(0, 0, 0, .4); color-scheme: dark } }
 :root[data-theme="dark"] {
   --bg: #1c1d1b; --surface: #252623; --ink: #dad6ca; --muted: #9a968a; --rule: #3a3b37;
-  --riff: #74b2b5; --layer: #d3a159; --other: #b3a7c9; --bass: #94b07f; --floor: #4a4b45; --focus: #74b2b5; color-scheme: dark }
+  --riff: #74b2b5; --layer: #d3a159; --other: #b3a7c9; --bass: #94b07f; --floor: #4a4b45; --focus: #74b2b5; --lift: rgba(0, 0, 0, .4); color-scheme: dark }
 body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--body); }
-.wrap { max-width: 980px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 64px; display: grid; gap: 28px; }
-h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+.wrap { max-width: 1040px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 64px; display: grid; gap: 28px; min-width: 0; }
+.wrap > * { min-width: 0; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; }
 h1 { font-size: clamp(28px, 5vw, 40px); font-weight: 700; letter-spacing: -0.01em; }
 h2 { font-size: 20px; font-weight: 700; }
+h3 { font-size: 15px; font-weight: 700; }
 p { margin: 0; max-width: 66ch; }
 .lede { color: var(--muted); }
 .eyebrow { font: 600 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-section { display: grid; gap: 12px; }
-.panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+section { display: grid; gap: 12px; min-width: 0; }
+.panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 14px; display: grid; gap: 12px; min-width: 0; }
 .row { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
-button, select, input { font: inherit; color: var(--ink); }
+button, input { font: inherit; color: var(--ink); }
 button { background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; padding: 5px 11px; cursor: pointer; }
 button:hover { border-color: var(--muted); }
 button.primary { background: var(--riff); border-color: var(--riff); color: var(--surface); font-weight: 700; }
-select { background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; padding: 3px 6px; }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .note { font-family: var(--mono); font-size: 13px; }
 .small { font-size: 13px; color: var(--muted); }
 .stat { font: 600 13px var(--mono); }
 .stat b { color: var(--riff); }
+.spacer { flex: 1; }
+.mini { padding: 2px 8px; font-size: 13px; }
 
 /* transport */
-.transport { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 2; background: var(--bg); padding-block: 10px; border-bottom: 1px solid var(--rule); }
+.transport { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 3; background: var(--bg); padding-block: 10px; border-bottom: 1px solid var(--rule); }
 .now { font: 13px var(--mono); color: var(--muted); min-height: 1.5em; }
-
-/* the bar */
-.cell-wrap { overflow-x: auto; }
-svg.cell { width: 100%; min-width: 520px; height: auto; display: block; touch-action: manipulation; }
-.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); }
-.sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 6px; }
+.kitline { font: 12px var(--mono); color: var(--muted); }
 
 /* timelines */
 .tl { display: grid; gap: 6px; }
@@ -60,29 +58,86 @@ svg.cell { width: 100%; min-width: 520px; height: auto; display: block; touch-ac
 .bars i.other { background: var(--other); opacity: .75; }
 .bars i.gap { margin-left: 3px; }
 .bars i.on { outline: 2px solid var(--ink); outline-offset: 1px; z-index: 1; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--muted); }
+.sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -1px; margin-right: 6px; }
 
-/* floors & form */
-.floors, .form { display: grid; gap: 10px; }
-.floor { display: grid; grid-template-columns: minmax(120px, 180px) 1fr auto; gap: 10px; align-items: center; }
-.chips { display: flex; flex-wrap: wrap; gap: 4px; }
-.chips select { font-family: var(--mono); font-size: 13px; padding: 2px 3px; }
-.sec { border: 1px solid var(--rule); border-radius: 8px; padding: 12px; display: grid; gap: 10px; background: var(--surface); }
-.sec.playing { border-color: var(--riff); }
-.sec-head { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
-.sec-head input[type=text] { font-weight: 700; border: 1px solid transparent; background: transparent; border-radius: 4px; padding: 2px 4px; min-width: 0; flex: 1 1 180px; }
-.sec-head input[type=text]:hover, .sec-head input[type=text]:focus { border-color: var(--rule); }
-.tag { font: 12px var(--mono); padding: 2px 7px; border-radius: 999px; border: 1px solid var(--rule); color: var(--muted); white-space: nowrap; }
-.tag.other { border-color: var(--other); color: var(--other); }
-.ctl { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; font-size: 14px; }
-.ctl label { display: inline-flex; gap: 6px; align-items: center; }
-.ctl input[type=number] { width: 3.5em; background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; padding: 2px 4px; }
-.mini { padding: 2px 8px; font-size: 13px; }
-.spacer { flex: 1; }
+/* the lane */
+.lane-wrap { overflow-x: auto; overscroll-behavior-x: contain; padding-block: 6px 10px; border-radius: 8px; transition: background-color .2s; }
+.lane-wrap.drop-in { background: color-mix(in srgb, var(--riff) 7%, transparent); }
+.lane { display: flex; gap: 6px; position: relative; width: max-content; min-width: 100%; min-height: 150px; align-items: stretch; padding-inline: 2px; }
+.lane .empty { align-self: center; color: var(--muted); font-size: 14px; padding: 12px; }
+.ins { position: absolute; top: 0; bottom: 0; width: 3px; border-radius: 2px; background: var(--riff); pointer-events: none; transform: translateX(-4px); }
+.block { position: relative; flex: 0 0 auto; background: var(--surface); border: 1px solid var(--rule); border-radius: 8px;
+  padding: 6px 14px 8px 8px; display: flex; flex-direction: column; gap: 4px; cursor: grab; user-select: none; -webkit-user-select: none;
+  touch-action: pan-x pan-y; transition: border-color .2s, box-shadow .2s, opacity .2s; min-width: 0; }
+.block:hover { border-color: var(--muted); }
+.block.sel { border-color: var(--riff); box-shadow: 0 0 0 1px var(--riff); }
+.block.playing { box-shadow: 0 0 0 2px var(--layer); }
+.block.k-other { background: color-mix(in srgb, var(--other) 13%, var(--surface)); }
+.block.k-floor { background: color-mix(in srgb, var(--floor) 30%, var(--surface)); }
+.block.lifted { opacity: .35; }
+.block.drop-on { border-color: var(--layer); box-shadow: 0 0 0 2px var(--layer); }
+.contour { width: 100%; height: 16px; display: block; overflow: visible; }
+.contour path { fill: none; stroke: var(--bass); stroke-width: 2; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.b-top { display: flex; gap: 6px; font: 11px var(--mono); color: var(--muted); white-space: nowrap; }
+.b-name { font-weight: 700; font-size: 14px; line-height: 1.25; overflow-wrap: anywhere; }
+.b-floor { font-size: 12px; color: var(--muted); line-height: 1.3; }
+.chips { display: flex; flex-wrap: wrap; gap: 3px; }
+.chip { font: 11px/1.3 var(--mono); padding: 1px 6px; border-radius: 999px; border: 1px solid var(--rule); background: var(--bg); color: var(--ink); cursor: pointer; }
+.chip:hover { border-color: var(--muted); }
+.chip.riff-on { border-color: var(--riff); color: var(--riff); }
+.chip.off { color: var(--muted); }
+.chip.info { cursor: default; color: var(--muted); }
+.chip.other { border-color: var(--other); color: var(--other); cursor: default; }
+.b-tools { display: flex; gap: 4px; margin-top: auto; padding-top: 2px; }
+.bbtn { font-size: 12px; padding: 1px 7px; line-height: 1.4; }
+.edge { position: absolute; top: 6px; bottom: 6px; right: 0; width: 12px; cursor: ew-resize; touch-action: none; border-radius: 0 8px 8px 0; }
+.edge::after { content: ""; position: absolute; right: 4px; top: 30%; bottom: 30%; width: 2px; border-radius: 1px; background: var(--muted); opacity: .55; }
+.edge:hover::after, .edge:focus-visible::after { opacity: 1; background: var(--riff); }
+
+/* palette, moves, bin */
+.shelf { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.shelf-label { font: 600 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); flex-basis: 100%; }
+.tile, .card { cursor: grab; user-select: none; -webkit-user-select: none; touch-action: pan-y; }
+.tile.k-riff { border-color: var(--riff); color: var(--riff); font-weight: 700; }
+.tile.k-other { border-color: var(--other); }
+.tile.k-floor { background: color-mix(in srgb, var(--floor) 30%, var(--surface)); }
+.card { font-size: 13px; padding: 4px 10px; border-radius: 999px; }
+.card .k { color: var(--layer); font-weight: 700; margin-right: 4px; }
+.bin { border: 1px dashed var(--muted); border-radius: 8px; padding: 4px 12px; font-size: 13px; color: var(--muted); transition: border-color .2s, color .2s; }
+.bin.drop-on { border-color: var(--layer); color: var(--layer); }
+.inspector { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; }
+.inspector input[type=text] { font-weight: 700; border: 1px solid var(--rule); background: var(--bg); border-radius: 6px; padding: 3px 7px; min-width: 0; flex: 1 1 160px; max-width: 320px; }
+.status { font-size: 13px; color: var(--muted); display: flex; gap: 8px; align-items: center; min-height: 28px; flex-wrap: wrap; }
+
+/* floors */
+.floors { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-start; }
+.floor { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 6px 8px 8px; display: grid; gap: 4px; min-width: 0; max-width: 100%; }
+.floor .grip { display: flex; gap: 6px; align-items: baseline; border: 0; background: none; padding: 2px 2px; text-align: left; width: 100%; }
+.floor .grip b { font-family: var(--display); font-size: 14px; }
+.floor .grip span { font: 11px var(--mono); color: var(--muted); }
+.floor-svg-wrap { overflow-x: auto; max-width: 100%; }
+.floor svg { display: block; touch-action: none; }
+.floor svg .h { cursor: ns-resize; }
+.floor svg .h:focus { outline: none; }
+.floor svg .h:focus-visible circle { stroke: var(--focus); stroke-width: 3; }
+.floor-foot { display: flex; gap: 6px; align-items: center; }
+.floor-foot input { font: 12px var(--mono); border: 1px solid var(--rule); background: var(--bg); border-radius: 6px; padding: 2px 6px; min-width: 0; width: 13ch; }
+
+/* the bar */
+/* the roll keeps a readable size; on a phone it scrolls sideways inside its own box, and vertical drags stay with the notes */
+.cell-wrap { overflow-x: auto; }
+svg.cell { width: 100%; min-width: 540px; height: auto; display: block; touch-action: pan-x; cursor: pointer; }
+
+/* drag ghost */
+.ghost { position: fixed; left: 0; top: 0; z-index: 10; pointer-events: none; background: var(--surface); border: 1px solid var(--riff);
+  border-radius: 8px; padding: 4px 10px; font-size: 13px; font-weight: 700; box-shadow: 0 6px 18px var(--lift); white-space: nowrap; }
+.ghost.del { border-color: var(--layer); color: var(--layer); }
+
 .notes { display: grid; gap: 8px; }
 .notes p { font-size: 14px; }
 @media (max-width: 560px) {
   .tl-row { grid-template-columns: 1fr; gap: 4px; }
-  .floor { grid-template-columns: 1fr; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
@@ -98,7 +153,7 @@ svg.cell { width: 100%; min-width: 520px; height: auto; display: block; touch-ac
     <button id="play" class="primary" type="button">Play form</button>
     <button id="stop" type="button">Stop</button>
     <label class="small" for="tempo">Tempo</label>
-    <input id="tempo" type="range" min="80" max="160" step="1" value="120" style="width:120px">
+    <input id="tempo" type="range" min="80" max="160" step="1" value="120" style="width:110px">
     <span id="tempoVal" class="stat">120 BPM</span>
     <label class="small"><input id="loop" type="checkbox" checked> loop</label>
     <span class="spacer"></span>
@@ -120,9 +175,34 @@ svg.cell { width: 100%; min-width: 520px; height: auto; display: block; touch-ac
     <p class="stat" id="counts"></p>
   </section>
 
+  <section aria-labelledby="h-form">
+    <div class="row"><h2 id="h-form">The form</h2><span class="spacer"></span>
+      <span class="small">Start from</span>
+      <button id="presetMega" type="button" class="mini">Megalovania, as transcribed</button>
+      <button id="presetBare" type="button" class="mini">Just the bar, four times</button>
+    </div>
+    <p class="small">Each block is a section: it plays its floor a number of times, and grows wider with every bar. Drag blocks to reorder them, drag one off the lane to remove it, drag its right edge to repeat its floor more or fewer times. Hold Alt while dragging to drop a copy. Its chips show the treatment, Toby's five moves: a new instrument, a new octave, a doubling on top, adding or stripping bass and drums. Tap a chip to take that move off.</p>
+    <div class="lane-wrap" id="laneWrap">
+      <div class="lane" id="lane" role="list" aria-label="Sections of your form, in order. Arrow keys move the focused section, Delete removes it."></div>
+    </div>
+    <div class="panel">
+      <div class="inspector" id="inspector"></div>
+      <div class="shelf" id="palette"><span class="shelf-label">New blocks · drag into the lane</span></div>
+      <div class="shelf" id="moves"><span class="shelf-label">Moves · drop on a block, or tap to give to the selected one</span></div>
+      <div class="status" id="status" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-floors">
+    <h2 id="h-floors">Floors</h2>
+    <p class="small">A floor is the bass walk under the bar, one note per bar. Megalovania uses four, built from only five notes: B♭, B, C, C♯ and D. The last two are the short walks where the riff comes back in before the loop restarts. Drag a floor by its name onto a block to stand that section on it. Drag a note up or down to change it.</p>
+    <div id="floors" class="floors"></div>
+    <div class="row"><button id="addFloor" type="button" class="mini">Add a floor</button></div>
+  </section>
+
   <section aria-labelledby="h-bar">
     <h2 id="h-bar">The bar</h2>
-    <p class="small">Sixteen sixteenth-notes. The first two notes are the <b>head</b>: they always take the pitch of the floor under the bar. The rest is the <b>tail</b>. Click a column to move its note to that pitch, click the note again to remove it.</p>
+    <p class="small">Sixteen sixteenth-notes. The first two notes are the <b>head</b>: they always take the pitch of the floor under the bar. The rest is the <b>tail</b>. Tap an empty column to add a note, drag a note up or down to change its pitch, tap a note to remove it.</p>
     <div class="panel">
       <div class="cell-wrap"><svg id="cell" class="cell" viewBox="0 0 640 260" role="img" aria-label="The riff's tail on a one-bar roll"></svg></div>
       <div class="row">
@@ -133,38 +213,22 @@ svg.cell { width: 100%; min-width: 520px; height: auto; display: block; touch-ac
     </div>
   </section>
 
-  <section aria-labelledby="h-floors">
-    <h2 id="h-floors">Floors</h2>
-    <p class="small">A floor is the bass walk under the bar, one note per bar. Megalovania uses four, built from only five notes: B♭, B, C, C♯ and D. The last two rows are the short walks where the riff comes back in before the loop restarts.</p>
-    <div id="floors" class="floors panel"></div>
-  </section>
-
-  <section aria-labelledby="h-form">
-    <div class="row"><h2 id="h-form">The form</h2><span class="spacer"></span>
-      <label class="small" for="preset">Start from</label>
-      <select id="preset">
-        <option value="mega">Megalovania, as transcribed</option>
-        <option value="bare">Just the bar, four times</option>
-      </select>
-      <button id="loadPreset" type="button">Load</button>
-    </div>
-    <p class="small">Each section plays its floor a number of times. Its treatment is Toby's five moves: a new instrument (voice), a new octave, a doubling on top, and adding or stripping bass and drums.</p>
-    <div id="form" class="form"></div>
-    <div class="row"><button id="addSec" type="button">Add a section</button></div>
-  </section>
-
   <section class="notes" aria-labelledby="h-notes">
     <h2 id="h-notes">What the transcription shows</h2>
     <p>The riff plays in 32 of the loop's 78 bars in Jay Reichard's transcription (36 in fakt13's and Zumi's, which also put it under bars 21–24). The other bars carry three different tunes, but all of them stand on the same four floors, so the bar's harmony never leaves.</p>
     <p>At bar 49 the riff comes back over a floor it has never stood on, B♭ C B B · B♭ C D D. In its first bar the head stays on D while the bass plays B♭. At bar 71 it returns again and strips back to the riff alone just before the loop restarts.</p>
-    <p class="small">Source: Jay Reichard's MIDI transcription on VGMusic, cross-checked against fakt13's and Zumi's. Only the riff is reproduced here. The other tunes, drum fills and the original sounds are left out; the instruments are simple browser synths.</p>
+    <p class="small">Source: Jay Reichard's MIDI transcription on VGMusic, cross-checked against fakt13's and Zumi's. Only the riff is reproduced here. The other tunes, drum fills and the original sounds are left out. The voices are Folio's own: its lead, bass and chord-lane synth tones, and its baked music box, pluck bass and sub samples. The drums are simple browser synths.</p>
   </section>
 </div>
 
 <script>
 (() => {
+'use strict';
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+/* ================= the data (identical to v1) ================= */
 const PC = ['C','C♯','D','E♭','E','F','F♯','G','A♭','A','B♭','B'];
-const FLOOR_PCS = [2, 1, 0, 11, 10, 9, 7, 5, 4];          // choices offered in floor chips
 const name = m => PC[((m % 12) + 12) % 12] + (Math.floor(m / 12) - 1);
 const headMidi = pc => 45 + ((pc - 9 + 12) % 12);           // A2..G♯3, so D -> D3 (50)
 const BASS_STEPS = [0, 2, 4, 5, 7, 9, 11, 13, 14];
@@ -179,8 +243,10 @@ const MEGA_FLOORS = [
   { id: 'reentry', name: 'Re-entry', roots: [2, 2] },
   { id: 'tothetop', name: 'Back to the top', roots: [10, 0, 2, 2, 10, 0] },
 ];
-const sec = (o) => Object.assign({ name: 'Section', floor: 'walk', reps: 1, riff: true, voice: 'saw', oct: 0, dbl: 0,
-  bass: true, drums: true, other: false, heads: null }, o);
+/* voice: the riff's sound (lead = Folio's lead tone, chord = Folio's chord-lane tone, musicbox = the baked kit);
+   bassVoice: folio = Folio's bass tone, pluck = the pluck-bass kit, sub = the sub kit */
+const sec = (o) => Object.assign({ name: 'Section', floor: 'walk', reps: 1, riff: true, voice: 'lead', oct: 0, dbl: 0,
+  bass: true, drums: true, other: false, heads: null, bassVoice: 'folio' }, o);
 const MEGA_FORM = [
   sec({ name: 'Riff alone', reps: 1, bass: false, drums: false }),
   sec({ name: '+ bass', reps: 1, drums: false }),
@@ -196,10 +262,42 @@ const MEGA_FORM = [
 const BARE_FORM = [sec({ name: 'The bar over the walk', reps: 4 })];
 const clone = x => JSON.parse(JSON.stringify(x));
 
+const VOICES = [['lead', 'Folio lead'], ['chord', 'Folio chord tone'], ['musicbox', 'music box']];
+const BASSES = [['folio', 'Folio bass'], ['pluck', 'pluck bass'], ['sub', 'sub']];
+const label = (list, v) => (list.find(x => x[0] === v) || list[0])[1];
+const nextOf = (list, v) => list[(list.findIndex(x => x[0] === v) + 1) % list.length][0];
+
+/* ---------- state, stored per viewer ---------- */
+const KEY = 'riff-and-form-v2';
+function normSec(s) {
+  const o = sec(s && typeof s === 'object' ? s : {});
+  if (!VOICES.some(v => v[0] === o.voice)) o.voice = ({ saw: 'lead', square: 'chord', soft: 'musicbox' })[o.voice] || 'lead';
+  if (!BASSES.some(v => v[0] === o.bassVoice)) o.bassVoice = 'folio';
+  o.reps = Math.min(8, Math.max(1, o.reps | 0));
+  o.oct = [-12, 0, 12].includes(o.oct) ? o.oct : 0;
+  o.dbl = [0, 12, 24].includes(o.dbl) ? o.dbl : 0;
+  return o;
+}
+function normState(s) {
+  if (!s || !Array.isArray(s.tail) || s.tail.length !== 16 || !Array.isArray(s.floors) || !Array.isArray(s.form)) return null;
+  const floors = s.floors.filter(f => f && typeof f.id === 'string' && Array.isArray(f.roots) && f.roots.length)
+    .map(f => ({ id: f.id, name: String(f.name || 'Floor'), roots: f.roots.map(r => ((r | 0) % 12 + 12) % 12) }));
+  if (!floors.length) return null;
+  return { tail: s.tail.map(m => (m == null || !ROWS.includes(m)) ? null : m), floors, form: s.form.map(normSec) };
+}
 let state = { tail: MEGA_TAIL.slice(), floors: clone(MEGA_FLOORS), form: clone(MEGA_FORM) };
 const REF = { floors: clone(MEGA_FLOORS), form: clone(MEGA_FORM) };
-try { const s = JSON.parse(localStorage.getItem('riff-and-form') || 'null'); if (s && s.tail && s.floors && s.form) state = s; } catch (e) {}
-const save = () => { try { localStorage.setItem('riff-and-form', JSON.stringify(state)); } catch (e) {} };
+try {
+  const s = normState(JSON.parse(localStorage.getItem(KEY) || 'null')) || normState(JSON.parse(localStorage.getItem('riff-and-form') || 'null'));
+  if (s) state = s;
+} catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
+let sel = state.form.length ? 0 : -1;
+let undoSnap = null;
+function remember(msg) { undoSnap = { form: clone(state.form), floors: clone(state.floors), sel, msg }; }
+
+const floorOf = s => state.floors.find(f => f.id === s.floor) || state.floors[0];
+const barsOf = s => { const f = floorOf(s); return (f ? f.roots.length : 0) * Math.max(1, s.reps | 0); };
 
 // bars: flatten a form into one entry per bar
 function bars(form, floors) {
@@ -230,167 +328,631 @@ function drawTimeline(el, list, playingBar) {
 function counts() {
   const ref = bars(REF.form, REF.floors), mine = bars(state.form, state.floors);
   const r = l => l.filter(b => b.s.riff).length;
-  document.getElementById('counts').innerHTML =
-    `Transcribed: the riff in <b>${r(ref)}</b> of ${ref.length} bars. Yours: <b>${r(mine)}</b> of ${mine.length}.`;
+  $('counts').innerHTML = `Transcribed: the riff in <b>${r(ref)}</b> of ${ref.length} bars. Yours: <b>${r(mine)}</b> of ${mine.length}.`;
 }
 
-/* ---------- the bar ---------- */
-const svg = document.getElementById('cell');
+/* ================= the lane of blocks ================= */
+const BAR_PX = 18, BASE_PX = 76;                        // a block is 76 px plus 18 px for every bar it plays
+const blockW = n => BASE_PX + n * BAR_PX;
+const kindOf = s => s.riff ? 'riff' : (s.other ? 'other' : 'floor');
+function stepPath(roots) {                              // the floor's bass as a step-line, one level per bar
+  let d = '';
+  roots.forEach((pc, i) => { const y = 56 - headMidi(pc); d += `${i ? 'L' : 'M'}${i} ${y}L${i + 1} ${y}`; });
+  return d;
+}
+function chipsFor(s) {
+  const c = [];
+  c.push(`<button type="button" class="chip ${s.riff ? 'riff-on' : 'off'}" data-chip="riff" aria-pressed="${s.riff}" title="Tap to turn the riff ${s.riff ? 'off' : 'on'}">${s.riff ? 'riff' : 'no riff'}</button>`);
+  if (s.riff) c.push(`<button type="button" class="chip" data-chip="voice" title="The riff's instrument. Tap for the next one">${esc(label(VOICES, s.voice))}</button>`);
+  if (s.riff && s.oct) c.push(`<button type="button" class="chip" data-chip="oct" title="Tap to take the octave move off">${s.oct > 0 ? 'up 8ve' : 'down 8ve'} ×</button>`);
+  if (s.riff && s.dbl) c.push(`<button type="button" class="chip" data-chip="dbl" title="Tap to take the doubling off">doubled +${s.dbl / 12} 8ve ×</button>`);
+  if (s.bass) c.push(`<button type="button" class="chip" data-chip="bass" title="Tap to take the bass off">${esc(label(BASSES, s.bassVoice))} ×</button>`);
+  if (s.drums) c.push(`<button type="button" class="chip" data-chip="drums" title="Tap to take the drums off">drums ×</button>`);
+  if (s.other && !s.riff) c.push(`<span class="chip other" title="In the original another tune plays here; it is not included">other tune</span>`);
+  if (s.heads && s.riff) c.push(`<span class="chip info" title="The transcription puts different heads over this floor">own heads</span>`);
+  return c.join('');
+}
+function drawLane() {
+  const lane = $('lane'), hadFocus = lane.contains(document.activeElement) && document.activeElement.classList.contains('block');
+  lane.innerHTML = '';
+  if (!state.form.length) { lane.innerHTML = '<span class="empty">The lane is empty. Drag “the riff” here from the palette below.</span>'; }
+  let start = 1;
+  state.form.forEach((s, si) => {
+    const f = floorOf(s), n = barsOf(s);
+    const roots = []; for (let r = 0; r < s.reps; r++) roots.push(...(f ? f.roots : []));
+    const b = document.createElement('div');
+    b.className = `block k-${kindOf(s)}` + (si === sel ? ' sel' : '');
+    b.tabIndex = 0; b.dataset.i = si; b.setAttribute('role', 'listitem');
+    b.style.width = blockW(n) + 'px';
+    b.setAttribute('aria-label', `Section ${si + 1}: ${s.name}, bars ${start} to ${start + n - 1}, floor ${f ? f.name : ''}, ${s.reps} times`);
+    b.innerHTML = `
+      <svg class="contour" viewBox="0 0 ${Math.max(1, roots.length)} 12" preserveAspectRatio="none" aria-hidden="true"><path d="${stepPath(roots)}"/></svg>
+      <div class="b-top"><span>bars ${start}–${start + n - 1}</span><span class="spacer"></span><span class="b-x">×${s.reps}</span></div>
+      <div class="b-name">${esc(s.name)}</div>
+      <div class="b-floor">${esc(f ? f.name : '')}</div>
+      <div class="chips">${chipsFor(s)}</div>
+      <div class="b-tools"><button type="button" class="bbtn" data-act="play" title="Play this block" aria-label="Play this block">▶</button><button type="button" class="bbtn" data-act="dup" title="Duplicate" aria-label="Duplicate this block">⧉</button></div>
+      <div class="edge" tabindex="-1" title="Drag to repeat the floor more or fewer times"></div>`;
+    lane.appendChild(b);
+    start += n;
+  });
+  if (hadFocus && sel >= 0) { const el = lane.querySelector(`.block[data-i="${sel}"]`); if (el) el.focus({ preventScroll: true }); }
+  drawInspector();
+}
+function drawInspector() {
+  const el = $('inspector'), s = state.form[sel];
+  if (!s) { el.innerHTML = '<span class="small">Tap a block to select it.</span>'; return; }
+  el.innerHTML = `<span class="small">Selected</span>
+    <input type="text" id="sec-name" aria-label="Section name" value="${esc(s.name)}">
+    <button type="button" class="mini" id="insPlay">Play this block</button>
+    <button type="button" class="mini" id="insLeft" aria-label="Move earlier">←</button>
+    <button type="button" class="mini" id="insRight" aria-label="Move later">→</button>
+    <button type="button" class="mini" id="insDup">Duplicate</button>
+    <button type="button" class="mini" id="insDel">Remove</button>`;
+  $('sec-name').onchange = e => { s.name = e.target.value || 'Section'; save(); refresh(); };
+  $('insPlay').onclick = () => play(sel, true);
+  $('insLeft').onclick = () => moveSec(sel, -1);
+  $('insRight').onclick = () => moveSec(sel, 1);
+  $('insDup').onclick = () => dupSec(sel);
+  $('insDel').onclick = () => removeSec(sel);
+}
+function say(msg, undo) {
+  const el = $('status'); el.innerHTML = '';
+  const t = document.createElement('span'); t.textContent = msg; el.appendChild(t);
+  if (undo && undoSnap) {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'mini'; b.textContent = 'Undo';
+    b.onclick = () => { state.form = undoSnap.form; state.floors = undoSnap.floors; sel = undoSnap.sel; undoSnap = null; save(); refresh(); say('Undone.'); };
+    el.appendChild(b);
+  }
+}
+function moveSec(i, d) {
+  const j = i + d; if (i < 0 || j < 0 || j >= state.form.length) return;
+  const [s] = state.form.splice(i, 1); state.form.splice(j, 0, s); sel = j; save(); refresh();
+  say(`Moved “${s.name}” to position ${j + 1}.`);
+}
+function moveTo(i, idx, copy) {
+  const s = state.form[i];
+  if (copy) { state.form.splice(idx, 0, clone(s)); sel = idx; save(); refresh(); say(`Copied “${s.name}”.`); return; }
+  if (idx > i) idx--;
+  if (idx === i) return;
+  state.form.splice(i, 1); state.form.splice(idx, 0, s); sel = idx; save(); refresh();
+  say(`Moved “${s.name}” to position ${idx + 1}.`);
+}
+function dupSec(i) { const s = state.form[i]; if (!s) return; state.form.splice(i + 1, 0, clone(s)); sel = i + 1; save(); refresh(); say(`Duplicated “${s.name}”.`); }
+function removeSec(i) {
+  const s = state.form[i]; if (!s) return;
+  remember(); state.form.splice(i, 1);
+  sel = Math.min(sel, state.form.length - 1); if (i < sel) sel--; if (sel < 0 && state.form.length) sel = 0;
+  save(); refresh(); say(`Removed “${s.name}”.`, true);
+}
+function setReps(i, r) { const s = state.form[i]; if (!s) return; r = Math.min(8, Math.max(1, r)); if (r === s.reps) return; s.reps = r; save(); refresh(); say(`“${s.name}” plays its floor ×${r}.`); }
+
+/* ---------- the palette, the moves ---------- */
+const PALETTE = [
+  { id: 'riff', label: 'the riff', kind: 'riff', make: f => sec({ name: 'The riff', floor: f }) },
+  { id: 'floor', label: 'floor only', kind: 'floor', make: f => sec({ name: 'Floor only', floor: f, riff: false }) },
+  { id: 'gap', label: 'other tune (gap)', kind: 'other', make: f => sec({ name: 'Other tune', floor: f, riff: false, other: true }) },
+];
+const CARDS = [
+  { id: 'voice', label: 'new instrument', apply: s => { s.voice = nextOf(VOICES, s.voice); return `the riff now plays on ${label(VOICES, s.voice)}`; } },
+  { id: 'up', label: 'up an octave', apply: s => { s.oct = Math.min(12, s.oct + 12); return s.oct ? 'the riff sits an octave up' : 'the riff is back home'; } },
+  { id: 'down', label: 'down an octave', apply: s => { s.oct = Math.max(-12, s.oct - 12); return s.oct ? 'the riff sits an octave down' : 'the riff is back home'; } },
+  { id: 'dbl1', label: 'double +1 oct', apply: s => { s.dbl = 12; return 'doubled an octave up'; } },
+  { id: 'dbl2', label: 'double +2 oct', apply: s => { s.dbl = 24; return 'doubled two octaves up'; } },
+  { id: 'bass', label: 'add bass', apply: s => { s.bass = true; return 'bass on'; } },
+  { id: 'bassv', label: 'new bass sound', apply: s => { s.bass = true; s.bassVoice = nextOf(BASSES, s.bassVoice); return `bass on ${label(BASSES, s.bassVoice)}`; } },
+  { id: 'drums', label: 'add drums', apply: s => { s.drums = true; return 'drums on'; } },
+  { id: 'strip', label: 'strip back', apply: s => { s.bass = false; s.drums = false; return 'stripped back to the riff'; } },
+];
+function drawShelves() {
+  const pal = $('palette');
+  PALETTE.forEach(p => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = `tile k-${p.kind}`; b.textContent = p.label;
+    b.dataset.pal = p.id; b.title = 'Drag into the lane, or tap to add after the selected block';
+    pal.appendChild(b);
+  });
+  const bin = document.createElement('span'); bin.className = 'bin'; bin.id = 'bin'; bin.textContent = 'drop here to remove';
+  pal.appendChild(bin);
+  const mv = $('moves');
+  CARDS.forEach(c => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'card'; b.dataset.card = c.id;
+    b.innerHTML = `<span class="k" aria-hidden="true">+</span>${esc(c.label)}`;
+    b.title = 'Drop on a block, or tap to give it to the selected block';
+    mv.appendChild(b);
+  });
+}
+function insertNew(pid, idx) {
+  const p = PALETTE.find(x => x.id === pid); if (!p) return;
+  const near = state.form[sel] || state.form[state.form.length - 1];
+  const s = p.make(near ? near.floor : 'walk');
+  if (idx == null) idx = sel >= 0 ? sel + 1 : state.form.length;
+  state.form.splice(idx, 0, s); sel = idx; save(); refresh(); say(`Added “${s.name}”.`);
+}
+function applyCard(cid, i) {
+  const c = CARDS.find(x => x.id === cid), s = state.form[i]; if (!c || !s) { say('Select a block first.'); return; }
+  const msg = c.apply(s); sel = i; save(); refresh(); say(`“${s.name}”: ${msg}.`);
+}
+function applyFloor(fid, i) {
+  const f = state.floors.find(x => x.id === fid), s = state.form[i]; if (!f || !s) { say('Select a block first.'); return; }
+  s.floor = fid; s.heads = null; sel = i; save(); refresh(); say(`“${s.name}” now stands on ${f.name}.`);
+}
+
+/* ---------- the floors ---------- */
+const FW = 26, FH = 92, FY0 = 14, FSTEP = (FH - 28) / 11;      // A at the bottom, G♯ at the top
+const fy = pc => FY0 + (56 - headMidi(pc)) * FSTEP;
+function floorSvg(f) {
+  const w = f.roots.length * FW;
+  let d = '';
+  f.roots.forEach((pc, i) => { const y = fy(pc); d += `${i ? 'L' : 'M'}${i * FW + 4} ${y}L${(i + 1) * FW - 4} ${y}`; });
+  let h = `<path d="${d}" fill="none" stroke="var(--bass)" stroke-width="1.5" opacity=".55" stroke-linejoin="round"/>`;
+  f.roots.forEach((pc, i) => {
+    const x = i * FW + FW / 2, y = fy(pc);
+    h += `<g class="h" tabindex="0" role="slider" aria-label="${esc(f.name)}, bar ${i + 1}" aria-valuetext="${PC[pc]}" data-f="${f.id}" data-b="${i}">
+      <circle cx="${x}" cy="${y}" r="7.5" fill="var(--surface)" stroke="var(--bass)" stroke-width="2"/>
+      <text x="${x}" y="${y < FH / 2 ? y + 19 : y - 11}" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--ink)">${PC[pc]}</text></g>`;
+  });
+  return `<svg width="${w}" height="${FH}" viewBox="0 0 ${w} ${FH}" data-floor="${f.id}">${h}</svg>`;
+}
+function drawFloors() {
+  const el = $('floors'); el.innerHTML = '';
+  state.floors.forEach(f => {
+    const t = document.createElement('div'); t.className = 'floor'; t.dataset.fid = f.id;
+    t.innerHTML = `<button type="button" class="grip tile" data-floor="${f.id}" title="Drag onto a block, or tap to give it to the selected block"><b>${esc(f.name)}</b><span>${f.roots.length} bars</span></button>
+      <div class="floor-svg-wrap">${floorSvg(f)}</div>
+      <div class="floor-foot"><input type="text" id="floor-name-${f.id}" aria-label="Floor name" value="${esc(f.name)}">
+        <button type="button" class="mini" data-fadd="${f.id}" aria-label="Add a bar to ${esc(f.name)}">+ bar</button>
+        <button type="button" class="mini" data-frem="${f.id}" aria-label="Remove a bar from ${esc(f.name)}">− bar</button></div>`;
+    el.appendChild(t);
+  });
+}
+$('floors').addEventListener('change', e => {
+  const m = e.target.id && e.target.id.match(/^floor-name-(.+)$/); if (!m) return;
+  const f = state.floors.find(x => x.id === m[1]); if (f) { f.name = e.target.value || 'Floor'; save(); refresh(); }
+});
+$('floors').addEventListener('click', e => {
+  const a = e.target.closest('[data-fadd],[data-frem]'); if (!a) return;
+  const f = state.floors.find(x => x.id === (a.dataset.fadd || a.dataset.frem)); if (!f) return;
+  if (a.dataset.fadd) f.roots.push(f.roots[f.roots.length - 1] ?? 2); else if (f.roots.length > 1) f.roots.pop();
+  save(); refresh();
+});
+function setRoot(fid, b, pc) {
+  const f = state.floors.find(x => x.id === fid); if (!f || f.roots[b] === pc) return false;
+  f.roots[b] = pc; save(); return true;
+}
+function redrawFloorSvg(fid) {
+  const f = state.floors.find(x => x.id === fid), old = document.querySelector(`#floors svg[data-floor="${fid}"]`);
+  if (!f || !old) return;
+  const tmp = document.createElement('div'); tmp.innerHTML = floorSvg(f); old.replaceWith(tmp.firstElementChild);
+}
+// dragging a floor's note up or down
+let fdrag = null;
+$('floors').addEventListener('pointerdown', e => {
+  const h = e.target.closest('.h'); if (!h) return;
+  e.preventDefault(); e.stopPropagation();
+  const svgEl = h.ownerSVGElement;
+  fdrag = { fid: h.dataset.f, b: +h.dataset.b, svg: svgEl, id: e.pointerId };
+  try { svgEl.setPointerCapture(e.pointerId); } catch (err) {}
+  h.focus({ preventScroll: true });
+});
+window.addEventListener('pointermove', e => {
+  if (!fdrag || e.pointerId !== fdrag.id) return;
+  const svgEl = document.querySelector(`#floors svg[data-floor="${fdrag.fid}"]`); if (!svgEl) return;
+  const r = svgEl.getBoundingClientRect(), y = (e.clientY - r.top) * (FH / r.height);
+  const m = Math.max(45, Math.min(56, Math.round(56 - (y - FY0) / FSTEP)));
+  if (setRoot(fdrag.fid, fdrag.b, m % 12)) {
+    redrawFloorSvg(fdrag.fid);
+    const nsvg = document.querySelector(`#floors svg[data-floor="${fdrag.fid}"]`);
+    try { nsvg.setPointerCapture(e.pointerId); } catch (err) {}
+    const hh = nsvg.querySelector(`.h[data-b="${fdrag.b}"]`); if (hh) hh.focus({ preventScroll: true });
+    preview(m - 12, 'bass');
+  }
+});
+const endF = e => { if (!fdrag || e.pointerId !== fdrag.id) return; fdrag = null; refreshButFloors(); };
+window.addEventListener('pointerup', endF); window.addEventListener('pointercancel', endF);
+$('floors').addEventListener('keydown', e => {
+  const h = e.target.closest('.h'); if (!h) return;
+  const d = e.key === 'ArrowUp' ? 1 : e.key === 'ArrowDown' ? -1 : 0; if (!d) return;
+  e.preventDefault();
+  const f = state.floors.find(x => x.id === h.dataset.f), b = +h.dataset.b;
+  const m = Math.max(45, Math.min(56, headMidi(f.roots[b]) + d));
+  if (setRoot(f.id, b, m % 12)) {
+    redrawFloorSvg(f.id); preview(m - 12, 'bass'); refreshButFloors();
+    const nh = document.querySelector(`#floors svg[data-floor="${f.id}"] .h[data-b="${b}"]`); if (nh) nh.focus();
+  }
+});
+$('addFloor').onclick = () => {
+  const id = 'f' + Date.now().toString(36);
+  state.floors.push({ id, name: 'New floor', roots: [2, 0, 11, 10] }); save(); refresh();
+};
+
+/* ================= one drag manager for blocks, tiles, cards ================= */
+let press = null, ghost = null, ins = null, suppressClick = false, scrollTimer = null;
+function sourceOf(t) {
+  if (t.closest('.chip,.bbtn,.edge,input,.h')) return null;
+  let el;
+  if ((el = t.closest('.block'))) return { kind: 'block', i: +el.dataset.i, el, text: state.form[+el.dataset.i].name };
+  if ((el = t.closest('[data-pal]'))) return { kind: 'new', id: el.dataset.pal, el, text: el.textContent };
+  if ((el = t.closest('[data-card]'))) return { kind: 'card', id: el.dataset.card, el, text: '+ ' + el.textContent.replace(/^\+/, '') };
+  if ((el = t.closest('.grip[data-floor]'))) return { kind: 'floor', id: el.dataset.floor, el, text: el.querySelector('b').textContent };
+  return null;
+}
+document.addEventListener('pointerdown', e => {
+  if (e.button > 0 || press || fdrag) return;
+  const src = sourceOf(e.target); if (!src) return;
+  press = Object.assign(src, { x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, pid: e.pointerId, touch: e.pointerType === 'touch', active: false });
+  if (press.touch) { const p = press; p.timer = setTimeout(() => { if (press === p && !p.active) activate(); }, 280); }
+});
+function activate() {
+  const p = press; p.active = true; clearTimeout(p.timer);
+  ghost = document.createElement('div'); ghost.className = 'ghost'; ghost.textContent = p.text;
+  document.body.appendChild(ghost);
+  if (p.kind === 'block') p.el.classList.add('lifted');
+  if (p.kind === 'block' || p.kind === 'new') {
+    ins = document.createElement('div'); ins.className = 'ins'; ins.hidden = true; $('lane').appendChild(ins);
+    scrollTimer = setInterval(autoScroll, 30);
+  }
+  track();
+}
+function autoScroll() {
+  if (!press) return;
+  const w = $('laneWrap'), r = w.getBoundingClientRect();
+  if (press.y < r.top - 30 || press.y > r.bottom + 30) return;
+  if (press.x < r.left + 40) w.scrollLeft -= 10; else if (press.x > r.right - 40) w.scrollLeft += 10;
+}
+function laneIndex(x) {
+  const bl = [...$('lane').querySelectorAll('.block')];
+  let idx = bl.length;
+  for (let k = 0; k < bl.length; k++) { const r = bl[k].getBoundingClientRect(); if (x < r.left + r.width / 2) { idx = k; break; } }
+  return { idx, bl };
+}
+function hit(p = press) {
+  const el = document.elementFromPoint(p.x, p.y);
+  const out = { bin: !!(el && el.closest('.bin')), block: el && el.closest('.block'), lane: false };
+  const r = $('laneWrap').getBoundingClientRect();
+  out.lane = p.x >= r.left - 10 && p.x <= r.right + 10 && p.y >= r.top - 24 && p.y <= r.bottom + 24;
+  return out;
+}
+function clearMarks() { document.querySelectorAll('.drop-on,.drop-in').forEach(x => x.classList.remove('drop-on', 'drop-in')); }
+function track() {
+  const p = press;
+  ghost.style.transform = `translate(${Math.min(p.x + 12, innerWidth - ghost.offsetWidth - 4)}px, ${p.y + 12}px)`;
+  clearMarks();
+  const h = hit();
+  if (p.kind === 'block' || p.kind === 'new') {
+    const del = p.kind === 'block' && (h.bin || !h.lane);
+    ghost.classList.toggle('del', del);
+    ghost.textContent = del ? `remove “${p.text}”` : p.text;
+    if (h.bin) $('bin').classList.add('drop-on');
+    if (h.lane && !h.bin) {
+      $('laneWrap').classList.add('drop-in');
+      const { idx, bl } = laneIndex(p.x), lr = $('lane').getBoundingClientRect();
+      const x = idx < bl.length ? bl[idx].getBoundingClientRect().left : (bl.length ? bl[bl.length - 1].getBoundingClientRect().right + 6 : lr.left + 6);
+      ins.hidden = false; ins.style.left = (x - lr.left + 1) + 'px';
+    } else ins.hidden = true;
+  } else if (h.block) h.block.classList.add('drop-on');
+}
+window.addEventListener('pointermove', e => {
+  if (!press || e.pointerId !== press.pid) return;
+  press.x = e.clientX; press.y = e.clientY;
+  if (!press.active) {
+    const d = Math.hypot(press.x - press.x0, press.y - press.y0);
+    if (press.touch) { if (d > 10) { clearTimeout(press.timer); press = null; } }   // a swipe: let the page scroll
+    else if (d > 4) activate();
+    return;
+  }
+  e.preventDefault(); track();
+});
+document.addEventListener('touchmove', e => { if (press && press.active) e.preventDefault(); }, { passive: false });
+document.addEventListener('contextmenu', e => { if (press) e.preventDefault(); });
+function endDrag(drop, alt) {
+  const p = press; press = null; clearTimeout(p.timer);
+  if (!p.active) return;
+  suppressClick = true; setTimeout(() => { suppressClick = false; }, 0);
+  const h = drop ? hit(p) : null;
+  clearInterval(scrollTimer); clearMarks();
+  if (ghost) ghost.remove(); ghost = null;
+  if (ins) ins.remove(); ins = null;
+  p.el.classList.remove('lifted');
+  if (!h) return;
+  if (p.kind === 'block') {
+    if (h.bin || !h.lane) removeSec(p.i);
+    else moveTo(p.i, laneIndex(p.x).idx, alt);
+  } else if (p.kind === 'new') { if (h.lane && !h.bin) insertNew(p.id, laneIndex(p.x).idx); }
+  else if (h.block) {
+    if (p.kind === 'card') applyCard(p.id, +h.block.dataset.i); else applyFloor(p.id, +h.block.dataset.i);
+  }
+}
+window.addEventListener('pointerup', e => { if (press && e.pointerId === press.pid) endDrag(true, e.altKey); });
+window.addEventListener('pointercancel', e => { if (press && e.pointerId === press.pid) endDrag(false); });
+window.addEventListener('click', e => { if (suppressClick) { e.stopPropagation(); e.preventDefault(); suppressClick = false; } }, true);
+
+/* taps and keys */
+$('palette').addEventListener('click', e => { const t = e.target.closest('[data-pal]'); if (t) insertNew(t.dataset.pal); });
+$('moves').addEventListener('click', e => { const t = e.target.closest('[data-card]'); if (t) applyCard(t.dataset.card, sel); });
+$('floors').addEventListener('click', e => { const t = e.target.closest('.grip[data-floor]'); if (t) applyFloor(t.dataset.floor, sel); });
+$('lane').addEventListener('click', e => {
+  const b = e.target.closest('.block'); if (!b) return;
+  const i = +b.dataset.i, s = state.form[i];
+  const chip = e.target.closest('[data-chip]'), act = e.target.closest('[data-act]');
+  if (chip) {
+    const k = chip.dataset.chip;
+    if (k === 'riff') s.riff = !s.riff;
+    else if (k === 'voice') s.voice = nextOf(VOICES, s.voice);
+    else if (k === 'oct') s.oct = 0;
+    else if (k === 'dbl') s.dbl = 0;
+    else if (k === 'bass') s.bass = false;
+    else if (k === 'drums') s.drums = false;
+    else return;
+    sel = i; save(); refresh(); return;
+  }
+  if (act) { if (act.dataset.act === 'play') { sel = i; refresh(); play(i, true); } else dupSec(i); return; }
+  if (sel !== i) { sel = i; drawLaneSel(); drawInspector(); }
+});
+function drawLaneSel() { document.querySelectorAll('#lane .block').forEach(b => b.classList.toggle('sel', +b.dataset.i === sel)); }
+$('lane').addEventListener('focusin', e => {
+  const b = e.target.closest('.block'); if (b && +b.dataset.i !== sel) { sel = +b.dataset.i; drawLaneSel(); drawInspector(); }
+});
+$('lane').addEventListener('keydown', e => {
+  const b = e.target.classList && e.target.classList.contains('block') ? e.target : null; if (!b) return;
+  const i = +b.dataset.i;
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+    e.preventDefault();
+    if (e.shiftKey) setReps(i, state.form[i].reps + (e.key === 'ArrowRight' ? 1 : -1));
+    else moveSec(i, e.key === 'ArrowRight' ? 1 : -1);
+    const el = $('lane').querySelector(`.block[data-i="${sel}"]`); if (el) { el.focus(); el.scrollIntoView({ block: 'nearest', inline: 'nearest' }); }
+  } else if (e.key === 'Delete' || e.key === 'Backspace') {
+    e.preventDefault(); removeSec(i);
+    const el = $('lane').querySelector(`.block[data-i="${sel}"]`); if (el) el.focus();
+  }
+});
+
+/* stretching a block by its right edge: whole floor-lengths */
+let edrag = null;
+$('lane').addEventListener('pointerdown', e => {
+  const ed = e.target.closest('.edge'); if (!ed || e.button > 0) return;
+  e.preventDefault(); e.stopPropagation();
+  const b = ed.closest('.block'), i = +b.dataset.i, s = state.form[i], f = floorOf(s);
+  edrag = { i, b, x0: e.clientX, reps0: s.reps, len: f ? f.roots.length : 1, reps: s.reps, id: e.pointerId };
+  try { ed.setPointerCapture(e.pointerId); } catch (err) {}
+});
+$('lane').addEventListener('pointermove', e => {
+  if (!edrag || e.pointerId !== edrag.id) return;
+  const r = Math.min(8, Math.max(1, edrag.reps0 + Math.round((e.clientX - edrag.x0) / (edrag.len * BAR_PX))));
+  if (r !== edrag.reps) {
+    edrag.reps = r; edrag.b.style.width = blockW(edrag.len * r) + 'px';
+    edrag.b.querySelector('.b-x').textContent = '×' + r;
+  }
+});
+const endE = e => { if (!edrag || e.pointerId !== edrag.id) return; const d = edrag; edrag = null; sel = d.i; if (d.reps !== d.reps0) setReps(d.i, d.reps); else drawLaneSel(); };
+$('lane').addEventListener('pointerup', endE); $('lane').addEventListener('pointercancel', endE);
+
+/* ================= the bar ================= */
+const svg = $('cell');
 const X0 = 54, CW = (640 - X0 - 10) / 16, Y0 = 12, RH = (260 - Y0 - 22) / ROWS.length;
-function drawCell(playStep = -1) {
+let cellStep = -1;
+function drawCell(playStep = cellStep) {
+  cellStep = playStep;
   const h = [];
-  // sparse rulings: one per beat, one per C and D (never a grid)
+  // sparse rulings: one per beat, never a grid
   for (let b = 0; b <= 4; b++) h.push(`<line x1="${X0 + b * 4 * CW}" y1="${Y0}" x2="${X0 + b * 4 * CW}" y2="${Y0 + ROWS.length * RH}" stroke="var(--rule)" stroke-width="${b % 4 ? 1 : 1.5}"/>`);
   ROWS.forEach((m, r) => {
-    if (m % 12 === 0 || m % 12 === 2) {
-      const y = Y0 + r * RH + RH / 2;
-      h.push(`<line x1="${X0}" y1="${y}" x2="${X0 + 16 * CW}" y2="${y}" stroke="var(--rule)" stroke-width="1"/>`);
-      h.push(`<text x="${X0 - 8}" y="${y + 4}" text-anchor="end" font-family="var(--mono)" font-size="11" fill="var(--muted)">${name(m)}</text>`);
-    }
+    if (m % 12 === 0 || m % 12 === 2) h.push(`<text x="${X0 - 8}" y="${Y0 + r * RH + RH / 2 + 4}" text-anchor="end" font-family="var(--mono)" font-size="11" fill="var(--muted)">${name(m)}</text>`);
   });
   for (let b = 0; b < 4; b++) h.push(`<text x="${X0 + b * 4 * CW + 3}" y="${Y0 + ROWS.length * RH + 16}" font-family="var(--mono)" font-size="11" fill="var(--muted)">beat ${b + 1}</text>`);
   if (playStep >= 0) h.push(`<rect x="${X0 + playStep * CW}" y="${Y0}" width="${CW}" height="${ROWS.length * RH}" fill="var(--riff)" opacity=".10"/>`);
   // head: follows the floor; drawn at D for the bench
   [0, 1].forEach(st => {
     const r = ROWS.indexOf(50);
-    h.push(`<rect x="${X0 + st * CW + 2}" y="${Y0 + r * RH + 2}" width="${CW - 4}" height="${RH - 4}" rx="4" fill="none" stroke="var(--riff)" stroke-width="2" stroke-dasharray="0"/>`);
+    h.push(`<rect x="${X0 + st * CW + 2}" y="${Y0 + r * RH + 2}" width="${CW - 4}" height="${RH - 4}" rx="4" fill="none" stroke="var(--riff)" stroke-width="2"/>`);
   });
   h.push(`<text x="${X0 + 2}" y="${Y0 + ROWS.indexOf(50) * RH + RH + 13}" font-family="var(--body)" font-size="11" fill="var(--muted)">head (= floor)</text>`);
   state.tail.forEach((m, st) => {
     if (m == null || st < 2) return;
     const r = ROWS.indexOf(m); if (r < 0) return;
-    h.push(`<rect x="${X0 + st * CW + 2}" y="${Y0 + r * RH + 2}" width="${CW - 4}" height="${RH - 4}" rx="4" fill="var(--riff)"/>`);
+    h.push(`<rect x="${X0 + st * CW + 2}" y="${Y0 + r * RH + 2}" width="${CW - 4}" height="${RH - 4}" rx="4" fill="var(--riff)"><title>${name(m)}, step ${st + 1}</title></rect>`);
   });
-  // invisible hit areas, columns 2..15
-  for (let st = 2; st < 16; st++) ROWS.forEach((m, r) =>
-    h.push(`<rect data-st="${st}" data-m="${m}" x="${X0 + st * CW}" y="${Y0 + r * RH}" width="${CW}" height="${RH}" fill="transparent" style="cursor:pointer"><title>${name(m)}, step ${st + 1}</title></rect>`));
   svg.innerHTML = h.join('');
-  document.getElementById('tailNames').textContent = 'Tail: ' + state.tail.slice(2).filter(m => m != null).map(m => PC[m % 12]).join(' ');
+  $('tailNames').textContent = 'Tail: ' + state.tail.slice(2).filter(m => m != null).map(m => PC[m % 12]).join(' ');
 }
-svg.addEventListener('click', e => {
-  const t = e.target.closest('[data-st]'); if (!t) return;
-  const st = +t.dataset.st, m = +t.dataset.m;
-  state.tail[st] = state.tail[st] === m ? null : m;
-  save(); drawCell(); preview(m);
+function cellAt(e) {
+  const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+  const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+  return { st: Math.floor((p.x - X0) / CW), r: Math.max(0, Math.min(ROWS.length - 1, Math.floor((p.y - Y0) / RH))) };
+}
+let ndrag = null;
+svg.addEventListener('pointerdown', e => {
+  if (e.button > 0) return;
+  const { st, r } = cellAt(e); if (st < 2 || st > 15) return;
+  e.preventDefault();
+  const had = state.tail[st];
+  ndrag = { st, id: e.pointerId, moved: false, onNote: had != null && ROWS.indexOf(had) === r };
+  if (!ndrag.onNote) { state.tail[st] = ROWS[r]; ndrag.moved = true; drawCell(); preview(ROWS[r]); }
+  try { svg.setPointerCapture(e.pointerId); } catch (err) {}
 });
+svg.addEventListener('pointermove', e => {
+  if (!ndrag || e.pointerId !== ndrag.id) return;
+  const { r } = cellAt(e);
+  if (state.tail[ndrag.st] !== ROWS[r]) { state.tail[ndrag.st] = ROWS[r]; ndrag.moved = true; drawCell(); preview(ROWS[r]); }
+});
+const endN = e => {
+  if (!ndrag || e.pointerId !== ndrag.id) return;
+  const d = ndrag; ndrag = null;
+  if (e.type === 'pointerup' && d.onNote && !d.moved) { state.tail[d.st] = null; drawCell(); }
+  save();
+};
+svg.addEventListener('pointerup', endN); svg.addEventListener('pointercancel', endN);
 
-/* ---------- floors ---------- */
-function drawFloors() {
-  const el = document.getElementById('floors'); el.innerHTML = '';
-  state.floors.forEach((f, fi) => {
-    const row = document.createElement('div'); row.className = 'floor';
-    const nm = document.createElement('input'); nm.type = 'text'; nm.value = f.name; nm.id = 'floor-name-' + f.id;
-    nm.setAttribute('aria-label', 'Floor name'); nm.className = 'note';
-    nm.style.cssText = 'background:transparent;border:1px solid var(--rule);border-radius:6px;padding:3px 6px;min-width:0';
-    nm.onchange = () => { f.name = nm.value; save(); drawForm(); };
-    const chips = document.createElement('div'); chips.className = 'chips';
-    f.roots.forEach((pc, i) => {
-      const s = document.createElement('select'); s.id = `floor-${f.id}-${i}`; s.setAttribute('aria-label', `${f.name}, bar ${i + 1}`);
-      const opts = FLOOR_PCS.includes(pc) ? FLOOR_PCS : FLOOR_PCS.concat(pc);
-      s.innerHTML = opts.map(p => `<option value="${p}"${p === pc ? ' selected' : ''}>${PC[p]}</option>`).join('');
-      s.onchange = () => { f.roots[i] = +s.value; save(); refresh(); };
-      chips.appendChild(s);
-    });
-    const ctl = document.createElement('div'); ctl.className = 'row';
-    const add = btn('+ bar', () => { f.roots.push(f.roots[f.roots.length - 1] ?? 2); save(); refresh(); });
-    const rem = btn('− bar', () => { if (f.roots.length > 1) { f.roots.pop(); save(); refresh(); } });
-    ctl.append(add, rem);
-    row.append(nm, chips, ctl); el.appendChild(row);
-  });
-  const add = btn('Add a floor', () => {
-    const id = 'f' + Date.now().toString(36);
-    state.floors.push({ id, name: 'New floor', roots: [2, 0, 11, 10] }); save(); refresh();
-  });
-  el.appendChild(add);
-}
-function btn(text, fn, cls = 'mini') { const b = document.createElement('button'); b.type = 'button'; b.className = cls; b.textContent = text; b.onclick = fn; return b; }
-
-/* ---------- form ---------- */
-function opt(list, val) { return list.map(([v, t]) => `<option value="${v}"${String(v) === String(val) ? ' selected' : ''}>${t}</option>`).join(''); }
-function drawForm() {
-  const el = document.getElementById('form'); el.innerHTML = '';
-  let start = 1;
-  state.form.forEach((s, si) => {
-    const f = state.floors.find(f => f.id === s.floor) || state.floors[0];
-    const n = (f ? f.roots.length : 0) * Math.max(1, s.reps | 0);
-    const box = document.createElement('div'); box.className = 'sec'; box.dataset.si = si;
-    box.innerHTML = `
-      <div class="sec-head">
-        <span class="tag">bars ${start}–${start + n - 1}</span>
-        <input type="text" id="sec-name-${si}" aria-label="Section name" value="${s.name.replace(/"/g, '&quot;')}">
-        ${s.other && !s.riff ? '<span class="tag other">another tune here in the original</span>' : ''}
-        ${s.heads ? '<span class="tag" title="The transcription puts different heads over this floor">heads from the transcription</span>' : ''}
-      </div>
-      <div class="ctl">
-        <label>Floor <select id="sec-floor-${si}">${opt(state.floors.map(f => [f.id, f.name]), s.floor)}</select></label>
-        <label>× <input id="sec-reps-${si}" type="number" min="1" max="8" value="${s.reps}" aria-label="Repeats"></label>
-        <label><input id="sec-riff-${si}" type="checkbox"${s.riff ? ' checked' : ''}> riff</label>
-        <label>voice <select id="sec-voice-${si}">${opt([['saw', 'saw lead'], ['square', 'square'], ['soft', 'soft flute']], s.voice)}</select></label>
-        <label>octave <select id="sec-oct-${si}">${opt([[-12, 'down'], [0, 'home'], [12, 'up']], s.oct)}</select></label>
-        <label>doubled <select id="sec-dbl-${si}">${opt([[0, 'no'], [12, '+1 octave'], [24, '+2 octaves']], s.dbl)}</select></label>
-        <label><input id="sec-bass-${si}" type="checkbox"${s.bass ? ' checked' : ''}> bass</label>
-        <label><input id="sec-drums-${si}" type="checkbox"${s.drums ? ' checked' : ''}> drums</label>
-      </div>`;
-    const tools = document.createElement('div'); tools.className = 'row';
-    tools.append(
-      btn('Play this', () => play(si, true)),
-      btn('↑', () => move(si, -1)), btn('↓', () => move(si, 1)),
-      btn('Duplicate', () => { state.form.splice(si + 1, 0, clone(s)); save(); refresh(); }),
-      btn('Remove', () => { state.form.splice(si, 1); save(); refresh(); }));
-    tools.children[1].setAttribute('aria-label', 'Move up'); tools.children[2].setAttribute('aria-label', 'Move down');
-    box.appendChild(tools);
-    const on = (k, fn) => box.querySelector(`#sec-${k}-${si}`).addEventListener('change', e => { fn(e.target); save(); refresh(); });
-    on('name', t => s.name = t.value);
-    on('floor', t => { s.floor = t.value; s.heads = null; });
-    on('reps', t => s.reps = Math.min(8, Math.max(1, +t.value || 1)));
-    on('riff', t => s.riff = t.checked);
-    on('voice', t => s.voice = t.value);
-    on('oct', t => s.oct = +t.value);
-    on('dbl', t => s.dbl = +t.value);
-    on('bass', t => s.bass = t.checked);
-    on('drums', t => s.drums = t.checked);
-    el.appendChild(box);
-    start += n;
-  });
-}
-function move(si, d) { const j = si + d; if (j < 0 || j >= state.form.length) return; [state.form[si], state.form[j]] = [state.form[j], state.form[si]]; save(); refresh(); }
-function refresh() { drawFloors(); drawForm(); drawTimeline(document.getElementById('tlRef'), bars(REF.form, REF.floors), -1); drawTimeline(document.getElementById('tlMine'), bars(state.form, state.floors), playing ? curBar : -1); counts(); }
-
-/* ---------- audio ---------- */
-let ctx, master, noiseBuf;
-function audio() {
-  if (ctx) return ctx;
-  ctx = new (window.AudioContext || window.webkitAudioContext)();
-  const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 4;
-  master = ctx.createGain(); master.gain.value = 0.55; master.connect(comp); comp.connect(ctx.destination);
-  noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
-  const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-  return ctx;
+/* ================= audio: ported from Folio's js/audio.js and js/tones.js ================= */
+let ctx = null, master = null, noiseBuf = null;
+const live = [];
+const LOOKAHEAD_MS = 25, AHEAD = 0.1, TAIL = 0.006, LEVEL = 0.22;
+/* Folio's TONE table, verbatim: [0] the lead, [1] the bass, [2] the chord lane */
+const TONE = [
+  { type:"triangle", cut:2500, q:0.7, level:LEVEL, attack:0.018,
+    release:0.080, hold:0.10, decay:[0.37, 1.0, 3.0], track:9.5,
+    wave:[1, 0.30, 0.12, 0.05] },
+  { type:"sine",     cut:820,  q:0.9, level:0.30,  attack:0.022,
+    release:0.100,   hold:0.17, decay:[0.60, 1.4, 4.0],
+    wave:[1, 0.22, 0.09] },
+  { type:"triangle", cut:1800, q:0.6, level:0.14, attack:0.030,
+    release:0.120,   hold:0.22, decay:[0.90, 1.6, 5.0], track:6.0,
+    wave:[1, 0.13, 0.05] }
+];
+/* the spectrum is built once per tone, on the context the notes play on */
+function toneWave(t) {
+  if (!t.wave) return null;
+  if (!t._pw) {
+    const re = new Float32Array(t.wave.length + 1), im = new Float32Array(t.wave.length + 1);
+    for (let i = 0; i < t.wave.length; i++) im[i + 1] = t.wave[i];
+    t._pw = ctx.createPeriodicWave(re, im);
+  }
+  return t._pw;
 }
 const hz = m => 440 * Math.pow(2, (m - 69) / 12);
-function tone(m, t, dur, kind, vol) {
-  const g = ctx.createGain(), f = ctx.createBiquadFilter();
-  const types = { saw: ['sawtooth', 2600], square: ['square', 2200], soft: ['triangle', 4000], strings: ['sawtooth', 1800], bass: ['square', 520] };
-  const [wave, cut] = types[kind];
-  f.type = 'lowpass'; f.frequency.value = cut; f.Q.value = 0.7;
-  const oscs = kind === 'strings' ? [-6, 6] : [0];
-  oscs.forEach(det => { const o = ctx.createOscillator(); o.type = wave; o.frequency.value = hz(m); o.detune.value = det; o.connect(f); o.start(t); o.stop(t + dur + 0.12); });
-  const a = kind === 'strings' ? 0.025 : 0.004;
-  g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + a);
-  g.gain.setTargetAtTime(vol * 0.55, t + a, dur * 0.4); g.gain.setTargetAtTime(0.0001, t + dur, 0.03);
-  f.connect(g); g.connect(master);
+let scheduled = 0;
+function track_(node) {
+  live.push(node); scheduled++;
+  node.onended = () => { const k = live.indexOf(node); if (k >= 0) live.splice(k, 1); try { node.disconnect(); } catch (e) {} };
 }
+/* One note: oscillator -> lowpass -> gain envelope (Folio's playNote, by MIDI number instead of note name) */
+function playNote(m, at, dur, v, held) {
+  const f = hz(m), t = TONE[v || 0] || TONE[0];
+  const rel = held ? t.hold : t.release;
+  const osc = ctx.createOscillator();
+  if (t.wave) osc.setPeriodicWave(toneWave(t)); else osc.type = t.type;
+  osc.frequency.setValueAtTime(f, at);
+  const lp = ctx.createBiquadFilter();
+  lp.type = 'lowpass';
+  lp.frequency.setValueAtTime(t.track ? Math.max(t.cut, f * t.track) : t.cut, at);
+  lp.Q.setValueAtTime(t.q, at);
+  const g = ctx.createGain();
+  const relEnd = at + dur - TAIL, relStart = Math.max(at + t.attack + 0.001, relEnd - rel);
+  g.gain.setValueAtTime(0, at);
+  g.gain.linearRampToValueAtTime(t.level, at + t.attack);
+  if (held) {
+    const d = t.decay, knee = at + d[1], vKnee = t.level * Math.exp(-d[1] / d[0]);
+    if (relStart <= knee + 0.001) {
+      g.gain.exponentialRampToValueAtTime(Math.max(0.0001, t.level * Math.exp(-(relStart - at) / d[0])), relStart);
+    } else {
+      g.gain.exponentialRampToValueAtTime(Math.max(0.0001, vKnee), knee);
+      g.gain.exponentialRampToValueAtTime(Math.max(0.0001, vKnee * Math.exp(-(relStart - knee) / d[2])), relStart);
+    }
+  } else g.gain.setValueAtTime(t.level, relStart);
+  g.gain.linearRampToValueAtTime(0, relEnd);
+  osc.connect(lp); lp.connect(g); g.connect(master);
+  osc.start(at); osc.stop(relEnd + 0.01);
+  track_(osc);
+}
+
+/* ---- the baked kits: roots, loops and decays copied from kits/<name>/manifest.md ---- */
+const KIT_LEVEL = 0.34, KIT_CUT = 5500, KIT_RATE = 11025;
+const KITS = {
+  'music-box': [
+    { file: 'music-box-c3.wav', root: 48, loop: [5060, 5650], decay: 3.4 },
+    { file: 'music-box-c4.wav', root: 60, loop: [5015, 5690], decay: 3.4 },
+    { file: 'music-box-c5.wav', root: 72, loop: [5016, 5691], decay: 3.4 },
+    { file: 'music-box-c6.wav', root: 84, loop: [5037, 5690], decay: 3.4 }],
+  'pluck-bass': [
+    { file: 'pluck-bass-e1.wav', root: 28, loop: [6155, 6426], decay: 2.8 },
+    { file: 'pluck-bass-c2.wav', root: 36, loop: [5693, 6426], decay: 2.8 },
+    { file: 'pluck-bass-a2.wav', root: 45, loop: [5765, 6426], decay: 2.8 }],
+  'sub': [
+    { file: 'sub-e1.wav', root: 28, loop: [0, 6432], decay: 0 },
+    { file: 'sub-e2.wav', root: 40, loop: [0, 3216], decay: 0 }],
+};
+const kitStatus = { 'music-box': 'waiting', 'pluck-bass': 'waiting', 'sub': 'waiting' };
+const kitBank = {};
+/* Folio's crossfadeLoop, on the decoded buffer (indices scaled from the kit's 11025 Hz to the context's rate) */
+function crossfadeLoop(data, l0, l1) {
+  const F = Math.min((l1 - l0) >> 1, l0, 256);
+  if (F < 8 || l1 > data.length) return;
+  for (let i = 0; i < F; i++) {
+    const t = (i + 1) / F * Math.PI / 2;
+    data[l1 - F + i] = data[l1 - F + i] * Math.cos(t) + data[l0 - F + i] * Math.sin(t);
+  }
+}
+function loadKits() {
+  Object.keys(KITS).forEach(k => {
+    kitStatus[k] = 'loading';
+    Promise.all(KITS[k].map(s => fetch(`kits/${k}/${s.file}`)
+      .then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+      .then(ab => ctx.decodeAudioData(ab))
+      .then(buf => {
+        const sc = buf.sampleRate / KIT_RATE;
+        if (s.loop[1] > s.loop[0]) crossfadeLoop(buf.getChannelData(0), Math.round(s.loop[0] * sc), Math.round(s.loop[1] * sc));
+        return Object.assign({}, s, { buf });
+      })))
+      .then(list => { kitBank[k] = list.sort((a, b) => a.root - b.root); kitStatus[k] = 'ready'; drawKitLine(); })
+      .catch(() => { kitStatus[k] = 'synth'; drawKitLine(); });
+  });
+  drawKitLine();
+}
+function drawKitLine() {
+  const el = $('kitline'); if (!el) return;
+  el.textContent = 'samples: ' + Object.keys(kitStatus).map(k => `${k.replace('-', ' ')} ${kitStatus[k] === 'ready' ? 'ready' : kitStatus[k] === 'synth' ? 'unavailable, synth instead' : 'loading'}`).join(' · ');
+}
+/* Folio's samplePlay: one buffer per note, pitched by playbackRate off the nearest root, looped, with the imposed decay */
+function samplePlay(kit, m, at, dur, held) {
+  const list = kitBank[kit]; if (!list || !list.length) return false;
+  let s = list[0]; for (const x of list) if (Math.abs(x.root - m) < Math.abs(s.root - m)) s = x;
+  const rate = hz(m) / hz(s.root);
+  const src = ctx.createBufferSource(); src.buffer = s.buf;
+  src.playbackRate.setValueAtTime(rate, at);
+  const natural = s.buf.duration / rate, looped = s.loop[1] > s.loop[0];
+  if (looped) { src.loop = true; src.loopStart = s.loop[0] / KIT_RATE; src.loopEnd = s.loop[1] / KIT_RATE; }
+  const g = ctx.createGain(), end = at + dur - TAIL, attack = 0.004, rel = held ? 0.05 : 0.03;
+  const relStart = Math.max(at + attack + 0.001, end - rel);
+  g.gain.setValueAtTime(0, at);
+  g.gain.linearRampToValueAtTime(KIT_LEVEL, at + attack);
+  if (s.decay > 0) g.gain.exponentialRampToValueAtTime(Math.max(0.0002, KIT_LEVEL * Math.exp(-(relStart - at) / (s.decay / 3))), relStart);
+  else g.gain.setValueAtTime(KIT_LEVEL, relStart);
+  g.gain.linearRampToValueAtTime(0, end);
+  const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.setValueAtTime(KIT_CUT, at); lp.Q.setValueAtTime(0.7, at);
+  src.connect(lp); lp.connect(g); g.connect(master);
+  src.start(at); src.stop(looped ? end + 0.01 : Math.min(end, at + natural) + 0.01);
+  track_(src); samplesPlayed++;
+  return true;
+}
+let samplesPlayed = 0;
+function leadNote(voice, m, at, dur, held) {
+  if (voice === 'musicbox' && samplePlay('music-box', m, at, dur, held)) return;
+  playNote(m, at, dur, voice === 'chord' ? 2 : 0, held);
+}
+function bassNote(bv, m, at, dur) {
+  if (bv === 'pluck' && samplePlay('pluck-bass', m, at, dur, false)) return;
+  if (bv === 'sub' && samplePlay('sub', m, at, dur, false)) return;
+  playNote(m, at, dur, 1, false);
+}
+
+/* Folio's audio(): one context, one master gain; here a soft compressor sits after it because drums and
+   a doubled lead share the bus, and the kits are fetched the first time sound is asked for */
+function audio() {
+  if (!ctx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    ctx = new AC();
+    const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -12; comp.ratio.value = 3;
+    master = ctx.createGain(); master.gain.setValueAtTime(0.9, ctx.currentTime);
+    master.connect(comp); comp.connect(ctx.destination);
+    noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+    const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    loadKits();
+  }
+  if (ctx.state === 'suspended') ctx.resume();
+  return ctx;
+}
+/* drums: the repo has none, so these stay simple synths */
 function drum(kind, t) {
   const g = ctx.createGain(); g.connect(master);
   if (kind === 'kick') {
     const o = ctx.createOscillator(); o.frequency.setValueAtTime(130, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.18);
-    g.gain.setValueAtTime(0.9, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.28); o.connect(g); o.start(t); o.stop(t + 0.3);
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.75, t + 0.003); g.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+    o.connect(g); o.start(t); o.stop(t + 0.3); track_(o);
   } else {
     const n = ctx.createBufferSource(); n.buffer = noiseBuf; const f = ctx.createBiquadFilter();
     f.type = kind === 'hat' ? 'highpass' : 'bandpass'; f.frequency.value = kind === 'hat' ? 7000 : 1800;
-    const len = kind === 'hat' ? 0.04 : 0.16;
-    g.gain.setValueAtTime(kind === 'hat' ? 0.18 : 0.45, t); g.gain.exponentialRampToValueAtTime(0.001, t + len);
-    n.connect(f); f.connect(g); n.start(t); n.stop(t + len + 0.02);
+    const len = kind === 'hat' ? 0.04 : 0.16, v = kind === 'hat' ? 0.12 : 0.35;
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(v, t + 0.002); g.gain.exponentialRampToValueAtTime(0.001, t + len);
+    n.connect(f); f.connect(g); n.start(t); n.stop(t + len + 0.02); track_(n);
   }
 }
 function scheduleBar(b, t0, step) {
@@ -399,84 +961,124 @@ function scheduleBar(b, t0, step) {
   if (s.riff) notes.forEach((m, st) => {
     if (m == null) return;
     let nx = st + 1; while (nx < 16 && notes[nx] == null) nx++;
-    const dur = Math.min(nx - st, 3) * step * 0.92;
-    tone(m, t0 + st * step, dur, s.voice, 0.16);
-    if (s.dbl) tone(m + s.dbl, t0 + st * step, dur, 'strings', 0.08);
+    const len = Math.min(nx - st, 3), dur = len * step;
+    leadNote(s.voice, m, t0 + st * step, dur, len > 1);
+    if (s.dbl) playNote(m + s.dbl, t0 + st * step, dur, 2, len > 1);   // the doubling, in Folio's chord-lane tone
   });
-  if (s.bass) BASS_STEPS.forEach(st => tone(headMidi(b.root) - 12, t0 + st * step, step * 1.6, 'bass', 0.22));
+  if (s.bass) BASS_STEPS.forEach(st => bassNote(s.bassVoice, headMidi(b.root) - 12, t0 + st * step, step * 1.6));
   if (s.drums) for (let st = 0; st < 16; st++) {
     if (st === 0 || st === 8 || st === 10) drum('kick', t0 + st * step);
     if (st === 4 || st === 12) drum('snare', t0 + st * step);
     if (st % 2 === 0) drum('hat', t0 + st * step);
   }
 }
-function preview(m) { audio(); if (ctx.state === 'suspended') ctx.resume(); tone(m, ctx.currentTime + 0.01, 0.18, 'saw', 0.14); }
-
-let playing = false, timer = null, list = [], nextBar = 0, nextTime = 0, curBar = -1, onlySec = -1, uiTimer = null, barTimes = [];
-function play(si = -1, only = false) {
-  audio(); if (ctx.state === 'suspended') ctx.resume();
-  stop(true);
-  onlySec = only ? si : -1;
-  playing = true; nextBar = 0; nextTime = ctx.currentTime + 0.08; barTimes = [];
-  timer = setInterval(tick, 25); tick();
-  uiTimer = setInterval(ui, 60);
+function preview(m, kind) {
+  audio(); if (ctx.state !== 'running') return;
+  const s = state.form[sel];
+  if (kind === 'bass') bassNote(s ? s.bassVoice : 'folio', m, ctx.currentTime + 0.01, 0.3);
+  else leadNote(s ? s.voice : 'lead', m, ctx.currentTime + 0.01, 0.2, false);
 }
-function currentList() { const all = bars(state.form, state.floors); return onlySec >= 0 ? all.map((b, i) => ({ ...b, i })).filter(b => b.si === onlySec) : all.map((b, i) => ({ ...b, i })); }
-function tick() {
-  const bpm = +document.getElementById('tempo').value, step = 60 / bpm / 4;
-  list = currentList();
-  while (playing && nextTime < ctx.currentTime + 0.15) {
+
+/* ---- the transport: Folio's lookahead scheduler, by the bar ---- */
+let playing = false, timer = null, nextBar = 0, nextTime = 0, curBar = -1, onlySec = -1, queue = [], raf = 0;
+const stepDur = () => 60 / +$('tempo').value / 4;
+function currentList() {
+  const all = bars(state.form, state.floors).map((b, i) => Object.assign({}, b, { i }));
+  return onlySec >= 0 ? all.filter(b => b.si === onlySec) : all;
+}
+function scheduler() {
+  if (!playing) return;
+  const step = stepDur();
+  /* never schedule in the past (a throttled background tab): pick up from now */
+  if (nextTime < ctx.currentTime - 0.02) { nextTime = ctx.currentTime + 0.02; queue.length = 0; }
+  const list = currentList();
+  while (playing && nextTime < ctx.currentTime + AHEAD) {
     if (nextBar >= list.length) {
-      if (document.getElementById('loop').checked && list.length) nextBar = 0; else { setTimeout(() => stop(), Math.max(0, (nextTime - ctx.currentTime) * 1000)); playing = false; break; }
+      if ($('loop').checked && list.length) nextBar = 0;
+      else { const left = Math.max(0, (nextTime - ctx.currentTime) * 1000); playing = false; clearInterval(timer); setTimeout(() => stop(), left); break; }
     }
     const b = list[nextBar];
     scheduleBar(b, nextTime, step);
-    barTimes.push({ t: nextTime, step, i: b.i, b });
+    queue.push({ t: nextTime, step, i: b.i, b });
     nextTime += 16 * step; nextBar++;
   }
 }
-function ui() {
-  if (!ctx) return;
+function play(si = -1, only = false) {
+  audio();
+  stop(true);
+  onlySec = only ? si : -1;
+  playing = true; nextBar = 0; queue = [];
+  master.gain.cancelScheduledValues(ctx.currentTime);
+  master.gain.setValueAtTime(master.gain.value, ctx.currentTime);
+  master.gain.linearRampToValueAtTime(0.9, ctx.currentTime + 0.02);
+  nextTime = ctx.currentTime + 0.06;
+  scheduler();
+  timer = setInterval(scheduler, LOOKAHEAD_MS);
+  cancelAnimationFrame(raf); raf = requestAnimationFrame(frame);
+}
+/* the playing bar is lit when its scheduled time arrives on the audio clock */
+function frame() {
+  if (!ctx || (!playing && !queue.length)) return;
   const now = ctx.currentTime;
-  let cur = null; for (const x of barTimes) if (x.t <= now) cur = x;
-  barTimes = barTimes.filter(x => x.t > now - 4);
-  if (!cur) return;
-  const st = Math.min(15, Math.floor((now - cur.t) / cur.step));
-  if (cur.i !== curBar) {
-    curBar = cur.i;
-    drawTimeline(document.getElementById('tlMine'), bars(state.form, state.floors), curBar);
-    document.querySelectorAll('.sec').forEach(e => e.classList.toggle('playing', +e.dataset.si === cur.b.si));
-    document.getElementById('now').textContent = `bar ${cur.i + 1} · ${cur.b.s.name} · floor ${PC[cur.b.root]}${cur.b.s.riff ? ` · head ${PC[cur.b.head]}` : ''}`;
+  let cur = null; while (queue.length && queue[0].t <= now) cur = queue.shift();
+  if (cur) frame.cur = cur;
+  cur = frame.cur;
+  if (cur) {
+    if (cur.i !== curBar) {
+      curBar = cur.i;
+      drawTimeline($('tlMine'), bars(state.form, state.floors), curBar);
+      document.querySelectorAll('#lane .block').forEach(e => e.classList.toggle('playing', +e.dataset.i === cur.b.si));
+      $('now').textContent = `bar ${cur.i + 1} · ${cur.b.s.name} · floor ${PC[cur.b.root]}${cur.b.s.riff ? ` · head ${PC[cur.b.head]}` : ''}`;
+    }
+    const st = cur.b.s.riff ? Math.min(15, Math.floor((now - cur.t) / cur.step)) : -1;
+    if (st !== cellStep) drawCell(st);
   }
-  drawCell(cur.b.s.riff ? st : -1);
+  raf = requestAnimationFrame(frame);
 }
 function stop(quiet) {
-  playing = false; clearInterval(timer); clearInterval(uiTimer); curBar = -1;
-  if (master && !quiet) { const g = master.gain; g.setTargetAtTime(0.0001, ctx.currentTime, 0.02); setTimeout(() => { if (!playing) g.setValueAtTime(0.55, ctx.currentTime); }, 200); }
-  document.querySelectorAll('.sec').forEach(e => e.classList.remove('playing'));
-  document.getElementById('now').textContent = 'Stopped';
-  drawTimeline(document.getElementById('tlMine'), bars(state.form, state.floors), -1); drawCell();
+  playing = false; clearInterval(timer); cancelAnimationFrame(raf); curBar = -1; queue = []; frame.cur = null;
+  if (ctx) {
+    const t = ctx.currentTime;
+    master.gain.cancelScheduledValues(t);
+    master.gain.setValueAtTime(master.gain.value, t);
+    master.gain.linearRampToValueAtTime(0, t + 0.03);            /* fade, never a cut */
+    live.slice().forEach(n => { try { n.stop(t + 0.04); } catch (e) {} });
+    master.gain.setValueAtTime(0.9, t + 0.06);
+  }
+  document.querySelectorAll('#lane .block').forEach(e => e.classList.remove('playing'));
+  if (!quiet) $('now').textContent = 'Stopped';
+  drawTimeline($('tlMine'), bars(state.form, state.floors), -1); drawCell(-1);
 }
 
-/* ---------- wiring ---------- */
-document.getElementById('play').onclick = () => play(-1, false);
-document.getElementById('stop').onclick = () => stop();
-document.getElementById('tempo').oninput = e => document.getElementById('tempoVal').textContent = e.target.value + ' BPM';
-document.getElementById('resetTail').onclick = () => { state.tail = MEGA_TAIL.slice(); save(); drawCell(); };
-document.getElementById('auditionBar').onclick = () => {
-  audio(); if (ctx.state === 'suspended') ctx.resume();
-  const step = 60 / +document.getElementById('tempo').value / 4;
-  scheduleBar({ s: sec({ bass: false, drums: false }), root: 2, head: 2 }, ctx.currentTime + 0.05, step);
+/* ================= wiring ================= */
+function refreshButFloors() {
+  drawLane();
+  drawTimeline($('tlRef'), bars(REF.form, REF.floors), -1);
+  drawTimeline($('tlMine'), bars(state.form, state.floors), playing ? curBar : -1);
+  counts();
+}
+function refresh() { drawFloors(); refreshButFloors(); }
+$('play').onclick = () => play(-1, false);
+$('stop').onclick = () => stop();
+$('tempo').oninput = e => $('tempoVal').textContent = e.target.value + ' BPM';
+$('resetTail').onclick = () => { state.tail = MEGA_TAIL.slice(); save(); drawCell(); };
+$('auditionBar').onclick = () => {
+  audio();
+  scheduleBar({ s: sec({ bass: false, drums: false, voice: (state.form[sel] || {}).voice || 'lead' }), root: 2, head: 2 }, ctx.currentTime + 0.05, stepDur());
 };
-document.getElementById('loadPreset').onclick = () => {
-  stop(true);
-  const p = document.getElementById('preset').value;
+const loadPreset = p => {
+  stop(true); remember();
   state.floors = clone(MEGA_FLOORS);
   state.form = clone(p === 'mega' ? MEGA_FORM : BARE_FORM);
-  save(); refresh();
+  sel = 0; save(); refresh();
+  say(p === 'mega' ? 'Loaded Megalovania as transcribed.' : 'Loaded the bar, four times.', true);
 };
-document.getElementById('addSec').onclick = () => { state.form.push(sec({ name: 'New section' })); save(); refresh(); };
+$('presetMega').onclick = () => loadPreset('mega');
+$('presetBare').onclick = () => loadPreset('bare');
+(() => { const k = document.createElement('span'); k.id = 'kitline'; k.className = 'kitline'; $('status').after(k); k.textContent = 'samples load when you first press play'; })();
 
-drawCell(); refresh();
+drawShelves(); drawCell(-1); refresh();
+say('Drag a block to reorder it. Drop a move or a floor onto a block to change it.');
+window.riffAndForm = { get state() { return state; }, kitStatus, get scheduled() { return scheduled; }, get samplesPlayed() { return samplesPlayed; } };
 })();
 </script>
