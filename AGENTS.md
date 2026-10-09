@@ -55,13 +55,16 @@ interval *direction* is not natively readable, let alone magnitude.
 
 ## Running
 
-- `folio.cmd` (or `node server.mjs`) → http://localhost:4173 — the synced
-  instrument. `server.mjs` is zero-dependency Node. `ecosystem.config.cjs`
-  runs it under pm2 as `folio-dev` (logs in `tmp/`); pm2 does not survive
-  a reboot here unless resurrected. **A down server may be deliberate** —
-  disk writes to the log and the rulings migration want the server off and
-  the tab closed — so ask before restarting it; never assume it's an
-  accident.
+- **`folio.cmd` is the one button**: it opens **Folio Native**, the served
+  page in a JUCE 8 + WebView2 window that hosts the SINE instruments
+  in-process (`folio-native/README.md`: build, rack format, diagnostics). If
+  the server isn't answering, the window starts it through pm2 (`folio-dev`,
+  `ecosystem.config.cjs`, logs in `tmp/`), and it outlives the window.
+  `node server.mjs` runs the server alone; it's zero-dependency Node. pm2
+  does not survive a reboot here unless resurrected. **A down server may be
+  deliberate**: disk writes to the log and the rulings migration want the
+  server off and the window closed, so ask before restarting it yourself;
+  the player pressing folio.cmd is the player's own decision.
 - `http://localhost:4173/auditor.html` — blind lineup-listening page
   (Italian). NOTE: plays the lead voice only (pre-L2); optional now that
   evaluation is self-administered.
@@ -70,34 +73,23 @@ interval *direction* is not natively readable, let alone magnitude.
   read-only mode) and `/auditor.html`. The deployed quest-log is a
   snapshot — redeploy after new composing.
 - `folio.html` opened via `file://` works offline, no sync.
-- **Folio Native (2026-10-09, the successor to the REAPER rack):**
-  `folio-native.cmd` opens the served page in a JUCE 8 + WebView2 window that
-  hosts the SINE instruments in-process. There's no MIDI cable, no REAPER, no
-  browser port. `js/audio.js` detects `window.__JUCE__` and sends its Web MIDI
-  bytes to the host. The window never starts the server. Build, rack format and
-  diagnostics: `folio-native/README.md`. The REAPER path below still works
-  but failed most of the time it was used. The Hub doesn't route to the native
-  window yet.
-- `folio-reaper.cmd` starts the native-MIDI/REAPER renderer without
-  touching the Folio server. Folio remains the sole UI, clock, and transport.
-  **Never own tone on this machine** (player ruling, 2026-09-11): the local
-  server writes the rack promise into every page it serves, so without the
-  rack Folio shows the rack-fault panel and plays nothing. Never propose own
-  tone as a workaround.
-- **Folio links go through the Hub:** `http://localhost:7777/go/daw/` plus
-  the page's own path and query, e.g.
-  `http://localhost:7777/go/daw/?quest=zoltraak`. The Hub puts it on the
-  Folio tab in the Hub window (the window the player works in; registry
-  `"browser": "hub"`), or in Folio's managed browser when the Hub window is
-  not up, never as a second Folio tab. Never hand the player a bare
-  `localhost:4173` link: whatever browser it opens in may not see the rack's
-  MIDI port. A page that loses the port asks the Hub itself (`/api/recover`
-  → Hub `/api/browser/recover`): the Hub window or managed browser holding it
-  is restarted with all its tabs; a page anywhere else is moved to the Hub
-  window. The complete contract,
-  fixed channel/patch map, lifecycle, rebuild path, and diagnosis are in
-  `rack/README.md`; read that before changing either side of the bridge.
-- **Seeing what the player sees:** the `experiments-hub` MCP server (user
+- **Never own tone on this machine** (player ruling, 2026-09-11): the local
+  server writes the rack promise into every page it serves. Inside Folio
+  Native that is the in-process rack; a browser tab can't keep it, so it
+  shows a panel saying Folio plays in its own window and plays nothing.
+  Never propose own tone as a workaround. The REAPER rack, the MIDI cable
+  (loopMIDI), the status service, and the Hub recovery path were torn out on
+  2026-10-09 after failing most of the time they were used; they're in git
+  history if ever needed. Don't rebuild them.
+- **Folio links:** the player works in the native window, so hand them
+  `folio.cmd "http://localhost:4173/?quest=<id>"`. With the window already
+  open, that navigates it there instead of opening a second one. A Hub link
+  (`http://localhost:7777/go/daw/...`) still opens a browser tab, which only
+  shows the panel.
+- **Seeing what the player sees:** Folio Native's page is open to CDP on
+  `127.0.0.1:9334` (`curl http://127.0.0.1:9334/json`, then
+  `Runtime.evaluate` / `Page.captureScreenshot`). Read-only habits apply:
+  inspect, never reload or close the player's window. For browsers, the `experiments-hub` MCP server (user
   scope for Claude Code, `~/.codex/config.toml` for Codex) has
   `list_browser_tabs`, `read_console`, `screenshot_tab` and `evaluate_in_tab`
   over the Hub window (`browser: "hub"`) and each managed profile, plus

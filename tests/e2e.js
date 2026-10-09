@@ -124,30 +124,11 @@ function staticServer(root, seen){
   writeJSON(LOG, SEED);
   writeJSON(RULES, { folio:"rulings", version:1, complete:{} });
 
-  /* Nothing in the suite may reach the machine's real rack or real Hub: the
-     rack may be running beside it, and the Hub would restart the player's own
-     browser. The rack's status port is pointed at nothing, and the Hub is a
-     stand-in that records what it was asked. */
-  const hubCalls = [];
-  const hub = http.createServer((req, res) => {
-    let raw = "";
-    req.on("data", chunk => { raw += chunk; });
-    req.on("end", () => {
-      try { hubCalls.push(Object.assign({ url:req.url }, JSON.parse(raw || "{}"))); }
-      catch (_){ hubCalls.push({ url:req.url, raw }); }
-      res.writeHead(200, { "content-type":"application/json" });
-      res.end(JSON.stringify({ ok:true, state:"navigated" }));
-    });
-  });
-  const hubPort = await freePort(4250);
-  await new Promise(resolve => hub.listen(hubPort, "127.0.0.1", resolve));
-  const HUB_ENV = { FOLIO_HUB:"http://127.0.0.1:" + hubPort, FOLIO_RACK_PORT:String(await freePort(4260)) };
-
   const port = await freePort(4210);
   const base = "http://127.0.0.1:" + port;
   const server = spawn(process.execPath, [path.join(ROOT, "server.mjs")], {
     cwd: ROOT, stdio: ["ignore", "pipe", "pipe"],
-    env: Object.assign({}, process.env, HUB_ENV, { PORT:String(port), FOLIO_LOG:LOG,
+    env: Object.assign({}, process.env, { PORT:String(port), FOLIO_LOG:LOG,
       FOLIO_RULINGS:RULES, FOLIO_KITS:KITS, FOLIO_RENDERER:"none" })
   });
   let serverLog = "";
@@ -187,161 +168,132 @@ function staticServer(root, seen){
   });
 
   await journey("2. the keyboard writes lead, bass, chords, and a hold", async () => {
-    /* Both halves of the renderer contract, before the composing proper.
-       Journey 1's ordinary boot already played Folio's own tone with no
-       renderer at all; this half opens the same instrument with the launch
-       promise `?renderer=reaper` in front of an absent rack, and proves that
-       the promise is kept honestly rather than quietly traded for a different
-       instrument. No renderer service listens during the suite, so the page
-       is looking at a genuinely missing rack. */
-    /* On this machine the local server makes the promise itself, so a link
-       that leaves out `?renderer=reaper` (a `?quest=` link, say) still
-       cannot bring the own tone back. A second server, started the way
-       folio.cmd starts it, must write the promise into the page it serves,
-       and the page must keep it with nothing in the address. Nothing is
-       played here: the real rack may well be running beside the suite. */
+    /* Both halves of the rack contract, before the composing proper. Journey
+       1's ordinary boot already played Folio's own tone with no rack at all.
+       On this machine the local server promises the rack in every page it
+       serves, and a browser tab cannot keep that promise — the instruments
+       live in Folio Native's window — so the tab must say so and play
+       nothing, never trading the promise for its own tone. A second server,
+       started the way folio.cmd starts it, must write the promise. */
     const machineLog = path.join(TMP, "machine-log.json");
     writeJSON(machineLog, SEED);
     const machinePort = await freePort(port + 1);
     const machineBase = "http://127.0.0.1:" + machinePort;
     const machine = spawn(process.execPath, [path.join(ROOT, "server.mjs")], {
       cwd: ROOT, stdio: "ignore",
-      env: Object.assign({}, process.env, HUB_ENV, { PORT:String(machinePort), FOLIO_LOG:machineLog,
+      env: Object.assign({}, process.env, { PORT:String(machinePort), FOLIO_LOG:machineLog,
         FOLIO_RULINGS:RULES, FOLIO_KITS:KITS, FOLIO_RENDERER:"" })
     });
     try {
       await ready(machineBase + "/");
       const served = await (await fetch(machineBase + "/")).text();
       const plain = await (await fetch(base + "/")).text();
-      expect(/name="folio-renderer" content="reaper"/.test(served),
+      expect(/name="folio-renderer" content="native"/.test(served),
         "this machine's server did not promise the rack in the page it serves");
       expect(!/folio-renderer/.test(plain), "FOLIO_RENDERER=none still promised the rack");
       await browser.goto(machineBase + "/?quest=zoltraak");
-      await wait(600);
-      expect((await browser.eval("MIDI_REQUIRED")) === true,
-        "a page served on this machine without ?renderer=reaper did not keep the rack promise");
+      await wait(900);
+      const promised = await browser.eval(`(function(){
+        var panel=document.getElementById('rackfault');
+        window.__fellThrough=0;
+        window.samplePlay=function(){window.__fellThrough++;return true;};
+        playNote("C4",0,0.1,0);
+        play();
+        audition("C4",1);
+        return {required:MIDI_REQUIRED, fault:midiFault,
+                shown:!!panel && !panel.hidden,
+                name:document.getElementById('rackfaultname').textContent,
+                text:document.getElementById('rackfaulttext').textContent,
+                playing:playing, fellThrough:window.__fellThrough};
+      })()`);
+      expect(promised.required && promised.fault === "not-native" && promised.shown,
+        "a browser tab on this machine did not say the sound is in Folio's own window", promised);
+      expect(/own window/.test(promised.name) && /safe/.test(promised.text),
+        "the rack panel does not say where the sound is or reassure about the music", promised);
+      expect(!promised.playing && promised.fellThrough === 0,
+        "a browser tab on this machine played without the rack", promised);
+      await browser.shot(path.join(__dirname, "e2e-rack.png"));
     } finally { machine.kill(); }
 
-    await browser.goto(base + "/?renderer=reaper");
-    await wait(1400);
-    const promised = await browser.eval(`(function(){
-      var panel=document.getElementById('rackfault');
-      window.__fellThrough=0;
-      window.samplePlay=function(){window.__fellThrough++;return true;};
-      playNote("C4",0,0.1,0);
-      play();
-      audition("C4",1);
-      return {required:MIDI_REQUIRED, fault:midiFault, state:midiState,
-              shown:!!panel && !panel.hidden,
-              name:document.getElementById('rackfaultname').textContent,
-              text:document.getElementById('rackfaulttext').textContent,
-              playing:playing, fellThrough:window.__fellThrough};
-    })()`);
-    expect(promised.required && promised.fault === "service-absent" && promised.shown,
-      "required-REAPER Folio did not show its missing rack", promised);
-    expect(/did not answer/.test(promised.name) && /safe/.test(promised.text),
-      "the renderer error does not name the boundary or reassure about the music", promised);
-    expect(!promised.playing && promised.fellThrough === 0,
-      "required-REAPER Folio played without its promised renderer", promised);
-    await browser.shot(path.join(__dirname, "e2e-rack.png"));
+    /* Inside Folio Native the page finds window.__JUCE__ before any script
+       runs. A stand-in backend records what the page hands the host and
+       answers folioRack with whatever state the journey sets, so this is the
+       same poll, panel and routing the player's window runs. */
+    const fakeHost = await browser.send("Page.addScriptToEvaluateOnNewDocument", { source: `
+      window.__rack="starting"; window.__midiSent=[]; window.__midiClears=0;
+      (function(){
+        var listeners={};
+        window.__JUCE__={backend:{
+          addEventListener:function(id,fn){(listeners[id]=listeners[id]||[]).push(fn);},
+          emitEvent:function(id,o){
+            if(id==="folioMidi"){
+              for(var i=0;i+3<o.events.length;i+=4){
+                var at=o.events[i];
+                if(at<0){window.__midiClears++;continue;}
+                window.__midiSent.push({bytes:[o.events[i+1],o.events[i+2],o.events[i+3]],
+                  when:at>0?at-performance.timeOrigin:0});
+              }
+            } else if(id==="__juce__invoke" && o.name==="folioRack"){
+              var r={state:window.__rack,detail:"",voices:window.__rack!=="ready"?null:
+                [[{seat:0,name:"Ratio piano"},{seat:1,name:"Helix strings"}],
+                 [{seat:0,name:"Crux J-bass"}],[{seat:0,name:"Roads Rhodes"}]]};
+              setTimeout(function(){(listeners.__juce__complete||[]).forEach(function(f){
+                f({promiseId:o.resultId,result:r});});},0);
+            }
+          }}};
+      })();` });
+    await browser.goto(base + "/");
+    await wait(900);
+    const opening = await browser.eval(`({native:NATIVE, required:MIDI_REQUIRED, fault:midiFault,
+      shown:!document.getElementById('rackfault').hidden})`);
+    expect(opening.native && opening.required && opening.fault === "starting" && opening.shown,
+      "the native window did not wait for its instruments behind the panel", opening);
     /* Editing and autosave stay available underneath the panel. */
     await browser.key("Home", { key:"Home", vk:36 });
     await browser.key("KeyZ", { key:"z", vk:90 });
-    const edited = await browser.eval(`(function(){
-      var wrote=doc.steps[0];
-      doc.steps[0]=null; doc.hold[0]=1; renderAll();
-      return {wrote:wrote};
-    })()`);
-    expect(edited.wrote === "C4", "the renderer error stopped the player writing", edited);
-    /* A rack that answers clears the panel without reloading the music, and
-       a rack that goes during playback takes the transport with it. The page
-       learns both through its ordinary one-second poll of the real status
-       endpoint, so this is the recovery path the player actually gets. */
-    await browser.eval(`(function(){
-      window.__rack="ready"; window.__midiSent=[];
-      var real=window.fetch.bind(window);
-      window.fetch=function(url,options){
-        if(String(url).indexOf("/api/renderer")>=0)
-          return Promise.resolve({ok:true,json:function(){
-            return Promise.resolve({ready:window.__rack==="ready",state:window.__rack,detail:""});}});
-        return real(url,options);
-      };
-      midiOut={name:"Folio to REAPER",state:"connected",connection:"open",
-        clear:function(){},
-        send:function(bytes,when){window.__midiSent.push({bytes:[].slice.call(bytes),when:when||0});}};
-      midiPermission="granted";
-      return true;
-    })()`);
+    expect((await browser.eval("doc.steps[0]")) === "C4",
+      "the rack panel stopped the player writing");
+    /* A rack that comes up clears the panel without reloading the music, and
+       one that fails during playback takes the transport with it. */
+    await browser.eval(`(function(){window.__rack="ready";return true;})()`);
     const cleared = await eventually(async () => {
       const seen = await browser.eval(`({fault:midiFault,
         hidden:document.getElementById('rackfault').hidden,
-        length:docLen(), first:doc.steps[0]})`);
+        length:docLen(), first:doc.steps[0], seats:midiSeats(0).length})`);
       return (!seen.fault && seen.hidden) ? seen : null;
-    }, 6000, "a healthy rack did not clear the renderer error");
-    expect(cleared.length === 16 && cleared.first === null,
-      "clearing the renderer error reloaded the music", cleared);
+    }, 6000, "a ready rack did not clear the panel");
+    expect(cleared.length === 16 && cleared.first === "C4" && cleared.seats === 2,
+      "the rack coming up reloaded the music or lost its catalogue", cleared);
     const during = await browser.eval(`(function(){
       window.__midiSent=[]; play();
       return {playing:playing, fault:midiFault};
     })()`);
     expect(during.playing && !during.fault,
       "a ready rack did not let the transport start", during);
-    await browser.eval(`(function(){window.__rack="renderer-lost";return true;})()`);
+    await browser.eval(`(function(){window.__rack="audio-failed";return true;})()`);
     const lost = await eventually(async () => {
       const seen = await browser.eval(`(function(){
         var panic=window.__midiSent.filter(function(e){return (e.bytes[0]&240)===176&&
           (e.bytes[1]===120||e.bytes[1]===123);});
         return {fault:midiFault, playing:playing, panic:panic.length,
-          shown:!document.getElementById('rackfault').hidden,
-          text:document.getElementById('rackfaulttext').textContent};
+          shown:!document.getElementById('rackfault').hidden};
       })()`);
-      return seen.fault === "renderer-lost" ? seen : null;
-    }, 6000, "a renderer lost mid-playback was never noticed");
+      return seen.fault === "audio-failed" ? seen : null;
+    }, 6000, "a rack that failed mid-playback was never noticed");
     expect(!lost.playing && lost.shown && lost.panic >= 6,
-      "a renderer lost mid-playback did not stop the transport and silence the rack", lost);
-    /* The rack answers, but this browser has no port by that name: a browser
-       left open across a MIDI service restart. After the grace the page asks
-       its own server, once, to have the Hub deal with it, naming this page;
-       a Hub that opened the page in the Hub window leaves this one saying
-       where the music went, and nothing reaches the own tone meanwhile. */
-    hubCalls.length = 0;
-    await browser.eval(`(function(){window.__rack="ready"; midiOut=null; midiRecovery=null;
-      MIDI_RECOVER_GRACE=200; window.__fellThrough=0;
-      window.samplePlay=function(){window.__fellThrough++;return true;};
-      return true;})()`);
-    const moved = await eventually(async () => {
-      const seen = await browser.eval(`({fault:midiFault,
-        name:document.getElementById('rackfaultname').textContent,
-        token:document.documentElement.getAttribute('data-recover')})`);
-      return seen.fault === "moved" ? seen : null;
-    }, 8000, "a browser that lost the rack's port was never sent to Folio's own window");
-    expect(hubCalls.length === 1 && hubCalls[0].url === "/api/browser/recover" &&
-      hubCalls[0].name === "daw" && hubCalls[0].path === "/?renderer=reaper" &&
-      hubCalls[0].token === moved.token && /Hub window/.test(moved.name),
-      "the page did not ask the Hub, once, to reopen this page where the rack plays",
-      { hubCalls, moved });
-    expect((await browser.eval(`(function(){playNote("C4",0,0.1,0);play();
-      return window.__fellThrough===0 && !playing;})()`)),
-      "a browser that cannot see the rack played something else instead");
-    await browser.goto(base + "/");
-    await wait(700);
+      "a rack that failed mid-playback did not stop the transport and silence it", lost);
+    await browser.eval(`(function(){
+      doc.steps[0]=null; doc.hold[0]=1; renderAll();
+      window.__rack="ready"; return true;
+    })()`);
+    await eventually(async () => (await browser.eval("midiConnected() && !midiFault")) || null,
+      6000, "the rack did not come back");
 
-    /* A local virtual port, without depending on machine MIDI hardware.  The
-       ordinary boot above already exercised the absent-port fallback; this
-       half of the same composing journey proves that all three written lanes
-       reach their default channels, that renderer selection moves a voice to
-       its reserved channel seat, and that stop clears the rack. */
+    /* All three written lanes reach their default channels, renderer
+       selection moves a voice to its reserved channel seat, and stop clears
+       the rack. */
     await browser.eval(`(function(){
       window.__midiSent=[]; window.__midiClears=0;
-      midiHealthSet=function(){};
-      midiRackReady=true;
-      window.__midiOut={name:"Folio to REAPER",state:"connected",connection:"open",
-        open:function(){return Promise.resolve(this);},
-        clear:function(){window.__midiClears++;},
-        send:function(bytes,when){window.__midiSent.push({bytes:[].slice.call(bytes),when:when||0});}};
-      Object.defineProperty(navigator,"requestMIDIAccess",{configurable:true,value:function(){
-        return Promise.resolve({outputs:new Map([["folio",window.__midiOut]]),onstatechange:null});
-      }});
       return true;
     })()`);
     await browser.key("Home", { key:"Home", vk:36 });
@@ -365,26 +317,31 @@ function staticServer(root, seen){
       play();
       setTimeout(function(){
         stop();
+        setTimeout(function(){
         var ons=window.__midiSent.filter(function(e){return (e.bytes[0]&240)===144;});
         var panic=window.__midiSent.filter(function(e){return (e.bytes[0]&240)===176&&
           (e.bytes[1]===120||e.bytes[1]===123);});
         resolve({channels:ons.map(function(e){return e.bytes[0]&15;}),
           velocities:ons.map(function(e){return e.bytes[2];}),panic:panic.length,
           clears:window.__midiClears,connected:midiConnected()});
+        },0);
       },250);
     })`);
     expect(routed.connected && [0,1,2].every(ch => routed.channels.includes(ch)),
-      "the three Folio lanes did not reach the REAPER channels", routed);
+      "the three Folio lanes did not reach the rack channels", routed);
     expect([82,88,68].every(v => routed.velocities.includes(v)),
       "the level-matched MIDI velocities changed", routed);
-    const selected = await browser.eval(`(function(){
+    const selected = await browser.eval(`new Promise(function(resolve){
       var before=window.__midiSent.length;
       var changed=midiSelectInstrument(1,3);
       var invalid=midiSelectInstrument(1,5);
       midiNote("D4",ctx.currentTime+0.01,0.1,1);
-      return {changed:changed,invalid:invalid,slot:MIDI_SLOTS[1],
-        sent:window.__midiSent.slice(before).map(function(e){return e.bytes;})};
-    })()`);
+      /* a frame's sends reach the host together, after the frame */
+      setTimeout(function(){
+        resolve({changed:changed,invalid:invalid,slot:MIDI_SLOTS[1],
+          sent:window.__midiSent.slice(before).map(function(e){return e.bytes;})});
+      },0);
+    })`);
     expect(selected.changed && !selected.invalid && selected.slot === 3 &&
       selected.sent.some(b => (b[0]&240)===144 && (b[0]&15)===10),
       "Folio did not send the bass renderer selection", selected);
@@ -418,9 +375,11 @@ function staticServer(root, seen){
       "the audio clock did not carry MIDI through a starved page timer", clocked);
     expect(clocked.gaps.length && clocked.gaps.every(g => g >= 20),
       "a MIDI note-off still crowds the following loop attack", clocked);
+    /* the rest of the suite is ordinary Folio again */
+    await browser.send("Page.removeScriptToEvaluateOnNewDocument", { identifier: fakeHost.identifier });
     await browser.eval(`(function(){
-      midiPanic(); midiRackReady=false; midiOut=null; midiAccess=null; midiAsked=true;
-      try{localStorage.removeItem(MIDI_PERMISSION);}catch(e){}
+      midiPanic(); midiHealthPoll=function(){}; MIDI_REQUIRED=false;
+      midiRackReady=false; midiOut=null; midiFaultRender(); return true;
     })()`);
   });
 
@@ -745,7 +704,6 @@ function staticServer(root, seen){
   clearInterval(drain);
   browser.close();
   server.kill();
-  hub.close();
   await wait(300);
 
   await journey("7. the built copy is playable, seeded, and read-only", async () => {

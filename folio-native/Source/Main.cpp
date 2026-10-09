@@ -33,34 +33,86 @@ private:
 };
 
 //==============================================================================
-class FolioView : public WebBrowserComponent
+class FolioView : public WebBrowserComponent, private Timer
 {
 public:
     FolioView (Rack& r, const String& startUrl)
         : WebBrowserComponent (options (r)), url (startUrl)
     {
-        goToURL (url);
+        open();
+    }
+
+    /* The one button: if the folio's own server is not answering, this
+       window brings it up the way the Hub and the agents do (pm2's folio-dev,
+       which outlives the window), then loads the page once it answers. A
+       URL given on the command line is loaded as it is. */
+    void open()
+    {
+        stopTimer();
+        if (! isLocalFolio() || serverAnswers())
+            return goToURL (url);
+
+        notice ("Opening the folio…", "Starting its server.");
+        Thread::launch ([root = File (FOLIO_NATIVE_DIR).getParentDirectory()]
+        {
+            ChildProcess pm2;
+            if (pm2.start ("cmd /c pm2 start \"" + root.getChildFile ("ecosystem.config.cjs").getFullPathName() + "\"", 0))
+                pm2.waitForProcessToFinish (30000);
+        });
+        waitedMs = 0;
+        startTimer (300);
     }
 
     bool pageLoadHadNetworkError (const String& error) override
     {
-        /* A down server may be deliberate (a disk write, a migration), so the
-           window never starts one; it says what is missing and waits. */
-        const String html =
-            "<!doctype html><meta charset=utf-8><body style=\"background:#efe6d2;color:#3b3226;"
-            "font:18px Georgia,serif;display:flex;align-items:center;justify-content:center;height:90vh\">"
-            "<div style=\"max-width:32em\"><p><b>The folio server is not running.</b></p>"
-            "<p>Start it with <code>folio.cmd</code>, then choose Rack &rarr; Reload page. "
-            "Your music is safe.</p><p style=\"opacity:.6;font-size:14px\">" + error + "</p></div>";
-        goToURL ("data:text/html;charset=utf-8," + URL::addEscapeChars (html, false));
+        notice ("The folio server is not answering.",
+                "Choose Rack &rarr; Reload page to start it again. Your music is safe.", error);
         return false;
     }
 
     void newWindowAttemptingToLoad (const String& newUrl) override { URL (newUrl).launchInDefaultBrowser(); }
 
-    void reload() { goToURL (url); }
+    void reload() { open(); }
+    void navigate (const String& newUrl) { url = newUrl; open(); }
 
 private:
+    void timerCallback() override
+    {
+        waitedMs += 300;
+        if (serverAnswers())
+        {
+            stopTimer();
+            goToURL (url);
+        }
+        else if (waitedMs > 20000)
+        {
+            stopTimer();
+            notice ("The folio server would not start.",
+                    "pm2 did not bring up folio-dev. Run <code>node server.mjs</code> in the folio, "
+                    "then choose Rack &rarr; Reload page. Your music is safe.");
+        }
+    }
+
+    bool isLocalFolio() const { return url.startsWith ("http://localhost:4173"); }
+
+    static bool serverAnswers()
+    {
+        StreamingSocket socket;
+        return socket.connect ("127.0.0.1", 4173, 250);
+    }
+
+    void notice (const String& title, const String& body, const String& detail = {})
+    {
+        const String html =
+            "<!doctype html><meta charset=utf-8><body style=\"background:#efe6d2;color:#3b3226;"
+            "font:18px Georgia,serif;display:flex;align-items:center;justify-content:center;height:90vh\">"
+            "<div style=\"max-width:32em\"><p><b>" + title + "</b></p><p>" + body + "</p>"
+            + (detail.isNotEmpty() ? "<p style=\"opacity:.6;font-size:14px\">" + detail + "</p>" : String())
+            + "</div>";
+        goToURL ("data:text/html;charset=utf-8," + URL::addEscapeChars (html, false));
+    }
+
+    int waitedMs = 0;
     static Options options (Rack& rack)
     {
         return Options{}
@@ -110,6 +162,8 @@ public:
     }
 
     void closeButtonPressed() override { JUCEApplication::getInstance()->systemRequestedQuit(); }
+
+    void navigate (const String& url) { view->navigate (url); }
 
 private:
     enum { audioSettings = 1, reloadPage, saveStates, instrumentBase = 100 };
@@ -188,9 +242,10 @@ public:
            the rack makes the sound, and a pad-only session never makes the
            gesture Chrome's autoplay policy waits for. */
         String args ("--autoplay-policy=no-user-gesture-required");
-        /* FOLIO_NATIVE_DEVTOOLS=<port> opens the page to a CDP client (tests/cdp.js) */
-        if (auto* port = std::getenv ("FOLIO_NATIVE_DEVTOOLS"))
-            args << " --remote-debugging-port=" << port;
+        /* the page is always open to a CDP client on this machine, so an agent
+           can see what the player sees; FOLIO_NATIVE_DEVTOOLS moves the port */
+        const auto port = SystemStats::getEnvironmentVariable ("FOLIO_NATIVE_DEVTOOLS", "9334");
+        args << " --remote-debugging-port=" << port;
         _putenv_s ("WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS", args.toRawUTF8());
 
         auto url = commandLine.unquoted().trim();
@@ -210,9 +265,15 @@ public:
 
     void systemRequestedQuit() override { quit(); }
 
-    void anotherInstanceStarted (const String&) override
+    /* folio.cmd with a URL while the window is open: go there, in this
+       window, rather than open a second one */
+    void anotherInstanceStarted (const String& commandLine) override
     {
-        if (window != nullptr) window->toFront (true);
+        if (window == nullptr) return;
+        const auto url = commandLine.unquoted().trim();
+        if (url.startsWithIgnoreCase ("http"))
+            window->navigate (url);
+        window->toFront (true);
     }
 
 private:

@@ -1413,3 +1413,19 @@
   /* the drawing gives up the room the strip stands in; everything in it is
      placed in proportion, so it is the same drawing, shorter */
   body.blocking .rollfield{height:24rem;}
+  /* ---- the rack panel ----
+     When a promised rack can't play: a card laid on the page, centred, in
+     the page's own ink and paper. It never blinks or moves, and the page
+     underneath stays live, because editing and autosave carry on. */
+  .rackfault[hidden]{display:none;}
+  .rackfault{
+    position:fixed; left:50%; top:50%; transform:translate(-50%,-50%);
+    z-index:50; box-sizing:border-box;
+    width:min(30em, calc(100vw - 32px)); padding:1.4em 1.7em 1.2em;
+    background:var(--ground); color:var(--ink);
+    border:1px solid var(--rule); border-top:2px solid var(--gilt);
+    box-shadow:0 3px 30px rgba(59,47,30,0.16);
+    text-align:center; pointer-events:none;
+  }
+  .rackfault h2{font-weight:normal; font-size:1.25em; letter-spacing:0.02em; margin:0 0 0.5em;}
+  .rackfault p{margin:0; line-height:1.5; color:var(--ink);}
