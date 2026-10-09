@@ -1,4 +1,4 @@
-/* Folio's whole test suite: seven journeys through the real app.
+/* Folio's whole test suite: nine journeys through the real app.
 
    This deliberately tests the seams a self-use instrument cannot afford to
    lose: it boots, both sets of hands can write, work survives a reload,
@@ -23,6 +23,7 @@ const RULES = path.join(TMP, "rulings.json");
 const KITS = path.join(TMP, "kits");
 const SCREENSHOT = path.join(__dirname, "e2e.png");
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+const SYNC_DEBOUNCE = 2000;                    /* what js/quests.js waits before a PUT */
 const silence = n => new Array(n || 16).fill(null);
 
 const SEED = {
@@ -123,12 +124,31 @@ function staticServer(root, seen){
   writeJSON(LOG, SEED);
   writeJSON(RULES, { folio:"rulings", version:1, complete:{} });
 
+  /* Nothing in the suite may reach the machine's real rack or real Hub: the
+     rack may be running beside it, and the Hub would restart the player's own
+     browser. The rack's status port is pointed at nothing, and the Hub is a
+     stand-in that records what it was asked. */
+  const hubCalls = [];
+  const hub = http.createServer((req, res) => {
+    let raw = "";
+    req.on("data", chunk => { raw += chunk; });
+    req.on("end", () => {
+      try { hubCalls.push(Object.assign({ url:req.url }, JSON.parse(raw || "{}"))); }
+      catch (_){ hubCalls.push({ url:req.url, raw }); }
+      res.writeHead(200, { "content-type":"application/json" });
+      res.end(JSON.stringify({ ok:true, state:"navigated" }));
+    });
+  });
+  const hubPort = await freePort(4250);
+  await new Promise(resolve => hub.listen(hubPort, "127.0.0.1", resolve));
+  const HUB_ENV = { FOLIO_HUB:"http://127.0.0.1:" + hubPort, FOLIO_RACK_PORT:String(await freePort(4260)) };
+
   const port = await freePort(4210);
   const base = "http://127.0.0.1:" + port;
   const server = spawn(process.execPath, [path.join(ROOT, "server.mjs")], {
     cwd: ROOT, stdio: ["ignore", "pipe", "pipe"],
-    env: Object.assign({}, process.env, { PORT:String(port), FOLIO_LOG:LOG,
-      FOLIO_RULINGS:RULES, FOLIO_KITS:KITS })
+    env: Object.assign({}, process.env, HUB_ENV, { PORT:String(port), FOLIO_LOG:LOG,
+      FOLIO_RULINGS:RULES, FOLIO_KITS:KITS, FOLIO_RENDERER:"none" })
   });
   let serverLog = "";
   server.stdout.on("data", d => { serverLog += d; });
@@ -174,6 +194,34 @@ function staticServer(root, seen){
        the promise is kept honestly rather than quietly traded for a different
        instrument. No renderer service listens during the suite, so the page
        is looking at a genuinely missing rack. */
+    /* On this machine the local server makes the promise itself, so a link
+       that leaves out `?renderer=reaper` (a `?quest=` link, say) still
+       cannot bring the own tone back. A second server, started the way
+       folio.cmd starts it, must write the promise into the page it serves,
+       and the page must keep it with nothing in the address. Nothing is
+       played here: the real rack may well be running beside the suite. */
+    const machineLog = path.join(TMP, "machine-log.json");
+    writeJSON(machineLog, SEED);
+    const machinePort = await freePort(port + 1);
+    const machineBase = "http://127.0.0.1:" + machinePort;
+    const machine = spawn(process.execPath, [path.join(ROOT, "server.mjs")], {
+      cwd: ROOT, stdio: "ignore",
+      env: Object.assign({}, process.env, HUB_ENV, { PORT:String(machinePort), FOLIO_LOG:machineLog,
+        FOLIO_RULINGS:RULES, FOLIO_KITS:KITS, FOLIO_RENDERER:"" })
+    });
+    try {
+      await ready(machineBase + "/");
+      const served = await (await fetch(machineBase + "/")).text();
+      const plain = await (await fetch(base + "/")).text();
+      expect(/name="folio-renderer" content="reaper"/.test(served),
+        "this machine's server did not promise the rack in the page it serves");
+      expect(!/folio-renderer/.test(plain), "FOLIO_RENDERER=none still promised the rack");
+      await browser.goto(machineBase + "/?quest=zoltraak");
+      await wait(600);
+      expect((await browser.eval("MIDI_REQUIRED")) === true,
+        "a page served on this machine without ?renderer=reaper did not keep the rack promise");
+    } finally { machine.kill(); }
+
     await browser.goto(base + "/?renderer=reaper");
     await wait(1400);
     const promised = await browser.eval(`(function(){
@@ -251,6 +299,30 @@ function staticServer(root, seen){
     }, 6000, "a renderer lost mid-playback was never noticed");
     expect(!lost.playing && lost.shown && lost.panic >= 6,
       "a renderer lost mid-playback did not stop the transport and silence the rack", lost);
+    /* The rack answers, but this browser has no port by that name: a browser
+       left open across a MIDI service restart. After the grace the page asks
+       its own server, once, to have the Hub deal with it, naming this page;
+       a Hub that opened the page in the Hub window leaves this one saying
+       where the music went, and nothing reaches the own tone meanwhile. */
+    hubCalls.length = 0;
+    await browser.eval(`(function(){window.__rack="ready"; midiOut=null; midiRecovery=null;
+      MIDI_RECOVER_GRACE=200; window.__fellThrough=0;
+      window.samplePlay=function(){window.__fellThrough++;return true;};
+      return true;})()`);
+    const moved = await eventually(async () => {
+      const seen = await browser.eval(`({fault:midiFault,
+        name:document.getElementById('rackfaultname').textContent,
+        token:document.documentElement.getAttribute('data-recover')})`);
+      return seen.fault === "moved" ? seen : null;
+    }, 8000, "a browser that lost the rack's port was never sent to Folio's own window");
+    expect(hubCalls.length === 1 && hubCalls[0].url === "/api/browser/recover" &&
+      hubCalls[0].name === "daw" && hubCalls[0].path === "/?renderer=reaper" &&
+      hubCalls[0].token === moved.token && /Hub window/.test(moved.name),
+      "the page did not ask the Hub, once, to reopen this page where the rack plays",
+      { hubCalls, moved });
+    expect((await browser.eval(`(function(){playNote("C4",0,0.1,0);play();
+      return window.__fellThrough===0 && !playing;})()`)),
+      "a browser that cannot see the rack played something else instead");
     await browser.goto(base + "/");
     await wait(700);
 
@@ -508,6 +580,150 @@ function staticServer(root, seen){
     expect(errors.length === 0, "the browser raised during the chord mirror journey", errors);
   });
 
+  await journey("5c. the echo's own actions answer the pad and the margin says where they stand", async () => {
+    /* an echo page carries acts nothing else does, and every one of them is
+       under a trigger: the call played, the answer judged, the pace slowed, a
+       window cut out of the page, and the hint that says where the call's
+       notes fall. They are the drill's whole usable surface — losing any of
+       them leaves a long transcription unanswerable — and not one of them may
+       be reachable, or even mentioned, on a page that is not an echo's. */
+    const GP = { L1:4, R1:5, L2:6, R2:7, SEL:8, L3:10, R3:11 };
+    const nulls = () => new Array(32).fill(null), ones = () => new Array(32).fill(1);
+    /* let the last journey's autosave land before touching the file: a PUT
+       that crosses this write hands the tab a fresh ETag and every poll
+       after it is a 304 over a file it has never read */
+    await wait(SYNC_DEBOUNCE + 1200);
+    const disk = readJSON(LOG);
+    disk.drills.push({ id:"echo-drill", name:"the echo drill", summary:"- write back what you hear",
+      teaches:"holding a line.", lesson:4,
+      pattern:{ version:1, title:"the echo drill", tempo:96, loop:32, key:"C major", len:32,
+        steps:nulls(), bass:nulls(), hold:ones(), basshold:ones(), lock:nulls(), basslock:nulls(),
+        tones:[null,null], mute:[false,false,false], solo:[false,false,false],
+        chords:nulls(), chordhold:ones(),
+        echo:{ stage:"rhythm", voice:0, at:0,
+               call:[{ step:0, note:"C4", len:2 }, { step:4, note:"E4", len:1 },
+                     { step:8, note:"G4", len:4 }] } } });
+    writeJSON(LOG, disk);
+    /* and a fresh page onto it, so the drill is read at boot and the pad is
+       answered by an instrument in its ordinary state rather than by whatever
+       an earlier journey left standing */
+    await browser.goto(base + "/");
+    await wait(900);
+    expect(await browser.eval(`DRILLS.some(function(d){return d.id==='echo-drill';})`),
+      "the seeded echo drill was not read at boot");
+    await browser.eval("(function(){ closeScreens(); switchWorkspace(null); return true; })()");
+    await browser.padInstall(); await browser.pad([]);
+    const free = await browser.eval(`({echo:!!echoNow(), rail:railecho.childNodes.length})`);
+    expect(!free.echo && free.rail === 0, "a page that is not an echo's grew the echo's margin block", free);
+
+    await browser.eval("(function(){ switchWorkspace('echo-drill'); return true; })()");
+    const arrived = await browser.eval(`({echo:!!echoNow(), tempo:doc.tempo, dur:stepDur(),
+      pace:echoPace, window:echoWindow(), hint:echoHint,
+      rail:railecho.textContent, picks:[].map.call(railecho.querySelectorAll('.epick span.on'),
+        function(e){return e.textContent;})})`);
+    expect(arrived.echo && arrived.rail.indexOf("the echo") === 0 &&
+           arrived.rail.indexOf("L2 + select") >= 0 && arrived.rail.indexOf("R2 + select") >= 0 &&
+           arrived.rail.indexOf("the whole page") >= 0,
+      "the margin did not say what the echo's seats do", arrived);
+    expect(arrived.pace === 1 && !arrived.window && !arrived.hint &&
+           arrived.picks.join(",") === "whole,hidden" && arrived.dur === 60 / 96 / 4,
+      "the echo page did not open at the whole pace with no window", arrived);
+
+    /* the pace: L2 over the bumpers, and it is the scheduling that changes,
+       never the page's own tempo */
+    await browser.tap(GP.L2, GP.L1);
+    const half = await browser.eval(`({pace:echoPace, dur:stepDur(), tempo:doc.tempo,
+      said:footer.textContent, pick:railecho.querySelector('.epick span.on').textContent})`);
+    expect(half.pace === 2 && half.dur === 2 * (60 / 96 / 4) && half.tempo === 96 &&
+           half.pick === "half" && half.said.indexOf("half pace") === 0,
+      "L2 and the left bumper did not halve the step", half);
+    await browser.tap(GP.L2, GP.L1);
+    await browser.tap(GP.L2, GP.L1);            /* the ring has ends, not a way round */
+    const quarter = await browser.eval(`({pace:echoPace, dur:stepDur()})`);
+    expect(quarter.pace === 4 && quarter.dur === 4 * (60 / 96 / 4),
+      "the pace did not stop at a quarter", quarter);
+    await browser.tap(GP.L2, GP.R1);
+    expect((await browser.eval("echoPace")) === 2, "L2 and the right bumper did not go back up a rung");
+
+    /* the window: both edges under the left stick, at the cursor */
+    await browser.eval("(function(){ jump(4); return true; })()");
+    await browser.tap(GP.L2, GP.L3);
+    await browser.eval("(function(){ jump(11); return true; })()");
+    await browser.tap(GP.R2, GP.L3);
+    const win = await browser.eval(`({window:echoWindow(), from:echoPlayFrom(), to:echoPlayTo(),
+      rail:railecho.querySelector('.estate').textContent, said:footer.textContent,
+      wash:document.querySelector('.rollwin').style.display})`);
+    expect(win.window && win.window.from === 4 && win.window.to === 11 &&
+           win.from === 4 && win.to === 11 && win.wash === "block" &&
+           win.rail === "bars 2 to 3 \u00b7 steps 5 to 12" &&
+           win.said.indexOf("the loop ends at 12") === 0,
+      "the two stick presses did not cut a window out of the page", win);
+    await browser.eval("(function(){ jump(2); return true; })()");
+    await browser.tap(GP.R2, GP.L3);            /* an end before the start is that window backwards */
+    expect(JSON.stringify(await browser.eval("echoWindow()")) === '{"from":2,"to":4}',
+      "an end set before the start did not swap the two edges");
+
+    /* the hint: where the call's notes fall, and nothing about what they are */
+    await browser.tap(GP.L2, GP.R3);
+    const shown = await browser.eval(`(function(){
+      var b=[].filter.call(document.querySelectorAll('.hintbar'),function(e){return e.style.display==='block';});
+      return {hint:echoHint, drawn:b.length, onscreen:echoCall(echoNow()).filter(function(ev){
+        return rollSlot(echoNow().at+ev.step)>=0; }).length,
+        pick:railecho.querySelectorAll('.epick span.on')[1].textContent,
+        said:footer.textContent, tall:b.length?Math.round(b[0].getBoundingClientRect().height):0,
+        pitched:b.some(function(e){return e.textContent.length>0;})};})()`);
+    expect(shown.hint && shown.drawn === shown.onscreen && shown.drawn > 0 &&
+           shown.tall > 2 && !shown.pitched && shown.pick === "shown" &&
+           shown.said.indexOf("the notes, shown") === 0,
+      "the hint did not bracket the call's notes without naming them", shown);
+    await browser.tap(GP.L2, GP.R3);
+    expect((await browser.eval(
+      "[].filter.call(document.querySelectorAll('.hintbar'),function(e){return e.style.display==='block';}).length")) === 0,
+      "the hint would not go away again");
+
+    /* the call and the verdict, on select under a trigger; and select bare is
+       still the transport it is everywhere */
+    await browser.tap(GP.R2, GP.SEL);
+    const judged = await browser.eval(`({said:footer.textContent, playing:playing})`);
+    expect(!judged.playing && judged.said.indexOf("nothing answered yet") === 0,
+      "R2 and select did not ask for the judgement", judged);
+    await browser.tap(GP.L2, GP.SEL);
+    const called = await browser.eval(`({said:footer.textContent, playing:playing})`);
+    expect(!called.playing && /the call|enable sound/.test(called.said),
+      "L2 and select did not play the call", called);
+    await browser.tap(GP.SEL);
+    expect(await browser.eval("playing"), "bare select stopped being the transport");
+    await browser.tap(GP.SEL);
+
+    /* and the bare seats are what they always were */
+    const loopWas = await browser.eval("doc.loop");
+    await browser.tap(GP.L3);
+    expect((await browser.eval("doc.loop")) !== loopWas, "bare L3 stopped being the loop length");
+    const vizWas = await browser.eval("viz");
+    await browser.tap(GP.R3);
+    expect((await browser.eval("viz")) !== vizWas, "bare R3 stopped turning the page over");
+    await browser.tap(GP.R3);
+
+    /* leaving the page puts all three back, and takes the block with them */
+    await browser.eval("(function(){ switchWorkspace(null); return true; })()");
+    const left = await browser.eval(`({pace:echoPace, window:echoWindow(), hint:echoHint,
+      rail:railecho.childNodes.length, wash:document.querySelector('.rollwin').style.display,
+      drawn:[].filter.call(document.querySelectorAll('.hintbar'),function(e){return e.style.display==='block';}).length})`);
+    expect(left.pace === 1 && !left.window && !left.hint && left.rail === 0 &&
+           left.wash === "none" && left.drawn === 0,
+      "the pace, the window or the hint outlived the page they belong to", left);
+
+    /* and back, with a window and the hint up, which is what the screenshot at
+       the end of the run has to show */
+    await browser.eval("(function(){ switchWorkspace('echo-drill'); jump(4); return true; })()");
+    await browser.tap(GP.L2, GP.L3);
+    await browser.eval("(function(){ jump(15); return true; })()");
+    await browser.tap(GP.R2, GP.L3);
+    await browser.tap(GP.L2, GP.R3);
+    await browser.eval("(function(){ jump(0); return true; })()");
+    expect(errors.length === 0, "the browser raised during the echo's own actions", errors);
+  });
+
   await journey("6. a sample can enter, appear on the shelf, and play back byte-for-byte", async () => {
     const wave = validWave();
     const put = await fetch(base + "/api/kits/e2e/tone.wav", { method:"PUT", body:wave });
@@ -529,6 +745,7 @@ function staticServer(root, seen){
   clearInterval(drain);
   browser.close();
   server.kill();
+  hub.close();
   await wait(300);
 
   await journey("7. the built copy is playable, seeded, and read-only", async () => {

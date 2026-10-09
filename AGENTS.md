@@ -70,9 +70,23 @@ interval *direction* is not natively readable, let alone magnitude.
   read-only mode) and `/auditor.html`. The deployed quest-log is a
   snapshot — redeploy after new composing.
 - `folio.html` opened via `file://` works offline, no sync.
-- `folio-reaper.cmd` starts the optional native-MIDI/REAPER renderer without
-  touching the Folio server. Folio remains the sole UI, clock, and transport;
-  closing the stopped rack restores own-tone fallback. The complete contract,
+- `folio-reaper.cmd` starts the native-MIDI/REAPER renderer without
+  touching the Folio server. Folio remains the sole UI, clock, and transport.
+  **Never own tone on this machine** (player ruling, 2026-09-11): the local
+  server writes the rack promise into every page it serves, so without the
+  rack Folio shows the rack-fault panel and plays nothing. Never propose own
+  tone as a workaround.
+- **Folio links go through the Hub:** `http://localhost:7777/go/daw/` plus
+  the page's own path and query, e.g.
+  `http://localhost:7777/go/daw/?quest=zoltraak`. The Hub puts it on the
+  Folio tab in the Hub window (the window the player works in; registry
+  `"browser": "hub"`), or in Folio's managed browser when the Hub window is
+  not up, never as a second Folio tab. Never hand the player a bare
+  `localhost:4173` link: whatever browser it opens in may not see the rack's
+  MIDI port. A page that loses the port asks the Hub itself (`/api/recover`
+  → Hub `/api/browser/recover`): the Hub window or managed browser holding it
+  is restarted with all its tabs; a page anywhere else is moved to the Hub
+  window. The complete contract,
   fixed channel/patch map, lifecycle, rebuild path, and diagnosis are in
   `rack/README.md`; read that before changing either side of the bridge.
 - **Seeing what the player sees:** the `experiments-hub` MCP server (user

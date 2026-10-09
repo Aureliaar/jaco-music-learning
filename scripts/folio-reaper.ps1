@@ -21,8 +21,9 @@ $reaper = 'C:\Program Files\REAPER (x64)\reaper.exe'
 # the single name it was configured with.
 $cablePort = 'Folio to REAPER'
 
-# The launch promise itself. Folio reads this intent once at boot; without it
-# the page is ordinary Folio and its own tones are the correct sound.
+# The launch promise itself. Folio reads this intent once at boot. The local
+# server also writes the same promise into every page it serves on this
+# machine, so the parameter is no longer the only thing keeping own tone out.
 $folioUrl = 'http://localhost:4173/?renderer=reaper'
 
 $launcherStop = $null
@@ -120,13 +121,12 @@ function Prepare-Reaper([int] $inputIndex) {
 }
 
 function Open-FolioBrowser {
-  # The launch promise lives in the URL, and Experiments Hub cannot carry it:
-  # hubd builds `http://localhost:<port>/` from its own registry and ignores any
-  # url given to /api/browser/open|restart. So Hub is asked to close the managed
-  # browser it owns — leaving its state accurate rather than stale — and this
-  # launcher opens the same persistent profile itself at the promised URL. Same
-  # profile means the same remembered Web MIDI grant, and one tab rather than an
-  # ordinary Folio sitting beside a required-renderer one over the same document.
+  # Folio's browser belongs to Experiments Hub. The Hub restarts it on its own
+  # profile (same Web MIDI grant), back on the page it was showing, and knows
+  # it is running. A restart rather than an open: a browser that was already
+  # open may have listed its MIDI ports before this cable existed, and would
+  # never hear the rack. The rack promise needs nothing in the address any
+  # more; the local server writes it into every page it serves.
   #
   # The installed-path acceptance runs exercise the rack itself and must not
   # close a browser the player is using, so they set FOLIO_RACK_NO_BROWSER.
@@ -136,10 +136,17 @@ function Open-FolioBrowser {
   }
 
   try {
-    $body = @{ name = 'daw' } | ConvertTo-Json -Compress
-    Invoke-RestMethod -Uri 'http://127.0.0.1:7777/api/browser/close' `
-      -Method Post -ContentType 'application/json' -Body $body -TimeoutSec 8 | Out-Null
-  } catch {}   # not running, or Hub is down: either way there is nothing to close
+    $body = @{ name = 'daw'; target = 'local' } | ConvertTo-Json -Compress
+    $opened = Invoke-RestMethod -Uri 'http://127.0.0.1:7777/api/browser/restart' `
+      -Method Post -ContentType 'application/json' -Body $body -TimeoutSec 45
+    Write-Host "Folio opened in its own browser: $($opened.url)"
+    return
+  } catch {
+    Write-Warning "Experiments Hub did not open Folio's browser ($($_.Exception.Message)); opening it directly."
+  }
+
+  # Without the Hub: the same profile, started the way the Hub starts it, so
+  # the Hub can take it over once it is back.
 
   # Hub names each managed profile by the first sixteen hex digits of the
   # SHA-256 of the project name, under .experiments-hub next to its registry.
@@ -163,6 +170,7 @@ function Open-FolioBrowser {
   }
   Start-Process -FilePath $chrome -ArgumentList @(
     ('--user-data-dir={0}' -f $profileDir),
+    '--remote-debugging-port=0',
     '--new-window', '--no-first-run', '--no-default-browser-check',
     $folioUrl) | Out-Null
   Write-Host "Folio opened with its renderer promised: $folioUrl"

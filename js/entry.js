@@ -366,9 +366,34 @@ function pollPads(){
      that button is what stops it, wherever the rest of the pad has got to */
   if (grow && grow.btn !== undefined && !cur[grow.btn]) growStop();
 
+  /* ---- the triggers: read first, because everything reads them ----
+     Held, they widen a move on the face buttons and the d-pad; on an echo
+     page they also say which of the paired seats below is meant. They are
+     read once, here, at the top of the frame, so that the transport, the
+     bumpers, the sticks, the face buttons and the d-pad are all told the
+     same story about the hand.
+
+     A trigger counts as held if it is down now or was down on the frame
+     before: rolling off it as the thumb lands is one movement, and the poll
+     must not read the two halves of it as a move that lost its modifier. */
+  l2Down = !!cur[GP_L2] || !!gpPrev[GP_L2];
+  r2Down = !!cur[GP_R2] || !!gpPrev[GP_R2];
+  /* on an echo page the triggers are a modifier for four seats that are
+     otherwise the transport, the voice, the loop and the view */
+  var ech = !!echoNow();
+
   /* select is the transport, everywhere and always: play or stop, whatever
-     page is up. It is the one button that does not care where you are. */
-  if (gpEdge(cur, GP_SELECT)){ if (playing) stop(); else play(); }
+     page is up. It is the one button that does not care where you are —
+     except on an echo page, where a trigger held over it asks the folio for
+     the call, or for its verdict on the answer. Those are the same two acts
+     the board keeps on O and P, in the one place on the pad that is reachable
+     without letting go of the writing hand. */
+  if (gpEdge(cur, GP_SELECT)){
+    if (ech && l2Down) echoPlay();
+    else if (ech && r2Down) echoJudge();
+    else if (playing) stop();
+    else play();
+  }
 
   /* ---- start: the screens ----
      Start opens the place it was last left in and puts everything down again
@@ -421,9 +446,21 @@ function pollPads(){
     gpPrev = cur; return;
   }
 
-  /* L3 is the loop length, the pad's answer to L; R3 the roll, its F2 */
-  if (gpEdge(cur, GP_L3)) cycleLoop();
-  if (gpEdge(cur, GP_R3)) toggleViz();
+  /* L3 is the loop length, the pad's answer to L; R3 the roll, its F2.
+
+     Under a trigger on an echo page the left stick sets the two edges of a
+     window instead — L2 where it starts, R2 where it ends, both at the
+     cursor — and L2 over the right stick shows where the call's notes fall.
+     R2 over the right stick is not spoken for. */
+  if (gpEdge(cur, GP_L3)){
+    if (ech && l2Down) echoLoopFrom();
+    else if (ech && r2Down) echoLoopTo();
+    else cycleLoop();
+  }
+  if (gpEdge(cur, GP_R3)){
+    if (ech && l2Down) echoHintToggle();
+    else if (!(ech && r2Down)) toggleViz();
+  }
 
   /* ---- the bumpers: the voice ----
      L1 the line before, R1 the line after, round the ring the strip above
@@ -433,20 +470,18 @@ function pollPads(){
      that strip and is one tap from the bass either way round. They
      have no second job, so a tap is simply a tap: nothing here waits for a
      release to find out what the hand meant. */
-  if (gpEdge(cur, GP_L1)) prevVoice();
-  if (gpEdge(cur, GP_R1)) nextVoice();
-
-  /* ---- the triggers: the modifiers ----
-     Held, they widen the move: L2 a third, R2 a fifth, both together a
-     semitone, out of the key. They do nothing else at all.
-
-     A trigger counts as held if it is down now or was down on the frame
-     before: rolling off it as the thumb lands is one movement, and the poll
-     must not read the two halves of it as a move that lost its modifier.
-     Read here, once, so that the face buttons and the d-pad both read the
-     same hand. */
-  l2Down = !!cur[GP_L2] || !!gpPrev[GP_L2];
-  r2Down = !!cur[GP_R2] || !!gpPrev[GP_R2];
+  /* and on an echo page, under L2, the same pair is the pace instead: L1
+     slower, R1 faster, three values and no more. It is the same idea the
+     bare pair already carries — one tap, one step along a short ring — and
+     the voice is one released trigger away. Under R2 the bumpers are not
+     spoken for. */
+  if (ech && l2Down){
+    if (gpEdge(cur, GP_L1)) echoSlower();
+    if (gpEdge(cur, GP_R1)) echoFaster();
+  } else if (!(ech && r2Down)){
+    if (gpEdge(cur, GP_L1)) prevVoice();
+    if (gpEdge(cur, GP_R1)) nextVoice();
+  }
 
   /* the face buttons are motion rather than pitch; ○ and □ ignore the
      triggers. These right-hand symbols always add or overwrite: on the

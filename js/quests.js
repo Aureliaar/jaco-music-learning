@@ -398,6 +398,9 @@ function switchWorkspace(id){
   if (qActive) activeTab = questGroup(questById(qActive));
   doc = workspaceDoc(qActive);
   cursor = 0;
+  /* the pace, the window and the hint belong to the page that was left, and
+     nothing carries them to the next one */
+  echoReset();
   if (playing) stop();
   save();
   renderAll(); renderQuests();
@@ -1365,6 +1368,80 @@ function layoutRailRows(){
    the crossbar's ← and → are turning, said where it is being turned */
 function renderRailTabs(){ drawTabs(rtabs, "rtab", false); }
 buildRailRows();
+/* ---- the echo's block in the right margin ----
+   Four actions no other page has, all of them under a trigger, said on the
+   page they are done on. Two of them are simply a seat and what it does; the
+   other three carry a state, and the state is said directly under the seat
+   that turns it — which pace, which stretch of the page, whether the notes
+   are shown — so that reading the margin is reading where the drill stands.
+
+   It is rebuilt whole rather than patched: it is nine short lines and it is
+   drawn only when the page in hand is an echo's. */
+function echoRow(key, meaning){
+  var r = document.createElement("div"), k, m;
+  r.className = "erow";
+  k = document.createElement("span"); k.className = "ekey"; k.textContent = key;
+  m = document.createElement("span"); m.className = "emean"; m.textContent = meaning;
+  r.appendChild(k); r.appendChild(m);
+  return r;
+}
+/* the values a seat turns between, with the one in force in ink under a
+   gilt rule: the state is shown by which word is lit, never spelled out in
+   a sentence */
+function echoPick(words, at){
+  var r = document.createElement("div"), i, w;
+  r.className = "epick";
+  for (i = 0; i < words.length; i++){
+    w = document.createElement("span");
+    w.textContent = words[i];
+    if (i === at) w.className = "on";
+    r.appendChild(w);
+  }
+  return r;
+}
+function echoState(text){
+  var r = document.createElement("div");
+  r.className = "estate";
+  r.textContent = text;
+  return r;
+}
+/* a bar is four steps, and both are counted from one, because the page's own
+   numbers down the margin and along the foot of the drawing are counted
+   from one */
+function echoBar(i){ return Math.floor(i / 4) + 1; }
+function echoWindowLine(){
+  var w = echoWindow();
+  if (!w) return "the whole page";
+  return "bars " + echoBar(w.from) + " to " + echoBar(w.to) +
+         " · steps " + (w.from + 1) + " to " + (w.to + 1);
+}
+/* the block is touched on every autosave, which is on every note, so it is
+   rebuilt only when what it says has actually moved — the same guard the
+   left margin's arrangement keeps */
+var echoShape = "";
+function renderRailEcho(){
+  var e = echoNow(), w = echoWindow(), h, hair, sig;
+  sig = !e ? "" : [echoPace, w ? w.from : -1, w ? w.to : -1, echoHint ? 1 : 0].join(":");
+  if (sig === echoShape) return;
+  echoShape = sig;
+  while (railecho.firstChild) railecho.removeChild(railecho.firstChild);
+  if (!e) return;
+  h = document.createElement("h4");
+  h.textContent = "the echo";
+  hair = document.createElement("div");
+  hair.className = "hair";
+  railecho.appendChild(h);
+  railecho.appendChild(hair);
+  railecho.appendChild(echoRow("L2 + select", "plays the call"));
+  railecho.appendChild(echoRow("R2 + select", "judges the answer"));
+  railecho.appendChild(echoRow("L2 + L1 · R1", "slower · faster"));
+  railecho.appendChild(echoPick(ECHO_PACE_NAMES, echoPaceAt()));
+  railecho.appendChild(echoRow("L2 + L3", "the loop starts here"));
+  railecho.appendChild(echoRow("R2 + L3", "the loop ends here"));
+  railecho.appendChild(echoState(echoWindowLine()));
+  railecho.appendChild(echoRow("L2 + R3", "where the notes are"));
+  railecho.appendChild(echoPick(["shown", "hidden"], echoHint ? 0 : 1));
+}
 function renderRails(){
   /* while the quests screen is up the caret is walking the board, and the
      margin says the same thing the board does — the line you are in is
@@ -1388,6 +1465,7 @@ function renderRails(){
   railtitle.textContent = q ? plainName(q) : "Free play";
   railtext.textContent  = q ? (q.text || "") : "No constraint. Whatever you write here stays here.";
   railteach.textContent = (q && q.teaches) ? "Teaches: " + q.teaches : "";
+  renderRailEcho();
   /* the margin's last line is the quest's standing, or — where the workspace
      is a tool — the run's own tally, which is the whole of its display */
   railstate.textContent = !q ? "F3 for the quest log"

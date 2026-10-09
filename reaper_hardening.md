@@ -68,8 +68,14 @@ happens to exist.
 
 ### Ordinary Folio
 
-`folio.cmd`, `node server.mjs`, `file://`, and the deployed static build use
-Folio's own tones normally. An absent rack is not an error.
+`file://` and the deployed static build use Folio's own tones normally. An
+absent rack is not an error.
+
+**Amended 2026-09-11.** `folio.cmd` and `node server.mjs` were ordinary Folio
+too, until a `?quest=` link that left out `?renderer=reaper` put the own tone
+back on the player's machine with the rack running. The player's ruling: never
+own tone on this machine. The local server now writes the promise into every
+page it serves; only the test suite's `FOLIO_RENDERER=none` turns it off.
 
 ### REAPER Folio
 

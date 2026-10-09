@@ -109,7 +109,7 @@ function echoSpan(e){
    music at once, and the ear cannot hold the one it is being asked to hold.
    It may be replayed as often as wanted; nothing is spent by listening. */
 function echoPlay(){
-  var e = echoNow(), i, ev, dur, t0;
+  var e = echoNow(), i, ev, dur, t0, w, at;
   if (!e) return;
   if (playing) stop();
   audio();
@@ -117,14 +117,22 @@ function echoPlay(){
     say("press any key or click once to enable sound");
     return;
   }
+  /* stepDur carries the pace, so the call is heard at whatever speed the
+     page is being heard at and the two can never disagree */
   dur = stepDur();
   t0 = ctx.currentTime + 0.12;
+  /* and where a window is set the call keeps to it, exactly as the page
+     does: the events outside are not played, and the ones inside begin
+     where the window begins rather than where the call does */
+  w = echoWindow();
   for (i = 0; i < e.call.length; i++){
     ev = e.call[i];
-    playNote(ev.note, t0 + ev.step * dur, dur * ev.len,
+    at = e.at + ev.step;                    /* the step of the page it falls on */
+    if (w && (at < w.from || at > w.to)) continue;
+    playNote(ev.note, t0 + (w ? at - w.from : ev.step) * dur, dur * ev.len,
              (ev.voice === undefined) ? e.voice : ev.voice, ev.len > 1);
   }
-  say("the call · listen");
+  say("the call · listen" + (echoPace === 1 ? "" : " · " + echoPaceName() + " pace"));
 }
 
 /* the events of one line of the call: what is asked of the voice that
@@ -309,4 +317,103 @@ function echoJudge(){
           (ans.length === e.call.length ? "" : " · a different number of notes");
   }
   say(msg + " · " + echoStageName(e.stage) + (filed ? " · " + filed : ""));
+}
+
+/* ---- the pace, the window and the hint ----
+   Three aids to answering, and not one of them is written down. They belong
+   to the page in hand for exactly as long as it is in hand: a half pace or a
+   short loop carried into the next drill would be a lie about what the next
+   drill sounds like, so leaving the page puts all three back.
+
+   They live here because only an echo page can reach them. The pad seats
+   them under the triggers (js/entry.js), the right margin says what each
+   seat does and where it stands (js/quests.js), and the drawing shows the
+   window and the hint (js/views.js). The tempo of the page is never
+   touched — the pace multiplies the step, so the page still says what it
+   always said and playing it at the written speed is one press away. */
+var ECHO_PACES = [1, 2, 4];                  /* the step, multiplied */
+var ECHO_PACE_NAMES = ["whole", "half", "quarter"];
+var echoPace = 1;
+var echoFrom = null, echoTo = null;          /* the window, in steps of the page */
+var echoHint = false;                        /* where the call's notes are */
+
+function echoPaceAt(){ var i = ECHO_PACES.indexOf(echoPace); return i < 0 ? 0 : i; }
+function echoPaceName(){ return ECHO_PACE_NAMES[echoPaceAt()]; }
+/* the window, or nothing at all: both edges or neither, so that everything
+   downstream has one question to ask */
+function echoWindow(){
+  return (echoFrom === null || echoTo === null) ? null : { from: echoFrom, to: echoTo };
+}
+/* where playback turns round: the window where there is one, the loop where
+   there is not. The window is the stronger of the two while it stands —
+   a stretch asked for by hand outranks the rung the loop happens to be on. */
+function echoPlayFrom(){ var w = echoWindow(); return w ? w.from : 0; }
+function echoPlayTo(){ var w = echoWindow(); return w ? w.to : doc.loop - 1; }
+
+/* leaving the page: everything above goes back to what it was */
+function echoReset(){
+  echoPace = 1; echoFrom = null; echoTo = null; echoHint = false;
+}
+/* what has to be said again when one of the three moves: the drawing carries
+   the window and the hint, the margin carries all three */
+function echoShow(msg){
+  renderLoop();
+  renderRails();
+  say(msg);
+}
+
+/* the pace: three values and no more, and the ends of the ring are ends
+   rather than a way round to the other one — asking for slower at a quarter
+   should not hand back the whole speed */
+function echoStepPace(d){
+  var i;
+  if (!echoNow()) return;
+  i = echoPaceAt() + d;
+  if (i < 0) i = 0;
+  if (i >= ECHO_PACES.length) i = ECHO_PACES.length - 1;
+  echoPace = ECHO_PACES[i];
+  echoShow(echoPaceName() + " pace");
+}
+function echoSlower(){ echoStepPace(1); }
+function echoFaster(){ echoStepPace(-1); }
+
+/* the window: two edges set one at a time, at wherever the cursor stands.
+   The first of them to be set brings the other with it — the loop's own end
+   for a start, the head of the page for an end — so that one press already
+   shortens what is heard rather than waiting for a second. The two edges may
+   land on the same step, which is one step, and they may land the wrong way
+   round, which is the same window said backwards. */
+function echoFix(){
+  var n = pageLen(), t;
+  if (echoFrom === null || echoTo === null) return;
+  if (echoFrom > echoTo){ t = echoFrom; echoFrom = echoTo; echoTo = t; }
+  if (echoFrom < 0) echoFrom = 0;
+  if (echoTo > n - 1) echoTo = n - 1;
+  /* a run already under way snaps into the window rather than finishing the
+     lap it was on outside it — the same thing shortening the loop does */
+  if (playing && (schedStep < echoFrom || schedStep > echoTo)) schedStep = echoFrom;
+}
+function echoLoopFrom(){
+  if (!echoNow()) return;
+  echoFrom = cursor;
+  if (echoTo === null) echoTo = Math.max(0, Math.min(doc.loop, pageLen()) - 1);
+  echoFix();
+  echoShow("the loop starts at " + (echoFrom + 1));
+}
+function echoLoopTo(){
+  if (!echoNow()) return;
+  echoTo = cursor;
+  if (echoFrom === null) echoFrom = 0;
+  echoFix();
+  echoShow("the loop ends at " + (echoTo + 1));
+}
+
+/* the hint: where the call's notes fall, and not one word about what they
+   are. It is the rhythm of the line handed over and the pitches kept back,
+   which is the one half of the question a stuck ear can be given without
+   answering the other half for it. */
+function echoHintToggle(){
+  if (!echoNow()) return;
+  echoHint = !echoHint;
+  echoShow(echoHint ? "the notes, shown" : "the notes, hidden");
 }

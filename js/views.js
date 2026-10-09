@@ -38,6 +38,7 @@ var rtabs = document.getElementById("rtabs");
 var railtitle = document.getElementById("railtitle");
 var railtext  = document.getElementById("railtext");
 var railteach = document.getElementById("railteach");
+var railecho  = document.getElementById("railecho");
 var railstate = document.getElementById("railstate");
 var sceneryEl = document.getElementById("scenery");
 var sceneryButtons = sceneryEl.querySelectorAll("button[data-scene]");
@@ -302,6 +303,17 @@ for (i = 0; i < 12; i++){
   PC_COLOR[i] = "hsl(" + ((((i * 7) % 12) * 30 + 45) % 360) + ",42%,40%)";
 }
 
+/* ---- the stretch that is playing ----
+   The echo's two stick presses cut a window out of the page, and while one
+   stands it is what the transport runs and what the call keeps to. It is
+   drawn as ground rather than as a mark: the page's own wash, full height,
+   laid under the rules and the music alike, so that what is outside it is
+   read as a page still there and not being played rather than as a page
+   crossed out. It is the first thing in the field and everything else is
+   put in after it. */
+var rollWin = document.createElement("div");
+rollWin.className = "rollwin";
+rollfield.appendChild(rollWin);
 /* the beat rules: one every fourth step of the page, wherever that falls in
    the window. They are laid out with the bars rather than built in place,
    because which slots are beats depends on where the window opens. */
@@ -415,6 +427,29 @@ for (i = 0; i < MAX_STEPS; i++){
 }
 for (i = 0; i < VOICES; i++) mkBar(seamBars);
 for (i = 0; i < VOICES; i++) mkBar(edgeBars);
+
+/* ---- where the call's notes are ----
+   An echo page can be asked to show where the fragment falls, and nothing
+   else about it: one faint bracket under the field for each note of the
+   line being answered, at the step it begins on and as long as it rings. No
+   height, no colour, no name — the rhythm handed over and the pitches kept
+   back, which is the one half of the question that can be given away
+   without answering the other half.
+
+   The brackets hang off the foot of the field rather than standing in the
+   layout, so that raising them shifts nothing: the drawing and the column
+   are the same height with them up as without. */
+var rollHints = document.createElement("div");
+rollHints.className = "rollhints";
+rollfield.appendChild(rollHints);
+var hintBars = [];
+for (i = 0; i < MAX_STEPS; i++){
+  var hbar = document.createElement("div");
+  hbar.className = "hintbar";
+  hbar.style.display = "none";
+  rollHints.appendChild(hbar);
+  hintBars.push(hbar);
+}
 
 /* ================= each view takes the room it has =================
    The window used to be sixteen steps in both views because sixteen steps
@@ -651,7 +686,7 @@ function rollLayout(){
     oho.textContent = "home";
     on.appendChild(opn); on.appendChild(oho);
     ln.appendChild(on);
-    rollfield.insertBefore(ln, rollfield.firstChild);   /* under wash and bars */
+    rollfield.insertBefore(ln, rollWin.nextSibling);    /* over the window, under wash and bars */
     octlines.push(ln);
   }
 
@@ -837,14 +872,49 @@ function rollCursor(){
     baseCells[k].textContent = on ? "‸" : (i % 4 === 0 ? String(i + 1) : "");
   }
 }
+/* what is outside what is playing: past the end of the loop, or — while the
+   echo's window stands — either side of it. One question, asked once, so
+   the shading and the wash can never say different things. */
+function rollOutside(i, w){
+  return w ? (i < w.from || i > w.to) : (i >= doc.loop);
+}
+function rollWindow(w){
+  var wid = 100 / winRoll, a, b;
+  if (!w){ rollWin.style.display = "none"; return; }
+  a = Math.max(w.from, startRoll);
+  b = Math.min(w.to, startRoll + winRoll - 1);
+  if (b < a){ rollWin.style.display = "none"; return; }   /* the window is off screen */
+  rollWin.style.left = ((a - startRoll) * wid) + "%";
+  rollWin.style.width = ((b - a + 1) * wid) + "%";
+  rollWin.style.display = "block";
+}
+function rollHint(w){
+  var e = echoNow(), wid = 100 / winRoll, list, n = 0, k, at, slot;
+  if (e && echoHint){
+    list = echoCall(e);                      /* the line answered, never the ground */
+    for (n = 0; n < list.length && n < hintBars.length; n++){
+      at = e.at + list[n].step;
+      slot = rollSlot(at);
+      if (slot < 0){ hintBars[n].style.display = "none"; continue; }
+      hintBars[n].style.display = "block";
+      hintBars[n].style.left = (slot * wid) + "%";
+      hintBars[n].style.width = (Math.min(list[n].len, winRoll - slot) * wid) + "%";
+      hintBars[n].classList.toggle("out", rollOutside(at, w));
+    }
+  }
+  for (k = n; k < hintBars.length; k++) hintBars[k].style.display = "none";
+}
 function rollLoop(){
+  var w = echoWindow();
   for (var k = 0; k < winRoll; k++){
-    var out = rollStep(k) >= doc.loop;
+    var out = rollOutside(rollStep(k), w);
     bars[k].classList.toggle("outside", out);
     bars2[k].classList.toggle("outside", out);
     chordBars[k].classList.toggle("outside", out);
     ivls[k].classList.toggle("outside", out);
   }
+  rollWindow(w);
+  rollHint(w);
 }
 
 /* No screen stands where the drawing stands any more, the board included:
@@ -1044,8 +1114,11 @@ function renderMeta(){
     (windowed() ? " · " + windowLabel() : "");
 }
 function renderLoop(){
+  /* the column says the same thing the drawing says about what is playing:
+     the loop, or the echo's window where one is set */
+  var w = echoWindow();
   for (var k = 0; k < winCol; k++){
-    rows[k].el.classList.toggle("outside", colStep(k) >= doc.loop);
+    rows[k].el.classList.toggle("outside", rollOutside(colStep(k), w));
   }
   rollLoop();
 }

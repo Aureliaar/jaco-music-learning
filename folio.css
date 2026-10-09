@@ -454,6 +454,26 @@
   /* and one per beat — the 4ths, upright, as quiet as the home rules */
   .beatline{position:absolute;top:0;bottom:0;width:1px;background:var(--rule);opacity:0.55;}
   .rollwash{position:absolute;top:0;bottom:0;background-color:var(--wash);display:none;}
+  /* ---- the stretch that is playing ----
+     The echo's window, drawn as ground rather than as a mark: the page's own
+     wash, full height, under the rules and the music alike. It stands under
+     the playhead's wash and is kept lighter than it, so the playhead is still
+     the darker of the two where the two meet. */
+  .rollwin{position:absolute;top:0;bottom:0;background-color:var(--wash);opacity:0.55;display:none;}
+  /* ---- where the call's notes are ----
+     One bracket a note, hung off the foot of the field above the numbers: the
+     step it begins on, as long as it rings, and nothing about its pitch.
+     Three sides only — it is a span, not a box. It takes no room in the
+     layout, so raising it moves nothing. */
+  .rollhints{position:absolute;left:0;right:0;top:100%;height:0.5rem;pointer-events:none;}
+  .hintbar{
+    position:absolute;top:0;bottom:0;
+    border-left:1px solid var(--gilt);
+    border-bottom:1px solid var(--gilt);
+    border-right:1px solid var(--gilt);
+    opacity:0.75;
+  }
+  .hintbar.out{opacity:0.3;}
   /* the cursor column, bracketed: two upright ink hairlines, full height —
      steady, unfilled, unmistakable; the caret below names the same column */
   .rollcur{
@@ -1106,6 +1126,30 @@
   /* headers mirror on the right rail; running text stays readable left-to-left */
   .rail.right .rtext{text-align:left;}
   .rail .rteach{margin-top:0.6rem;font-style:italic;}
+  /* ---- the echo's own block in the margin ----
+     An echo page has four actions no other page has and every one of them is
+     under a trigger. What each does is said here, on the page it is done on
+     — this folio has no controls reference and is not getting one — and
+     beside each seat, where it matters, what it currently stands at. Key on
+     the left in ink, meaning on the right in faded ink; the value under it,
+     right aligned, with the one in force in ink under a gilt rule. */
+  .rail .recho{margin-top:0.9rem;}
+  .rail .recho:empty{margin-top:0;}
+  .rail .recho h4{
+    margin:0 0 0.45rem;
+    font-weight:400;
+    font-variant:small-caps;
+    letter-spacing:0.16em;
+    font-size:0.84rem;
+    color:var(--gilt);
+  }
+  .recho .erow{display:flex;justify-content:space-between;align-items:baseline;gap:0.8em;}
+  .recho .ekey{color:var(--ink);white-space:nowrap;}
+  .recho .emean{color:var(--faded);text-align:right;}
+  .recho .epick{margin:0.05rem 0 0.5rem;text-align:right;color:var(--faded);}
+  .recho .epick span{margin-left:0.75em;}
+  .recho .epick span.on{color:var(--ink);border-bottom:1px solid var(--gilt);}
+  .recho .estate{margin:0.05rem 0 0.5rem;text-align:right;color:var(--ink);}
   .rail .rstate{margin-top:0.8rem;}
   /* a narrow window keeps the column and drops the rails whole, rather
      than squeezing the page. The board goes with them: there is no margin to

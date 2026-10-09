@@ -10,12 +10,17 @@ state back to Folio.
 
 The mode is a launch promise, not a guess about which ports happen to exist.
 
-**Ordinary Folio** — `folio.cmd`, `node server.mjs`, `file://`, and the
-deployed static build. Folio's own tones are the correct sound. An absent rack
-is not an error and is never mentioned.
+**Ordinary Folio** — `file://`, the deployed static build, and a device
+reaching the folio over `--lan`. Folio's own tones are the correct sound. An
+absent rack is not an error and is never mentioned.
 
-**REAPER Folio** — `folio-reaper.cmd` opens the local instrument at
-`http://localhost:4173/?renderer=reaper`. In this mode the SINE rack is part of
+**REAPER Folio** — every page the local server serves on this machine, and any
+page opened with `?renderer=reaper` (as `folio-reaper.cmd` opens it). Since
+2026-09-11 the server writes `<meta name="folio-renderer" content="reaper">`
+into the page it serves, so `folio.cmd`, `node server.mjs` and a link that
+leaves the parameter out are all REAPER Folio: on the player's machine there
+is no own tone. Only the test suite turns the promise off, with
+`FOLIO_RENDERER=none`. In this mode the SINE rack is part of
 the launch promise. Playback and audition never fall through to Folio's own
 tones; if the renderer is not ready, transport does not start, and if it
 disappears mid-loop, Folio stops, clears queued MIDI, sends panic, and stays
@@ -228,15 +233,26 @@ REAPER instances may later write older global preferences. If the physical
 output device changes, update the `wasapi_*` values in this launcher and test
 the rack; do not add a Folio UI setting for it.
 
-The launcher opens the page itself rather than asking Hub to. `hubd` builds
-`http://localhost:<port>/` from its own registry and ignores any url given to
-`/api/browser/open` or `/api/browser/restart`, so a Hub-opened window would be
-ordinary Folio and the launch promise would never arrive. Instead Hub is asked
-to close the managed browser it owns — keeping its state accurate rather than
-stale — and the launcher starts Chrome on that same persistent profile
-(`.experiments-hub/browser-profiles/<first 16 hex of sha256("daw")>`) at the
-promised URL. Same profile, same remembered MIDI grant, and one tab rather than
-an ordinary Folio sitting beside a required-renderer one over the same document.
+The launcher asks Hub to restart Folio's managed browser
+(`.experiments-hub/browser-profiles/<first 16 hex of sha256("daw")>`, the
+profile holding the MIDI grant) rather than opening one itself. A restart,
+because Chrome lists MIDI ports once per browser process: a browser that was
+open before the cable appeared, or across a Windows MIDI service restart,
+never sees `Folio to REAPER` however healthy the rack is. Hub brings it back
+on the page it was showing. Only when Hub is down does the launcher start
+Chrome on that profile directly.
+
+The same failure can happen with the rack already running, and the page deals
+with it: when the rack reports `ready` but the browser has had no port by that
+name for three seconds, the page asks its server (`POST /api/recover`), which
+asks Hub (`/api/browser/recover`). If the page is in a browser Hub owns (the
+Hub window, or Folio's managed browser), Hub restarts that browser with all its
+tabs, at most once every ninety seconds each. If it is anywhere else, Hub opens
+the page in the Hub window instead, and the old window says where the music
+went. Links to Folio go through Hub too —
+`http://localhost:7777/go/daw/?quest=<id>` — so they land on the Folio tab
+already open in the right browser, not in whatever browser the link was
+clicked in.
 
 Because the launcher must not start or inspect Folio's `:4173` server, a launch
 made while that server is deliberately down lands on the browser's own

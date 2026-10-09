@@ -32,8 +32,9 @@ var audioClockNode = null, audioClockSink = null;
 
    There are two modes, and they are never inferred from whether a port happens
    to exist. Ordinary Folio uses its own tones and treats an absent rack as no
-   error at all. Required-REAPER Folio — the page opened by folio-reaper.cmd
-   with `?renderer=reaper` — was promised the rack, so an unavailable rack stops
+   error at all. Required-REAPER Folio — every page the local server serves on
+   this machine, and any page opened with `?renderer=reaper` — was promised the
+   rack, so an unavailable rack stops
    the transport and says which boundary failed. It never quietly substitutes a
    different instrument and calls that success. */
 var MIDI_PORT = "Folio to REAPER";
@@ -60,10 +61,18 @@ var midiAccess = null, midiOut = null;
 var midiAsked = false, midiConnecting = false;
 var midiRackReady = false;
 
-/* The launch promise, read once and held for the page session. */
+/* The launch promise, read once and held for the page session. It comes from
+   the address, as folio-reaper.cmd opens it, or from the local server, which
+   writes it into every page it serves: on this machine a link that forgets
+   the parameter must not bring the own tone back. The server's promise binds
+   only a page opened on this machine; a device reaching the folio over --lan
+   has no cable to keep it with. */
 var MIDI_REQUIRED = (function(){
-  try { return /(^|[?&])renderer=reaper(&|$)/.test(location.search || ""); }
-  catch (e) { return false; }
+  try {
+    if (/(^|[?&])renderer=reaper(&|$)/.test(location.search || "")) return true;
+    var meta = document.querySelector('meta[name="folio-renderer"]');
+    return !!(meta && meta.getAttribute("content") === "reaper" && midiLocal());
+  } catch (e) { return false; }
 })();
 /* Until the first poll answers, a promised rack is starting, not absent. */
 var midiState = MIDI_REQUIRED ? "starting" : "not-requested";
@@ -98,7 +107,17 @@ var MIDI_FAULT_COPY = {
   "renderer-lost":   ["The sound rack has gone.",
     "The REAPER rack closed while Folio was open. Your music is safe. Run folio-reaper.cmd again."],
   "send-failed":     ["The sound rack stopped listening.",
-    "A note could not be sent down the MIDI cable. Your music is safe. Run folio-reaper.cmd again."]
+    "A note could not be sent down the MIDI cable. Your music is safe. Run folio-reaper.cmd again."],
+  "browser-port":    ["The sound rack is not reaching this browser.",
+    "The rack is running, but this browser cannot see its “Folio to REAPER” port. Your music is safe. If it stays this way, Experiments Hub reopens this browser."],
+  "recovering":      ["Experiments Hub is reopening this browser.",
+    "This browser has lost sight of the sound rack's MIDI port, and only a fresh browser sees it again. Every tab comes back. Your music is safe."],
+  "moved":           ["Folio is open in the Hub window.",
+    "This browser cannot hear the sound rack. Your music is safe and carries on in the Hub window, where the rack plays."],
+  "browser-stuck":   ["This browser cannot see the sound rack.",
+    "The rack is running, but its “Folio to REAPER” port is not reaching this browser, and reopening the browser did not bring it back. Your music is safe."],
+  "hub-absent":      ["This browser cannot see the sound rack.",
+    "The rack is running, but its port is not reaching this browser, and Experiments Hub did not answer to reopen it. Your music is safe."]
 };
 
 function midiLocal(){
@@ -132,7 +151,12 @@ function midiFaultNow(){
   if (midiPermission === "denied") return "midi-denied";
   if (midiPermission !== "granted") return "midi-unasked";
   if (midiSendFailed) return "send-failed";
-  if (!midiConnected()) return "port-missing";
+  /* the rack answers, but this browser has no port by that name */
+  if (!midiConnected())
+    return midiRecovery === "asked" ? "recovering" :
+           midiRecovery === "moved" ? "moved" :
+           midiRecovery === "stuck" ? "browser-stuck" :
+           midiRecovery === "hub-absent" ? "hub-absent" : "browser-port";
   return null;
 }
 /* A calm, persistent panel: no blink, no texture, no timer, no dismissal.
@@ -142,6 +166,7 @@ function midiFaultRender(){
   if (fault === midiFault) return;
   var wasClear = !midiFault;
   midiFault = fault;
+  if (!fault) midiRecovery = null;   /* heard again: a later loss may ask anew */
   var panel = document.getElementById("rackfault");
   if (panel){
     if (fault){
@@ -185,7 +210,54 @@ function midiHealthPoll(){
     midiHealthSet(false);
   }).then(function(){
     midiFaultRender();
+    midiRecoverCheck();
     setTimeout(midiHealthPoll, 1000);
+  });
+}
+/* ---- a browser that has lost the rack ----
+   The rack answers and the cable is there, but this browser's MIDI list has no
+   port by that name. Chrome lists MIDI ports once per browser process, so a
+   browser that was open across a MIDI service restart never sees the cable
+   again, and nothing inside the page can make it look. After a short grace (a
+   port still being opened looks missing for a moment) the page asks its server
+   to have the Hub deal with it, naming itself with a token on its own <html>.
+   A page in a browser the Hub owns (the Hub window, or Folio's managed
+   browser) has that browser restarted with all its tabs; a page anywhere
+   else is opened in the Hub window instead. Which of the two happened comes
+   back, and decides what the panel says. Once per loss: a fresh browser that still cannot see
+   the port says so and stops asking, and the Hub refuses a second restart
+   inside ninety seconds whatever the page does. */
+var MIDI_RECOVER_GRACE = 3000, MIDI_RESTART_WAIT = 10000;
+var midiMissingSince = 0, midiRecovery = null;
+var midiRecoverToken = String(Math.random()).slice(2, 12);
+function midiRecoverCheck(){
+  if (!MIDI_REQUIRED || midiFault !== "browser-port"){ midiMissingSince = 0; return; }
+  if (!midiMissingSince){ midiMissingSince = Date.now(); return; }
+  if (midiRecovery || Date.now() - midiMissingSince < MIDI_RECOVER_GRACE) return;
+  midiRecovery = "asked";
+  midiFaultRender();
+  try { document.documentElement.setAttribute("data-recover", midiRecoverToken); } catch (e) {}
+  fetch("/api/recover", { method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ path: location.pathname + location.search, token: midiRecoverToken })
+  }).then(function(response){
+    return response.json().then(function(body){
+      if (!response.ok) throw new Error((body && body.state) || "recover failed");
+      return body;
+    });
+  }).then(function(body){
+    if (body.state === "restarted"){
+      /* this very browser is being replaced; a page still here long after
+         means the restart did not go the way it was meant to */
+      setTimeout(function(){
+        if (midiRecovery === "asked"){ midiRecovery = "stuck"; midiFaultRender(); }
+      }, MIDI_RESTART_WAIT);
+      return;
+    }
+    midiRecovery = (body.state === "stuck") ? "stuck" : "moved";
+    midiFaultRender();
+  }).catch(function(){
+    midiRecovery = "hub-absent";
+    midiFaultRender();
   });
 }
 /* ---- the catalogue, read ----
@@ -336,7 +408,12 @@ function midiNote(name, at, dur, v){
   }
 }
 
-function stepDur(){ return 60 / doc.tempo / 4; }   /* 112 bpm 16ths = 0.1339 s */
+/* how long one step lasts. The page's own tempo, and then the echo's pace
+   over the top of it — half or a quarter of the speed, for an ear that
+   cannot yet hear the line at the speed it was written at. The pace is a
+   multiplier on the step and never a change to doc.tempo, so the page still
+   says what it always said and the header never moves. */
+function stepDur(){ return 60 / doc.tempo / 4 * echoPace; }   /* 112 bpm 16ths = 0.1339 s */
 
 /* setInterval is only a foreground convenience. Chrome batches a hidden
    tab's timers at one second and later one minute; the AudioContext clock
@@ -578,7 +655,10 @@ function scheduler(){
     }
     queue.push({ step: schedStep, time: nextStepTime + midiVisualDelay() });
     nextStepTime += dur;
-    schedStep = (schedStep + 1) % doc.loop;
+    /* where the run turns round: the loop, or the window the echo's two
+       stick presses set inside it. Read afresh every step, as mute and solo
+       are, so a window asked for mid-run lands on the next step round */
+    schedStep = (schedStep >= echoPlayTo()) ? echoPlayFrom() : schedStep + 1;
   }
 }
 
@@ -591,7 +671,7 @@ function play(){
   audio();
   playing = true;
   queue.length = 0;
-  schedStep = 0;
+  schedStep = echoPlayFrom();
   master.gain.cancelScheduledValues(ctx.currentTime);
   master.gain.setValueAtTime(master.gain.value, ctx.currentTime);
   master.gain.linearRampToValueAtTime(1, ctx.currentTime + 0.02);
