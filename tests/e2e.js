@@ -179,7 +179,7 @@ function staticServer(root, seen){
               width:Math.round(field.width), height:Math.round(field.height),
               meta:document.getElementById('metatext').textContent};
     })()`);
-    expect(view.title === "Folio" && view.length === 16 && view.rows >= view.length && view.scripts === 12,
+    expect(view.title === "Folio" && view.length === 16 && view.rows >= view.length && view.scripts === 13,
       "the page did not boot the complete instrument", view);
     expect(view.width > 500 && view.height > 300, "the working folio collapsed", view);
     expect(/112.*C major/.test(view.meta), "the seeded tempo and key are not visible", view.meta);

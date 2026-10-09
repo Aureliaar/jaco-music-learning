@@ -36,6 +36,7 @@ const FILES = [
   ["js/audio.js", "js/audio.js"],
   ["js/edit.js", "js/edit.js"],
   ["js/chords.js", "js/chords.js"],
+  ["js/blocks.js", "js/blocks.js"],
   ["js/echo.js", "js/echo.js"],
   ["js/quiz.js", "js/quiz.js"],
   ["js/quests.js", "js/quests.js"],

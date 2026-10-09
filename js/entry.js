@@ -46,6 +46,41 @@ document.addEventListener("keydown", function(e){
     e.preventDefault(); cycleScenery(); return;
   }
 
+  /* ---- the blocks (js/blocks.js) ----
+     F4 puts the strip up under the drawing and takes it down again. While it
+     is up the left hand is on WASD and nothing writes notes: A and D walk the
+     blocks, W and S the voices, and the keys around them change what this
+     block does to this voice — Q and E the octave, R and F the instrument, X
+     tacet, Z back to as written, C a copy. Shift widens a change to every
+     voice of the block, and makes A and D carry the block instead of walking.
+     The strip says all of this itself, under the blocks. */
+  if (code === "F4"){
+    e.preventDefault();
+    if (!anyPage()) toggleBlocks();
+    return;
+  }
+  if (blocksOpen() && !anyPage()){
+    e.preventDefault();
+    var sh = e.shiftKey;
+    switch (code){
+      case "Escape":     toggleBlocks(); return;
+      case "KeyA": case "ArrowLeft":  if (sh) blockMove(-1); else blockWalk(-1); return;
+      case "KeyD": case "ArrowRight": if (sh) blockMove(1);  else blockWalk(1);  return;
+      case "KeyW": case "ArrowUp":    laneWalk(-1); return;
+      case "KeyS": case "ArrowDown":  laneWalk(1);  return;
+      case "KeyQ":       blockOct(-1, sh); return;
+      case "KeyE":       blockOct(1, sh);  return;
+      case "KeyR":       blockSeat(1);  return;
+      case "KeyF":       blockSeat(-1); return;
+      case "KeyX":       blockTacet();  return;
+      case "KeyZ":       blockPlain(sh); return;
+      case "KeyC":       blockCopy();   return;
+      case "Delete": case "Backspace": blockRemove(); return;
+      case "Space":      if (playing) stop(); else play(); return;
+    }
+    return;
+  }
+
   /* tab is the other voice — the one key that changes which line the hands
      are in, and with shift the one before instead of the one after, so the
      ring is walked both ways and a third voice is still one press from

@@ -815,6 +815,10 @@ function docOut(d){
   out.mute = trimFlags(out.mute);
   if (allOwnTone(out[VOICE_TONE])) delete out[VOICE_TONE];
   if (allUnbound(out[MIRROR_FIELD])) delete out[MIRROR_FIELD];
+  /* the blocks, js/blocks.js: only where there are some */
+  if (Array.isArray(out[BLOCK_FIELD]) && out[BLOCK_FIELD].length)
+    out[BLOCK_FIELD] = blocksOut(out[BLOCK_FIELD]);
+  else delete out[BLOCK_FIELD];
   /* the echo is written only where there is one, and only where it is one:
      the validator is the single door it comes through, so anything else
      wearing the name leaves here rather than being written back out */
@@ -891,6 +895,8 @@ function validate(obj){
   /* the hidden call, if the page is an echo's: read strictly by js/echo.js,
      which is where the whole of that idea lives, and simply absent — not
      null, not empty — on every page that is not one */
+  var bl = readBlocks(obj[BLOCK_FIELD]);
+  if (bl.length) out[BLOCK_FIELD] = bl;
   var ec = readEcho(obj[ECHO_FIELD], N);
   if (ec) out[ECHO_FIELD] = ec;
   if (N !== STEPS) out[PAGE_FIELD] = N;
@@ -917,6 +923,7 @@ function save(){
   }
   catch (e){ storageOK = false; say("autosave unavailable in this window"); }
   renderRails();
+  if (typeof renderBlocks === "function") renderBlocks();
   syncPush();
 }
 function load(){

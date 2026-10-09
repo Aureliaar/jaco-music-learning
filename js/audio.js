@@ -458,10 +458,14 @@ function midiConnect(){
     midiFaultRender();
   });
 }
-function midiNote(name, at, dur, v){
+function midiNote(name, at, dur, v, seat){
   if (!midiConnected()) return false;
   var voiceChannel = Math.max(0, Math.min(LANES - 1, v || 0));
-  var note = midiOf(name), ch = voiceChannel + MIDI_SLOTS[voiceChannel] * LANES;
+  /* a block may put this one note on another of the voice's seats; the
+     voice's own seat is left where it is */
+  var slot = (typeof seat === "number" && seat >= 0 && seat < MIDI_SLOT_COUNT)
+               ? seat : MIDI_SLOTS[voiceChannel];
+  var note = midiOf(name), ch = voiceChannel + slot * LANES;
   if (note === null || note === undefined) return false;
   var when = performance.now() + Math.max(0, at - ctx.currentTime) * 1000;
   var off = when + Math.max(1, dur * 1000 - MIDI_TAIL * 1000);
@@ -621,13 +625,13 @@ function toneWave(t){
 /* One note: oscillator -> lowpass -> gain envelope. Gain starts at 0 and
    ends at 0, so nothing ever switches on or off abruptly. Release finishes
    TAIL seconds before the next step begins. */
-function playNote(name, at, dur, v, held){
+function playNote(name, at, dur, v, held, seat){
   var f = noteToFreq(name);
   if (!f) return;
   /* REAPER is a renderer, never a second layer.  A successful MIDI send is
      the note; only an absent or failed port reaches Folio's sample/synth
      path, which is the complete offline fallback. */
-  if (midiNote(name, at, dur, v)) return;
+  if (midiNote(name, at, dur, v, seat)) return;
   /* Required-REAPER mode has no fallback by design: a promised rack that
      cannot be reached is an error the player is told about, never a quieter
      instrument standing in for it. Nothing reaches samplePlay or the
@@ -697,12 +701,17 @@ function scheduler(){
     nextStepTime = ctx.currentTime + 0.02;
     queue.length = 0;
   }
+  /* the blocks, where they are what is playing: each pass of the loop is
+     one block, and what it does to a voice is read here, as mute is */
+  var arr = arrOn(), bm;
   while (nextStepTime < ctx.currentTime + AHEAD){
     /* both voices, in step, from the one clock — a mute or a solo is read
        here and nowhere else, so it lands on the next scheduled step without
        a restart, exactly as a tempo change does */
     for (var v = 0; v < VOICES; v++){
       if (!audible(v)) continue;
+      bm = arr ? blockMod(schedBlock, v) : PLAIN_LANE;
+      if (bm.off) continue;
       var n = vsteps(v)[schedStep];
       /* a note is scheduled once, for as long as it is written to last; the
          steps it covers hold no note of their own and so retrigger nothing.
@@ -711,23 +720,29 @@ function scheduler(){
          comes round, which is what ringing across the seam is. */
       if (n){
         var len = spanOf(doc, v, schedStep);
-        playNote(n, nextStepTime, dur * len, v, len > 1);
+        playNote(shiftNote(n, bm.oct || 0), nextStepTime, dur * len, v, len > 1, bm.seat);
       }
     }
     /* and the chord lane, which is one cell and several pitches: what those
        pitches are is worked out from the lane, not read off it, so it is
        asked here once a step and never stored anywhere */
-    if (audible(CHORD_LANE) && chordAt(doc, schedStep)){
+    bm = arr ? blockMod(schedBlock, CHORD_LANE) : PLAIN_LANE;
+    if (audible(CHORD_LANE) && !bm.off && chordAt(doc, schedStep)){
       var ps = chordVoicings(doc)[schedStep], clen = spanOf(doc, CHORD_LANE, schedStep);
       for (var ci = 0; ps && ci < ps.length; ci++)
-        playNote(nameOfMidi(ps[ci]), nextStepTime, dur * clen, CHORD_LANE, clen > 1);
+        playNote(nameOfMidi(Math.max(0, Math.min(127, ps[ci] + 12 * (bm.oct || 0)))),
+                 nextStepTime, dur * clen, CHORD_LANE, clen > 1, bm.seat);
     }
-    queue.push({ step: schedStep, time: nextStepTime + midiVisualDelay() });
+    queue.push({ step: schedStep, time: nextStepTime + midiVisualDelay(),
+                 block: arr ? schedBlock : -1 });
     nextStepTime += dur;
     /* where the run turns round: the loop, or the window the echo's two
        stick presses set inside it. Read afresh every step, as mute and solo
        are, so a window asked for mid-run lands on the next step round */
-    schedStep = (schedStep >= echoPlayTo()) ? echoPlayFrom() : schedStep + 1;
+    if (schedStep >= echoPlayTo()){
+      schedStep = echoPlayFrom();
+      if (arr) schedBlock = (schedBlock + 1) % docBlocks(doc).length;
+    } else schedStep++;
   }
 }
 
@@ -741,6 +756,7 @@ function play(){
   playing = true;
   queue.length = 0;
   schedStep = echoPlayFrom();
+  schedBlock = arrOn() ? Math.min(bsel, docBlocks(doc).length - 1) : 0;
   master.gain.cancelScheduledValues(ctx.currentTime);
   master.gain.setValueAtTime(master.gain.value, ctx.currentTime);
   master.gain.linearRampToValueAtTime(1, ctx.currentTime + 0.02);
@@ -768,6 +784,7 @@ function stop(){
     master.gain.setValueAtTime(1, t + 0.06);
   }
   renderPlayhead(-1);
+  renderBlockPlay(-1);
   say("stopped");
 }
 
@@ -799,9 +816,12 @@ function audition(name, len){
    scheduled time actually arrives, and only then. */
 function frame(){
   if (playing && ctx){
-    var now = ctx.currentTime, step = shownPlayhead;
-    while (queue.length && queue[0].time <= now){ step = queue.shift().step; }
+    var now = ctx.currentTime, step = shownPlayhead, blk = shownBlock, q;
+    while (queue.length && queue[0].time <= now){
+      q = queue.shift(); step = q.step; blk = q.block;
+    }
     if (step !== shownPlayhead) renderPlayhead(step);
+    if (blk !== shownBlock) renderBlockPlay(blk);
   }
   growTick();                      /* a note still under the finger goes on growing */
   pollPads();                      /* additive input layer; never touches audio timing */

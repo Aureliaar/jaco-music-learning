@@ -130,7 +130,11 @@ propose reviving one. The truth about bindings is `js/entry.js`.
   read strictly, the shapes, the near/rooted voicing arithmetic, and the
   lane's own writing — the lane is the third stop on the voice ring,
   `CHORD_LANE`, and inherits the holds arithmetic whole because state.js
-  asks only whether something is written at a step) · `quiz.js` (the
+  asks only whether something is written at a step) · `blocks.js` (**the
+  blocks, 2026-10-09**: the loop played N times, each pass a block with
+  per-voice modifiers — octave, rack seat, tacet — computed at play time,
+  never written into the notes; F4 opens the strip under the roll, WASD
+  edits; keyboard-first by player call, pad home not yet agreed) · `quiz.js` (the
   up-or-down ear quiz: the TOOLS rail
   kind, the ramp, and the `earlog` field — a per-answer record riding the
   autosave, last 500, for the assistant's error-pattern reads; player-

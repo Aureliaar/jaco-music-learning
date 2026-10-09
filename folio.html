@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="folio.css">
 <!-- ================================ the map ================================
      folio.html is the markup and the list of scripts. The app itself is
-     eleven plain files, loaded in this order and sharing one
+     twelve plain files, loaded in this order and sharing one
      scope — no modules, no build step, so opening this file over file://
      still works exactly as it always did.
 
@@ -23,6 +23,8 @@
        js/chords.js   the chord lane: a degree and a shape in a cell, a
                       nearest voicing frozen when written, and the lane's
                       own writing
+       js/blocks.js   the blocks: the loop played several times over, each
+                      pass with its own modifiers, and the strip that edits them
        js/echo.js     the echo: the hidden call played, the answer judged
        js/quiz.js     up or down: a fresh pair of notes, one press, the next,
                       and the log kept of every answer
@@ -74,6 +76,11 @@
   </section>
 
   </div>
+
+  <section class="blocks" id="blocks" aria-label="the blocks" hidden>
+    <div class="brow" id="brow"></div>
+    <p class="blegend" id="blegend"></p>
+  </section>
 
   <div class="divider"></div>
   <div class="foot">
@@ -143,6 +150,7 @@
 <script src="js/audio.js"></script>
 <script src="js/edit.js"></script>
 <script src="js/chords.js"></script>
+<script src="js/blocks.js"></script>
 <script src="js/echo.js"></script>
 <script src="js/quiz.js"></script>
 <script src="js/quests.js"></script>
