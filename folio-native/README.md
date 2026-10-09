@@ -24,8 +24,9 @@ instrument states, reload the page.
 
 ## Building
 
-`folio-native\build.cmd`: it clones JUCE 8.0.10 and unzips the WebView2 SDK
-on first run (both gitignored), then builds with VS 2022's CMake.
+`folio-native\build.cmd`: it checks out JUCE 8.0.10 (a submodule) and unzips
+the WebView2 SDK (gitignored) on first run, then builds with VS 2022's CMake.
+The SINE libraries themselves are in the private `soundbanks/` submodule.
 
 ## The rack
 

@@ -1,0 +1,7 @@
+[submodule "folio-native/JUCE"]
+	path = folio-native/JUCE
+	url = https://github.com/juce-framework/JUCE.git
+	shallow = true
+[submodule "soundbanks"]
+	path = soundbanks
+	url = git@github.com:Aureliaar/folio-soundbanks.git

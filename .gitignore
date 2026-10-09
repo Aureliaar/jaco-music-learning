@@ -15,7 +15,7 @@ tests/prof-*/
 tests/*.png
 tests/tmp/
 
-# Folio Native: JUCE and the WebView2 SDK are fetched by folio-native/build.cmd
-folio-native/JUCE/
+# Folio Native: the WebView2 SDK is fetched by folio-native/build.cmd
+# (JUCE and soundbanks/ are submodules)
 folio-native/deps/
 folio-native/build/

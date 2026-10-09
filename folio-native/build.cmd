@@ -1,10 +1,10 @@
 @echo off
-rem Fetches JUCE and the WebView2 SDK if they are missing, then builds Folio.exe.
+rem Checks out the JUCE submodule and fetches the WebView2 SDK if missing, then builds Folio.exe.
 setlocal
 cd /d "%~dp0"
 set CMAKE=%ProgramFiles%\Microsoft Visual Studio\2022\Professional\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe
 if not exist "%CMAKE%" set CMAKE=cmake
-if not exist JUCE git clone --depth 1 --branch 8.0.10 https://github.com/juce-framework/JUCE.git JUCE || exit /b 1
+if not exist JUCE\CMakeLists.txt git -C .. submodule update --init --depth 1 folio-native/JUCE || exit /b 1
 set WV2=deps\Microsoft.Web.WebView2.1.0.2903.40
 if not exist "%WV2%" (
   mkdir "%WV2%"

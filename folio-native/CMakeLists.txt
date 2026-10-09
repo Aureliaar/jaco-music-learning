@@ -1,9 +1,8 @@
 cmake_minimum_required(VERSION 3.22)
 project(FolioNative VERSION 0.1.0)
 
-# JUCE is a shallow clone beside this file (git clone --depth 1 --branch 8.0.10
-# https://github.com/juce-framework/JUCE.git JUCE), and the WebView2 SDK is the
-# unzipped NuGet package under deps/. Neither is checked in.
+# JUCE is the folio-native/JUCE submodule (8.0.10), and the WebView2 SDK is the
+# unzipped NuGet package under deps/ (fetched by build.cmd, not checked in).
 add_subdirectory(JUCE)
 set(JUCE_WEBVIEW2_PACKAGE_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/deps" CACHE PATH "" FORCE)
 
