@@ -1,122 +1,29 @@
 /* Folio — js/quests.js : the workspaces, the board and the log on disk.
 
-   The settings crossbar the pad raises; quests as workspaces, each holding a
-   whole page of its own, and the drills delivered into the log from outside;
-   the state's shape in storage and in quests/quest-log.json, and the sync
-   layer that keeps the two level — the debounced push, the conditional poll,
-   the narrow drill merge, and the read-only mode a static host gets; the
-   board read one lesson at a time, with its tabs, its favourites and the
-   player's own order; and the two side rails. */
+   Quests as workspaces, each holding a whole page of its own, and the drills
+   delivered into the log from outside; the state's shape in storage and in
+   quests/quest-log.json, and the sync layer that keeps the two level — the
+   debounced push, the conditional poll, the narrow drill merge, and the
+   read-only mode a static host gets; the board read one lesson at a time,
+   with its tabs, its favourites and the player's own order; the two side
+   rails; and what each voice sounds like.
+
+   What start opens is js/screens.js. The settings crossbar that used to live
+   here — eight slots, two drawings, and a chip row to turn between them — is
+   deleted (2026-09-07): an action bar away from the page is a shape with
+   holes asking to be filled, and start is a list of places instead. */
 "use strict";
 
-/* ================= the settings crossbar =================
-   Start raises it, as start raises the system menu in the game. While it is
-   up the eight crossbar slots are items rather than pitches, read in the
-   same order the crossbar always reads — left, up, right, down, then □ △ ○ ✕
-   — so the hand that knows the crossbar already knows this.
+/* ================= what each voice sounds like =================
+   A tone belongs to the workspace: it rides in the page and is written by
+   the ordinary autosave, so switching workspaces switches the sound with
+   everything else about the page. Stepping onto a tone is already wearing
+   it — there is nothing to confirm and no list to open.
 
-   What the mode is for is the left margin, and now it is the whole margin.
-   ↑ and ↓ walk the workspaces there, and walking is arriving — the
-   highlight moves and you are already in that workspace. ← and → turn the
-   lesson the margin is showing, because the margin shows one lesson at a
-   time, exactly as the log does and on the same tab. There is no list to
-   open first and nothing to confirm, so no slot opens a page of any kind:
-   the four directions are the margin, entire, and that is the mode.
-
-   The base octave is not here and is not a command: the pad writes
-   contours, counted from the note before, and the octave has nothing to say
-   to that. It lives on the keyboard's page up and page down, which is which
-   pair of octaves the two rows of note keys are.
-
-   The quest log is not here either: it is F3, and the margin has already
-   replaced what one would have come here to do. ✕ is the scene behind the
-   sheet — Shift+B on the keyboard, and otherwise nowhere on the pad. */
-var SETTINGS = [
-  { glyph:"←", label:"the lesson",
-    value:function(){ return tabLabel(currentTab()); },
-    run:function(){ railTab(-1); }, head:true },
-  { glyph:"↑", label:"the workspace",
-    value:function(){ return workspaceName(); },
-    run:function(){ railStep(-1); }, head:true },
-  { glyph:"→", label:"the lesson",
-    value:function(){ return tabLabel(currentTab()); },
-    run:function(){ railTab(1); }, head:true },
-  { glyph:"↓", label:"the workspace",
-    value:function(){ return workspaceName(); },
-    run:function(){ railStep(1); }, head:true },
-  /* ---- two seats, lent ----
-     In an echo workspace the folio is asking rather than playing, and these
-     two seats are the asking: □ plays the hidden call again and △ says how
-     much of the answer rang true. Nowhere else does either change — outside
-     an echo they are solo and mute, exactly as they have always been. The
-     keyboard's O and P are derived from these, not the other way round. */
-  { glyph:"□", label:function(){ return echoNow() ? "the call" : "solo"; },
-    value:function(){
-      return echoNow() ? "play it again" : (flag("solo", voice) ? "on" : "off"); },
-    run:function(){
-      if (echoNow()) echoPlay(); else toggleSolo();
-      renderSettings(); } },
-  { glyph:"△", label:function(){ return echoNow() ? "the answer" : "mute"; },
-    value:function(){
-      return echoNow() ? "judge it" : (flag("mute", voice) ? "on" : "off"); },
-    run:function(){
-      if (echoNow()) echoJudge(); else toggleMute();
-      renderSettings(); } },
-  { glyph:"○", label:"close",
-    value:function(){ return "back to the page"; },
-    run:function(){ closeSettings(); } },
-  { glyph:"✕", label:"the background",
-    value:function(){ return scenePref; },
-    run:function(){ cycleScenery(); renderSettings(); } }
-];
-/* the diamond each cluster is drawn as: left, up, right, down. The points
-   sit further out than the sides do, because the sides are wide and the
-   points are not: a diamond of four boxes only reads as a diamond while no
-   two of them touch — and at 26 and 74 the two points did touch. A slot is
-   as wide as it is *plus its padding*, which is half a rem the arithmetic
-   had not counted, so ← and → overlapped by a few pixels and the lesson's
-   name ran into itself. They stand at 22 and 78 now, a rem clear of each
-   other on the widest board and still clear on the narrow one. */
-var XPOS = [["22%","50%"],["50%","12%"],["78%","50%"],["50%","88%"]];
-var xslots = [];
-function buildSettings(){
-  var i, host, p, el, g, l, v;
-  for (i = 0; i < 8; i++){
-    host = (i < 4) ? xbarPad : xbarFace;
-    p = XPOS[i % 4];
-    el = document.createElement("div");
-    el.className = "xslot";
-    el.style.left = p[0];
-    el.style.top = p[1];
-    el.style.transform = "translateY(-50%)";
-    g = document.createElement("span"); g.className = "xg";
-    l = document.createElement("span"); l.className = "xl";
-    v = document.createElement("span"); v.className = "xv";
-    el.appendChild(g); el.appendChild(l); el.appendChild(v);
-    el.addEventListener("click", (function(n){
-      return function(){ runSetting(n); };
-    })(i));
-    host.appendChild(el);
-    xslots.push({ el: el, glyph: g, label: l, value: v });
-  }
-}
-buildSettings();
-
-/* ================= the crossbar's modes =================
-   L1 and R1 turn the crossbar itself: the same eight slots, redrawn as
-   another room. Settings is the first drawing; the scriptorium is the
-   second — what the two voices sound like, walked as the workspace rail is
-   walked. Stepping onto a tone is already wearing it: there is nothing to
-   confirm and no list to open, exactly as in the settings drawing.
-
-   ↑ and ↓ are the lead's rail and ← and → are the bass's, which is the
-   voice strip's own arrangement turned on its side — the lead above, the
-   bass beside it — and it means the two rails never share a direction and
-   the thumb never has to say which voice it meant.
-
-   The choice belongs to the workspace. It rides in the page and is written
-   by the ordinary autosave, so switching workspaces switches the sound with
-   everything else about the page. */
+   Where it is walked is the voices screen (js/screens.js): one row a voice,
+   ← and → along its rail, and the row the caret is on is the voice the hands
+   are in. The chord lane has no rail of its own yet and is played by the
+   lead's own tone. */
 function toneRail(v){ return TONE_RAIL[v] || TONE_RAIL[0]; }
 function toneNow(v){
   if (!Array.isArray(doc.tones)) doc.tones = [null, null];
@@ -140,61 +47,10 @@ function toneStep(v, d){
   /* a kit is fetched the first time it is stepped onto, not at boot: they are
      no longer all small, and the piano alone is two megabytes */
   loadKit(next, refreshTones);
-  renderSettings();
+  if (typeof renderScreen === "function") renderScreen();
   say(VOICE_NAMES[v] + " · " + toneLabel(next) +
       (toneHere(next) ? "" : " · not on this folio's shelf — its own tone plays"));
 }
-var SCRIPTBAR = [
-  { glyph:"←", label:"the bass",
-    value:function(){ return toneValue(1); },
-    run:function(){ toneStep(1, -1); }, head:true },
-  { glyph:"↑", label:"the lead",
-    value:function(){ return toneValue(0); },
-    run:function(){ toneStep(0, -1); }, head:true },
-  { glyph:"→", label:"the bass",
-    value:function(){ return toneValue(1); },
-    run:function(){ toneStep(1, 1); }, head:true },
-  { glyph:"↓", label:"the lead",
-    value:function(){ return toneValue(0); },
-    run:function(){ toneStep(0, 1); }, head:true },
-  { glyph:"□", label:"" },
-  { glyph:"△", label:"" },
-  { glyph:"○", label:"close",
-    value:function(){ return "back to the page"; },
-    run:function(){ closeSettings(); } },
-  { glyph:"✕", label:"" }
-];
-var XBAR_MODES = [
-  { name:"settings",    slots:SETTINGS },
-  { name:"scriptorium", slots:SCRIPTBAR }
-];
-var xbarMode = 0;
-function xbarSlots(){ return XBAR_MODES[xbarMode].slots; }
-function stepXbarMode(d){
-  xbarMode = (xbarMode + d + XBAR_MODES.length) % XBAR_MODES.length;
-  renderSettings();
-  say(XBAR_MODES[xbarMode].name + " · L1 R1 turn the crossbar");
-}
-function xbarStep(d){       /* what ↑↓ mean depends on the drawing */
-  if (XBAR_MODES[xbarMode].name === "scriptorium") toneStep(0, d);
-  else railStep(d);
-}
-var xchips = [];
-(function buildChips(){
-  var row = document.createElement("div");
-  row.className = "xchips";
-  for (var i = 0; i < XBAR_MODES.length; i++){
-    var c = document.createElement("span");
-    c.className = "xchip";
-    c.textContent = XBAR_MODES[i].name;
-    c.addEventListener("click", (function(n){
-      return function(){ xbarMode = n; renderSettings(); };
-    })(i));
-    row.appendChild(c);
-    xchips.push(c);
-  }
-  settingsEl.insertBefore(row, settingsEl.firstChild);
-})();
 /* the strip answers the mouse too: a name chooses that voice, its mark
    under it takes it away and gives it back */
 for (var i = 0; i < VOICES; i++){
@@ -205,55 +61,10 @@ for (var i = 0; i < VOICES; i++){
     return function(){ toggleMute(n); };
   })(i));
 }
-function renderSettings(){
-  var slots = xbarSlots();
-  for (var i = 0; i < 8; i++){
-    var s = slots[i], r = xslots[i];
-    r.glyph.textContent = s.glyph;
-    /* a slot may name itself afresh on every render — the echo's two do */
-    r.label.textContent = (typeof s.label === "function" ? s.label() : s.label) || "—";
-    r.value.textContent = s.run ? s.value() : "";
-    r.el.className = "xslot" + (s.run ? "" : " none") + (s.head ? " head" : "");
-  }
-  for (i = 0; i < xchips.length; i++)
-    xchips[i].classList.toggle("on", i === xbarMode);
-}
-function runSetting(i){
-  var s = xbarSlots()[i];
-  if (!s || !s.run){ say("nothing on that slot yet"); return; }
-  s.run();
-}
+/* the two pages that are not the folio: the board, and whatever screen start
+   has open. Note entry reaches neither. */
 function anyPage(){
-  return questsEl.classList.contains("on") || settingsEl.classList.contains("on") ||
-         keysOpen();
-}
-/* the body carries the mode so that the title can step back behind the
-   crossbar standing over it; the folio itself is never touched */
-function markSettings(on){
-  if (on) document.body.setAttribute("data-settings", "on");
-  else document.body.removeAttribute("data-settings");
-}
-function closeSettings(){
-  if (!settingsEl.classList.contains("on")) return;
-  settingsEl.classList.remove("on");
-  markSettings(false);
-  applyViz();
-  renderRails();                   /* the margin stops being the pad's */
-  say("‸ cursor row");
-}
-function toggleSettings(){
-  var on = !settingsEl.classList.contains("on");
-  settingsEl.classList.toggle("on", on);
-  markSettings(on);
-  if (on) questsEl.classList.remove("on");
-  applyViz();
-  /* start has no memory: the crossbar always rises in its first drawing,
-     and the other modes are somewhere you go, not somewhere you wake */
-  if (on) xbarMode = 0;
-  if (on) renderSettings();
-  renderRails();
-  say(on ? "settings · ↑↓ the workspace, ←→ the lesson · the margin, in the thumb"
-         : "‸ cursor row");
+  return questsEl.classList.contains("on") || screenOpen();
 }
 
 /* ================= quests as workspaces =================
@@ -537,12 +348,41 @@ function docHasNotes(d){
 function questPage(id){ return (id === qActive) ? doc : (wsDoc[id] || null); }
 function questHasContent(id){ return docHasNotes(questPage(id)); }
 
+/* ---- and one way in that does not come from the hands ----
+   `?quest=<id>` in the address opens on that workspace: a deep link, so that
+   a page delivered from outside can be handed over as a link rather than as
+   directions to a row on a board. It chooses which page the folio boots
+   holding, exactly as the log's own `active` does, and nothing more — the
+   next autosave writes wherever you actually are.
+
+   It is spent by the HANDS and by nothing else. Reading it once and throwing
+   it away does not work: the log arrives more than once — the browser's own
+   cache first, then the server's copy over the top, and then a poll whenever
+   the file changes — and every one of those carries an `active` of its own
+   that would put the link's page straight back down again. So the link
+   stands until the player actually walks somewhere (switchWorkspace, the one
+   door), and until then every reading of the log lands on the page the link
+   named. An id this folio does not have — a browser that has never been here
+   and is still waiting on the server — is simply not honoured yet, and is
+   honoured the moment the log that has it arrives. An id that is a tool's,
+   or that nothing answers to, is never honoured at all. */
+var linkQuest = null;
+function questFromLocation(){
+  var m = /(^|[?&])quest=([^&]*)/.exec((typeof location === "object" && location.search) || "");
+  return m ? decodeURIComponent(m[2]) : null;
+}
+linkQuest = questFromLocation();
+function takeLinkQuest(){
+  return (linkQuest && questById(linkQuest) && !isTool(linkQuest)) ? linkQuest : null;
+}
+
 /* the whole of the switch: put the page back, pick up another one */
 function switchWorkspace(id){
   /* a tool's run is bounded by the workspace and nothing else: every road out
      of it — the margin under start, a row on the board, a click in the
      margin — comes through here, so ending it here ends it everywhere */
   if (quizOn() && id !== QUIZ_ID) quizEnd();
+  linkQuest = null;                    /* the hands have moved; the link is spent */
   stash();
   qActive = id || null;
   /* the caret follows the workspace, by whichever road it was reached —
@@ -558,6 +398,9 @@ function switchWorkspace(id){
   if (qActive) activeTab = questGroup(questById(qActive));
   doc = workspaceDoc(qActive);
   cursor = 0;
+  /* the pace, the window and the hint belong to the page that was left, and
+     nothing carries them to the next one */
+  echoReset();
   if (playing) stop();
   save();
   renderAll(); renderQuests();
@@ -581,7 +424,7 @@ function sayWorkspace(id){
   /* an echo workspace says what it is on arrival, because two of its
      controls do not mean what they mean anywhere else */
   if (echoNow()){
-    say(q.short + " · the echo · □ the call, △ judge it");
+    say(q.short + " · the echo · O plays the call, P judges it · on the pad, start then □ and △");
     return;
   }
   say(q.short + " · its own page" + (questHasContent(id) ? "" : ", empty"));
@@ -627,6 +470,10 @@ function workspaceName(){
   var q = activeQuest();
   return q ? q.short : "free play";
 }
+/* ---- the workspace rail, walked ----
+   Kept for the mouse and for whatever wants to step to the next workspace
+   without going through the board. The pad reaches the workspaces through
+   the quests screen now; nothing under start walks this rail any more. */
 function railStep(d){
   var order = railOrder(), n = order.length;
   var at = order.indexOf(qActive);
@@ -634,17 +481,13 @@ function railStep(d){
   var id = order[((at + d) % n + n) % n];
   selectById(id);
   switchWorkspace(id);
-  if (settingsEl.classList.contains("on")) renderSettings();
   sayWorkspace(id);
 }
 /* ← and → under the crossbar: the margin turns to another lesson, and the
    board turns with it — one tab, read in two places. Nothing is entered by
    turning a page; the workspace you are in is the workspace you are in
    until ↑ or ↓ walks you into another. */
-function railTab(d){
-  moveTab(d);
-  if (settingsEl.classList.contains("on")) renderSettings();
-}
+function railTab(d){ moveTab(d); }
 /* C on the row, ○ on the pad: the same key it always was, writing to the
    rulings file instead of into the log — one id, and nothing else said */
 /* neither mark means anything on a tool: there is no work in it to finish
@@ -755,6 +598,8 @@ function applyState(o){
   }
   qActive = (typeof o.active === "string" && questById(o.active) && !isTool(o.active))
               ? o.active : null;
+  var linked = takeLinkQuest();        /* ?quest=<id>, if the link named one */
+  if (linked) qActive = linked;
   /* the caret starts where the work is, as it goes where the work goes */
   qsel = 0;
   if (qActive)
@@ -1523,10 +1368,85 @@ function layoutRailRows(){
    the crossbar's ← and → are turning, said where it is being turned */
 function renderRailTabs(){ drawTabs(rtabs, "rtab", false); }
 buildRailRows();
+/* ---- the echo's block in the right margin ----
+   Four actions no other page has, all of them under a trigger, said on the
+   page they are done on. Two of them are simply a seat and what it does; the
+   other three carry a state, and the state is said directly under the seat
+   that turns it — which pace, which stretch of the page, whether the notes
+   are shown — so that reading the margin is reading where the drill stands.
+
+   It is rebuilt whole rather than patched: it is nine short lines and it is
+   drawn only when the page in hand is an echo's. */
+function echoRow(key, meaning){
+  var r = document.createElement("div"), k, m;
+  r.className = "erow";
+  k = document.createElement("span"); k.className = "ekey"; k.textContent = key;
+  m = document.createElement("span"); m.className = "emean"; m.textContent = meaning;
+  r.appendChild(k); r.appendChild(m);
+  return r;
+}
+/* the values a seat turns between, with the one in force in ink under a
+   gilt rule: the state is shown by which word is lit, never spelled out in
+   a sentence */
+function echoPick(words, at){
+  var r = document.createElement("div"), i, w;
+  r.className = "epick";
+  for (i = 0; i < words.length; i++){
+    w = document.createElement("span");
+    w.textContent = words[i];
+    if (i === at) w.className = "on";
+    r.appendChild(w);
+  }
+  return r;
+}
+function echoState(text){
+  var r = document.createElement("div");
+  r.className = "estate";
+  r.textContent = text;
+  return r;
+}
+/* a bar is four steps, and both are counted from one, because the page's own
+   numbers down the margin and along the foot of the drawing are counted
+   from one */
+function echoBar(i){ return Math.floor(i / 4) + 1; }
+function echoWindowLine(){
+  var w = echoWindow();
+  if (!w) return "the whole page";
+  return "bars " + echoBar(w.from) + " to " + echoBar(w.to) +
+         " · steps " + (w.from + 1) + " to " + (w.to + 1);
+}
+/* the block is touched on every autosave, which is on every note, so it is
+   rebuilt only when what it says has actually moved — the same guard the
+   left margin's arrangement keeps */
+var echoShape = "";
+function renderRailEcho(){
+  var e = echoNow(), w = echoWindow(), h, hair, sig;
+  sig = !e ? "" : [echoPace, w ? w.from : -1, w ? w.to : -1, echoHint ? 1 : 0].join(":");
+  if (sig === echoShape) return;
+  echoShape = sig;
+  while (railecho.firstChild) railecho.removeChild(railecho.firstChild);
+  if (!e) return;
+  h = document.createElement("h4");
+  h.textContent = "the echo";
+  hair = document.createElement("div");
+  hair.className = "hair";
+  railecho.appendChild(h);
+  railecho.appendChild(hair);
+  railecho.appendChild(echoRow("L2 + select", "plays the call"));
+  railecho.appendChild(echoRow("R2 + select", "judges the answer"));
+  railecho.appendChild(echoRow("L2 + L1 · R1", "slower · faster"));
+  railecho.appendChild(echoPick(ECHO_PACE_NAMES, echoPaceAt()));
+  railecho.appendChild(echoRow("L2 + L3", "the loop starts here"));
+  railecho.appendChild(echoRow("R2 + L3", "the loop ends here"));
+  railecho.appendChild(echoState(echoWindowLine()));
+  railecho.appendChild(echoRow("L2 + R3", "where the notes are"));
+  railecho.appendChild(echoPick(["shown", "hidden"], echoHint ? 0 : 1));
+}
 function renderRails(){
-  /* while start is up the d-pad is walking this list, so the line it is on
-     is washed as well as marked — the pad's own highlight, and calm */
-  var nav = settingsEl.classList.contains("on");
+  /* while the quests screen is up the caret is walking the board, and the
+     margin says the same thing the board does — the line you are in is
+     washed as well as marked, and it never blinks */
+  var nav = questsEl.classList.contains("on");
   renderRailTabs();
   layoutRailRows();
   rrows[0].el.classList.toggle("act", !qActive);
@@ -1545,6 +1465,7 @@ function renderRails(){
   railtitle.textContent = q ? plainName(q) : "Free play";
   railtext.textContent  = q ? (q.text || "") : "No constraint. Whatever you write here stays here.";
   railteach.textContent = (q && q.teaches) ? "Teaches: " + q.teaches : "";
+  renderRailEcho();
   /* the margin's last line is the quest's standing, or — where the workspace
      is a tool — the run's own tally, which is the whole of its display */
   railstate.textContent = !q ? "F3 for the quest log"

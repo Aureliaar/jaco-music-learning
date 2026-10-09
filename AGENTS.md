@@ -5,6 +5,42 @@ grows one primitive per lesson. The tool is the cage; the music is the
 point. Read `CURRICULUM.md` (lessons + quest system), `QUESTS.md` (L1
 board + rules), `BUDGET.md` (HUD budget ledger) before proposing anything.
 
+## How we work together
+
+- Be warm, candid, and conversational. This is a long-running creative
+  collaboration, so write like a thoughtful studio partner rather than a terse
+  build bot.
+- Lead with the useful result, then explain the reasoning in plain language.
+  Keep routine updates compact, but give design and music questions room to
+  breathe.
+- Surface uncertainty and disagreements directly, with concrete evidence. Ask
+  before making a choice that would change the player's creative direction.
+- Preserve the project's vocabulary and slightly storybook tone where it helps;
+  don't force whimsy into logs, commands, test output, or bug reports.
+- Never confuse friendliness with cheerleading. Honest critique is more useful
+  here than automatic agreement.
+
+### When we're talking about music
+
+- Meet the player at the ear, not at the textbook. Start with what can be heard,
+  felt, compared, or tried; introduce a theory name afterward only when it makes
+  the next conversation easier.
+- Treat the player's own descriptions—weight, pull, color, distance, weather,
+  or anything else—as useful musical evidence. Translate them when helpful;
+  never correct them merely for being nonstandard.
+- Prefer one small, playable experiment over a lecture or a pile of exercises.
+  Say what to listen for without promising what the player must hear.
+- For composition feedback, a good natural shape is: what is already audible,
+  where the interesting choice or tension lives, then one possible experiment.
+  Use that shape when it fits, not as a mandatory template.
+- Praise specifically and sparingly: name the musical decision or newly heard
+  distinction that earned it. Avoid generic encouragement and teacherly grading.
+- Distinguish observation, interpretation, and taste. The player should be able
+  to tell whether something is in the notes, inferred from them, or simply one
+  artistic preference.
+- Keep the exchange alive and human. Ask a focused question when the answer will
+  genuinely shape the next thought; don't tack a question onto every response.
+
 **Second purpose (2026-08-11): this project is also an untrained-ear lab**
 for TheoryOfMagic's scored-encounters design — read
 `E:\experiments\TheoryOfMagic\Docs\design\wiki\music-mechanics.md`. Part of
@@ -34,15 +70,44 @@ interval *direction* is not natively readable, let alone magnitude.
   read-only mode) and `/auditor.html`. The deployed quest-log is a
   snapshot — redeploy after new composing.
 - `folio.html` opened via `file://` works offline, no sync.
+- `folio-reaper.cmd` starts the native-MIDI/REAPER renderer without
+  touching the Folio server. Folio remains the sole UI, clock, and transport.
+  **Never own tone on this machine** (player ruling, 2026-09-11): the local
+  server writes the rack promise into every page it serves, so without the
+  rack Folio shows the rack-fault panel and plays nothing. Never propose own
+  tone as a workaround.
+- **Folio links go through the Hub:** `http://localhost:7777/go/daw/` plus
+  the page's own path and query, e.g.
+  `http://localhost:7777/go/daw/?quest=zoltraak`. The Hub puts it on the
+  Folio tab in the Hub window (the window the player works in; registry
+  `"browser": "hub"`), or in Folio's managed browser when the Hub window is
+  not up, never as a second Folio tab. Never hand the player a bare
+  `localhost:4173` link: whatever browser it opens in may not see the rack's
+  MIDI port. A page that loses the port asks the Hub itself (`/api/recover`
+  → Hub `/api/browser/recover`): the Hub window or managed browser holding it
+  is restarted with all its tabs; a page anywhere else is moved to the Hub
+  window. The complete contract,
+  fixed channel/patch map, lifecycle, rebuild path, and diagnosis are in
+  `rack/README.md`; read that before changing either side of the bridge.
+- **Seeing what the player sees:** the `experiments-hub` MCP server (user
+  scope for Claude Code, `~/.codex/config.toml` for Codex) has
+  `list_browser_tabs`, `read_console`, `screenshot_tab` and `evaluate_in_tab`
+  over the Hub window (`browser: "hub"`) and each managed profile, plus
+  `get_logs` (a server the Hub started) and `hub_log` (hubd itself). Over
+  HTTP the same views are at `http://localhost:7777/api/inspect/*`; the route
+  list is in the header of `aureontools/hub/hub-inspect.mjs`. Inspect, don't
+  restart: never close or restart the player's browser to look at it.
 
 ## Architecture (all zero-dependency)
 
 THE CODE IS THE SOURCE OF TRUTH: many sessions/agents have modified it;
 always read it for current bindings — do not trust docs or memory for
-keymaps. The F1 key page is DELETED (2026-08-01, "too rot prone"): the
-truth about bindings is `js/entry.js`, and the living key help is the
-contextual **key overlay** F1 raises — the crossbar's drawing of the
-controls, laid over the folio (the hint strip it replaced is gone).
+keymaps. **There is no controls reference of any kind, by ruling** — the
+F1 key page (2026-08-01, "too rot prone"), the hint strip, and the key
+overlay that replaced them (2026-09-07) are all DELETED. A screen that has
+to explain the controls is an admission the controls failed: what a control
+does is said on the screen the control lives on, in its own legend. Do not
+propose reviving one. The truth about bindings is `js/entry.js`.
 
 - `folio.html` — the markup and the list of scripts. It
   carries a MAP comment at the head saying what lives where. **Read the map
@@ -51,7 +116,7 @@ controls, laid over the folio (the hint strip it replaced is gone).
 - `js/*.js` — the instrument, split 2026-08-01, loaded in this order:
   `state.js` (the page as data, holds arithmetic, key/degrees, the
   validator, the autosave) · `views.js` (column, roll, scenery, renderers,
-  the key overlay, `say()`) · `audio.js` (timbres, lookahead scheduler,
+  `say()`) · `audio.js` (timbres, lookahead scheduler,
   transport) · `edit.js` (writing, length, contour, voices, key, tempo,
   loop, the pages) · `chords.js` (**the chord lane, L5**: the `chords` field
   read strictly, the shapes, the near/rooted voicing arithmetic, and the
@@ -108,25 +173,13 @@ controls, laid over the folio (the hint strip it replaced is gone).
   for. **No test may read or write it** either; migrate an old log with
   `node scripts/migrate-rulings.mjs` (tab closed).
 - `auditor.html` — blind lineup listening; `?ids=a,b,c` picks entries.
-- `tests/` — restructured 2026-08-01, pared 2026-08-01. `tier1.js` (342
-  checks) is data integrity only: a page out and back (including `tones`),
-  the quest log's v2 schema, the WAV round-trip, the checked-in kits read
-  as the page reads them, the kit API, server.mjs driven for real, a boot
-  onto an existing log. **It is
-  always-green, no exceptions: run it first and last, every time.** Then
-  `reltest.js` (726, the instrument's input semantics, including the
-  multi-frame pad section that used to be leaptest.js — that file is gone),
-  `bootcheck.js` (207, real-Chrome boot and layout: only what a browser can
-  prove), `drilltest.js` (40, live drill delivery), `statictest.js` (50,
-  the deploy artifact and the read-only copy). `rig.js` is the shared bench
-  for the fake-DOM harnesses and loads the app from whatever `folio.html`
-  actually names; `cdp.js` is the one CDP driver. Test LOC 4876 against
-  5779 of app (folio.html + folio.css + js/*.js + server.mjs). Total test
-  LOC is kept **at or under app LOC** — extend by deleting something first.
-  NOTE: bootcheck has two timing-sensitive clusters (the pitch guide's
-  1300 ms fade, and pad taps that need the animation frame) that flake on a
-  loaded machine; a clean re-run with `rm -rf tests/prof-boot` first is the
-  check, and the profile is NOT wiped between runs by the harness itself.
+- `tests/` — replaced 2026-08-28 with one real-Chrome suite: `e2e.js`, seven
+  user journeys covering boot/render, keyboard composition, gamepad
+  composition, autosave/reload, live drill+ruling sync, the sample shelf, and
+  the static read-only build. `cdp.js` is its zero-dependency Chrome driver.
+  Run `npm test --prefix tests`. The harness uses only temp logs, rulings,
+  kits, build inputs, and browser profiles; it never reads or writes the
+  player's `quests/quest-log.json` or `quests/rulings.json`.
 
 ## Critical rules learned the hard way
 
@@ -167,10 +220,29 @@ controls, laid over the folio (the hint strip it replaced is gone).
    pair is the semitone hatch, the *time* pair **carries the note** one
    step, its written length with it — so ↑↓ in the column, ←→ in the
    roll, trading places exactly as the bare d-pad's pairs do.
-   The base octave is no longer on the pad's shoulders: it is the settings
-   crossbar's ←→, and page up/down. Start still raises the settings
-   crossbar, which now overlays the folio instead of replacing it.
+   The base octave is page up/down on the board and has no pad seat.
    Range C2–C6, MIDI 36–84.
+   **The cross-hotbar idiom lives on the PAGE, never behind start**
+   (2026-09-07): the triggers, bumpers and face buttons are the hotbar
+   because they write notes every few seconds. Start is a *list of
+   places* — folio · voices · quests · settings · mirrors, turned with
+   L1/R1 — because an action bar away from the page is a shape with
+   holes asking to be filled, which is how the folio grew a hidden
+   second drawing and a slot that answered "nothing on that slot yet".
+   Inside a screen the rule is mechanical and has no per-row
+   exceptions: **←→ turns a value and you stay; ✕ finishes an act and
+   you are back on the page; ○ is back; start puts it all down from any
+   depth.** The one seam is ○ on the quests screen, which is still
+   "complete" pending a ruling on completion itself.
+   **No screen ever replaces the drawing** (2026-09-08): the folio stays
+   visible under every one of them. The ground steps down a shade to a
+   desk and the folio becomes a lit sheet on it; the page washes to about
+   a third of its ink, keeping the playhead row legible; whatever is live
+   is lit and rimmed in gilt. The quest log lives in the two margins,
+   because **a quest IS a workspace** — the left margin's list and the
+   log were always one list drawn twice. Do not propose a centred board,
+   a full-screen mode, or a darker watermark. See
+   `briefs/start-screens.md` and `js/screens.js`.
 4. **Build on relations, never on identities** (player ruling 2026-08-11).
    Relational hearing here is strong — tension, territory, sameness,
    interval character — while putting a *name* on a single sound is a
@@ -186,30 +258,22 @@ controls, laid over the folio (the hint strip it replaced is gone).
 5. **Migraine rules (revised):** only grid/stripe patterns and extreme
    contrast are forbidden. Texture/gradients fine. Nothing blinks; calm
    motion. Do not over-apply.
-6. **Agent workflow that works:** one Opus agent per feature, prompt
-   includes: read folio.html first as source of truth, migraine rules,
-   e.code rule, the testing policy below, commit with Co-Authored-By,
-   never commit BUDGET.md/QUESTS.md/quest-log.json unless told. Agents
-   verify in real headless Chrome, not by inspection (a layout bug
-   shipped when one didn't).
-7. **Testing policy (2026-07-31, replaces "extend and keep all green"):**
-   there is a **complexity budget: total test LOC ≤ app LOC** (folio.html
-   + server.mjs), target ~0.5:1 after housekeeping. Agents RUN the fast
-   harnesses (green-or-stop for failures they caused; pre-existing
-   failures reported verbatim, never fixed, never papered over), WRITE
-   new checks only for what must outlive rewrites — data formats
-   (save/load, quest-log schema, sync/PUT) and input semantics (bindings
-   → model changes); never layout/styling/copy. UI verification =
-   real-Chrome screenshots opened and DESCRIBED (the only method that
-   has caught layout bugs here). DELETE checks a change obsoletes.
-   Reports must quote the literal "N passed, M failed" harness tail
-   lines, never totals from memory. Rhythm: feature stages, then a
-   periodic **housekeeping two-step** (refactor + test shrink) whenever
-   the budget is breached or a lesson passes. Known debt: 7 reltest
-   failures pin live quest-log contents — slated for deletion. Future
-   idea, parked, skepticism on record (self-use tool, not a 10k-user
-   app): 2-agent TDD split — one writes tests, one writes code, minimal
-   cross-reading.
+6. **Implementation workflow that works:** keep one feature per task. Start by
+   reading folio.html as the source of truth, then carry the migraine rules,
+   e.code rule, and testing policy below through the change. Never commit
+   BUDGET.md, QUESTS.md, quest-log.json, or rulings.json unless told. Verify UI
+   work in real headless Chrome, not by inspection (a layout bug shipped when
+   that check was skipped).
+7. **Testing policy (2026-08-28, replaces the complexity ledger):** there are
+   seven end-to-end journeys and no unit suite. Run `npm test --prefix tests`
+   before and after a change. A new test must protect a distinct player
+   journey whose loss would plausibly destroy work or make the instrument
+   unusable; do not add assertions for helper branches, permutations,
+   styling, copy, exact DOM structure, or bugs already obvious in an existing
+   journey. Keep the public count in single digits: strengthen or replace a
+   journey instead of growing a second suite. UI verification still includes
+   opening and describing `tests/e2e.png`, because screenshots have caught
+   failures assertions missed. Report the literal `N passed, M failed` tail.
 8. Windows console is cp932 — Python on quest-log.json needs
    `encoding='utf-8'` both directions.
 
@@ -256,10 +320,10 @@ koto, not the guitar that was wanted; the kit stays on disk so old
 pages still play it; a future guitar takes the seat).
 
 **Design rulings 2026-08-01 (do not re-litigate):**
-- The F1 key page is DELETED (rot-prone). F1 raises the key overlay now,
-  and its keydown is still swallowed whatever it does — unhandled, F1
-  opens Chrome help, focus is lost, rAF stops, and the playhead and
-  gamepad poll die with it.
+- The F1 key page is DELETED (rot-prone), and so is the key overlay that
+  replaced it (2026-09-07). F1 now does nothing, but its keydown is still
+  swallowed — unhandled, F1 opens Chrome help, focus is lost, rAF stops,
+  and the playhead and gamepad poll die with it.
 - Tonic, mode and tempo have NO runtime controls, by design: the header
   shows `tempo · key` and nothing edits them. Tonic is fixed per
   workspace (chromaticism is the spice channel), tempo comes from the
@@ -268,9 +332,9 @@ pages still play it; a future guitar takes the seat).
 - The meta line is tempo and key only.
 
 **Queued builds, in order (briefs in `briefs/`, build serially):**
-1. ~~`briefs/key-overlay.md`~~ — MERGED 2026-08-01, 1 feature credit
-   spent: the strip is gone, F1 raises the overlay, top-right mark,
-   crossbar-chip overlap fixed (warranty).
+1. ~~`briefs/key-overlay.md`~~ — merged 2026-08-01, then **DELETED
+   2026-09-07** with the whole idea of a controls reference. The brief
+   is gone; do not revive it.
 2. `briefs/duplicate-workspace.md` — duplicate/promote a workspace
    (quest → "II", free play → "To Be Named"); 1 small feature.
 The **basic Scriptorium is MERGED** (2026-08-02, the 2 banked small
@@ -278,9 +342,10 @@ features spent together; the F4 room's demolition was warranty). Every
 workspace says what its two voices sound like: the page doc carries an
 optional `tones:[lead,bass]` (null = the voice's own synth tone, else a
 kit name), read permissively and written only where a voice wears one.
-The crossbar's **scriptorium** drawing (L1/R1 turn to it) walks two
-rails — d-pad ↑↓ the lead, ←→ the bass — and walking is arriving,
-autosaved with the page. Lead rail: own tone · piano · music box
+The **voices screen** (start → voices) walks the rails — one row a
+voice, ← and → along its rail — and walking is arriving, autosaved
+with the page. It replaced the crossbar's scriptorium drawing on
+2026-09-07. Lead rail: own tone · piano · music box
 (pluck retired 2026-08-04). Bass rail: own tone · pluck bass · sub.
 Kits are fetched on
 demand (never at boot — the piano is 2 MB), over `/api/kits` where
@@ -296,11 +361,9 @@ structure-view idea (pattern placement + variation, noted 2026-08-01 —
 build at the arrangement lesson, L8 after renumbering, not before). Design against migraine rules;
 sigil/parchment idiom.
 
-Housekeeping done (needs no repeating): tests restructured twice —
-tier-1 extracted; live-log reads gone (harnesses seed their own log via
-`FOLIO_LOG`); leaptest folded into reltest; enumeration cut in favor of
-contracts (2026-08-01 pare-down: app 4760, tests 4449 LOC, ratio
-0.93:1 — the remaining app fat is prose comments, kept on purpose).
+Housekeeping done (needs no repeating): the former 1,300+-assertion mixed
+unit/fake-DOM/browser suite was removed 2026-08-28. Seven isolated real-user
+journeys are the suite now; do not rebuild the test matrix or its LOC ledger.
 `folio.html` split into `folio.css` + `js/*.js` (see Architecture). Old
 worktrees daw-l3 / daw-l3-holds / daw-l3-demo / daw-pare are merged and
 removable; the :4179 and :4182 demo servers are STALE — the live

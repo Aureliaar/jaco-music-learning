@@ -43,8 +43,14 @@ var KIT_CUT   = 5500;                 /* the courtesy the synth voices always ha
    by hand, and they are simply not on the rail. */
 var TONE_RAIL = [
   [null, "piano", "music-box"],               /* the lead */
-  [null, "pluck-bass", "sub"]                 /* the bass */
+  [null, "piano", "pluck-bass", "sub"]        /* the bass */
 ];
+/* the piano stands on both rails, and is the one tone that does. It is what
+   a transcription page needs: a call taken off a two-handed piano recording
+   must be able to sound in the folio the way it sounds on the record, and a
+   bass that can only pluck or drone cannot answer that. It is also the base
+   the player asked for — the same instrument under both hands, and the other
+   choices arranged around it. */
 /* the lead's pluck is RETIRED from the rail (player ruling 2026-08-04): a
    Karplus-Strong string with no body reads as a koto, and a koto was never
    what was wanted. The kit stays on the shelf — a page that wears "pluck"
@@ -392,6 +398,5 @@ function toneBoot(){
 }
 /* a kit arriving changes what the rails say, and nothing else on the page */
 function refreshTones(){
-  if (typeof settingsEl !== "undefined" && settingsEl &&
-      settingsEl.classList.contains("on")) renderSettings();
+  if (typeof screenOpen === "function" && screenOpen()) renderScreen();
 }

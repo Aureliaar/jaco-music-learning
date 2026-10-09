@@ -121,7 +121,7 @@ paper over the gap with wishful wording.
 
 If quest delivery ever touches UI: no grid/stripe patterns, no extreme
 contrast, nothing blinks. Texture and gradients are fine. (Migraine
-rules — see `CLAUDE.md`.)
+rules — see `AGENTS.md`.)
 
 ## Pre-flight checklist
 

@@ -16,18 +16,21 @@
                       the key and its degrees, the validator, the autosave
        js/views.js    the page drawn: the column, the roll, how much of the
                       page each of them has room for, the scenery, the
-                      renderers, the key overlay, say()
+                      renderers, say()
        js/audio.js    the two timbres, the lookahead scheduler, the transport
        js/edit.js     what the hands do: writing, length, contour, the voices,
                       the key, the tempo, the loop, the pages
-       js/chords.js   the chord lane: a degree and a shape in a cell, the
-                      pitches worked out from the cell before it, and the
-                      lane's own writing
+       js/chords.js   the chord lane: a degree and a shape in a cell, a
+                      nearest voicing frozen when written, and the lane's
+                      own writing
        js/echo.js     the echo: the hidden call played, the answer judged
        js/quiz.js     up or down: a fresh pair of notes, one press, the next,
                       and the log kept of every answer
        js/quests.js   workspaces, drills, the quest log on disk and its sync,
                       the board's tabs, the two side rails
+       js/screens.js  what start opens: the folio, the voices, the quests,
+                      the settings, the mirrors — and the one rule that says
+                      which presses put the screen down again
        js/tones.js    what the voices sound like: the WAV read, the kits off
                       the shelf, and the sampled voice
        js/entry.js    the keyboard by physical position, and the gamepad
@@ -60,30 +63,16 @@
     <div class="rollbase" id="rollbase"></div>
   </section>
 
-  <section class="settings" id="settings" aria-label="settings crossbar">
-    <div class="xbars">
-      <div class="xbar" id="xbarpad" aria-label="the d-pad cluster"><div class="xhub"></div></div>
-      <div class="xbar" id="xbarface" aria-label="the face cluster"><div class="xhub"></div></div>
+  <section class="sviews" id="screens" aria-label="the screens" aria-hidden="true">
+    <div class="sview svoices" id="sv-voices" aria-label="the voices"></div>
+    <div class="sview sset" id="sv-settings" aria-label="the settings"></div>
+    <div class="sview smirr" id="sv-mirrors" aria-label="the mirrors">
+      <p>One cell of music pointed at from several places — a write at any of
+      them lands at all of them. It is in the log already and has no controls
+      yet; the arrangement lesson brings them, and this is where they will be.</p>
     </div>
   </section>
 
-  <section class="quests" id="quests" aria-label="quest log">
-    <h2>The quest log</h2>
-    <div class="qfree" id="qfree">
-      <span class="qcaret"></span><span class="qsigil" id="qfreesigil"></span>
-      <div>free play &mdash; no constraint</div><span class="qstat"></span><span class="qfav"></span>
-    </div>
-    <div class="qtabs" id="qtabs" role="tablist" aria-label="the lessons"></div>
-    <div id="qlist"></div>
-    <div class="qdetail" id="qdetail">
-      <div class="qdname" id="qdname"></div>
-      <div class="qdtext" id="qdtext"></div>
-      <div class="qdteach" id="qdteach"></div>
-      <div class="qpreview" id="qpreview"></div>
-      <div class="qdstate" id="qdstate"></div>
-    </div>
-    <p>Constraint &eacute;tudes, in any order, abandoned guiltlessly. Each is a workspace holding its own page, and nothing is ever bound, loaded or lost. &#10087; complete &middot; &#8226; something written &middot; &#9876; where you are &middot; &#10022; kept to hand. The left margin carries the same marks for the lesson it is showing.</p>
-  </section>
   </div>
 
   <div class="divider"></div>
@@ -92,9 +81,40 @@
   </div>
 </main>
 
-<button type="button" class="keymark" id="keymark" aria-expanded="false">the keys &middot; F1</button>
-<section class="keyhelp" id="keyhelp" aria-label="the keys" aria-hidden="true"></section>
+<!-- The renderer promise, kept honestly: shown only when Folio was opened
+     with ?renderer=reaper and its rack cannot be reached. Editing and autosave
+     stay available underneath; play and audition refuse for the same reason. -->
+<section class="rackfault" id="rackfault" role="status" aria-live="polite" hidden>
+  <h2 id="rackfaultname"></h2>
+  <p id="rackfaulttext"></p>
+</section>
 
+<div class="schrome" id="schrome" aria-hidden="true">
+  <div class="sstrip" id="sstrip" role="tablist" aria-label="the screens"></div>
+  <p class="swhere" id="swhere"></p>
+</div>
+
+<!-- The quest log lives in the two margins, not over the drawing: a quest
+     IS a workspace, so the left margin's list and the log are one list. The
+     board is that list promoted — the lesson tags, free play, the quests —
+     and the right margin reads the one under the caret in full, which is the
+     job that margin already had. Both stand outside <main> so that the sheet
+     may be a sheet and these may be furniture on the desk beside it. -->
+<section class="quests" id="quests" aria-label="quest log">
+  <div class="qtabs" id="qtabs" role="tablist" aria-label="the lessons"></div>
+  <div class="qfree" id="qfree">
+    <span class="qcaret"></span><span class="qsigil" id="qfreesigil"></span>
+    <div>free play</div><span class="qstat"></span><span class="qfav"></span>
+  </div>
+  <div id="qlist"></div>
+</section>
+<aside class="qdetail" id="qdetail" aria-label="the quest in hand">
+  <div class="qdname" id="qdname"></div>
+  <div class="qdtext" id="qdtext"></div>
+  <div class="qdteach" id="qdteach"></div>
+  <div class="qpreview" id="qpreview"></div>
+  <div class="qdstate" id="qdstate"></div>
+</aside>
 <aside class="rail left" id="raill" aria-label="workspaces">
   <div class="rtabs" id="rtabs" role="tablist" aria-label="the lessons"></div>
   <div class="hair"></div>
@@ -105,6 +125,7 @@
   <div class="hair"></div>
   <div class="rtext" id="railtext"></div>
   <div class="rteach" id="railteach"></div>
+  <div class="recho" id="railecho"></div>
   <div class="rstate" id="railstate"></div>
 </aside>
 <div class="scenery" id="scenery" role="group" aria-label="background scenery">
@@ -126,6 +147,7 @@
 <script src="js/quiz.js"></script>
 <script src="js/quests.js"></script>
 <script src="js/tones.js"></script>
+<script src="js/screens.js"></script>
 <script src="js/entry.js"></script>
 <script src="js/boot.js"></script>
 </body>

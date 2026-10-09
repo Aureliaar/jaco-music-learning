@@ -30,10 +30,18 @@
    the default — so a sixteen-step page is byte for byte the page it always
    was, and an older build reads it without ever knowing the field exists.
    Everything derived from it — the steps, the holds, the seals — follows
-   the page it is on. */
+   the page it is on.
+
+   The rungs doubled twice more when a transcription arrived that could not
+   be cut: sixteen seconds off a recording is a hundred and forty-nine
+   sixteenths, and breaking it into pages breaks the one thing the page is
+   for — hearing the line whole. Nothing in the app counts to the longest
+   rung except the pool of cells it builds once at boot, and a few hundred
+   more of those cost nothing; what is drawn is still only what the window
+   holds. */
 var STEPS = 16;
-var PAGE_LENS = [16, 32, 64];
-var MAX_STEPS = 64;
+var PAGE_LENS = [16, 32, 64, 128, 256];
+var MAX_STEPS = PAGE_LENS[PAGE_LENS.length - 1];
 var WIN = 16;
 var PAGE_FIELD = "len";
 var NAMES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
@@ -65,9 +73,9 @@ var VOICE_FIELD = ["steps", "bass"];
 /* ---- and one lane that is not a voice, from Lesson 5 on ----
    A voice is one line: one note at a time, named absolutely, written into
    `steps` or `bass`. The chord lane is not that. Its cell holds a chord as
-   an object — a degree of the key and a shape — and what it actually sounds
-   is worked out from the cell before it, never stored. js/chords.js is the
-   whole of that idea; here there is only the seat it sits in.
+   an object — a degree of the key, a shape and a frozen arrangement chosen
+   from the chord before it when written. js/chords.js is the whole of that
+   idea; here there is only the seat it sits in.
 
    It is a third stop on the ring the hands walk, so everything that counts
    lanes counts LANES and everything that counts *voices* — the two lines of
@@ -162,10 +170,14 @@ var LANE_LOCK = VOICE_LOCK.concat([null]);
    Not a source and a copy: there is no original and no direction. A cell of
    length `cell` has a list of `sites`, and the music at every one of them IS
    the cell — writing at any site writes the cell, and every other site is
-   already changed by the time the page is drawn again. It binds one voice:
-   a mirror on the bass leaves the lead free to answer it.
+   already changed by the time the page is drawn again. It binds one lane:
+   a mirror on the bass leaves the lead free to answer it. `voice` is a lane
+   index — 0 the lead, 1 the bass, 2 the chord lane — and a chord mirror
+   binds the written cell exactly as a note mirror does; the voicing is
+   computed at each site, as it always is.
 
      mirrors: [ { voice:1, cell:4, sites:[0,4,8,12,16,20,24,28] } ]
+     mirrors: [ { voice:2, cell:8, sites:[0,8,16,24] } ]
 
    The Return is a cell of 8 with sites at 0 and 24 in both voices — two
    mirrors, one a voice. An ostinato is the eight sites above. Even spacing
@@ -208,8 +220,7 @@ function defaultDoc(){
     chordhold: new Array(STEPS).fill(1),  /* and how long each chord rings */
     tones: [null, null],                  /* what each voice sounds like */
     mirrors: [],                          /* cells bound to several places */
-    mute: [false, false, false],
-    solo: [false, false, false]
+    mute: [false, false, false]
   };
 }
 var doc = defaultDoc();
@@ -242,11 +253,23 @@ function docLen(d){
 function pageLen(){ return docLen(doc); }
 /* the loop rungs a page of this length offers: the short ones are kept
    whatever the page is — a deliberate four-step loop on a sixty-four-step
-   page is a thing somebody wants — and the page's own length is the top */
-function loopRungs(n){
+   page is a thing somebody wants — and the page's own length is the top.
+
+   `cur` is the loop the page is actually on, and it takes a rung of its own
+   wherever it is not one already. The rungs are the powers the hand walks
+   through; the loop itself is a plain number of steps, because music does
+   not end on a power of two. A page whose material runs a hundred and fifty
+   steps loops at a hundred and fifty, and stepping off that rung and round
+   the ring comes back to it rather than losing it. */
+function loopRungs(n, cur){
   var out = [], i;
   for (i = 0; i < PAGE_LENS.length; i++) if (PAGE_LENS[i] < n) out.push(PAGE_LENS[i]);
-  return [4, 8].concat(out, [n]);
+  out = [4, 8].concat(out, [n]);
+  if (typeof cur === "number" && cur > 0 && cur <= n && out.indexOf(cur) < 0){
+    out.push(cur);
+    out.sort(function(a, b){ return a - b; });
+  }
+  return out;
 }
 /* ---- the window, and how it follows ----
    A page longer than the room a view has is read a window at a time, at
@@ -497,12 +520,15 @@ function setFlag(kind, v, on){
   if (!Array.isArray(doc[kind])) doc[kind] = [false, false, false];
   doc[kind][v] = !!on;
 }
-function anySolo(){
-  for (var v = 0; v < LANES; v++) if (flag("solo", v)) return true;
-  return false;
-}
-/* solo wins over mute, as it does on every desk ever built */
-function audible(v){ return anySolo() ? flag("solo", v) : !flag("mute", v); }
+/* ---- one state, not two (2026-09-07) ----
+   A voice was once muted *and* soloed, two arrays saying one thing twice:
+   with two voices a solo was the other one's mute, and with three it was
+   the other two's, so the page could hold a solo and a mute that disagreed
+   and the strip had to invent a third word ("silent") for a voice that was
+   neither. Mute is now the whole of it — what is heard is simply what is
+   not muted — and solo is a *verb* that mutes the others (edit.js). An old
+   page that carries a solo array is read forward into the mutes it meant. */
+function audible(v){ return !flag("mute", v); }
 var storageOK = true;
 var droppedMarks = false;   /* the last thing validated carried "x" entries */
 
@@ -718,7 +744,7 @@ function readTones(a){
    optional here and is the right way round for this one: a length or a tone
    read wrong costs the page a little sound, but a mirror read wrong would
    fan a write out into steps nobody meant, and go on doing it. So a mirror
-   that is not exactly what a mirror is — a voice that is not a voice, a cell
+   that is not exactly what a mirror is — a voice that is not a lane, a cell
    shorter than a step or longer than the page, a site that is not a whole
    number, a site that runs off the end, a site named twice, a site lying
    over another site of its own cell or over any cell already read — is
@@ -730,14 +756,14 @@ function readTones(a){
    to two cells would have no answer to what writing on it means. */
 function readMirrors(a, N){
   var out = [], taken = [], k, i, j, v, m, cell, sites, s, bad, seen;
-  for (v = 0; v < VOICES; v++) taken.push(new Array(N).fill(false));
+  for (v = 0; v < LANES; v++) taken.push(new Array(N).fill(false));
   if (!Array.isArray(a)) return out;
   for (k = 0; k < a.length; k++){
     m = a[k];
     if (!m || typeof m !== "object" || Array.isArray(m)) continue;
     v = m.voice;
     if (typeof v !== "number" || !isFinite(v) || v !== Math.round(v) ||
-        v < 0 || v >= VOICES) continue;
+        v < 0 || v >= LANES) continue;
     cell = m.cell;
     if (typeof cell !== "number" || !isFinite(cell) || cell !== Math.round(cell) ||
         cell < 1 || cell > N) continue;
@@ -787,7 +813,6 @@ function docOut(d){
      byte for byte the page it always was */
   if (allFree(out[CHORD_FIELD])) delete out[CHORD_FIELD];
   out.mute = trimFlags(out.mute);
-  out.solo = trimFlags(out.solo);
   if (allOwnTone(out[VOICE_TONE])) delete out[VOICE_TONE];
   if (allUnbound(out[MIRROR_FIELD])) delete out[MIRROR_FIELD];
   /* the echo is written only where there is one, and only where it is one:
@@ -806,6 +831,17 @@ function readFlags(a){
   var out = [];
   for (var i = 0; i < LANES; i++) out.push(!!(Array.isArray(a) && a[i]));
   return out;
+}
+/* the forward reading of a page written before the collapse: where anything
+   was soloed, what was *heard* was the soloed voices, so everything else is
+   muted and the solo array is spent. Where nothing was, the mutes stand as
+   they are. Either way the page sounds exactly as it did. */
+function readMutes(mute, solo){
+  var s = readFlags(solo), m = readFlags(mute), v, any = false;
+  for (v = 0; v < LANES; v++) if (s[v]) any = true;
+  if (!any) return m;
+  for (v = 0; v < LANES; v++) m[v] = !s[v];
+  return m;
 }
 function trimFlags(a){
   return (Array.isArray(a) && a.length > VOICES && !a[CHORD_LANE])
@@ -827,9 +863,13 @@ function validate(obj){
                ? silence(N) : (readSteps(obj.bass, N) || silence(N));
   var tempo = (typeof obj.tempo === "number" && isFinite(obj.tempo) && obj.tempo > 0) ? obj.tempo : 112;
   var title = (typeof obj.title === "string" && obj.title.trim()) ? obj.title.trim().slice(0, 60) : "untitled folio";
-  /* version 1 files may carry a loop length; anything the page does not
-     offer as a rung means the whole page, whatever the page is */
-  var loop = (loopRungs(N).indexOf(obj.loop) >= 0) ? obj.loop : N;
+  /* version 1 files may carry a loop length: any whole number of steps the
+     page has room for, since the seam belongs to the music and not to the
+     rungs the hand happens to walk. Anything else — absent, junk, longer
+     than the page — means the whole page, whatever the page is. */
+  var loop = (typeof obj.loop === "number" && isFinite(obj.loop) &&
+              obj.loop === Math.round(obj.loop) && obj.loop >= 1 && obj.loop <= N)
+               ? obj.loop : N;
   /* the key is optional and permissive: a file without one is in C major,
      and so is a file whose key cannot be read */
   var key = normalizeKey(obj.key);
@@ -841,11 +881,12 @@ function validate(obj){
            basslock: readLocks(obj.basslock, bass, N),
            tones: readTones(obj.tones),
            mirrors: readMirrors(obj[MIRROR_FIELD], N),
-           mute: readFlags(obj.mute), solo: readFlags(obj.solo) };
+           mute: readMutes(obj.mute, obj.solo) };
   /* the chord lane, read strictly by js/chords.js — a lane of nothing where
      the page has none, and a lane of nothing where what it has is not a
      chord lane, the notes underneath it untouched either way */
-  out[CHORD_FIELD] = readChords(obj[CHORD_FIELD], N);
+  out[CHORD_FIELD] = readChords(obj[CHORD_FIELD], N, out);
+  chordVoicings(out);             /* old cells become the same sound, frozen */
   out[CHORD_HOLD] = readHolds(obj[CHORD_HOLD], out[CHORD_FIELD], N);
   /* the hidden call, if the page is an echo's: read strictly by js/echo.js,
      which is where the whole of that idea lives, and simply absent — not

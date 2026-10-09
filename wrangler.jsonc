@@ -19,6 +19,12 @@
   "observability": {
     "enabled": true
   },
+
+  // Attached as a custom domain, so Cloudflare owns the record and the
+  // certificate. The workers.dev URL stays enabled alongside it.
+  "routes": [
+    { "pattern": "folio.aure.onl", "custom_domain": true }
+  ],
   "assets": {
     "directory": "./dist"
   }

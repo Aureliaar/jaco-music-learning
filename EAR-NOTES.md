@@ -195,3 +195,108 @@ in stacked transients rather than interleaved motion. Mechanic note
 not note count; sustains are what convert foreground into ground, and
 a texture with no ground becomes anxiogenic on repetition even when
 every pitch is right.
+
+**2026-08-29 · the familiar anchor survives the new costume.** Informal
+layer-identification pass on *Locus* (original FFXIV soundtrack): the player
+could set aside the two conspicuously novel layers — strong electro bass and
+heavily distorted lyrics — and still hear a quieter, familiar thing making
+the track read as Final Fantasy. They could not confidently name its source
+(``probably piano''), but could identify its *role* as the anchor.
+
+This is same/different recognition operating above timbre identity: an
+untrained ear can hear which layer carries continuity with a known musical
+language while being unable to label the instrument. Working hypothesis,
+not yet isolated: the anchor may be literal piano, or it may be a
+piano-shaped gesture (bright attack, decay, broken-chord or chordal pulse)
+whose harmony and behavior do the recognition work. Test by rebuilding the
+part on piano, another struck voice, and a sustained voice; if the first two
+survive and the third loses the identity, the attack/role matters more than
+the sample.
+
+Follow-up, same day: a musician identified the *Locus* layer as electric
+piano. The player's ``probably piano'' was therefore right at the family and
+role level while missing the source identity — exactly the relational/identity
+split this lab keeps finding.
+
+Second identification pass: the player heard ELO's *Mr. Blue Sky* as
+``probably Hammond.'' Session credits instead name acoustic piano, Wurlitzer
+electric piano, synthesizer and vocoder, with no organ. Again the ear found
+the keyboard/harmonic anchor but not its mechanism; layered sustained voices
+can lend a struck keyboard an organ-like body. Instrument identity remains
+weak while functional stream identity is stable.
+
+Third identification pass: the player heard the distant high call in the
+studio opening of Dire Straits' *Telegraph Road* as possible flute. The album
+credits list Alan Clark on keyboards and Ed Walsh on synthesizer programming,
+but no flute player; the safest identification is a synthesized whistle/flute
+voice. Later live arrangements have used an actual flute for this role, making
+the source ambiguity musically real rather than an arbitrary naming error.
+Again the player identified the gesture and family — breathy, high, distant —
+more securely than the sound-producing mechanism. Small comparison drill:
+alternate a dry flute sample and a simple synth-whistle patch on the same
+phrase, asking only which sounds more embodied versus more like weather.
+
+**2026-08-29 · co-onsets fuse into an instrument that is not there.** During
+the fox capture plan reference-listening pass, the player realized that what
+they had often heard as one unidentified instrument may be three simultaneous
+events: bass note + drum hit + piano chord. This reframes the repeated failure
+to name the timbre — the ear may be reporting a real composite object rather
+than misidentifying any one source.
+
+This extends the earlier stacked-transients finding from affect to grouping:
+onset coincidence can bind separate streams into one perceived attack. ToM
+implication, still a one-listener hypothesis: several score layers landing
+together may make a robust single mechanic cue, but they cannot then be
+assumed to communicate three independently readable facts. Small test: hold
+pitches and levels constant, offset one member of the three-part attack by a
+few tens of milliseconds, and ask when the composite splits into sources.
+
+Follow-up, same day: the player offered Dire Straits' *Walk of Life* as the
+clearest familiar example of the object they mean. It is an unusually useful
+reference because the opening exposes the layers before the whole band locks:
+the famous keyboard riff is itself two keyboard sounds played in parallel
+(a Farfisa-like modified DX1 organ patch plus an accordion-like Synclavier
+sound), and later coincidences with bass and drums make an already composite
+voice read as a still larger attack. This confirms that the player's ``single
+instrument'' uncertainty is not merely weak timbre naming; in this example,
+there literally is no single source to name.
+
+**2026-08-29 · an unwanted timbre can still reveal a better mix.** In the
+first external-renderer A/B, the exact notes of *the wide field* were moved
+from Folio into REAPER/Surge XT: soft-tine electric-piano lead, picked/electric
+bass and glassy electric-piano chords, once at unity and once with only level
+hierarchy and slight stereo separation. The player disliked both renderings'
+strongly distorted/electric character, yet heard no ambiguity at all that
+their mixing was better than Folio's.
+
+This separates timbre taste from mix legibility without requiring the player
+to name either: ``I do not want this material'' and ``I can hear its parts
+more clearly'' coexisted. The result is evidence that Folio's production
+ceiling is not only a sample-library problem; routing, headroom and hierarchy
+are audible even through the wrong instrument family. Follow-up control:
+route Folio's own piano samples through REAPER and level-match the result, so
+renderer/mix can be compared while source timbre is held constant.
+
+**2026-09-02 · pitch shelves broke one sound into several identities.** Boost
+countdown SFX pass: the same glass-contact ingredient was split into three
+four-star groups, with different pitch, duration and level. Player verdict:
+*"sadly very bad. They read as four entirely different sounds."* The intended
+reading was one mechanism gradually unloading; categorical shelves instead
+triggered same-vs-different segmentation and erased continuity. Ruling for the
+next pass: hold ingredient, envelope and level constant, and move pitch only by
+a tight continuous line (`+2 → 0`) across individual disappearances.
+
+**2026-08-29 · rendering quality was large enough to masquerade as a writing
+problem.** The same *wide field* MIDI — notes, rhythm and arrangement held
+constant — was played through level-matched SINE instruments in REAPER
+(Ratio piano, Crux bass, then Roads/Clutch/Ratio/Spindle/Helix as alternate
+harmonic anchors). Player's immediate verdict: *"that's incredible quality.
+feels like another planet. huge success."*
+
+Observation: the change was categorical before any compositional edit. This
+does not prove the writing is finished; it proves the old rendering was a
+confound large enough that discomfort with the piece could not safely be
+assigned to composition. The diagnostic workflow now has teeth: hold the
+notes fixed, audition materially better sources at matched loudness, then ask
+which unease survives. What disappears belonged to rendering or mix; what
+survives is finally worth testing as writing.

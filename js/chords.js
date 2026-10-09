@@ -2,16 +2,14 @@
 
    Lesson 5's whole toolset, and the third stop on the ring the hands walk.
    A voice is one line of named pitches; this is not that. Its cell holds a
-   chord as an OBJECT — where its root sits in the key, and what shape stands
-   on it — and the pitches it actually sounds are worked out from the cell
-   before it and never written down.
+   chord as an OBJECT — where its root sits in the key, what shape stands on
+   it, and the inversion and octave placement chosen when it was written.
 
-   That last part is the lesson. Voice leading is not a property of a chord,
-   it is a property of the pair: the same chord after a different one is a
-   different set of pitches, because the tones that were already sounding
-   stay exactly where they are and only the rest move. So the page stores the
-   relation and computes the sound, which is the only way the ear can be
-   handed common tones for free.
+   Voice leading is discovered from the pair at the moment of writing: the
+   nearest arrangement is offered once, then put down as ink. Later edits to
+   an earlier chord never rearrange the chords after it. The page stores no
+   pitch names for a chord — only which tone is lowest and where that
+   inversion sits — so key and shape still make the pitches themselves.
 
    Nothing here names a chord. There is no spelling, no palette, no menu, and
    nothing anywhere asks which chord this is: every control says how this one
@@ -49,8 +47,9 @@
    are, so a page with no chords is byte for byte the page it always was and
    an older build never sees the field:
 
-     chords: [ {deg:0, shape:"triad"}, null, {deg:3, shape:"seventh",
-               voicing:"root"}, … ]        one cell per step
+     chords: [ {deg:0, shape:"triad", inversion:0, octave:0}, null,
+               {deg:3, shape:"seventh", voicing:"root"}, … ]
+                                               one cell per step
 
    `deg` is the root as a scale degree of the page's own key: 0 is home,
    1..6 the steps above it, 7 the octave, and negatives below — the same
@@ -62,8 +61,10 @@
    `shape` is one of a closed set of literal strings, and an unknown one
    takes the whole field with it — so the set is a constant, in one place.
 
-   `voicing` is "near" or "root", and "near" is the default and is never
-   written out.
+   `voicing:"root"` asks for the plain rooted stack. Otherwise `inversion`
+   names which tone is lowest and `octave` places it, freezing the nearest
+   arrangement chosen when the chord was written. Older cells with neither
+   field are accepted and frozen in their old sounding arrangement on read.
 
    Read strictly and dropped WHOLE, for the reason a mirror is read strictly:
    a length read wrong costs a little sound, but a chord lane read wrong
@@ -91,10 +92,11 @@ var CHORD_GLYPH = { dyad:"◦", triad:"◇", seventh:"◈", sus:"○", borrowed:
 var CHORD_SAID = { dyad:"two voices", triad:"three voices",
                    seventh:"four voices", sus:"three voices, no third",
                    borrowed:"three voices, borrowed" };
-/* the scale steps above the root each shape stands on. The third and the
-   seventh are whatever the KEY makes of them at that degree — which is the
-   whole reason the lane is written in degrees: the shapes come out major,
-   minor and diminished by themselves, and nobody had to choose. */
+/* the scale steps above the root each shape stands on: the written
+   convention is root-recipe — I-135, V-145, III-1357, and so on. The third
+   and the seventh are whatever the KEY makes of them at that degree — which
+   is the whole reason the lane is written in degrees: moving only the root
+   can make the slab look a little different without changing its recipe. */
 var CHORD_STEPS = { dyad:[0,4], triad:[0,2,4], seventh:[0,2,4,6],
                     sus:[0,3,4], borrowed:[0,2,4] };
 
@@ -104,14 +106,18 @@ function chordInt(n, lo, hi){
 }
 /* a cell, made the one way cells are made: clean, fresh, and carrying the
    default voicing only as its absence */
-function chordCell(deg, shape, voicing){
+function chordCell(deg, shape, voicing, inversion, octave){
   var c = { deg: Math.max(CHORD_DEG_LO, Math.min(CHORD_DEG_HI, deg)),
             shape: (CHORD_SHAPES.indexOf(shape) >= 0) ? shape : "triad" };
   if (voicing === "root") c.voicing = "root";
+  if (c.voicing !== "root" && inversion !== undefined && octave !== undefined){
+    c.inversion = inversion;
+    c.octave = octave;
+  }
   return c;
 }
-function readChords(a, N){
-  var out = new Array(N).fill(null), i, o, deg;
+function readChords(a, N, d){
+  var out = new Array(N).fill(null), i, o, deg, inv, oct, hasInv, hasOct;
   if (a === null || a === undefined) return out;
   if (!Array.isArray(a) || a.length > N) return out;
   for (i = 0; i < a.length; i++){
@@ -123,7 +129,16 @@ function readChords(a, N){
     if (CHORD_SHAPES.indexOf(o.shape) < 0) return new Array(N).fill(null);
     if (o.voicing !== null && o.voicing !== undefined &&
         CHORD_VOICINGS.indexOf(o.voicing) < 0) return new Array(N).fill(null);
-    out[i] = chordCell(deg, o.shape, o.voicing);
+    hasInv = o.inversion !== null && o.inversion !== undefined;
+    hasOct = o.octave !== null && o.octave !== undefined;
+    if (hasInv !== hasOct || (o.voicing === "root" && hasInv))
+      return new Array(N).fill(null);
+    inv = hasInv ? chordInt(o.inversion, 0, CHORD_STEPS[o.shape].length - 1) : undefined;
+    oct = hasOct ? chordInt(o.octave, -2, 2) : undefined;
+    if ((hasInv && inv === null) || (hasOct && oct === null))
+      return new Array(N).fill(null);
+    out[i] = chordCell(deg, o.shape, o.voicing, inv, oct);
+    if (hasInv && !chordFrozen(out[i], d)) return new Array(N).fill(null);
   }
   return out;
 }
@@ -148,14 +163,19 @@ function chordsHere(d){
    chord is the one exception and it is exactly one semitone: the third,
    leant the other way — out of the key, which is what both triggers have
    always meant everywhere else on this pad. */
-function chordHomeDeg(){ return degreeOfMidi((CHORD_OCT + 1) * 12 + keyOf().pc); }
-function chordRootMidi(c){ return midiOfDegree(chordHomeDeg() + c.deg); }
+function chordKeyOf(d){ return d ? (parseKey(d.key) || { pc:0, mode:"major" }) : keyOf(); }
+function chordMidiOfDegree(n, d){
+  var k = chordKeyOf(d), sc = SCALES[k.mode], o = Math.floor(n / 7);
+  return k.pc + o * 12 + sc[n - o * 7];
+}
+function chordHomeDeg(){ return (CHORD_OCT + 1) * 7; }
+function chordRootMidi(c, d){ return chordMidiOfDegree(chordHomeDeg() + c.deg, d); }
 /* the chord in root position, low to high, before anything is voiced */
-function chordStack(c){
+function chordStack(c, d){
   var st = CHORD_STEPS[c.shape] || CHORD_STEPS.triad, rd = chordHomeDeg() + c.deg;
   var out = [], i;
-  for (i = 0; i < st.length; i++) out.push(midiOfDegree(rd + st[i]));
-  if (c.shape === "borrowed") out[1] += (keyOf().mode === "major") ? -1 : 1;
+  for (i = 0; i < st.length; i++) out.push(chordMidiOfDegree(rd + st[i], d));
+  if (c.shape === "borrowed") out[1] += (chordKeyOf(d).mode === "major") ? -1 : 1;
   return out;
 }
 /* inside the range the whole folio writes in, moved by whole octaves only so
@@ -171,7 +191,7 @@ function chordInRange(p){
    put it and with no regard for what came before. It is one half of the pair
    the lesson is about: flip a chord to this and the movement it was hiding
    is audible at once. */
-function chordRooted(c){ return chordInRange(chordStack(c)) || chordStack(c); }
+function chordRooted(c, d){ return chordInRange(chordStack(c, d)) || chordStack(c, d); }
 /* ---- and the near one ----
    The same chord, arranged so that as little as possible moves. Every
    stacked arrangement of it is tried — each tone taken as the bottom, at
@@ -205,8 +225,9 @@ function chordMove(a, b){
   }
   return s;
 }
-function chordNear(c, prev){
-  var stack = chordStack(c), best = null, bs = 1e9, bb = 1e9, r, o, cand, s, b;
+function chordNearChoice(c, prev, d){
+  var stack = chordStack(c, d), best = null, bestR = 0, bestO = 0;
+  var bs = 1e9, bb = 1e9, r, o, cand, s, b;
   for (r = 0; r < stack.length; r++){
     for (o = -2; o <= 2; o++){
       cand = chordCandidate(stack, r, o);
@@ -216,24 +237,44 @@ function chordNear(c, prev){
       /* least movement; and where two arrangements move the same, the one
          whose bottom stayed nearer the old bottom, which is the one the ear
          reads as the same chord moved rather than a new one */
-      if (s < bs || (s === bs && b < bb)){ best = cand; bs = s; bb = b; }
+      if (s < bs || (s === bs && b < bb)){
+        best = cand; bestR = r; bestO = o; bs = s; bb = b;
+      }
     }
   }
-  return best || chordRooted(c);
+  return { pitches:best || chordRooted(c, d), inversion:bestR, octave:bestO };
+}
+function chordFrozen(c, d){
+  if (c.voicing === "root") return chordRooted(c, d);
+  if (c.inversion === undefined || c.octave === undefined) return null;
+  var p = chordCandidate(chordStack(c, d), c.inversion, c.octave);
+  return (p[0] < MIDI_LO || p[p.length - 1] > MIDI_HI) ? null : p;
+}
+function freezeChord(c, prev, d){
+  if (!c || c.voicing === "root" || chordFrozen(c, d)) return c;
+  var q;
+  if (prev) q = chordNearChoice(c, prev, d);
+  else {
+    q = { pitches:chordRooted(c, d), inversion:0, octave:0 };
+    while (chordCandidate(chordStack(c, d), 0, q.octave)[0] < MIDI_LO) q.octave++;
+    while (chordCandidate(chordStack(c, d), 0, q.octave).slice(-1)[0] > MIDI_HI) q.octave--;
+  }
+  c.inversion = q.inversion;
+  c.octave = q.octave;
+  return c;
 }
 /* ---- the lane, voiced ----
-   One pass down the page, because every chord is near the one before it and
-   nothing else. The first chord of a lane is rooted — there is nothing to be
-   near — and so is any chord the page says is rooted, which then becomes
-   what the next one is near to. Nothing wraps: a lane read from the seam
-   backwards would have no beginning to start the chain at. */
+   Each arrangement is independent ink. Older cells are frozen in one pass
+   using the old nearest-chain result, so the migration changes no sound;
+   after that, changing one cell cannot move another. */
 function chordVoicings(d){
   var s = docSteps(d || doc, CHORD_LANE), N = docLen(d || doc);
   var out = new Array(N).fill(null), prev = null, i, c;
   for (i = 0; i < N; i++){
     c = s ? s[i] : null;
     if (!c) continue;
-    out[i] = (!prev || c.voicing === "root") ? chordRooted(c) : chordNear(c, prev);
+    freezeChord(c, prev, d || doc);
+    out[i] = chordFrozen(c, d || doc) || chordRooted(c, d || doc);
     prev = out[i];
   }
   return out;
@@ -291,9 +332,9 @@ function chordAudition(pitches, len){
    round the loop, which is the same scan contour entry has always used — so
    a lane is written by shape, without a number anywhere in the hand.
 
-   The triggers say the shape while it is being written, mirroring what they
-   already do to a note: L2 the seventh, R2 the sus, both together the
-   borrowed chord, out of the key. */
+   The right-hand symbols are always writing gestures: the triggers choose
+   what is added or overwritten while △ and ✕ place the next chord. Changes
+   to a chord already on the page belong to trigger plus d-pad instead. */
 var CHORD_BY_LEAD = ["triad", "seventh", "sus", "borrowed"];
 
 function chordAnchor(){
@@ -306,6 +347,9 @@ function chordAnchor(){
 }
 function chordWrite(c, tail){
   var at = cursor + 1;
+  var before = chordVoicings(doc), pi = cursor - 1, prev = null;
+  while (pi >= 0 && !prev){ prev = before[pi]; pi--; }
+  freezeChord(c, prev, doc);
   /* a refused write leaves the cursor where it is as well as the page */
   if (!setStep(cursor, c, 1)) return;
   stepGuide(CHORD_LANE, at - 1);
@@ -321,7 +365,7 @@ function chordEnter(dir, lead){
 function chordRepeat(){
   var a = chordAnchor();
   if (!a){ chordWrite(chordCell(0, "triad"), "home"); return; }
-  chordWrite(chordCell(a.deg, a.shape, a.voicing), "again");
+  chordWrite(chordCell(a.deg, a.shape, a.voicing, a.inversion, a.octave), "again");
 }
 
 /* ================= editing the chord under the cursor =================
@@ -339,17 +383,21 @@ function chordHere(){
   return i;
 }
 function chordPut(i, c, tail){
+  var before = chordVoicings(doc), pi = i - 1, prev = null;
+  while (pi >= 0 && !prev){ prev = before[pi]; pi--; }
+  freezeChord(c, prev, doc);
   if (!setStep(i, c, writtenLen(doc, CHORD_LANE, i))) return;
   stepGuide(CHORD_LANE, i);
   stepAudition(CHORD_LANE, i);
   say(chordSay(c) + " at step " + (i + 1) + (tail ? " · " + tail : ""));
 }
-/* the root, a scale step, staying where it is — the nudge, for a chord */
+/* the root alone, a scale step, staying where it is — the dependable bare
+   ↑ and ↓ change. Shape, voicing, length and position travel untouched. */
 function chordNudge(n){
   var i = chordHere(), c;
   if (i < 0) return;
   c = vsteps(CHORD_LANE)[i];
-  chordPut(i, chordCell(c.deg + n, c.shape, c.voicing));
+  chordPut(i, chordCell(c.deg + n, c.shape, c.voicing, c.inversion, c.octave));
 }
 /* thicker and thinner: two voices, three, four. A dial and not a ring — the
    ends hold, so leaning on it never wraps round to the thin end by surprise.

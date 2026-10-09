@@ -45,7 +45,7 @@ ostinato-variant were all made by the assistant editing the log file).
 - Read folio.html's MAP comment; classic scripts, no modules, file://
   keeps working; e.code bindings; migraine rules.
 - Tests: this is a data-format change (new defs/workspaces written into
-  the v2 log) — per CLAUDE.md rule 6 it warrants real checks for the
+  the v2 log) — per AGENTS.md rule 7 it warrants real checks for the
   dup's data shape and sync round-trip, in tier1's style; UI verified by
   real-Chrome screenshots described, never layout tests.
 - Never commit BUDGET.md, QUESTS.md, quests/quest-log.json.

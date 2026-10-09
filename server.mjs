@@ -45,6 +45,19 @@ const PORT = Number(process.env.PORT) || 4173;
 const HOST = LAN ? "0.0.0.0" : "127.0.0.1";
 
 const INDEX = "folio.html";
+/* This machine's rack promise. On the player's machine Folio is the REAPER
+   rack or silence, never its own tone (the 2026-09-11 ruling), and a promise
+   carried only by `?renderer=reaper` is lost by every link that forgets it.
+   So the local server makes the promise itself, in the page it serves, and
+   the page keeps it exactly as it keeps the address's. FOLIO_RENDERER=none is
+   for the test suite's ordinary journeys; it is not a player control. */
+const RENDERER_PROMISE = process.env.FOLIO_RENDERER !== "none";
+const PROMISE_META = '<meta name="folio-renderer" content="reaper">';
+/* The rack's status service, and the Hub that owns Folio's own browser. Both
+   are fixed on this machine; the test suite points them somewhere harmless. */
+const RACK_STATUS_PORT = Number(process.env.FOLIO_RACK_PORT) || 4174;
+const HUB = process.env.FOLIO_HUB || "http://127.0.0.1:7777";
+const HUB_PROJECT = "daw";
 const MAX_BODY = 4 * 1024 * 1024;         /* a quest log is kilobytes; this is generous */
 /* A whole kit is meant to fit in 64KB. One file is capped four times higher —
    generous enough that a sample can be saved before it has been cut down, mean
@@ -75,20 +88,80 @@ function log(req, status){
   console.log(req.method + " " + req.url + " " + status);
 }
 
+/* The renderer's own status service owns the state; this is only a proxy, so
+   that the page can ask one origin. Nothing answering on 4174 means no
+   renderer service is running — which is right only for ordinary Folio (the
+   deployed copy, file://, or the suite), and is the page's business to read
+   differently wherever the rack was promised: by `?renderer=reaper`, or by
+   this server's own promise in the page it serves. */
 function getRenderer(req, res){
   let settled = false;
-  const finish = ready => {
+  const finish = (state, detail, voices) => {
     if (settled) return;
     settled = true;
-    send(req, res, 200, JSON.stringify({ ready: !!ready }), "application/json; charset=utf-8");
+    send(req, res, 200, JSON.stringify({
+      ready: state === "ready",
+      state,
+      detail: detail || "",
+      /* what the rack says it holds, passed through untouched: this server
+         knows nothing about instruments and must not start guessing. The
+         status service reads the rack project; a rack that is not up sends
+         nothing, and the page draws no rail rather than an empty one. */
+      voices: Array.isArray(voices) ? voices : null
+    }), "application/json; charset=utf-8");
   };
-  const probe = http.get({ host:"127.0.0.1", port:4174, path:"/", timeout:250 }, response => {
-    const ready = response.statusCode === 200;
-    response.resume();
-    finish(ready);
+  const probe = http.get({ host:"127.0.0.1", port:RACK_STATUS_PORT, path:"/", timeout:250 }, response => {
+    let body = "";
+    response.setEncoding("utf8");
+    response.on("data", chunk => { if (body.length < 4096) body += chunk; });
+    response.on("end", () => {
+      let status = null;
+      try { status = JSON.parse(body); } catch (e) {}
+      if (status && typeof status.state === "string")
+        finish(status.state, typeof status.detail === "string" ? status.detail : "",
+               status.voices);
+      /* an older status service that only carried an HTTP code */
+      else finish(response.statusCode === 200 ? "ready" : "starting", "");
+    });
+    response.on("error", () => finish("reaper-failed", "the renderer status service failed"));
   });
   probe.on("timeout", () => probe.destroy());
-  probe.on("error", () => finish(false));
+  probe.on("error", () => finish("not-requested", "no renderer service is running"));
+}
+/* ---- when this browser has lost the rack ----
+   The page asks here, never the Hub itself: a cross-origin POST to the Hub
+   would need CORS, which the Hub rightly does not offer. Only a page on this
+   machine may ask, and only for a path on this server. What the Hub does with
+   it (restart Folio's own browser, or open the page there) is its decision,
+   and its answer goes back to the page untouched. */
+function recover(req, res){
+  const reply = (status, body) => send(req, res, status, JSON.stringify(body),
+    "application/json; charset=utf-8");
+  const from = req.socket.remoteAddress || "";
+  if (!/^(127\.0\.0\.1|::1|::ffff:127\.0\.0\.1)$/.test(from)){
+    reply(403, { ok:false, state:"not-local" }); return;
+  }
+  let raw = "";
+  req.setEncoding("utf8");
+  req.on("data", chunk => { if (raw.length < 4096) raw += chunk; });
+  req.on("end", () => {
+    let body = {};
+    try { body = JSON.parse(raw || "{}") || {}; } catch {}
+    let path = typeof body.path === "string" ? body.path : "/";
+    if (!path.startsWith("/") || path.startsWith("//") || path.length > 1024) path = "/";
+    const token = typeof body.token === "string" ? body.token.slice(0, 64) : "";
+    fetch(HUB + "/api/browser/recover", {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: HUB_PROJECT, path, token }),
+      signal: AbortSignal.timeout(45000)
+    }).then(r => r.json().then(b => {
+      if (!r.ok) throw new Error((b && b.error) || ("the Hub answered " + r.status));
+      reply(200, { ok:true, state: String((b && b.state) || "") });
+    })).catch(error => {
+      reply(502, { ok:false, state:"hub-failed",
+        detail: String((error && error.message) || error).slice(0, 200) });
+    });
+  });
 }
 function send(req, res, status, body, type, extra){
   const buf = Buffer.isBuffer(body) ? body : Buffer.from(body ?? "");
@@ -438,6 +511,8 @@ async function serveStatic(req, res, pathname){
   let buf;
   try { buf = await fs.readFile(file); }
   catch { send(req, res, 404, "not found"); return; }
+  if (RENDERER_PROMISE && dir === ROOT && leaf === INDEX)
+    buf = Buffer.from(buf.toString("utf8").replace("<head>", "<head>\n" + PROMISE_META));
   send(req, res, 200, buf, type);
 }
 
@@ -463,6 +538,12 @@ const server = http.createServer((req, res) => {
   if (pathname === "/api/renderer"){
     if (req.method === "GET" || req.method === "HEAD"){ getRenderer(req, res); return; }
     res.setHeader("allow", "GET");
+    send(req, res, 405, "method not allowed");
+    return;
+  }
+  if (pathname === "/api/recover"){
+    if (req.method === "POST"){ recover(req, res); return; }
+    res.setHeader("allow", "POST");
     send(req, res, 405, "method not allowed");
     return;
   }

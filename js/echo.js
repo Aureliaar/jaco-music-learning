@@ -32,6 +32,15 @@
    fragment itself — events counted from nought *inside the call*, so the
    fragment can be moved along the page by changing one number.
 
+   An event may name a `voice` of its own, and then the call is more than one
+   line: everything in it is PLAYED, and only the events belonging to the
+   echo's own `voice` are answered and judged. That is what a call taken off
+   a recording needs — the ground moves under the melody, and an ear asked to
+   write the melody out of silence is being asked a different question than
+   the one the recording poses. Events without a voice are the echo's own, so
+   every call written before this reads exactly as it did. Order and
+   uniqueness are per line, since two voices sound together by definition.
+
    Read strictly and dropped whole, for the same reason a mirror is: a length
    read wrong costs a little sound, but an echo read wrong would mark a page
    right or wrong on arithmetic nobody meant. Anything that is not exactly
@@ -51,22 +60,24 @@ function readEcho(o, N){
   var v = echoInt(o.voice, 0, VOICES - 1, 0);
   var at = echoInt(o.at, 0, N - 1, 0);
   if (v === null || at === null) return null;
-  if (!Array.isArray(o.call) || !o.call.length || o.call.length > N) return null;
-  var call = [], i, e, step, len, p, last = -1;
+  if (!Array.isArray(o.call) || !o.call.length || o.call.length > N * VOICES) return null;
+  var call = [], i, e, step, len, p, ev, last = [];
+  for (i = 0; i < VOICES; i++) last.push(-1);
   for (i = 0; i < o.call.length; i++){
     e = o.call[i];
     if (!e || typeof e !== "object" || Array.isArray(e)) return null;
     step = echoInt(e.step, 0, N - 1, null);
     len = echoInt(e.len, 1, N, 1);
-    if (step === null || len === null) return null;
-    if (step <= last) return null;                 /* in order, and never twice */
+    ev = echoInt(e.voice, 0, VOICES - 1, v);
+    if (step === null || len === null || ev === null) return null;
+    if (step <= last[ev]) return null;             /* in order, and never twice */
     p = parseNote(e.note);
     if (!p) return null;
     if (at + step + len > N) return null;          /* the call fits the page */
-    last = step;
+    last[ev] = step;
     /* the note written the one way the page writes notes, whatever spelling
        the definition arrived in */
-    call.push({ step: step, note: NAMES[p.pc] + p.oct, len: len });
+    call.push({ step: step, note: NAMES[p.pc] + p.oct, len: len, voice: ev });
   }
   return { stage: o.stage, voice: v, at: at, call: call };
 }
@@ -98,7 +109,7 @@ function echoSpan(e){
    music at once, and the ear cannot hold the one it is being asked to hold.
    It may be replayed as often as wanted; nothing is spent by listening. */
 function echoPlay(){
-  var e = echoNow(), i, ev, dur, t0;
+  var e = echoNow(), i, ev, dur, t0, w, at;
   if (!e) return;
   if (playing) stop();
   audio();
@@ -106,13 +117,40 @@ function echoPlay(){
     say("press any key or click once to enable sound");
     return;
   }
+  /* stepDur carries the pace, so the call is heard at whatever speed the
+     page is being heard at and the two can never disagree */
   dur = stepDur();
   t0 = ctx.currentTime + 0.12;
+  /* and where a window is set the call keeps to it, exactly as the page
+     does: the events outside are not played, and the ones inside begin
+     where the window begins rather than where the call does */
+  w = echoWindow();
   for (i = 0; i < e.call.length; i++){
     ev = e.call[i];
-    playNote(ev.note, t0 + ev.step * dur, dur * ev.len, e.voice, ev.len > 1);
+    at = e.at + ev.step;                    /* the step of the page it falls on */
+    if (w && (at < w.from || at > w.to)) continue;
+    playNote(ev.note, t0 + (w ? at - w.from : ev.step) * dur, dur * ev.len,
+             (ev.voice === undefined) ? e.voice : ev.voice, ev.len > 1);
   }
-  say("the call · listen");
+  say("the call · listen" + (echoPace === 1 ? "" : " · " + echoPaceName() + " pace"));
+}
+
+/* the events of one line of the call: what is asked of the voice that
+   answers, which on a single-voice call is the whole of it. Every judgement
+   is made against this and never against the accompaniment — a call may
+   carry a bass, and the bass was never the question. */
+function echoCall(e){
+  var out = [], i;
+  for (i = 0; i < e.call.length; i++)
+    if (e.call[i].voice === undefined || e.call[i].voice === e.voice)
+      out.push(e.call[i]);
+  return out;
+}
+/* and how far that line reaches: the window the answer is read out of, which
+   is the answering voice's own — an accompaniment running on past the melody
+   does not widen the question */
+function echoLine(e){
+  return { stage: e.stage, voice: e.voice, at: e.at, call: echoCall(e) };
 }
 
 /* ---- the answer, as it stands on the page ----
@@ -253,6 +291,8 @@ function echoFile(){
 function echoJudge(){
   var e = echoNow(), ans, hits = [], i, n = 0, msg, filed;
   if (!e) return;
+  e = echoLine(e);                     /* the line that answers, and only it */
+  if (!e.call.length) return;
   ans = echoAnswer(e);
   if (!ans.length){
     echoClear(); renderNotes();
@@ -277,4 +317,103 @@ function echoJudge(){
           (ans.length === e.call.length ? "" : " · a different number of notes");
   }
   say(msg + " · " + echoStageName(e.stage) + (filed ? " · " + filed : ""));
+}
+
+/* ---- the pace, the window and the hint ----
+   Three aids to answering, and not one of them is written down. They belong
+   to the page in hand for exactly as long as it is in hand: a half pace or a
+   short loop carried into the next drill would be a lie about what the next
+   drill sounds like, so leaving the page puts all three back.
+
+   They live here because only an echo page can reach them. The pad seats
+   them under the triggers (js/entry.js), the right margin says what each
+   seat does and where it stands (js/quests.js), and the drawing shows the
+   window and the hint (js/views.js). The tempo of the page is never
+   touched — the pace multiplies the step, so the page still says what it
+   always said and playing it at the written speed is one press away. */
+var ECHO_PACES = [1, 2, 4];                  /* the step, multiplied */
+var ECHO_PACE_NAMES = ["whole", "half", "quarter"];
+var echoPace = 1;
+var echoFrom = null, echoTo = null;          /* the window, in steps of the page */
+var echoHint = false;                        /* where the call's notes are */
+
+function echoPaceAt(){ var i = ECHO_PACES.indexOf(echoPace); return i < 0 ? 0 : i; }
+function echoPaceName(){ return ECHO_PACE_NAMES[echoPaceAt()]; }
+/* the window, or nothing at all: both edges or neither, so that everything
+   downstream has one question to ask */
+function echoWindow(){
+  return (echoFrom === null || echoTo === null) ? null : { from: echoFrom, to: echoTo };
+}
+/* where playback turns round: the window where there is one, the loop where
+   there is not. The window is the stronger of the two while it stands —
+   a stretch asked for by hand outranks the rung the loop happens to be on. */
+function echoPlayFrom(){ var w = echoWindow(); return w ? w.from : 0; }
+function echoPlayTo(){ var w = echoWindow(); return w ? w.to : doc.loop - 1; }
+
+/* leaving the page: everything above goes back to what it was */
+function echoReset(){
+  echoPace = 1; echoFrom = null; echoTo = null; echoHint = false;
+}
+/* what has to be said again when one of the three moves: the drawing carries
+   the window and the hint, the margin carries all three */
+function echoShow(msg){
+  renderLoop();
+  renderRails();
+  say(msg);
+}
+
+/* the pace: three values and no more, and the ends of the ring are ends
+   rather than a way round to the other one — asking for slower at a quarter
+   should not hand back the whole speed */
+function echoStepPace(d){
+  var i;
+  if (!echoNow()) return;
+  i = echoPaceAt() + d;
+  if (i < 0) i = 0;
+  if (i >= ECHO_PACES.length) i = ECHO_PACES.length - 1;
+  echoPace = ECHO_PACES[i];
+  echoShow(echoPaceName() + " pace");
+}
+function echoSlower(){ echoStepPace(1); }
+function echoFaster(){ echoStepPace(-1); }
+
+/* the window: two edges set one at a time, at wherever the cursor stands.
+   The first of them to be set brings the other with it — the loop's own end
+   for a start, the head of the page for an end — so that one press already
+   shortens what is heard rather than waiting for a second. The two edges may
+   land on the same step, which is one step, and they may land the wrong way
+   round, which is the same window said backwards. */
+function echoFix(){
+  var n = pageLen(), t;
+  if (echoFrom === null || echoTo === null) return;
+  if (echoFrom > echoTo){ t = echoFrom; echoFrom = echoTo; echoTo = t; }
+  if (echoFrom < 0) echoFrom = 0;
+  if (echoTo > n - 1) echoTo = n - 1;
+  /* a run already under way snaps into the window rather than finishing the
+     lap it was on outside it — the same thing shortening the loop does */
+  if (playing && (schedStep < echoFrom || schedStep > echoTo)) schedStep = echoFrom;
+}
+function echoLoopFrom(){
+  if (!echoNow()) return;
+  echoFrom = cursor;
+  if (echoTo === null) echoTo = Math.max(0, Math.min(doc.loop, pageLen()) - 1);
+  echoFix();
+  echoShow("the loop starts at " + (echoFrom + 1));
+}
+function echoLoopTo(){
+  if (!echoNow()) return;
+  echoTo = cursor;
+  if (echoFrom === null) echoFrom = 0;
+  echoFix();
+  echoShow("the loop ends at " + (echoTo + 1));
+}
+
+/* the hint: where the call's notes fall, and not one word about what they
+   are. It is the rhythm of the line handed over and the pitches kept back,
+   which is the one half of the question a stuck ear can be given without
+   answering the other half for it. */
+function echoHintToggle(){
+  if (!echoNow()) return;
+  echoHint = !echoHint;
+  echoShow(echoHint ? "the notes, shown" : "the notes, hidden");
 }

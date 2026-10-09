@@ -393,7 +393,6 @@ function voiceName(v){ return LANE_NAMES[v]; }
    so in the lane's own noun */
 function laneThing(v){ return (v === CHORD_LANE) ? "chord" : "note"; }
 function voiceState(v){
-  if (anySolo()) return flag("solo", v) ? "solo" : "silent under the solo";
   return flag("mute", v) ? "muted" : "";
 }
 function setVoice(v){
@@ -418,17 +417,31 @@ function setVoice(v){
 function cycleVoice(d){ setVoice(voice + d); }
 function nextVoice(){ cycleVoice(1); }
 function prevVoice(){ cycleVoice(-1); }
+/* ---- solo is a verb ----
+   There is no soloed state to be in: soloing mutes every other voice, and
+   pressing it again on a voice that is already the only one heard gives them
+   all back. So the strip has one word to say — muted, or nothing — and the
+   page can never hold a solo and a mute that disagree about what is heard.
+   Muting the last voice that could be heard is refused: silence is what stop
+   is for, and a folio that plays nothing at all reads as a fault. */
+function alone(v){
+  for (var i = 0; i < LANES; i++) if ((i === v) === flag("mute", i)) return false;
+  return true;
+}
 function toggleSolo(v){
   v = (v === undefined) ? voice : v;
-  setFlag("solo", v, !flag("solo", v));
+  var back = alone(v);
+  for (var i = 0; i < LANES; i++) setFlag("mute", i, back ? false : i !== v);
   renderMeta(); renderVoices(); save();
-  say(flag("solo", v) ? "the " + voiceName(v) + " alone" : "both voices again");
+  say(back ? "every voice again" : "the " + voiceName(v) + " alone");
 }
 function toggleMute(v){
   v = (v === undefined) ? voice : v;
-  setFlag("mute", v, !flag("mute", v));
+  var on = !flag("mute", v);
+  if (on && alone(v)){ say("the " + voiceName(v) + " is all there is left to hear"); return; }
+  setFlag("mute", v, on);
   renderMeta(); renderVoices(); save();
-  say("the " + voiceName(v) + (flag("mute", v) ? " · muted" : " · back"));
+  say("the " + voiceName(v) + (on ? " · muted" : " · back"));
 }
 
 /* the key is set on the key page, where it is also explained. The drawing's
@@ -478,7 +491,7 @@ function setLoop(n){
 /* down the rungs and round again, as it always went: the whole page, then
    the halves under it, then back to the whole page */
 function cycleLoop(){
-  var r = loopRungs(pageLen()), i = r.indexOf(doc.loop);
+  var r = loopRungs(pageLen(), doc.loop), i = r.indexOf(doc.loop);
   setLoop(r[(i <= 0 ? r.length : i) - 1]);
 }
 
@@ -535,12 +548,9 @@ function shiftOctave(d){
   if (n === baseOctave){ say("octave " + baseOctave + " — end of the range"); return; }
   baseOctave = n; renderMeta(); say("octave " + baseOctave);
 }
+/* F3 is the board, straight there: the same screen start reaches by turning
+   the strip, and the same press again puts it down. The keyboard keeps its
+   own way in because the board is read as much as it is walked. */
 function toggleQuests(){
-  var on = !questsEl.classList.contains("on");
-  questsEl.classList.toggle("on", on);
-  if (on){ settingsEl.classList.remove("on"); markSettings(false); }
-  applyViz();
-  renderRails();
-  if (on) renderQuests();
-  say(on ? "the quest log · " + selQuest().short : "‸ cursor row");
+  if (screenIs("quests")) closeScreens(); else openScreens("quests");
 }
