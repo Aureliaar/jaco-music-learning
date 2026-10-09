@@ -61,6 +61,50 @@ var midiAccess = null, midiOut = null;
 var midiAsked = false, midiConnecting = false;
 var midiRackReady = false;
 
+/* ---- Folio Native ----
+   Inside folio-native's own window the rack is in the same process, and
+   window.__JUCE__ is there before any script runs. Nothing below changes for
+   it: the page still schedules every note itself and sends Web MIDI bytes with
+   Web MIDI timestamps, only to an output that hands them to the host instead
+   of down a cable — no port to lose, no permission to ask, no second process.
+   The timestamps travel as wall-clock milliseconds (timeOrigin + the stamp),
+   the one clock both sides can read, and the host lands each on its sample.
+   A frame's sends go over in one message. */
+var NATIVE = !!(window.__JUCE__ && window.__JUCE__.backend &&
+                typeof window.__JUCE__.backend.emitEvent === "function");
+var nativeQueue = [], nativeQueued = false, nativeCalls = {}, nativeCallId = 0;
+function nativeFlush(){
+  nativeQueued = false;
+  if (!nativeQueue.length) return;
+  var events = nativeQueue;
+  nativeQueue = [];
+  window.__JUCE__.backend.emitEvent("folioMidi",
+    { events: events, now: performance.timeOrigin + performance.now() });
+}
+function nativePush(at, a, b, c){
+  nativeQueue.push(at, a | 0, b | 0, c | 0);
+  if (!nativeQueued){ nativeQueued = true; Promise.resolve().then(nativeFlush); }
+}
+var nativeOut = !NATIVE ? null : {
+  name: MIDI_PORT, state: "connected", connection: "open",
+  send: function(data, ts){
+    nativePush(ts ? performance.timeOrigin + ts : 0, data[0], data[1], data[2]);
+  },
+  clear: function(){ nativePush(-1, 0, 0, 0); }   /* drops everything still queued */
+};
+/* a native function, answered through JUCE's own completion event */
+if (NATIVE) window.__JUCE__.backend.addEventListener("__juce__complete", function(m){
+  var done = m && nativeCalls[m.promiseId];
+  if (done){ delete nativeCalls[m.promiseId]; done(m.result); }
+});
+function nativeCall(name){
+  return new Promise(function(resolve){
+    var id = nativeCallId++;
+    nativeCalls[id] = resolve;
+    window.__JUCE__.backend.emitEvent("__juce__invoke", { name: name, params: [], resultId: id });
+  });
+}
+
 /* The launch promise, read once and held for the page session. It comes from
    the address, as folio-reaper.cmd opens it, or from the local server, which
    writes it into every page it serves: on this machine a link that forgets
@@ -68,6 +112,7 @@ var midiRackReady = false;
    only a page opened on this machine; a device reaching the folio over --lan
    has no cable to keep it with. */
 var MIDI_REQUIRED = (function(){
+  if (NATIVE) return true;          /* the window is the rack's own */
   try {
     if (/(^|[?&])renderer=reaper(&|$)/.test(location.search || "")) return true;
     var meta = document.querySelector('meta[name="folio-renderer"]');
@@ -120,6 +165,21 @@ var MIDI_FAULT_COPY = {
     "The rack is running, but its port is not reaching this browser, and Experiments Hub did not answer to reopen it. Your music is safe."]
 };
 
+/* the same boundaries, as they fail inside the native window */
+var NATIVE_FAULT_COPY = {
+  "starting":       ["The sound rack is still opening.",
+    "The instruments are loading. Your music is safe; playing will work as soon as they are in."],
+  "audio-failed":   ["The sound rack has no speaker.",
+    "No audio output could be opened. Your music is safe. Choose one under Rack, Audio settings."],
+  "rack-missing":   ["The sound rack could not be opened.",
+    "There is no rack.json beside the native folio. Your music is safe."],
+  "plugin-missing": ["The sound rack could not be opened.",
+    "An instrument the rack lists is not installed. Your music is safe."],
+  "plugin-failed":  ["The sound rack could not be opened.",
+    "An instrument would not load. Your music is safe."],
+  "reaper-failed":  ["The sound rack could not be opened.",
+    "The rack said something Folio does not understand. Your music is safe."]
+};
 function midiLocal(){
   return location.protocol === "http:" &&
     (location.hostname === "localhost" || location.hostname === "127.0.0.1" ||
@@ -170,7 +230,8 @@ function midiFaultRender(){
   var panel = document.getElementById("rackfault");
   if (panel){
     if (fault){
-      var copy = MIDI_FAULT_COPY[fault] || MIDI_FAULT_COPY["service-absent"];
+      var copy = (NATIVE && NATIVE_FAULT_COPY[fault]) || MIDI_FAULT_COPY[fault] ||
+                 MIDI_FAULT_COPY["service-absent"];
       var name = document.getElementById("rackfaultname");
       var text = document.getElementById("rackfaulttext");
       if (name) name.textContent = copy[0];
@@ -195,11 +256,11 @@ function midiHealthSet(ready){
   else if (midiConnected()) say("reaper sound connected");
 }
 function midiHealthPoll(){
-  if (!midiLocal() || !window.fetch) return;
-  fetch(MIDI_HEALTH, {cache:"no-store"}).then(function(response){
+  if (!NATIVE && (!midiLocal() || !window.fetch)) return;
+  (NATIVE ? nativeCall("folioRack") : fetch(MIDI_HEALTH, {cache:"no-store"}).then(function(response){
     if (!response.ok) throw new Error("renderer status " + response.status);
     return response.json();
-  }).then(function(status){
+  })).then(function(status){
     midiState = (status && typeof status.state === "string") ? status.state
               : ((status && status.ready) ? "ready" : "not-requested");
     midiRackSet(status && status.voices);
@@ -367,6 +428,14 @@ function midiRefresh(){
   } catch (e) {}
 }
 function midiConnect(){
+  if (NATIVE){
+    if (midiOut) return;
+    midiAccess = {};
+    midiPermission = "granted";
+    midiOut = nativeOut;
+    midiFaultRender();
+    return;
+  }
   if (!midiLocal() || midiAccess || midiConnecting || midiAsked) return;
   if (!navigator.requestMIDIAccess){
     midiPermission = "absent";

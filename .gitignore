@@ -14,3 +14,8 @@ tmp/
 tests/prof-*/
 tests/*.png
 tests/tmp/
+
+# Folio Native: JUCE and the WebView2 SDK are fetched by folio-native/build.cmd
+folio-native/JUCE/
+folio-native/deps/
+folio-native/build/

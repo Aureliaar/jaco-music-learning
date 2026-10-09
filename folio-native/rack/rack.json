@@ -1,0 +1,87 @@
+{
+  "folio": "native-rack",
+  "version": 1,
+  "instruments": [
+    {
+      "channel": 1,
+      "voice": 0,
+      "seat": 0,
+      "name": "Ratio piano",
+      "plugin": "SINE Player.vst3",
+      "state": "01.component",
+      "gain": 0.76
+    },
+    {
+      "channel": 2,
+      "voice": 1,
+      "seat": 0,
+      "name": "Crux J-bass",
+      "plugin": "SINE Player.vst3",
+      "state": "02.component",
+      "gain": 0.58
+    },
+    {
+      "channel": 3,
+      "voice": 2,
+      "seat": 0,
+      "name": "Roads Rhodes",
+      "plugin": "SINE Player.vst3",
+      "state": "03.component",
+      "gain": 0.45319513731155
+    },
+    {
+      "channel": 4,
+      "voice": 0,
+      "seat": 1,
+      "name": "Helix strings",
+      "plugin": "SINE Player.vst3",
+      "state": "04.component",
+      "gain": 0.76
+    },
+    {
+      "channel": 5,
+      "voice": 1,
+      "seat": 1,
+      "name": "Ratio piano",
+      "plugin": "SINE Player.vst3",
+      "state": "05.component",
+      "gain": 0.58
+    },
+    {
+      "channel": 6,
+      "voice": 2,
+      "seat": 1,
+      "name": "Spindle felt piano",
+      "plugin": "SINE Player.vst3",
+      "state": "06.component",
+      "gain": 0.45319513731155
+    },
+    {
+      "channel": 7,
+      "voice": 0,
+      "seat": 2,
+      "name": "Spindle felt piano",
+      "plugin": "SINE Player.vst3",
+      "state": "07.component",
+      "gain": 0.76
+    },
+    {
+      "channel": 8,
+      "voice": 1,
+      "seat": 2,
+      "name": "Clutch organ",
+      "plugin": "SINE Player.vst3",
+      "state": "08.component",
+      "gain": 0.58
+    },
+    {
+      "channel": 9,
+      "voice": 2,
+      "seat": 2,
+      "name": "Helix strings",
+      "plugin": "SINE Player.vst3",
+      "state": "09.component",
+      "gain": 0.45319513731155
+    }
+  ]
+}

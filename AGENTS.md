@@ -70,6 +70,14 @@ interval *direction* is not natively readable, let alone magnitude.
   read-only mode) and `/auditor.html`. The deployed quest-log is a
   snapshot — redeploy after new composing.
 - `folio.html` opened via `file://` works offline, no sync.
+- **Folio Native (2026-10-09, the successor to the REAPER rack):**
+  `folio-native.cmd` opens the served page in a JUCE 8 + WebView2 window that
+  hosts the SINE instruments in-process. There's no MIDI cable, no REAPER, no
+  browser port. `js/audio.js` detects `window.__JUCE__` and sends its Web MIDI
+  bytes to the host. The window never starts the server. Build, rack format and
+  diagnostics: `folio-native/README.md`. The REAPER path below still works
+  but failed most of the time it was used. The Hub doesn't route to the native
+  window yet.
 - `folio-reaper.cmd` starts the native-MIDI/REAPER renderer without
   touching the Folio server. Folio remains the sole UI, clock, and transport.
   **Never own tone on this machine** (player ruling, 2026-09-11): the local
