@@ -21,55 +21,45 @@ var ATTACK = 0.008, RELEASE = 0.040, TAIL = 0.006;
 var LEVEL = 0.22;
 var audioClockNode = null, audioClockSink = null;
 
-/* ================= external renderer =================
+/* ================= the rack =================
    Folio is still the clock, the transport and the thing in the player's
-   hands.  On the local server only, a remembered Web MIDI permission hands the
-   three existing lanes down one persistent installed MIDI cable to a monitored
-   REAPER rack: slot zero is lead on channel 1, bass on 2, chords on 3. Further
-   renderer slots occupy the next channel triplets. The rack launcher owns a
-   tiny local status endpoint. Nothing in a page document knows or stores a
+   hands. On this machine the sound is Folio Native's: the same page, in a
+   window whose own process hosts the instruments (folio-native/). The page
+   schedules every note itself and sends Web MIDI bytes with Web MIDI
+   timestamps to an output that hands them to the host — no port, no cable,
+   no second program. Lead is channel 1, bass 2, chords 3; each further seat
+   is the next channel triplet. Nothing in a page document knows or stores a
    renderer.
 
-   There are two modes, and they are never inferred from whether a port happens
-   to exist. Ordinary Folio uses its own tones and treats an absent rack as no
-   error at all. Required-REAPER Folio — every page the local server serves on
-   this machine, and any page opened with `?renderer=reaper` — was promised the
-   rack, so an unavailable rack stops
-   the transport and says which boundary failed. It never quietly substitutes a
-   different instrument and calls that success. */
-var MIDI_PORT = "Folio to REAPER";
-var MIDI_HEALTH = "/api/renderer";
-var MIDI_PERMISSION = "folio-midi-permission";
+   There are two modes, and they are never inferred. Ordinary Folio —
+   file://, the deployed static copy, a device on --lan, the test suite —
+   plays its own tones and has no rack at all. A page that was promised the
+   rack — inside the native window, or any page this machine's server
+   serves, which writes the promise into it — plays the rack or nothing: on
+   this machine there is no own tone (the 2026-09-11 ruling). A promised
+   rack that cannot play stops the transport and says why, and never quietly
+   substitutes a different instrument and calls that success. */
 var MIDI_LATENCY = "folio-midi-latency-ms";
 var MIDI_VELOCITY = [82, 88, 68];       /* the level-matched lineup's values */
 var MIDI_SLOTS = [0, 0, 0];             /* which seat each voice is sitting in */
 var MIDI_SLOT_COUNT = Math.floor(16 / LANES);
 /* ---- and what is actually in those seats ----
-   Not a list this file keeps: the rack project is the only honest catalogue,
-   and the status service reads it and sends it along with the health. Null
-   until a rack answers, and null again the moment one goes away, so nothing
-   anywhere can draw a seat that has no instrument behind it. Each lane holds
-   its seats in order, `{ seat, name }`. */
+   Not a list this file keeps: the host reads its own rack.json and sends it
+   along with the health. Null until the rack answers, so nothing anywhere
+   can draw a seat with no instrument behind it. Each lane holds its seats in
+   order, `{ seat, name }`. */
 var midiRack = null;
-/* The app's own envelope can reach silence inside six milliseconds.  The
-   Windows MIDI path cannot preserve a boundary that small: live capture saw
-   six milliseconds arrive as either one 15 ms service quantum or no gap at
-   all.  Keep external note ends over one quantum clear of the next attack so
-   a note-off cannot trade places with the following note-on at a loop seam. */
+/* Note ends are kept a little clear of the next attack, so a note-off can
+   never land after the following note-on at a loop seam. */
 var MIDI_TAIL = 0.024;
-var midiAccess = null, midiOut = null;
-var midiAsked = false, midiConnecting = false;
+var midiOut = null;
 var midiRackReady = false;
 
-/* ---- Folio Native ----
-   Inside folio-native's own window the rack is in the same process, and
-   window.__JUCE__ is there before any script runs. Nothing below changes for
-   it: the page still schedules every note itself and sends Web MIDI bytes with
-   Web MIDI timestamps, only to an output that hands them to the host instead
-   of down a cable — no port to lose, no permission to ask, no second process.
-   The timestamps travel as wall-clock milliseconds (timeOrigin + the stamp),
-   the one clock both sides can read, and the host lands each on its sample.
-   A frame's sends go over in one message. */
+/* ---- the native window ----
+   window.__JUCE__ is there before any script runs. Timestamps travel as
+   wall-clock milliseconds (timeOrigin + the stamp), the one clock both
+   sides can read, and the host lands each on its sample. A frame's sends go
+   over in one message. */
 var NATIVE = !!(window.__JUCE__ && window.__JUCE__.backend &&
                 typeof window.__JUCE__.backend.emitEvent === "function");
 var nativeQueue = [], nativeQueued = false, nativeCalls = {}, nativeCallId = 0;
@@ -86,7 +76,6 @@ function nativePush(at, a, b, c){
   if (!nativeQueued){ nativeQueued = true; Promise.resolve().then(nativeFlush); }
 }
 var nativeOut = !NATIVE ? null : {
-  name: MIDI_PORT, state: "connected", connection: "open",
   send: function(data, ts){
     nativePush(ts ? performance.timeOrigin + ts : 0, data[0], data[1], data[2]);
   },
@@ -105,68 +94,34 @@ function nativeCall(name){
   });
 }
 
-/* The launch promise, read once and held for the page session. It comes from
-   the address, as folio-reaper.cmd opens it, or from the local server, which
-   writes it into every page it serves: on this machine a link that forgets
-   the parameter must not bring the own tone back. The server's promise binds
-   only a page opened on this machine; a device reaching the folio over --lan
-   has no cable to keep it with. */
+/* The promise, read once and held for the page session: the native window
+   makes it by being the native window; this machine's server makes it by
+   writing a meta into every page it serves, so a browser tab on this machine
+   says where the sound is instead of playing its own. The server's promise
+   binds only a page opened on this machine; a device reaching the folio over
+   --lan has no rack. */
+function midiLocal(){
+  return location.protocol === "http:" &&
+    (location.hostname === "localhost" || location.hostname === "127.0.0.1" ||
+     location.hostname === "[::1]");
+}
 var MIDI_REQUIRED = (function(){
-  if (NATIVE) return true;          /* the window is the rack's own */
+  if (NATIVE) return true;
   try {
-    if (/(^|[?&])renderer=reaper(&|$)/.test(location.search || "")) return true;
     var meta = document.querySelector('meta[name="folio-renderer"]');
-    return !!(meta && meta.getAttribute("content") === "reaper" && midiLocal());
+    return !!(meta && meta.getAttribute("content") === "native" && midiLocal());
   } catch (e) { return false; }
 })();
-/* Until the first poll answers, a promised rack is starting, not absent. */
+/* Until the first answer, a promised rack is starting, not absent. */
 var midiState = MIDI_REQUIRED ? "starting" : "not-requested";
-var midiPermission = "unknown";   /* unknown · granted · denied · absent */
-var midiSendFailed = false;
 var midiFault = null;             /* the failed boundary in required mode */
 
-/* Player-facing copy for each boundary that can fail. The status service
-   sends a short stable detail for diagnosis; these are the only words the
-   page shows, and every one of them says the music is safe. */
+/* Player-facing copy for each boundary that can fail. The host sends a short
+   stable detail for diagnosis; these are the only words the page shows, and
+   every one of them says the music is safe. */
 var MIDI_FAULT_COPY = {
-  "not-local":       ["This page cannot reach the sound rack.",
-    "The REAPER rack answers only the local Folio server. Open Folio from folio-reaper.cmd."],
-  "no-web-midi":     ["This browser cannot open the sound rack.",
-    "It has no Web MIDI. Your music is safe. Open Folio in the browser folio-reaper.cmd uses."],
-  "midi-unasked":    ["The sound rack is waiting for permission.",
-    "Click once in the page, or press a key, and allow the browser's MIDI request."],
-  "midi-denied":     ["The browser is refusing MIDI.",
-    "Your music is safe. Allow MIDI for this page in the browser's site settings, then reopen Folio."],
-  "service-absent":  ["The sound rack did not answer.",
-    "No Folio renderer is running on this machine. Your music is safe. Start it with folio-reaper.cmd."],
-  "starting":        ["The sound rack is still opening.",
-    "REAPER is starting. Your music is safe; playing will work as soon as the rack answers."],
-  "port-missing":    ["The sound rack did not answer.",
-    "Folio found no “Folio to REAPER” MIDI port. Your music is safe. Start the installed MIDI cable, then reopen the Folio sound rack."],
-  "reaper-missing":  ["The sound rack could not be opened.",
-    "REAPER is not installed where Folio expects it. Your music is safe."],
-  "rack-missing":    ["The sound rack could not be opened.",
-    "The fixed REAPER rack project is missing. Your music is safe."],
-  "reaper-failed":   ["The sound rack could not be opened.",
-    "REAPER did not start. Your music is safe. Close any REAPER window and run folio-reaper.cmd again."],
-  "renderer-lost":   ["The sound rack has gone.",
-    "The REAPER rack closed while Folio was open. Your music is safe. Run folio-reaper.cmd again."],
-  "send-failed":     ["The sound rack stopped listening.",
-    "A note could not be sent down the MIDI cable. Your music is safe. Run folio-reaper.cmd again."],
-  "browser-port":    ["The sound rack is not reaching this browser.",
-    "The rack is running, but this browser cannot see its “Folio to REAPER” port. Your music is safe. If it stays this way, Experiments Hub reopens this browser."],
-  "recovering":      ["Experiments Hub is reopening this browser.",
-    "This browser has lost sight of the sound rack's MIDI port, and only a fresh browser sees it again. Every tab comes back. Your music is safe."],
-  "moved":           ["Folio is open in the Hub window.",
-    "This browser cannot hear the sound rack. Your music is safe and carries on in the Hub window, where the rack plays."],
-  "browser-stuck":   ["This browser cannot see the sound rack.",
-    "The rack is running, but its “Folio to REAPER” port is not reaching this browser, and reopening the browser did not bring it back. Your music is safe."],
-  "hub-absent":      ["This browser cannot see the sound rack.",
-    "The rack is running, but its port is not reaching this browser, and Experiments Hub did not answer to reopen it. Your music is safe."]
-};
-
-/* the same boundaries, as they fail inside the native window */
-var NATIVE_FAULT_COPY = {
+  "not-native":     ["Folio plays in its own window.",
+    "This browser tab has no instruments. Your music is safe. Open Folio from folio.cmd."],
   "starting":       ["The sound rack is still opening.",
     "The instruments are loading. Your music is safe; playing will work as soon as they are in."],
   "audio-failed":   ["The sound rack has no speaker.",
@@ -177,61 +132,34 @@ var NATIVE_FAULT_COPY = {
     "An instrument the rack lists is not installed. Your music is safe."],
   "plugin-failed":  ["The sound rack could not be opened.",
     "An instrument would not load. Your music is safe."],
-  "reaper-failed":  ["The sound rack could not be opened.",
+  "unknown":        ["The sound rack could not be opened.",
     "The rack said something Folio does not understand. Your music is safe."]
 };
-function midiLocal(){
-  return location.protocol === "http:" &&
-    (location.hostname === "localhost" || location.hostname === "127.0.0.1" ||
-     location.hostname === "[::1]");
-}
+
 function midiStored(key){
   try { return localStorage.getItem(key); } catch (e) { return null; }
 }
-function midiStore(key, value){
-  try { localStorage.setItem(key, value); } catch (e) {}
-}
 function midiConnected(){
-  return !!(midiRackReady && midiOut && midiOut.state !== "disconnected" &&
-            midiOut.connection !== "closed");
+  return !!(midiRackReady && midiOut);
 }
-/* Which boundary is failing, named from the outside in: the page's origin,
-   then the renderer the launch promised, then the browser's MIDI, then the
-   port itself. The renderer comes before the browser deliberately — while no
-   rack is running at all, "start the rack" is the true and useful sentence,
-   and a MIDI permission is not yet worth mentioning.
-   Ordinary Folio never has a fault — an absent rack is not an error there. */
+/* Ordinary Folio never has a fault — it has no rack to miss. */
 function midiFaultNow(){
   if (!MIDI_REQUIRED) return null;
-  if (!midiLocal()) return "not-local";
-  if (midiState !== "ready")
-    return midiState === "not-requested" ? "service-absent" :
-           (MIDI_FAULT_COPY[midiState] ? midiState : "reaper-failed");
-  if (midiPermission === "absent") return "no-web-midi";
-  if (midiPermission === "denied") return "midi-denied";
-  if (midiPermission !== "granted") return "midi-unasked";
-  if (midiSendFailed) return "send-failed";
-  /* the rack answers, but this browser has no port by that name */
-  if (!midiConnected())
-    return midiRecovery === "asked" ? "recovering" :
-           midiRecovery === "moved" ? "moved" :
-           midiRecovery === "stuck" ? "browser-stuck" :
-           midiRecovery === "hub-absent" ? "hub-absent" : "browser-port";
+  if (!NATIVE) return "not-native";
+  if (midiState !== "ready") return MIDI_FAULT_COPY[midiState] ? midiState : "unknown";
   return null;
 }
 /* A calm, persistent panel: no blink, no texture, no timer, no dismissal.
-   It clears itself the moment the same expected rack becomes healthy again. */
+   It clears itself the moment the rack is ready. */
 function midiFaultRender(){
   var fault = midiFaultNow();
   if (fault === midiFault) return;
   var wasClear = !midiFault;
   midiFault = fault;
-  if (!fault) midiRecovery = null;   /* heard again: a later loss may ask anew */
   var panel = document.getElementById("rackfault");
   if (panel){
     if (fault){
-      var copy = (NATIVE && NATIVE_FAULT_COPY[fault]) || MIDI_FAULT_COPY[fault] ||
-                 MIDI_FAULT_COPY["service-absent"];
+      var copy = MIDI_FAULT_COPY[fault];
       var name = document.getElementById("rackfaultname");
       var text = document.getElementById("rackfaulttext");
       if (name) name.textContent = copy[0];
@@ -240,85 +168,24 @@ function midiFaultRender(){
     }
     panel.hidden = !fault;
   }
-  /* A renderer that goes while the loop runs takes the transport with it;
-     stop() clears the queue and panics the port it still has. */
+  /* A rack that goes while the loop runs takes the transport with it;
+     stop() clears the queue and silences what is still sounding. */
   if (fault && playing && wasClear) stop();
   if (fault) say("the sound rack is not answering");
-  else if (!wasClear) say(playing ? "playing · reaper" : "reaper sound connected");
-}
-function midiHealthSet(ready){
-  ready = !!ready;
-  if (ready === midiRackReady) return;
-  if (!ready && midiOut) midiPanic(midiOut);
-  midiRackReady = ready;
-  if (MIDI_REQUIRED) return;      /* the panel speaks for required mode */
-  if (playing) say(midiConnected() ? "playing · reaper" : "playing · own tone");
-  else if (midiConnected()) say("reaper sound connected");
+  else if (!wasClear) say(playing ? "playing · the rack" : "the rack is ready");
 }
 function midiHealthPoll(){
-  if (!NATIVE && (!midiLocal() || !window.fetch)) return;
-  (NATIVE ? nativeCall("folioRack") : fetch(MIDI_HEALTH, {cache:"no-store"}).then(function(response){
-    if (!response.ok) throw new Error("renderer status " + response.status);
-    return response.json();
-  })).then(function(status){
-    midiState = (status && typeof status.state === "string") ? status.state
-              : ((status && status.ready) ? "ready" : "not-requested");
+  if (!NATIVE) return;
+  nativeCall("folioRack").then(function(status){
+    midiState = (status && typeof status.state === "string") ? status.state : "unknown";
     midiRackSet(status && status.voices);
-    midiHealthSet(midiState === "ready");
-  }).catch(function(){
-    midiState = "not-requested";
-    midiRackSet(null);
-    midiHealthSet(false);
+    var ready = midiState === "ready";
+    if (!ready && midiRackReady) midiPanic();
+    midiRackReady = ready;
+    midiOut = nativeOut;
   }).then(function(){
     midiFaultRender();
-    midiRecoverCheck();
     setTimeout(midiHealthPoll, 1000);
-  });
-}
-/* ---- a browser that has lost the rack ----
-   The rack answers and the cable is there, but this browser's MIDI list has no
-   port by that name. Chrome lists MIDI ports once per browser process, so a
-   browser that was open across a MIDI service restart never sees the cable
-   again, and nothing inside the page can make it look. After a short grace (a
-   port still being opened looks missing for a moment) the page asks its server
-   to have the Hub deal with it, naming itself with a token on its own <html>.
-   A page in a browser the Hub owns (the Hub window, or Folio's managed
-   browser) has that browser restarted with all its tabs; a page anywhere
-   else is opened in the Hub window instead. Which of the two happened comes
-   back, and decides what the panel says. Once per loss: a fresh browser that still cannot see
-   the port says so and stops asking, and the Hub refuses a second restart
-   inside ninety seconds whatever the page does. */
-var MIDI_RECOVER_GRACE = 3000, MIDI_RESTART_WAIT = 10000;
-var midiMissingSince = 0, midiRecovery = null;
-var midiRecoverToken = String(Math.random()).slice(2, 12);
-function midiRecoverCheck(){
-  if (!MIDI_REQUIRED || midiFault !== "browser-port"){ midiMissingSince = 0; return; }
-  if (!midiMissingSince){ midiMissingSince = Date.now(); return; }
-  if (midiRecovery || Date.now() - midiMissingSince < MIDI_RECOVER_GRACE) return;
-  midiRecovery = "asked";
-  midiFaultRender();
-  try { document.documentElement.setAttribute("data-recover", midiRecoverToken); } catch (e) {}
-  fetch("/api/recover", { method: "POST", headers: { "content-type": "application/json" },
-    body: JSON.stringify({ path: location.pathname + location.search, token: midiRecoverToken })
-  }).then(function(response){
-    return response.json().then(function(body){
-      if (!response.ok) throw new Error((body && body.state) || "recover failed");
-      return body;
-    });
-  }).then(function(body){
-    if (body.state === "restarted"){
-      /* this very browser is being replaced; a page still here long after
-         means the restart did not go the way it was meant to */
-      setTimeout(function(){
-        if (midiRecovery === "asked"){ midiRecovery = "stuck"; midiFaultRender(); }
-      }, MIDI_RESTART_WAIT);
-      return;
-    }
-    midiRecovery = (body.state === "stuck") ? "stuck" : "moved";
-    midiFaultRender();
-  }).catch(function(){
-    midiRecovery = "hub-absent";
-    midiFaultRender();
   });
 }
 /* ---- the catalogue, read ----
@@ -374,19 +241,18 @@ function midiVisualDelay(){
   var ms = Number(midiStored(MIDI_LATENCY));
   return isFinite(ms) ? Math.max(0, Math.min(500, ms)) / 1000 : 0;
 }
-function midiPanic(out){
-  out = out || midiOut;
-  if (!out) return;
-  try { if (out.clear) out.clear(); } catch (e) {}
+function midiPanic(){
+  if (!midiOut) return;
+  try { midiOut.clear(); } catch (e) {}
   for (var ch = 0; ch < 16; ch++){
-    try { out.send([0xB0 | ch, 123, 0]); } catch (e) {} /* all notes off */
-    try { out.send([0xB0 | ch, 120, 0]); } catch (e) {} /* all sound off */
+    try { midiOut.send([0xB0 | ch, 123, 0]); } catch (e) {} /* all notes off */
+    try { midiOut.send([0xB0 | ch, 120, 0]); } catch (e) {} /* all sound off */
   }
 }
-/* Hidden renderer seam for the later instrument page.  Selection is local
-   runtime state, not composition data: callers choose a voice and a rack seat.
-   Notes for seat N travel on MIDI channel `voice + N * 3`; REAPER needs only a
-   monitored instrument track on that channel, with no stateful MIDI effect. */
+/* Which instrument a voice plays. Selection is local runtime state, not
+   composition data: callers choose a voice and a rack seat. Notes for seat N
+   travel on MIDI channel `voice + N * 3`, and the host plays each channel on
+   the instrument rack.json gives it. */
 function midiSelectInstrument(v, slot){
   v = Math.floor(Number(v));
   slot = Math.floor(Number(slot));
@@ -397,67 +263,6 @@ function midiSelectInstrument(v, slot){
   MIDI_SLOTS[v] = slot;
   return true;
 }
-function midiRefresh(){
-  if (!midiAccess) return;
-  var found = null;
-  try {
-    midiAccess.outputs.forEach(function(out){
-      if (!found && String(out.name || "").trim().toLowerCase() === MIDI_PORT.toLowerCase() &&
-          out.state !== "disconnected") found = out;
-    });
-  } catch (e) {}
-  if (found === midiOut) return;
-  if (midiOut) midiPanic(midiOut);
-  midiOut = null;
-  if (!found){
-    if (MIDI_REQUIRED) midiFaultRender();
-    else if (playing) say("playing · own tone");
-    return;
-  }
-  function arrived(){
-    midiOut = found;
-    midiSendFailed = false;       /* a fresh port is not the one that threw */
-    if (MIDI_REQUIRED){ midiFaultRender(); return; }
-    if (midiConnected())
-      say(playing ? "playing · reaper" : "reaper sound connected");
-  }
-  try {
-    var opened = found.open && found.open();
-    if (opened && opened.then) opened.then(arrived).catch(function(){});
-    else arrived();
-  } catch (e) {}
-}
-function midiConnect(){
-  if (NATIVE){
-    if (midiOut) return;
-    midiAccess = {};
-    midiPermission = "granted";
-    midiOut = nativeOut;
-    midiFaultRender();
-    return;
-  }
-  if (!midiLocal() || midiAccess || midiConnecting || midiAsked) return;
-  if (!navigator.requestMIDIAccess){
-    midiPermission = "absent";
-    midiFaultRender();
-    return;
-  }
-  midiAsked = true;
-  midiConnecting = true;
-  navigator.requestMIDIAccess().then(function(access){
-    midiConnecting = false;
-    midiAccess = access;
-    midiPermission = "granted";
-    midiStore(MIDI_PERMISSION, "yes");
-    access.onstatechange = midiRefresh;
-    midiRefresh();
-    midiFaultRender();
-  }).catch(function(){
-    midiConnecting = false;
-    midiPermission = "denied";
-    midiFaultRender();
-  });
-}
 function midiNote(name, at, dur, v){
   if (!midiConnected()) return false;
   var voiceChannel = Math.max(0, Math.min(LANES - 1, v || 0));
@@ -465,16 +270,9 @@ function midiNote(name, at, dur, v){
   if (note === null || note === undefined) return false;
   var when = performance.now() + Math.max(0, at - ctx.currentTime) * 1000;
   var off = when + Math.max(1, dur * 1000 - MIDI_TAIL * 1000);
-  try {
-    midiOut.send([0x90 | ch, note, MIDI_VELOCITY[ch] || 80], when);
-    midiOut.send([0x80 | ch, note, 0], off);
-    return true;
-  } catch (e) {
-    midiOut = null;
-    midiSendFailed = true;
-    if (MIDI_REQUIRED) midiFaultRender();
-    return false;
-  }
+  midiOut.send([0x90 | ch, note, MIDI_VELOCITY[ch] || 80], when);
+  midiOut.send([0x80 | ch, note, 0], off);
+  return true;
 }
 
 /* how long one step lasts. The page's own tempo, and then the echo's pace
@@ -528,16 +326,10 @@ function audio(){
 /* the autoplay policy does not count gamepad buttons as a user gesture, so
    a pad-only session leaves the context suspended and every note lands on a
    frozen clock; the first real key or pointer press unlocks it for the pad */
-function unlockAudio(){ audio(); midiConnect(); }
+function unlockAudio(){ audio(); }
 window.addEventListener("pointerdown", unlockAudio, true);
 window.addEventListener("keydown", unlockAudio, true);
-/* Once Chrome has granted the local page permission, later sessions can
-   reconnect without spending the player's first press on setup. */
-/* A page launched with the rack promised should not spend the player's first
-   press on setup either; it asks at once, and the panel says so meanwhile. */
-if (midiLocal() && (MIDI_REQUIRED || midiStored(MIDI_PERMISSION) === "yes"))
-  setTimeout(midiConnect, 0);
-if (midiLocal()) setTimeout(midiHealthPoll, 0);
+if (NATIVE) setTimeout(midiHealthPoll, 0);
 if (MIDI_REQUIRED) setTimeout(midiFaultRender, 0);
 
 /* ---- the two timbres ----
@@ -624,11 +416,11 @@ function toneWave(t){
 function playNote(name, at, dur, v, held){
   var f = noteToFreq(name);
   if (!f) return;
-  /* REAPER is a renderer, never a second layer.  A successful MIDI send is
-     the note; only an absent or failed port reaches Folio's sample/synth
-     path, which is the complete offline fallback. */
+  /* The rack is a renderer, never a second layer. A note it takes is the
+     note; only ordinary Folio, which has no rack, reaches the sample/synth
+     path below. */
   if (midiNote(name, at, dur, v)) return;
-  /* Required-REAPER mode has no fallback by design: a promised rack that
+  /* A promised rack has no fallback by design: a promised rack that
      cannot be reached is an error the player is told about, never a quieter
      instrument standing in for it. Nothing reaches samplePlay or the
      oscillator below. */
@@ -749,7 +541,7 @@ function play(){
   timer = setInterval(scheduler, LOOKAHEAD_MS);
   say(ctx.state !== "running"
       ? "playing · press any key or click once to enable sound"
-      : (midiConnected() ? "playing · reaper" : "playing · own tone"));
+      : (midiConnected() ? "playing · the rack" : "playing · own tone"));
 }
 
 function stop(){
