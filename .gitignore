@@ -19,3 +19,6 @@ tests/tmp/
 # (JUCE and soundbanks/ are submodules)
 folio-native/deps/
 folio-native/build/
+
+# Python bytecode
+__pycache__/

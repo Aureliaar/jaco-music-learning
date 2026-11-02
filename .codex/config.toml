@@ -1,0 +1,12 @@
+# Folio uses local files, shell commands, and its checked-in CDP harness.
+# Keep unrelated globally configured MCP servers out of the default project
+# context. OpenAI Developer Docs stays available for Codex/API questions.
+
+[mcp_servers.openaiDeveloperDocs]
+enabled = true
+
+[mcp_servers.vs-debugger]
+enabled = false
+
+[mcp_servers.chrome-devtools]
+enabled = false
